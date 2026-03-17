@@ -2800,49 +2800,27 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('input[type=date]').forEach(el => { if (!el.value) el.value = today(); });
   updateBusSelects();
   renderDashboard();
-  // Init modal CSV
   if (!state.statsLignes) state.statsLignes = [];
-  document.getElementById('csv-type-info').innerHTML = CSV_INFO["bus"];
+  document.getElementById('csv-type-info').innerHTML = CSV_INFO['bus'];
 
-  // ── Écoute les CSV envoyés par l'extension Firefox ──────────
-  window.addEventListener('tm_csv_ready', e => {
-    const { type } = e.detail;
-    const raw = localStorage.getItem('tm_ext_csv_' + type);
-    if (!raw) return;
-    try {
-      const payload = JSON.parse(raw);
-      // Pré-remplir le textarea et lancer l'import automatiquement
-      document.getElementById('csv-paste-text').value = payload.content;
-      csvRawContent = payload.content;
-      // Sélectionner le bon onglet CSV
-      const tabEl = document.querySelector(`#csv-type-tabs .tab[onclick*="'${type}'"]`);
-      if (tabEl) selectCsvType(tabEl, type);
-      // Importer directement
-      csvImporter();
-      toastMsg(`✅ ${type}.csv reçu de l'extension et importé !`, 'success');
-      // Nettoyer
-      localStorage.removeItem('tm_ext_csv_' + type);
-    } catch(e) { console.error(e); }
-  });
-
-  // Vérifier au démarrage si l'extension a déjà déposé des CSV (cas où la page était fermée)
-  ['bus','affects','stats','salaries','compta'].forEach(type => {
-    const raw = localStorage.getItem('tm_ext_csv_' + type);
-    if (raw) {
+  // ── Polling localStorage : vérifie toutes les 500ms si l'extension a déposé un CSV ──
+  setInterval(() => {
+    ['bus','affects','stats','salaries','compta'].forEach(type => {
+      const raw = localStorage.getItem('tm_ext_csv_' + type);
+      if (!raw) return;
       try {
         const payload = JSON.parse(raw);
-        // Import silencieux si données fraîches (< 10 min)
-        if (Date.now() - payload.timestamp < 10 * 60 * 1000) {
-          document.getElementById('csv-paste-text').value = payload.content;
-          csvRawContent = payload.content;
-          const tabEl = document.querySelector(`#csv-type-tabs .tab[onclick*="'${type}'"]`);
-          if (tabEl) selectCsvType(tabEl, type);
-          csvImporter();
-        }
         localStorage.removeItem('tm_ext_csv_' + type);
-      } catch(e) {}
-    }
-  });
+        // Sélectionner le bon onglet et importer
+        csvRawContent = payload.content;
+        document.getElementById('csv-paste-text').value = payload.content;
+        const tabEl = document.querySelector(`#csv-type-tabs .tab[onclick*="'${type}'"]`);
+        if (tabEl) selectCsvType(tabEl, type);
+        csvImporter();
+        toastMsg(`✅ ${type}.csv reçu et importé via l'extension !`, 'success');
+      } catch(err) { console.error('tm_csv import error:', err); }
+    });
+  }, 500);
 });
 
 // Click outside modal
