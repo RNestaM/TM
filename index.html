@@ -592,6 +592,7 @@
 
   <div class="sidebar-bottom">
     <span id="clock">--:--:--</span> &nbsp;|&nbsp; Jour <span id="game-day">1</span>
+    <button onclick="resetTotal()" style="display:block;width:100%;margin-top:10px;padding:6px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:5px;color:var(--red);font-size:11px;cursor:pointer;letter-spacing:0.5px" title="Efface toutes les données locales">🗑 Réinitialiser la base</button>
   </div>
 </div>
 
@@ -1512,66 +1513,20 @@ function loadState() {
 function saveState() {
   try { localStorage.setItem('tm_state', JSON.stringify(state)); } catch(e) {}
 }
-
-// Données de démo si vide
-if (!state.bus.length) {
-  const demo = [
-    { id: 1, nom: 'STD-B-001', idJeu: 10001, type: 'STD', km: 120000, statut: 'En service', ct: '2026-06-15', capa: 90, motorisation: 'Diesel', revision: null },
-    { id: 2, nom: 'STD-B-002', idJeu: 10002, type: 'STD', km: 85000, statut: 'En service', ct: '2026-04-10', capa: 90, motorisation: 'Diesel', revision: null },
-    { id: 3, nom: 'ART-001', idJeu: 10003, type: 'ART', km: 210000, statut: 'En révision', ct: '2026-05-22', capa: 150, motorisation: 'Hybride', revision: 'Révision standard' },
-    { id: 4, nom: 'MID-001', idJeu: 10004, type: 'MID', km: 55000, statut: 'En service', ct: '2026-08-01', capa: 60, motorisation: 'Électrique', revision: null },
-    { id: 5, nom: 'MIN-001', idJeu: 10005, type: 'MIN', km: 30000, statut: 'Indispo', ct: '2027-01-01', capa: 25, motorisation: 'Diesel', revision: null },
-    { id: 6, nom: 'STD-E-001', idJeu: 10006, type: 'STD', km: 175000, statut: 'En service', ct: '2026-03-28', capa: 90, motorisation: 'Diesel', revision: null },
-    { id: 7, nom: 'CAR-001', idJeu: 10007, type: 'CAR', km: 310000, statut: 'En service', ct: '2026-07-14', capa: 55, motorisation: 'Diesel', revision: null },
-  ];
-  state.bus = demo;
-  state.personnel = [
-    { id: 1, nom: 'Dupont Martin', matricule: 'P001', permis: 'D (Bus)', fco: '2022-03-14', statut: 'FCO requise' },
-    { id: 2, nom: 'Lambert Sophie', matricule: 'P002', permis: 'D+E (Articulé)', fco: '2024-11-20', statut: 'Actif' },
-    { id: 3, nom: 'Moreau Jean', matricule: 'P003', permis: 'D (Bus)', fco: '2025-01-05', statut: 'Actif' },
-    { id: 4, nom: 'Perrin Cécile', matricule: 'P004', permis: 'D (Bus)', fco: '2021-06-12', statut: 'FCO requise' },
-  ];
-  state.lignes = [
-    { id: 1, num: 'L1', nom: 'Centre — Gare', freq: 2400, recette: 1800, nbBus: 3, typeBus: 'STD' },
-    { id: 2, num: 'L2', nom: 'Université — Nord', freq: 1200, recette: 900, nbBus: 2, typeBus: 'MID' },
-    { id: 3, num: 'L3', nom: 'Zone Indus — Centre', freq: 600, recette: 450, nbBus: 1, typeBus: 'STD' },
-    { id: 4, num: 'L4', nom: 'Périphérique Est', freq: 300, recette: 280, nbBus: 1, typeBus: 'MIN' },
-  ];
-  state.achats = [
-    { id: 1, modele: 'Citaro G', idJeu: 91346, prix: 115000, km: 0, date: '2026-03-10', note: '' },
-    { id: 2, modele: 'Iveco Crossway', idJeu: 91201, prix: 98000, km: 0, date: '2026-02-15', note: '' },
-  ];
-  state.compta = [
-    { id: 1, date: '2026-03-01', type: 'recette', cat: 'Lignes', desc: 'Recettes lignes mars', montant: 15200 },
-    { id: 2, date: '2026-03-05', type: 'depense', cat: 'Carburant', desc: 'Plein citerne', montant: 4800 },
-    { id: 3, date: '2026-03-10', type: 'depense', cat: 'Achat véhicule', desc: 'Citaro G ID91346', montant: 115000 },
-    { id: 4, date: '2026-03-12', type: 'recette', cat: 'Contrats pub', desc: 'Contrat pub Total', montant: 1200 },
-    { id: 5, date: '2026-03-15', type: 'depense', cat: 'Maintenance', desc: 'Révision ART-001', montant: 3200 },
-  ];
-  state.contratsPub = [
-    { id: 1, annonceur: 'Total Énergie', bus: 'STD-B-001', type: 'Habillage total', montant: 800, duree: 12, debut: '2026-01-01', statut: 'Actif' },
-    { id: 2, annonceur: 'Leclerc', bus: 'STD-B-002', type: 'Bandeaux latéraux', montant: 400, duree: 6, debut: '2026-02-01', statut: 'Actif' },
-  ];
-  state.journal = [
-    { date: '2026-03-17', text: 'Ajout STD-B-001 au parc', type: 'info' },
-    { date: '2026-03-17', text: 'ART-001 envoyé en révision standard', type: 'warn' },
-    { date: '2026-03-16', text: 'CT STD-E-001 planifié le 28/03', type: 'warn' },
-    { date: '2026-03-15', text: 'Plein citerne : 5000L effectué', type: 'ok' },
-    { date: '2026-03-10', text: 'Achat Citaro G (ID91346) pour 115 000€', type: 'info' },
-  ];
-  state.maintenance = [
-    { id: 1, bus: 'ART-001', type: 'Révision standard', depuis: '2026-03-14', duree: 5, cout: 3200, statut: 'En cours' }
-  ];
-  state.ct = [
-    { id: 1, bus: 'STD-E-001', date: '2026-03-28', km: 175000, resultat: '' },
-    { id: 2, bus: 'STD-B-002', date: '2026-04-10', km: 85000, resultat: '' },
-  ];
-  state.gasoil = [
-    { id: 1, date: '2026-03-15', volume: 5000, prix: 1.42, niveauAvant: 800 }
-  ];
-  state.conso.niveau = 4200;
-  saveState();
+function resetTotal() {
+  if (!confirm('⚠️ Réinitialisation complète !\n\nToutes les données seront effacées définitivement :\n• Parc de bus\n• Affectations\n• Personnel\n• Comptabilité\n• Stats lignes\n• Maintenance\n• Tout le reste\n\nContinuer ?')) return;
+  if (!confirm('Dernière confirmation — cette action est irréversible.')) return;
+  // Supprimer toutes les clés liées à TM
+  ['tm_state','tm_ext_present','tm_ext_request'].forEach(k => localStorage.removeItem(k));
+  ['bus','affects','stats','salaries','compta'].forEach(t => localStorage.removeItem('tm_ext_csv_' + t));
+  // Recharger la page pour repartir de zéro
+  location.reload();
 }
+
+
+// Pas de données de démo — état vide par défaut
+// Utilise le bouton "MAJ via CSV" pour importer tes données réelles
+
 
 let currentParcTypeFilter = 'all';
 let editBusId = null;
