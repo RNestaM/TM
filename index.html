@@ -601,6 +601,7 @@
     <div id="topbar-title">Tableau de bord</div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
+      <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
     </div>
   </div>
@@ -1461,6 +1462,7 @@
       </div>
     </div>
     <div class="modal-footer">
+      <button class="btn btn-ghost" id="btn-ext-fetch" onclick="fetchViaExtension()" style="display:none;background:rgba(124,58,237,0.15);border-color:var(--accent3);color:var(--accent3)">🦊 Récupérer via Extension</button>
       <button class="btn btn-ghost" onclick="csvPreview()">👁 Prévisualiser</button>
       <button class="btn btn-ghost" onclick="closeModal('modal-maj-csv')">Annuler</button>
       <button class="btn btn-primary" id="csv-import-btn" onclick="csvImporter()">✓ Importer</button>
@@ -2719,7 +2721,58 @@ function enregistrerConso() {
 }
 
 // ═══════════════════════════════════════════════════════
-//  HELPERS SELECTS
+//  EXTENSION FIREFOX — COMMUNICATION
+// ═══════════════════════════════════════════════════════
+
+// Vérifie si l'extension est installée (elle expose une clé dans localStorage)
+function detectExtension() {
+  // L'extension écrit 'tm_ext_present' = '1' dans le localStorage au démarrage
+  const present = localStorage.getItem('tm_ext_present') === '1';
+  const extStatus = document.getElementById('ext-status');
+  const btnExt = document.getElementById('btn-ext-fetch');
+  if (present) {
+    if (extStatus) { extStatus.textContent = '🦊 Extension active'; extStatus.style.color = 'var(--accent3)'; }
+    if (btnExt) btnExt.style.display = '';
+  } else {
+    if (extStatus) { extStatus.textContent = ''; }
+    if (btnExt) btnExt.style.display = 'none';
+  }
+  return present;
+}
+
+// Demande à l'extension de récupérer le CSV du type sélectionné
+function fetchViaExtension() {
+  const type = currentCsvType;
+  const btn = document.getElementById('btn-ext-fetch');
+  const origText = btn.textContent;
+  btn.textContent = '⏳ Génération en cours (~5s)...';
+  btn.disabled = true;
+
+  // Signal à l'extension via localStorage
+  localStorage.setItem('tm_ext_request', JSON.stringify({ type, timestamp: Date.now() }));
+
+  // L'extension répondra via l'événement 'tm_csv_ready'
+  // On attend 12 secondes max
+  const timeout = setTimeout(() => {
+    btn.textContent = origText;
+    btn.disabled = false;
+    toastMsg('Extension non répondue — essaie le drag & drop manuel', 'error');
+  }, 12000);
+
+  window.addEventListener('tm_csv_ready', function handler(e) {
+    if (e.detail.type === type) {
+      clearTimeout(timeout);
+      btn.textContent = origText;
+      btn.disabled = false;
+      window.removeEventListener('tm_csv_ready', handler);
+    }
+  });
+}
+
+// Vérifier l'extension toutes les 3s
+setInterval(detectExtension, 3000);
+
+
 // ═══════════════════════════════════════════════════════
 function updateBusSelects() {
   const opts = '<option value="">Choisir...</option>' + state.bus.map(b=>`<option>${b.nom}</option>`).join('');
@@ -2749,7 +2802,47 @@ document.addEventListener('DOMContentLoaded', () => {
   renderDashboard();
   // Init modal CSV
   if (!state.statsLignes) state.statsLignes = [];
-  document.getElementById('csv-type-info').innerHTML = CSV_INFO['bus'];
+  document.getElementById('csv-type-info').innerHTML = CSV_INFO["bus"];
+
+  // ── Écoute les CSV envoyés par l'extension Firefox ──────────
+  window.addEventListener('tm_csv_ready', e => {
+    const { type } = e.detail;
+    const raw = localStorage.getItem('tm_ext_csv_' + type);
+    if (!raw) return;
+    try {
+      const payload = JSON.parse(raw);
+      // Pré-remplir le textarea et lancer l'import automatiquement
+      document.getElementById('csv-paste-text').value = payload.content;
+      csvRawContent = payload.content;
+      // Sélectionner le bon onglet CSV
+      const tabEl = document.querySelector(`#csv-type-tabs .tab[onclick*="'${type}'"]`);
+      if (tabEl) selectCsvType(tabEl, type);
+      // Importer directement
+      csvImporter();
+      toastMsg(`✅ ${type}.csv reçu de l'extension et importé !`, 'success');
+      // Nettoyer
+      localStorage.removeItem('tm_ext_csv_' + type);
+    } catch(e) { console.error(e); }
+  });
+
+  // Vérifier au démarrage si l'extension a déjà déposé des CSV (cas où la page était fermée)
+  ['bus','affects','stats','salaries','compta'].forEach(type => {
+    const raw = localStorage.getItem('tm_ext_csv_' + type);
+    if (raw) {
+      try {
+        const payload = JSON.parse(raw);
+        // Import silencieux si données fraîches (< 10 min)
+        if (Date.now() - payload.timestamp < 10 * 60 * 1000) {
+          document.getElementById('csv-paste-text').value = payload.content;
+          csvRawContent = payload.content;
+          const tabEl = document.querySelector(`#csv-type-tabs .tab[onclick*="'${type}'"]`);
+          if (tabEl) selectCsvType(tabEl, type);
+          csvImporter();
+        }
+        localStorage.removeItem('tm_ext_csv_' + type);
+      } catch(e) {}
+    }
+  });
 });
 
 // Click outside modal
