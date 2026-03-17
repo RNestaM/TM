@@ -2724,53 +2724,128 @@ function enregistrerConso() {
 //  EXTENSION FIREFOX — COMMUNICATION
 // ═══════════════════════════════════════════════════════
 
-// Vérifie si l'extension est installée (elle expose une clé dans localStorage)
+// Détecte si l'extension est active (elle écrit 'tm_ext_present' toutes les 5s)
 function detectExtension() {
-  // L'extension écrit 'tm_ext_present' = '1' dans le localStorage au démarrage
   const present = localStorage.getItem('tm_ext_present') === '1';
   const extStatus = document.getElementById('ext-status');
-  const btnExt = document.getElementById('btn-ext-fetch');
-  if (present) {
-    if (extStatus) { extStatus.textContent = '🦊 Extension active'; extStatus.style.color = 'var(--accent3)'; }
-    if (btnExt) btnExt.style.display = '';
-  } else {
-    if (extStatus) { extStatus.textContent = ''; }
-    if (btnExt) btnExt.style.display = 'none';
+  const btnExt    = document.getElementById('btn-ext-fetch');
+  if (extStatus) {
+    extStatus.textContent = present ? '🦊 Extension active' : '';
+    extStatus.style.color = 'var(--accent3)';
   }
+  if (btnExt) btnExt.style.display = present ? '' : 'none';
   return present;
 }
+setInterval(detectExtension, 2000);
 
-// Demande à l'extension de récupérer le CSV du type sélectionné
-function fetchViaExtension() {
-  const type = currentCsvType;
-  const btn = document.getElementById('btn-ext-fetch');
-  const origText = btn.textContent;
-  btn.textContent = '⏳ Génération en cours (~5s)...';
-  btn.disabled = true;
+// Importe directement un contenu CSV pour un type donné (sans passer par le modal)
+function importerCSVDirect(type, contenu) {
+  if (!contenu || !contenu.trim()) return;
+  const rows = parseCSV(contenu);
+  if (type === 'bus') {
+    const buses = parserBus(rows);
+    if (!buses.length) { toastMsg('bus.csv : aucun bus trouvé', 'error'); return; }
+    let maj = 0, ajouts = 0;
+    buses.forEach(b => {
+      const exist = state.bus.find(x => x.nom === b.nom || (b.idJeu && x.idJeu === b.idJeu));
+      if (exist) { Object.assign(exist, { km:b.km, statut:b.statut, ct:b.ct, revisionDate:b.revisionDate, energie:b.energie, marque:b.marque, modele:b.modele, depot:b.depot }); if (b.idJeu) exist.idJeu = b.idJeu; maj++; }
+      else { state.bus.push({ id: Date.now() + Math.random()*1000|0, ...b }); ajouts++; }
+    });
+    journalLog(`MAJ bus.csv : ${maj} MàJ · ${ajouts} nouveaux`, 'ok');
+    saveState(); renderParc(); renderDashboard(); updateBusSelects();
+    toastMsg(`🚍 ${maj} bus mis à jour · ${ajouts} ajoutés`, 'success');
 
-  // Signal à l'extension via localStorage
-  localStorage.setItem('tm_ext_request', JSON.stringify({ type, timestamp: Date.now() }));
+  } else if (type === 'affects') {
+    const aff = parserAffects(rows);
+    if (!aff.length) { toastMsg('affects.csv : aucune affectation', 'error'); return; }
+    state.affectations = aff;
+    journalLog(`MAJ affects.csv : ${aff.length} lignes`, 'ok');
+    saveState(); if (document.getElementById('page-affectations').classList.contains('active')) renderAffectations();
+    toastMsg(`📋 ${aff.length} affectations importées`, 'success');
 
-  // L'extension répondra via l'événement 'tm_csv_ready'
-  // On attend 12 secondes max
-  const timeout = setTimeout(() => {
-    btn.textContent = origText;
-    btn.disabled = false;
-    toastMsg('Extension non répondue — essaie le drag & drop manuel', 'error');
-  }, 12000);
+  } else if (type === 'stats') {
+    if (!state.statsLignes) state.statsLignes = [];
+    const stats = parserStats(rows);
+    if (!stats.length) { toastMsg('statslignes.csv : aucune donnée', 'error'); return; }
+    const existKeys = new Set(state.statsLignes.map(s=>`${s.date}_${s.ligne}_${s.creneau}`));
+    const nouvelles = stats.filter(s => !existKeys.has(`${s.date}_${s.ligne}_${s.creneau}`));
+    state.statsLignes = [...state.statsLignes, ...nouvelles];
+    journalLog(`MAJ statslignes.csv : ${nouvelles.length} nouvelles entrées`, 'ok');
+    saveState(); if (document.getElementById('page-lignes').classList.contains('active')) renderLignes();
+    toastMsg(`📊 ${nouvelles.length} nouvelles entrées stats`, 'success');
 
-  window.addEventListener('tm_csv_ready', function handler(e) {
-    if (e.detail.type === type) {
-      clearTimeout(timeout);
-      btn.textContent = origText;
-      btn.disabled = false;
-      window.removeEventListener('tm_csv_ready', handler);
-    }
-  });
+  } else if (type === 'salaries') {
+    const pers = parserSalaries(rows);
+    if (!pers.length) { toastMsg('salaries.csv : aucun personnel', 'error'); return; }
+    state.personnel = pers;
+    journalLog(`MAJ salaries.csv : ${pers.length} personnes`, 'ok');
+    saveState(); renderDashboard();
+    if (document.getElementById('page-personnel').classList.contains('active')) renderPersonnel();
+    toastMsg(`👤 ${pers.length} personnels mis à jour`, 'success');
+
+  } else if (type === 'compta') {
+    const ops = parserCompta(rows);
+    if (!ops.length) { toastMsg('compta.csv : aucune opération', 'error'); return; }
+    const existKeys = new Set(state.compta.map(o=>`${o.date}_${o.desc}_${o.montant}`));
+    const nouvelles = ops.filter(o => !existKeys.has(`${o.date}_${o.desc}_${o.montant}`));
+    state.compta = [...state.compta, ...nouvelles];
+    journalLog(`MAJ compta.csv : ${nouvelles.length} opérations`, 'ok');
+    saveState(); renderDashboard();
+    if (document.getElementById('page-compta').classList.contains('active')) renderCompta();
+    toastMsg(`💰 ${nouvelles.length} opérations importées`, 'success');
+  }
 }
 
-// Vérifier l'extension toutes les 3s
-setInterval(detectExtension, 3000);
+// Polling localStorage : récupère les CSV déposés par l'extension
+setInterval(() => {
+  ['bus','affects','stats','salaries','compta'].forEach(type => {
+    const raw = localStorage.getItem('tm_ext_csv_' + type);
+    if (!raw) return;
+    localStorage.removeItem('tm_ext_csv_' + type); // supprimer AVANT de parser pour éviter double import
+    try {
+      const payload = JSON.parse(raw);
+      importerCSVDirect(type, payload.content);
+    } catch(err) { console.error('TM import error:', err); }
+  });
+}, 500);
+
+// Bouton "Récupérer via Extension" dans le modal
+function fetchViaExtension() {
+  const type  = currentCsvType;
+  const btn   = document.getElementById('btn-ext-fetch');
+  btn.textContent = '⏳ En cours (~5s)...';
+  btn.disabled = true;
+
+  // Écrire la requête pour l'extension
+  localStorage.setItem('tm_ext_request', JSON.stringify({ type, timestamp: Date.now() }));
+
+  let waited  = 0;
+  let keySeen = false; // a-t-on vu la clé apparaître ?
+
+  const check = setInterval(() => {
+    waited += 500;
+    const keyPresent = !!localStorage.getItem('tm_ext_csv_' + type);
+
+    if (keyPresent) keySeen = true; // la clé est apparue, l'extension a répondu
+
+    // Le polling du site consomme la clé → import fait
+    if (keySeen && !keyPresent) {
+      clearInterval(check);
+      btn.textContent = '🦊 Récupérer via Extension';
+      btn.disabled = false;
+      closeModal('modal-maj-csv');
+      return;
+    }
+
+    if (waited >= 13000) {
+      clearInterval(check);
+      btn.textContent = '🦊 Récupérer via Extension';
+      btn.disabled = false;
+      if (!keySeen) toastMsg('Extension : pas de réponse — vérifie que tu es connecté sur transport-manager.net', 'error');
+    }
+  }, 500);
+}
+
 
 
 // ═══════════════════════════════════════════════════════
@@ -2802,25 +2877,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderDashboard();
   if (!state.statsLignes) state.statsLignes = [];
   document.getElementById('csv-type-info').innerHTML = CSV_INFO['bus'];
-
-  // ── Polling localStorage : vérifie toutes les 500ms si l'extension a déposé un CSV ──
-  setInterval(() => {
-    ['bus','affects','stats','salaries','compta'].forEach(type => {
-      const raw = localStorage.getItem('tm_ext_csv_' + type);
-      if (!raw) return;
-      try {
-        const payload = JSON.parse(raw);
-        localStorage.removeItem('tm_ext_csv_' + type);
-        // Sélectionner le bon onglet et importer
-        csvRawContent = payload.content;
-        document.getElementById('csv-paste-text').value = payload.content;
-        const tabEl = document.querySelector(`#csv-type-tabs .tab[onclick*="'${type}'"]`);
-        if (tabEl) selectCsvType(tabEl, type);
-        csvImporter();
-        toastMsg(`✅ ${type}.csv reçu et importé via l'extension !`, 'success');
-      } catch(err) { console.error('tm_csv import error:', err); }
-    });
-  }, 500);
+  detectExtension();
 });
 
 // Click outside modal
