@@ -601,7 +601,7 @@
     <div id="topbar-title">Tableau de bord</div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-bus')">+ Ajouter Bus</button>
+      <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
     </div>
   </div>
   <div id="content">
@@ -717,9 +717,9 @@
                 <th>Modèle / Nom</th>
                 <th>Type</th>
                 <th>KM</th>
+                <th>Dépôt</th>
                 <th>Statut</th>
                 <th>Prochain CT</th>
-                <th>Révision</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -979,7 +979,7 @@
         </div>
         <div class="card-body" style="padding:0">
           <table class="data-table">
-            <thead><tr><th>Matricule</th><th>Nom</th><th>Permis</th><th>Dernière FCO</th><th>Prochaine FCO</th><th>Statut</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Matricule</th><th>Nom</th><th>Poste</th><th>Salaire</th><th>Satisf.</th><th>FCO</th><th>Statut</th><th>État</th></tr></thead>
             <tbody id="personnel-tbody"></tbody>
           </table>
         </div>
@@ -1034,11 +1034,23 @@
         </div>
       </div>
       <div class="card" style="margin-top:14px">
-        <div class="card-header"><div class="card-title">Toutes les lignes</div></div>
+        <div class="card-header">
+          <div class="card-title">Stats par ligne (depuis CSV)</div>
+          <button class="btn btn-ghost btn-sm" onclick="if(confirm('Effacer tout l\'historique stats ?')){state.statsLignes=[];saveState();renderLignes();}">🗑 Réinitialiser</button>
+        </div>
         <div class="card-body" style="padding:0">
           <table class="data-table">
-            <thead><tr><th>Ligne</th><th>Nom</th><th>Passagers/j</th><th>Recette/j</th><th>Bus requis</th><th>Type</th><th>Rentabilité</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Ligne</th><th>Tickets total</th><th>Abonnés</th><th>Gains total</th><th>Jours</th><th>Part des gains</th></tr></thead>
             <tbody id="lignes-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-header"><div class="card-title">Historique détaillé (30 dernières entrées)</div></div>
+        <div class="card-body" style="padding:0">
+          <table class="data-table">
+            <thead><tr><th>Date</th><th>Ligne</th><th>Créneau</th><th>Tickets</th><th>Abonnés</th><th>Gains</th></tr></thead>
+            <tbody id="stats-hist-tbody"></tbody>
           </table>
         </div>
       </div>
@@ -1404,6 +1416,58 @@
   </div>
 </div>
 
+<!-- ═══════════════════════ MODAL MAJ CSV ═══════════════════════ -->
+<div class="modal-overlay" id="modal-maj-csv">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-header">
+      <div class="modal-title">📥 Mise à jour via CSV</div>
+      <div class="modal-close" onclick="closeModal('modal-maj-csv')">✕</div>
+    </div>
+    <div class="modal-body">
+      <!-- Onglets type CSV -->
+      <div class="tabs" style="margin-bottom:16px" id="csv-type-tabs">
+        <div class="tab active" onclick="selectCsvType(this,'bus')">🚍 Parc Bus</div>
+        <div class="tab" onclick="selectCsvType(this,'affects')">📋 Affectations</div>
+        <div class="tab" onclick="selectCsvType(this,'stats')">📊 Stats Lignes</div>
+        <div class="tab" onclick="selectCsvType(this,'salaries')">👤 Personnels</div>
+        <div class="tab" onclick="selectCsvType(this,'compta')">💰 Comptabilité</div>
+      </div>
+
+      <!-- Info selon type -->
+      <div id="csv-type-info" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px;margin-bottom:12px;font-size:11px;color:var(--text3)"></div>
+
+      <!-- Zone de drop / upload -->
+      <div id="csv-dropzone" onclick="document.getElementById('csv-file-input').click()"
+        style="border:2px dashed var(--border);border-radius:8px;padding:28px;text-align:center;cursor:pointer;transition:.2s;margin-bottom:12px"
+        ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
+        ondragleave="this.style.borderColor='var(--border)'"
+        ondrop="handleCsvDrop(event)">
+        <div style="font-size:28px;margin-bottom:8px">📂</div>
+        <div style="color:var(--text2);font-size:13px">Glisse ton fichier CSV ici</div>
+        <div style="color:var(--text3);font-size:11px;margin-top:4px">ou clique pour choisir le fichier</div>
+        <input type="file" id="csv-file-input" accept=".csv,.txt" style="display:none" onchange="handleCsvFile(this)">
+      </div>
+
+      <!-- Ou coller texte -->
+      <details style="margin-bottom:12px">
+        <summary style="cursor:pointer;color:var(--text2);font-size:11px;margin-bottom:6px">▶ Ou coller le contenu manuellement</summary>
+        <textarea id="csv-paste-text" style="width:100%;height:120px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:8px;resize:vertical;outline:none;margin-top:8px" placeholder="Colle ici le contenu du CSV..."></textarea>
+      </details>
+
+      <!-- Résultat preview -->
+      <div id="csv-preview-zone" style="display:none">
+        <div id="csv-preview-label" style="font-size:12px;margin-bottom:8px;padding:8px 10px;border-radius:6px"></div>
+        <div id="csv-preview-list" style="max-height:180px;overflow-y:auto;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px;font-size:11px;font-family:'JetBrains Mono',monospace"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="csvPreview()">👁 Prévisualiser</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-maj-csv')">Annuler</button>
+      <button class="btn btn-primary" id="csv-import-btn" onclick="csvImporter()">✓ Importer</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Edit Bus -->
 <div class="modal-overlay" id="modal-edit-bus">
   <div class="modal">
@@ -1430,6 +1494,7 @@ let state = loadState() || {
   ct: [],
   personnel: [],
   lignes: [],
+  statsLignes: [],
   achats: [],
   abribus: [],
   contratsPub: [],
@@ -1701,24 +1766,27 @@ function renderParc() {
   const search = (document.getElementById('search-parc').value||'').toLowerCase();
   const filtered = state.bus.filter(b => {
     const matchType = currentParcTypeFilter === 'all' || b.type === currentParcTypeFilter;
-    const matchSearch = !search || b.nom.toLowerCase().includes(search) || String(b.idJeu).includes(search);
+    const matchSearch = !search || b.nom.toLowerCase().includes(search)
+      || String(b.idJeu||'').includes(search)
+      || (b.marque||'').toLowerCase().includes(search)
+      || (b.modele||'').toLowerCase().includes(search);
     return matchType && matchSearch;
   });
   const tbody = document.getElementById('parc-tbody');
   tbody.innerHTML = filtered.map(b => `<tr>
-    <td class="mono">${b.idJeu||'—'}</td>
-    <td><b>${b.nom}</b></td>
+    <td class="mono" style="color:var(--text3)">${b.idJeu||'—'}</td>
+    <td><b>${b.nom}</b>${b.marque?`<br><span style="color:var(--text3);font-size:10px">${b.marque} ${b.modele||''}</span>`:''}</td>
     <td>${getTypeBadge(b.type)}</td>
     <td class="mono">${fmtNum(b.km)} km</td>
+    <td>${b.depot?`<span style="color:var(--text2);font-size:11px">${b.depot}</span>`:'—'}</td>
     <td>${getStatusBadge(b.statut)}</td>
     <td>${ctStatus(b.ct)}</td>
-    <td>${b.revision ? `<span class="badge badge-orange">${b.revision}</span>` : '<span class="badge badge-gray">—</span>'}</td>
     <td>
       <button class="btn btn-ghost btn-xs" onclick="editBus(${b.id})">✏️</button>
       <button class="btn btn-warning btn-xs" onclick="quickRevision(${b.id})">🔧</button>
       <button class="btn btn-danger btn-xs" onclick="retirerBus(${b.id})">🗑️</button>
     </td>
-  </tr>`).join('') || '<tr><td colspan="8" style="color:var(--text3);text-align:center;padding:20px">Aucun bus</td></tr>';
+  </tr>`).join('') || '<tr><td colspan="8" style="color:var(--text3);text-align:center;padding:20px">Aucun bus — Importe ton bus.csv</td></tr>';
 }
 
 function filterParc() { renderParc(); }
@@ -1823,37 +1891,348 @@ function quickRevision(id) {
 }
 
 // ═══════════════════════════════════════════════════════
-//  AFFECTATIONS
+//  IMPORT CSV UNIVERSEL
+// ═══════════════════════════════════════════════════════
+
+let currentCsvType = 'bus';
+let csvRawContent = '';
+
+const CSV_INFO = {
+  bus:      '🚍 <b>bus.csv</b> — Met à jour le parc complet : KM, statut, révision, CT, énergie, modèle. Nouveaux bus ajoutés automatiquement.',
+  affects:  '📋 <b>affects.csv</b> — Importe les affectations bus/lignes par créneau (Semaine/Samedi/Dimanche × Creuse/Pointe/Soir/Nocturne).',
+  stats:    '📊 <b>statslignes.csv</b> — Ajoute les données de fréquentation (tickets, abonnés, gains) par ligne et créneau.',
+  salaries: '👤 <b>salaries.csv</b> — Met à jour le personnel : contrat, poste, salaire, FCO, état, satisfaction.',
+  compta:   '💰 <b>compta.csv</b> — Importe toutes les opérations comptables (dépenses et revenus).'
+};
+
+function selectCsvType(el, type) {
+  currentCsvType = type;
+  document.querySelectorAll('#csv-type-tabs .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('csv-type-info').innerHTML = CSV_INFO[type];
+  document.getElementById('csv-preview-zone').style.display = 'none';
+  document.getElementById('csv-paste-text').value = '';
+  csvRawContent = '';
+  document.getElementById('csv-dropzone').querySelector('div:nth-child(2)').textContent = `Glisse ton fichier ${type}.csv ici`;
+}
+
+function handleCsvDrop(e) {
+  e.preventDefault();
+  document.getElementById('csv-dropzone').style.borderColor = 'var(--border)';
+  const file = e.dataTransfer.files[0];
+  if (file) readCsvFile(file);
+}
+
+function handleCsvFile(input) {
+  const file = input.files[0];
+  if (file) readCsvFile(file);
+}
+
+function readCsvFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    csvRawContent = e.target.result;
+    document.getElementById('csv-paste-text').value = csvRawContent;
+    document.getElementById('csv-dropzone').style.borderColor = 'var(--green)';
+    document.getElementById('csv-dropzone').querySelector('div:nth-child(2)').textContent = `✅ ${file.name} chargé (${file.size > 1024 ? Math.round(file.size/1024)+'KB' : file.size+'B'})`;
+    csvPreview();
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function parseCSV(texte) {
+  const txt = texte.replace(/^\uFEFF/, '').replace(/\r/g, '');
+  const lines = txt.split('\n').filter(l => l.trim());
+  return lines.map(line => {
+    const cols = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { inQ = !inQ; continue; }
+      if (c === ';' && !inQ) { cols.push(cur.trim()); cur = ''; continue; }
+      cur += c;
+    }
+    cols.push(cur.trim());
+    return cols;
+  });
+}
+
+function parseDateFR(d) {
+  if (!d) return '';
+  const p = d.split('/');
+  if (p.length === 3) return `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
+  return d;
+}
+
+function parserBus(rows) {
+  // Col: 0=ID, 1=NumParc, 2=Patrimoine, 3=FinLoc, 4=TypeVeh, 5=Marque, 6=Modele, 7=Type,
+  //      10=Energie, 12=Places, 14=MiseEnService, 15=KM, 16=RevisionDate, 17=CT, 19=Statut, 20=Depot
+  return rows.slice(1).filter(c => c[1]).map(c => {
+    const statutJeu = (c[19] || '').toLowerCase();
+    let statut = 'En service';
+    if (statutJeu.includes('révis') || statutJeu.includes('revis')) statut = 'En révision';
+    else if (statutJeu.includes('indispo') || statutJeu.includes('panne')) statut = 'Indispo';
+    else if (statutJeu.includes('musée')) statut = 'Musée';
+    const nom = c[1];
+    let type = 'STD';
+    const nu = nom.toUpperCase();
+    if (nu.startsWith('MIN-')) type = 'MIN';
+    else if (nu.startsWith('MID-')) type = 'MID';
+    else if (nu.startsWith('ART-')) type = 'ART';
+    else if (nu.startsWith('CAR-')) type = 'CAR';
+    else if (nu.startsWith('TRAM-')) type = 'TRAM';
+    return {
+      idJeu: parseInt(c[0]) || null,
+      nom, marque: c[5]||'', modele: c[6]||'', type,
+      energie: c[10]||'Diesel', capa: parseInt(c[12])||60,
+      km: parseInt((c[15]||'').replace(/\s/g,''))||0,
+      revisionDate: parseDateFR(c[16]),
+      ct: parseDateFR(c[17]),
+      statut, depot: c[20]||'', patrimoine: c[2]||''
+    };
+  });
+}
+
+function parserAffects(rows) {
+  const creneaux = [
+    {col:3,label:'Sem. Creuse'},{col:4,label:'Sem. Pointe'},{col:5,label:'Sem. Soir'},{col:6,label:'Sem. Nocturne'},
+    {col:7,label:'Sam. Creuse'},{col:8,label:'Sam. Pointe'},{col:9,label:'Sam. Soir'},{col:10,label:'Sam. Nocturne'},
+    {col:11,label:'Dim. Creuse'},{col:12,label:'Dim. Pointe'},{col:13,label:'Dim. Nocturne'}
+  ];
+  const results = [];
+  rows.slice(1).filter(c => c[0]).forEach(c => {
+    creneaux.forEach(cr => {
+      const ligne = c[cr.col];
+      if (ligne && ligne !== '' && ligne !== '0') {
+        results.push({ bus: c[0], ligne: 'L' + ligne, service: cr.label });
+      }
+    });
+  });
+  return results;
+}
+
+function parserStats(rows) {
+  return rows.slice(1).filter(c => c[0] && c[1]).map(c => ({
+    date: c[0], ligne: 'L' + c[1], creneau: c[2]||'',
+    tickets: parseInt(c[3])||0, abonnes: parseInt(c[4])||0, gains: parseFloat(c[5])||0
+  }));
+}
+
+function parserSalaries(rows) {
+  return rows.slice(1).filter(c => c[0]).map(c => {
+    const fcoDate = parseDateFR(c[9]);
+    let statut = 'Actif';
+    if (fcoDate) {
+      const diff = Math.round((new Date(fcoDate) - new Date()) / (1000*60*60*24));
+      if (diff < 0) statut = 'FCO requise';
+      else if (diff < 90) statut = 'FCO bientôt';
+    }
+    if (c[7] && c[7] !== 'Disponible') statut = c[7];
+    return {
+      matricule: c[0], contrat: c[1]||'CDI', nom: c[2]||'',
+      embauche: parseDateFR(c[3]), age: parseInt(c[4])||0,
+      poste: c[5]||'', salaire: parseInt(c[6])||0,
+      etat: c[7]||'Disponible', satisfaction: parseFloat(c[8])||0,
+      fco: fcoDate, statut
+    };
+  });
+}
+
+function categoriserLibelle(lib) {
+  if (!lib) return 'Autre';
+  const l = lib.toLowerCase();
+  if (l.includes('achat véhicule') || l.includes('achat bus')) return 'Achat véhicule';
+  if (l.includes('révision') || l.includes('revision') || l.includes('maintenance')) return 'Maintenance';
+  if (l.includes('gasoil') || l.includes('carburant') || l.includes('fuel')) return 'Carburant';
+  if (l.includes('gain') || l.includes('jac') || l.includes('quotidien')) return 'Exploitation';
+  if (l.includes('pub') || l.includes('publicité')) return 'Publicité';
+  if (l.includes('salaire') || l.includes('personnel')) return 'Personnel';
+  if (l.includes('ct') || l.includes('contrôle')) return 'CT';
+  return 'Autre';
+}
+
+function parserCompta(rows) {
+  return rows.slice(1).filter(c => c[0]).map((c, i) => {
+    const dep = parseFloat((c[2]||'').replace(/\s/g,'').replace(',','.'))||0;
+    const rev = parseFloat((c[3]||'').replace(/\s/g,'').replace(',','.'))||0;
+    const rawDate = (c[0]||'').replace(/"/g,'').split(' ')[0];
+    return {
+      id: Date.now() + i,
+      date: parseDateFR(rawDate),
+      type: dep > 0 ? 'depense' : 'recette',
+      cat: categoriserLibelle(c[1]),
+      desc: (c[1]||'').replace(/"/g,'').replace(/\\n/g,''),
+      montant: dep > 0 ? dep : rev
+    };
+  });
+}
+
+function csvPreview() {
+  const texte = document.getElementById('csv-paste-text').value || csvRawContent;
+  if (!texte.trim()) { toastMsg('Aucun contenu CSV chargé', 'error'); return; }
+  csvRawContent = texte;
+  const rows = parseCSV(texte);
+  const zone = document.getElementById('csv-preview-zone');
+  const label = document.getElementById('csv-preview-label');
+  const list = document.getElementById('csv-preview-list');
+  zone.style.display = 'block';
+  let html = '', info = '';
+
+  if (currentCsvType === 'bus') {
+    const buses = parserBus(rows);
+    const maj = buses.filter(b => state.bus.find(x => x.nom === b.nom || (b.idJeu && x.idJeu === b.idJeu)));
+    const nouveaux = buses.filter(b => !state.bus.find(x => x.nom === b.nom || (b.idJeu && x.idJeu === b.idJeu)));
+    info = `✅ ${buses.length} bus — <span style="color:var(--accent)">${maj.length} à mettre à jour</span> · <span style="color:var(--green)">${nouveaux.length} nouveaux</span>`;
+    html = buses.slice(0,25).map(b => {
+      const exist = state.bus.find(x => x.nom === b.nom || (b.idJeu && x.idJeu === b.idJeu));
+      return `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)">
+        <span><b>${b.nom}</b> <span style="color:var(--text3)">${b.marque} ${b.modele}</span></span>
+        <span>${exist?`<span style="color:var(--accent)">KM→${b.km.toLocaleString()}</span>`:`<span style="color:var(--green)">+NOUVEAU</span>`} · ${b.statut}</span>
+      </div>`;
+    }).join('') + (buses.length>25?`<div style="color:var(--text3);padding-top:4px">...+${buses.length-25} autres</div>`:'');
+  } else if (currentCsvType === 'affects') {
+    const aff = parserAffects(rows);
+    info = `✅ ${rows.length-1} bus · ${aff.length} affectations détectées`;
+    html = aff.slice(0,15).map(a=>`<div style="padding:2px 0;border-bottom:1px solid var(--border)">${a.bus} → <b>${a.ligne}</b> · ${a.service}</div>`).join('');
+  } else if (currentCsvType === 'stats') {
+    const stats = parserStats(rows);
+    const dates = [...new Set(stats.map(s=>s.date))];
+    const gains = stats.reduce((a,s)=>a+s.gains,0);
+    info = `✅ ${stats.length} entrées · ${dates.length} jours · Gains : <b style="color:var(--green)">${fmt(gains)}</b>`;
+    html = stats.slice(0,10).map(s=>`<div style="padding:2px 0;border-bottom:1px solid var(--border)">${s.date} · ${s.ligne} · ${s.creneau} · ${s.tickets} tkts · ${fmt(s.gains)}</div>`).join('');
+  } else if (currentCsvType === 'salaries') {
+    const pers = parserSalaries(rows);
+    const fco = pers.filter(p=>p.statut==='FCO requise'||p.statut==='FCO bientôt').length;
+    info = `✅ ${pers.length} personnes · <span style="color:var(--yellow)">${fco} FCO à renouveler</span>`;
+    html = pers.slice(0,15).map(p=>`<div style="padding:2px 0;border-bottom:1px solid var(--border)">${p.matricule} · <b>${p.nom}</b> · ${p.poste} · FCO ${p.fco||'?'} · <span style="color:${p.statut==='FCO requise'?'var(--red)':p.statut==='FCO bientôt'?'var(--yellow)':'var(--green)'}">${p.statut}</span></div>`).join('');
+  } else if (currentCsvType === 'compta') {
+    const ops = parserCompta(rows);
+    const dep = ops.filter(o=>o.type==='depense').reduce((a,o)=>a+o.montant,0);
+    const rev = ops.filter(o=>o.type==='recette').reduce((a,o)=>a+o.montant,0);
+    info = `✅ ${ops.length} opérations · Dép. <span style="color:var(--red)">${fmt(dep)}</span> · Rev. <span style="color:var(--green)">${fmt(rev)}</span>`;
+    html = ops.slice(0,10).map(o=>`<div style="padding:2px 0;border-bottom:1px solid var(--border)">${o.date} · ${o.cat} · ${o.desc.substring(0,45)} · <span style="color:${o.type==='recette'?'var(--green)':'var(--red)'}">${o.type==='recette'?'+':'−'}${fmt(o.montant)}</span></div>`).join('');
+  }
+
+  label.innerHTML = info;
+  label.style.cssText = 'background:rgba(16,185,129,0.1);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:8px';
+  list.innerHTML = html || '<span style="color:var(--text3)">Aucune donnée</span>';
+}
+
+function csvImporter() {
+  const texte = document.getElementById('csv-paste-text').value || csvRawContent;
+  if (!texte.trim()) { toastMsg('Aucun contenu CSV', 'error'); return; }
+  const rows = parseCSV(texte);
+
+  if (currentCsvType === 'bus') {
+    const buses = parserBus(rows);
+    if (!buses.length) { toastMsg('Aucun bus trouvé', 'error'); return; }
+    let maj = 0, ajouts = 0;
+    buses.forEach(b => {
+      const exist = state.bus.find(x => x.nom === b.nom || (b.idJeu && x.idJeu === b.idJeu));
+      if (exist) {
+        Object.assign(exist, { km:b.km, statut:b.statut, ct:b.ct, revisionDate:b.revisionDate,
+          energie:b.energie, marque:b.marque, modele:b.modele, depot:b.depot });
+        if (b.idJeu) exist.idJeu = b.idJeu;
+        maj++;
+      } else {
+        state.bus.push({ id: Date.now() + Math.random()*1000|0, ...b });
+        ajouts++;
+      }
+    });
+    journalLog(`MAJ CSV bus : ${maj} MàJ · ${ajouts} nouveaux`, 'ok');
+    saveState(); renderParc(); renderDashboard(); updateBusSelects();
+    toastMsg(`✅ ${maj} mis à jour · ${ajouts} ajoutés`, 'success');
+
+  } else if (currentCsvType === 'affects') {
+    const aff = parserAffects(rows);
+    if (!aff.length) { toastMsg('Aucune affectation trouvée', 'error'); return; }
+    state.affectations = aff;
+    journalLog(`MAJ CSV affectations : ${aff.length} lignes`, 'ok');
+    saveState(); if (document.getElementById('page-affectations').classList.contains('active')) renderAffectations();
+    toastMsg(`✅ ${aff.length} affectations importées`, 'success');
+
+  } else if (currentCsvType === 'stats') {
+    if (!state.statsLignes) state.statsLignes = [];
+    const stats = parserStats(rows);
+    if (!stats.length) { toastMsg('Aucune stat trouvée', 'error'); return; }
+    const existKeys = new Set(state.statsLignes.map(s=>`${s.date}_${s.ligne}_${s.creneau}`));
+    const nouvelles = stats.filter(s=>!existKeys.has(`${s.date}_${s.ligne}_${s.creneau}`));
+    state.statsLignes = [...state.statsLignes, ...nouvelles];
+    journalLog(`MAJ CSV stats : ${nouvelles.length} nouvelles entrées`, 'ok');
+    saveState(); if (document.getElementById('page-lignes').classList.contains('active')) renderLignes();
+    toastMsg(`✅ ${nouvelles.length} nouvelles entrées stats`, 'success');
+
+  } else if (currentCsvType === 'salaries') {
+    const pers = parserSalaries(rows);
+    if (!pers.length) { toastMsg('Aucun personnel trouvé', 'error'); return; }
+    state.personnel = pers;
+    journalLog(`MAJ CSV personnel : ${pers.length} personnes`, 'ok');
+    saveState(); renderDashboard();
+    if (document.getElementById('page-personnel').classList.contains('active')) renderPersonnel();
+    toastMsg(`✅ ${pers.length} personnels mis à jour`, 'success');
+
+  } else if (currentCsvType === 'compta') {
+    const ops = parserCompta(rows);
+    if (!ops.length) { toastMsg('Aucune opération trouvée', 'error'); return; }
+    const existKeys = new Set(state.compta.map(o=>`${o.date}_${o.desc}_${o.montant}`));
+    const nouvelles = ops.filter(o=>!existKeys.has(`${o.date}_${o.desc}_${o.montant}`));
+    state.compta = [...state.compta, ...nouvelles];
+    journalLog(`MAJ CSV compta : ${nouvelles.length} opérations ajoutées`, 'ok');
+    saveState(); renderDashboard();
+    if (document.getElementById('page-compta').classList.contains('active')) renderCompta();
+    toastMsg(`✅ ${nouvelles.length} opérations importées`, 'success');
+  }
+
+  closeModal('modal-maj-csv');
+}
+
+
 // ═══════════════════════════════════════════════════════
 function renderAffectations() {
   const affBus = document.getElementById('aff-bus');
-  affBus.innerHTML = '<option value="">Choisir...</option>' + state.bus.filter(b => b.statut === 'En service').map(b => `<option>${b.nom}</option>`).join('');
+  affBus.innerHTML = '<option value="">Choisir...</option>' + state.bus.map(b => `<option>${b.nom}</option>`).join('');
   const affLigne = document.getElementById('aff-ligne');
-  affLigne.innerHTML = '<option value="">Choisir...</option>' + state.lignes.map(l => `<option>${l.num} — ${l.nom}</option>`).join('');
+  affLigne.innerHTML = '<option value="">Choisir...</option>' + [...new Set(state.affectations.map(a=>a.ligne))].sort().map(l=>`<option>${l}</option>`).join('');
   const affCond = document.getElementById('aff-conducteur');
-  affCond.innerHTML = '<option value="">Choisir...</option>' + state.personnel.filter(p => p.statut === 'Actif' || p.statut === 'FCO requise').map(p => `<option>${p.nom}</option>`).join('');
+  affCond.innerHTML = '<option value="">Choisir...</option>' + state.personnel.filter(p=>p.etat==='Disponible'||p.statut==='Actif').map(p=>`<option>${p.nom}</option>`).join('');
+
+  // ── Tableau affectations groupées par bus ────────
+  const parBus = {};
+  state.affectations.forEach(a => {
+    if (!parBus[a.bus]) parBus[a.bus] = [];
+    parBus[a.bus].push(a);
+  });
 
   const tbody = document.getElementById('affectations-tbody');
-  tbody.innerHTML = state.affectations.map((a,i) => `<tr>
-    <td>${a.bus}</td>
-    <td>${a.ligne}</td>
-    <td>${a.conducteur}</td>
-    <td><span class="badge badge-blue">${a.service}</span></td>
-    <td>${a.note||'—'}</td>
-    <td><button class="btn btn-danger btn-xs" onclick="supprimerAffectation(${i})">✕</button></td>
-  </tr>`).join('') || '<tr><td colspan="6" style="color:var(--text3);text-align:center;padding:16px">Aucune affectation</td></tr>';
+  if (Object.keys(parBus).length) {
+    tbody.innerHTML = Object.entries(parBus).sort((a,b)=>a[0].localeCompare(b[0])).map(([bus, affs]) => {
+      const lignes = [...new Set(affs.map(a=>a.ligne))].sort().join(', ');
+      const services = [...new Set(affs.map(a=>a.service))];
+      return `<tr>
+        <td><b>${bus}</b></td>
+        <td class="mono">${lignes}</td>
+        <td>${services.map(s=>`<span class="badge badge-blue" style="margin:1px">${s}</span>`).join('')}</td>
+        <td>—</td>
+        <td>—</td>
+        <td><button class="btn btn-danger btn-xs" onclick="supprimerAffectationBus('${bus}')">✕</button></td>
+      </tr>`;
+    }).join('');
+  } else {
+    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--text3);text-align:center;padding:16px">Aucune affectation — Importe ton affects.csv</td></tr>';
+  }
 
   // résumé
   const total = state.bus.length;
-  const aff = new Set(state.affectations.map(a => a.bus)).size;
+  const affectes = new Set(state.affectations.map(a=>a.bus)).size;
+  const pct = total ? Math.round(affectes/total*100) : 0;
   document.getElementById('aff-resume').innerHTML = `
     <div class="stat-card blue" style="margin-bottom:8px">
       <div class="stat-label">Taux d'affectation</div>
-      <div class="stat-value">${total?Math.round(aff/total*100):0}%</div>
-      <div class="progress-bar"><div class="progress-fill" style="width:${total?aff/total*100:0}%;background:var(--accent)"></div></div>
+      <div class="stat-value">${pct}%</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:var(--accent)"></div></div>
     </div>
-    <div style="font-size:12px;color:var(--text2);margin-top:8px">${aff} / ${total} bus affectés aujourd'hui</div>
-    <div style="font-size:12px;color:var(--text2);">${state.affectations.length} service(s) programmé(s)</div>
+    <div style="font-size:12px;color:var(--text2);margin-top:8px">${affectes} / ${total} bus affectés</div>
+    <div style="font-size:12px;color:var(--text2);">${state.affectations.length} service(s) au total</div>
   `;
 }
 
@@ -1868,7 +2247,8 @@ function ajouterAffectation() {
   toastMsg('Affectation enregistrée ✓', 'success');
 }
 function supprimerAffectation(i) { state.affectations.splice(i, 1); saveState(); renderAffectations(); }
-function clearAffectations() { if (confirm('Réinitialiser toutes les affectations du jour ?')) { state.affectations = []; saveState(); renderAffectations(); } }
+function supprimerAffectationBus(bus) { state.affectations = state.affectations.filter(a=>a.bus!==bus); saveState(); renderAffectations(); }
+function clearAffectations() { if (confirm('Réinitialiser toutes les affectations ?')) { state.affectations = []; saveState(); renderAffectations(); } }
 
 // ═══════════════════════════════════════════════════════
 //  MAINTENANCE
@@ -1997,37 +2377,37 @@ function clearAbribus() { state.abribus = []; saveState(); renderAbribus(); docu
 //  PERSONNEL / FCO
 // ═══════════════════════════════════════════════════════
 function renderPersonnel() {
-  const fcoList = state.personnel.filter(p => p.statut === 'FCO requise');
-  document.getElementById('fco-alerte').className = 'alert-box ' + (fcoList.length > 0 ? 'warning' : 'success');
-  document.getElementById('fco-alerte').innerHTML = fcoList.length > 0 
-    ? `⚠️ ${fcoList.length} conducteur(s) nécessitent une FCO urgente`
+  const fcoList = state.personnel.filter(p => p.statut === 'FCO requise' || p.statut === 'FCO bientôt');
+  const fcoUrgents = state.personnel.filter(p => p.statut === 'FCO requise');
+  document.getElementById('fco-alerte').className = 'alert-box ' + (fcoUrgents.length > 0 ? 'warning' : 'success');
+  document.getElementById('fco-alerte').innerHTML = fcoUrgents.length > 0
+    ? `⚠️ ${fcoUrgents.length} conducteur(s) FCO expirée — ${fcoList.length - fcoUrgents.length} bientôt à renouveler`
     : '✅ Toutes les FCO sont à jour';
 
   document.getElementById('fco-list').innerHTML = fcoList.map(p => `
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:6px 8px;background:rgba(245,158,11,0.06);border-radius:4px">
-      <span>👤 <b>${p.nom}</b> (${p.matricule})</span>
-      <span style="font-size:11px;color:var(--text3)">Dernière FCO: ${p.fco||'?'}</span>
-      <button class="btn btn-success btn-xs" style="margin-left:auto" onclick="marquerFCO(${p.id})">FCO effectuée</button>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:6px 8px;background:rgba(245,158,11,0.06);border-radius:4px;flex-wrap:wrap">
+      <span>👤 <b>${p.nom}</b> <span style="color:var(--text3);font-size:11px">${p.matricule}</span></span>
+      <span style="font-size:11px;color:var(--text3)">FCO le : <b>${p.fco||'?'}</b></span>
+      <span class="badge ${p.statut==='FCO requise'?'badge-red':'badge-yellow'}" style="margin-left:4px">${p.statut}</span>
     </div>`).join('');
 
   const search = (document.getElementById('search-pers').value||'').toLowerCase();
-  const filtered = state.personnel.filter(p => !search || p.nom.toLowerCase().includes(search) || p.matricule.toLowerCase().includes(search));
+  const filtered = state.personnel.filter(p => !search || p.nom.toLowerCase().includes(search) || String(p.matricule).toLowerCase().includes(search) || (p.poste||'').toLowerCase().includes(search));
   const tbody = document.getElementById('personnel-tbody');
   tbody.innerHTML = filtered.map(p => {
-    const nextFco = p.fco ? new Date(new Date(p.fco).setFullYear(new Date(p.fco).getFullYear()+5)).toISOString().slice(0,10) : '—';
+    const satColor = p.satisfaction >= 16 ? 'var(--green)' : p.satisfaction >= 12 ? 'var(--yellow)' : 'var(--red)';
+    const fcoColor = p.statut === 'FCO requise' ? 'var(--red)' : p.statut === 'FCO bientôt' ? 'var(--yellow)' : 'var(--green)';
     return `<tr>
       <td class="mono">${p.matricule}</td>
-      <td><b>${p.nom}</b></td>
-      <td><span class="badge badge-blue">${p.permis}</span></td>
-      <td class="mono">${p.fco||'—'}</td>
-      <td class="mono">${nextFco}</td>
+      <td><b>${p.nom}</b>${p.age?`<span style="color:var(--text3);font-size:10px"> ${p.age}ans</span>`:''}</td>
+      <td style="font-size:11px">${p.poste||p.permis||'—'}</td>
+      <td class="mono">${p.salaire?fmt(p.salaire):'—'}</td>
+      <td class="mono" style="color:${satColor}">${p.satisfaction?p.satisfaction+'/20':'—'}</td>
+      <td class="mono" style="color:${fcoColor}">${p.fco||'—'}</td>
       <td>${getStatusBadge(p.statut)}</td>
-      <td>
-        <button class="btn btn-success btn-xs" onclick="marquerFCO(${p.id})">FCO ✓</button>
-        <button class="btn btn-danger btn-xs" onclick="supprimerPersonnel(${p.id})">✕</button>
-      </td>
+      <td>${p.etat||'—'}</td>
     </tr>`;
-  }).join('') || '<tr><td colspan="7" style="color:var(--text3);text-align:center;padding:16px">Aucun personnel</td></tr>';
+  }).join('') || '<tr><td colspan="8" style="color:var(--text3);text-align:center;padding:16px">Aucun personnel — Importe ton salaries.csv</td></tr>';
 }
 function filterPersonnel() { renderPersonnel(); }
 
@@ -2062,28 +2442,79 @@ function supprimerPersonnel(id) {
 //  LIGNES
 // ═══════════════════════════════════════════════════════
 function renderLignes() {
-  const totalFreq = state.lignes.reduce((s,l)=>s+l.freq,0);
-  const totalRec = state.lignes.reduce((s,l)=>s+l.recette,0);
+  if (!state.statsLignes) state.statsLignes = [];
+
+  // ── Calcul depuis statsLignes CSV ──────────────────
+  // Grouper par ligne : tickets totaux, gains totaux, nombre de jours
+  const byLigne = {};
+  state.statsLignes.forEach(s => {
+    if (!byLigne[s.ligne]) byLigne[s.ligne] = { tickets:0, abonnes:0, gains:0, jours:new Set() };
+    byLigne[s.ligne].tickets  += s.tickets;
+    byLigne[s.ligne].abonnes  += s.abonnes;
+    byLigne[s.ligne].gains    += s.gains;
+    byLigne[s.ligne].jours.add(s.date);
+  });
+
+  const totalTickets = state.statsLignes.reduce((s,x)=>s+x.tickets,0);
+  const totalGains   = state.statsLignes.reduce((s,x)=>s+x.gains,0);
+  const dates        = [...new Set(state.statsLignes.map(s=>s.date))].sort().reverse();
+
   document.getElementById('stats-lignes-recap').innerHTML = `
-    <div class="gauge-row"><div class="gauge-label">Lignes actives</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--accent)"></div></div><div class="gauge-val">${state.lignes.length}</div></div>
-    <div class="gauge-row"><div class="gauge-label">Passagers/jour</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--green)"></div></div><div class="gauge-val">${fmtNum(totalFreq)}</div></div>
-    <div class="gauge-row"><div class="gauge-label">Recette/jour</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--yellow)"></div></div><div class="gauge-val">${fmt(totalRec)}</div></div>
+    <div class="gauge-row"><div class="gauge-label">Lignes actives</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--accent)"></div></div><div class="gauge-val">${Object.keys(byLigne).length || state.lignes.length}</div></div>
+    <div class="gauge-row"><div class="gauge-label">Tickets total</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--green)"></div></div><div class="gauge-val">${fmtNum(totalTickets)}</div></div>
+    <div class="gauge-row"><div class="gauge-label">Gains total</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--yellow)"></div></div><div class="gauge-val">${fmt(totalGains)}</div></div>
+    <div class="gauge-row"><div class="gauge-label">Jours de données</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--accent3)"></div></div><div class="gauge-val">${dates.length}</div></div>
   `;
+
+  // ── Tableau stats par ligne ────────────────────────
   const tbody = document.getElementById('lignes-tbody');
-  tbody.innerHTML = state.lignes.map((l,i) => {
-    const renta = l.freq > 0 ? (l.recette / l.freq * 100).toFixed(1) : 0;
-    return `<tr>
-      <td class="mono"><b>${l.num}</b></td>
-      <td>${l.nom}</td>
-      <td class="mono">${fmtNum(l.freq)}</td>
-      <td class="mono" style="color:var(--green)">${fmt(l.recette)}</td>
-      <td>${l.nbBus} bus</td>
-      <td>${getTypeBadge(l.typeBus)}</td>
-      <td><div class="progress-bar"><div class="progress-fill" style="width:${Math.min(renta,100)}%;background:var(--green)"></div></div></td>
-      <td><button class="btn btn-danger btn-xs" onclick="supprimerLigne(${i})">✕</button></td>
-    </tr>`;
-  }).join('') || '<tr><td colspan="8" style="color:var(--text3);text-align:center;padding:16px">Aucune ligne</td></tr>';
+  if (Object.keys(byLigne).length) {
+    const maxGains = Math.max(...Object.values(byLigne).map(v=>v.gains), 1);
+    tbody.innerHTML = Object.entries(byLigne)
+      .sort((a,b) => b[1].gains - a[1].gains)
+      .map(([ligne, d]) => {
+        const jours = d.jours.size || 1;
+        const gainJour = d.gains / jours;
+        const tkJour   = d.tickets / jours;
+        const pct      = Math.round(d.gains / maxGains * 100);
+        return `<tr>
+          <td class="mono"><b>${ligne}</b></td>
+          <td>${fmtNum(d.tickets)} <span style="color:var(--text3);font-size:10px">(${Math.round(tkJour)}/j)</span></td>
+          <td class="mono">${fmtNum(d.abonnes)}</td>
+          <td class="mono" style="color:var(--green)">${fmt(d.gains)} <span style="color:var(--text3);font-size:10px">(${fmt(gainJour)}/j)</span></td>
+          <td>${jours} j</td>
+          <td><div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:var(--green)"></div></div></td>
+        </tr>`;
+      }).join('');
+  } else {
+    // Afficher les lignes manuelles si pas de données CSV
+    tbody.innerHTML = state.lignes.map((l,i) => {
+      const renta = l.freq > 0 ? (l.recette / l.freq * 100).toFixed(1) : 0;
+      return `<tr>
+        <td class="mono"><b>${l.num}</b></td>
+        <td>${fmtNum(l.freq)}</td>
+        <td class="mono">—</td>
+        <td class="mono" style="color:var(--green)">${fmt(l.recette)}</td>
+        <td>—</td>
+        <td><div class="progress-bar"><div class="progress-fill" style="width:${Math.min(renta,100)}%;background:var(--green)"></div></div></td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="6" style="color:var(--text3);text-align:center;padding:16px">Aucune donnée — Importe ton statslignes.csv</td></tr>';
+  }
+
+  // ── Historique récent (10 dernières lignes CSV) ────
+  const histTbody = document.getElementById('stats-hist-tbody');
+  if (histTbody) {
+    histTbody.innerHTML = [...state.statsLignes].reverse().slice(0,30).map(s => `<tr>
+      <td class="mono">${s.date}</td>
+      <td class="mono"><b>${s.ligne}</b></td>
+      <td>${s.creneau}</td>
+      <td class="mono">${fmtNum(s.tickets)}</td>
+      <td class="mono">${fmtNum(s.abonnes)}</td>
+      <td class="mono" style="color:var(--green)">${fmt(s.gains)}</td>
+    </tr>`).join('') || '<tr><td colspan="6" style="color:var(--text3);text-align:center;padding:16px">Aucune donnée CSV importée</td></tr>';
+  }
 }
+
 
 function ajouterLigne() {
   const num = document.getElementById('ligne-num').value.trim();
@@ -2313,10 +2744,12 @@ updateClock();
 //  INIT
 // ═══════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
-  // Set today dates
   document.querySelectorAll('input[type=date]').forEach(el => { if (!el.value) el.value = today(); });
   updateBusSelects();
   renderDashboard();
+  // Init modal CSV
+  if (!state.statsLignes) state.statsLignes = [];
+  document.getElementById('csv-type-info').innerHTML = CSV_INFO['bus'];
 });
 
 // Click outside modal
