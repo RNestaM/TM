@@ -654,7 +654,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v13</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v18</span>
       <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
     </div>
@@ -986,33 +986,28 @@
 
     <!-- ═══════════════════════════════════════════ ABRIBUS ═══ -->
     <div id="page-abribus" class="page">
-      <div class="grid-2">
-        <div class="card">
-          <div class="card-header"><div class="card-title">Importer données abribus</div></div>
-          <div class="card-body">
-            <div class="alert-box info">💡 Colle le texte brut issu du jeu. Le système détectera les numéros d'abribus et leurs pourcentages de remplissage.</div>
-            <div class="form-group" style="margin-bottom:10px">
-              <label>Texte brut</label>
-              <textarea id="abribus-texte" rows="8" placeholder="Colle ici le texte brut du jeu contenant les données d'abribus...&#10;&#10;Ex:&#10;42&#10;Abribus Nord &lt;&gt;&#10;85%&#10;72%"></textarea>
-            </div>
-            <button class="btn btn-primary" onclick="importerAbribus()">📥 Importer</button>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Importer données abribus</div></div>
+        <div class="card-body">
+          <div class="alert-box info">💡 Colle le texte brut issu du jeu. Le système détectera les numéros d'abribus et leurs pourcentages.</div>
+          <div class="form-group" style="margin-bottom:10px;margin-top:10px">
+            <textarea id="abribus-texte" rows="6" placeholder="Colle ici le texte brut du jeu..."></textarea>
           </div>
-        </div>
-        <div class="card">
-          <div class="card-header"><div class="card-title">Résumé équipement</div></div>
-          <div class="card-body" id="abribus-resume">
-            <div class="alert-box info">Importez des données pour voir les statistiques.</div>
-          </div>
+          <button class="btn btn-primary" onclick="importerAbribus()">📥 Importer</button>
         </div>
       </div>
       <div class="card" style="margin-top:14px">
         <div class="card-header">
-          <div class="card-title">Données abribus</div>
+          <div class="card-title">Données abribus <span id="abribus-count" class="badge badge-blue" style="margin-left:8px">0</span></div>
           <button class="btn btn-danger btn-sm" onclick="clearAbribus()">Effacer</button>
         </div>
         <div class="card-body" style="padding:0">
           <table class="data-table">
-            <thead><tr><th>N° Abribus</th><th>Équipement 1</th><th>Équipement 2</th><th>Évaluation</th></tr></thead>
+            <thead><tr>
+              <th onclick="sortAbribus('num')" class="sortable">N° Abribus <span class="sort-icon" data-col="num">↕</span></th>
+              <th onclick="sortAbribus('pct1')" class="sortable">Usure <span class="sort-icon" data-col="pct1">↕</span></th>
+              <th onclick="sortAbribus('pct2')" class="sortable">Propreté <span class="sort-icon" data-col="pct2">↕</span></th>
+            </tr></thead>
             <tbody id="abribus-tbody"></tbody>
           </table>
         </div>
@@ -1391,7 +1386,6 @@
             <thead><tr>
               <th>Véhicule</th>
               <th>Places</th>
-              <th>Pub autorisée</th>
               <th>Affectation</th>
               <th>Pan. Avant</th>
               <th>Pan. Latéral</th>
@@ -2964,14 +2958,41 @@ function supprimerMaintenance(i) { state.maintenance.splice(i, 1); saveState(); 
 // ═══════════════════════════════════════════════════════
 //  ABRIBUS
 // ═══════════════════════════════════════════════════════
+let abribusSortCol = 'num', abribusSortDir = 'asc';
+
+function sortAbribus(col) {
+  abribusSortDir = (abribusSortCol === col && abribusSortDir === 'asc') ? 'desc' : 'asc';
+  abribusSortCol = col;
+  // Update icons
+  document.querySelectorAll('#page-abribus .sort-icon').forEach(el => el.textContent = '↕');
+  const icon = document.querySelector(`#page-abribus .sort-icon[data-col="${col}"]`);
+  if (icon) icon.textContent = abribusSortDir === 'asc' ? '↑' : '↓';
+  renderAbribus();
+}
+
 function renderAbribus() {
   const tbody = document.getElementById('abribus-tbody');
-  tbody.innerHTML = state.abribus.map(a => `<tr>
+  const badge = document.getElementById('abribus-count');
+  if (badge) badge.textContent = state.abribus.length;
+
+  const sorted = [...state.abribus].sort((a, b) => {
+    const va = abribusSortCol === 'num' ? parseInt(a.num) : parseInt(a[abribusSortCol]);
+    const vb = abribusSortCol === 'num' ? parseInt(b.num) : parseInt(b[abribusSortCol]);
+    return abribusSortDir === 'asc' ? va - vb : vb - va;
+  });
+
+  const pctColor = v => {
+    const n = parseInt(v);
+    if (n >= 90) return 'color:var(--green)';
+    if (n >= 70) return 'color:var(--yellow)';
+    return 'color:var(--red);font-weight:700';
+  };
+
+  tbody.innerHTML = sorted.map(a => `<tr>
     <td class="mono"><b>#${a.num}</b></td>
-    <td>${a.pct1}</td>
-    <td>${a.pct2}</td>
-    <td>${parseInt(a.pct1)>70&&parseInt(a.pct2)>70?'<span class="badge badge-green">Bon équipement</span>':parseInt(a.pct1)<40||parseInt(a.pct2)<40?'<span class="badge badge-red">À améliorer</span>':'<span class="badge badge-yellow">Correct</span>'}</td>
-  </tr>`).join('') || '<tr><td colspan="4" style="color:var(--text3);text-align:center;padding:16px">Aucune donnée importée</td></tr>';
+    <td class="mono" style="${pctColor(a.pct1)}">${a.pct1}</td>
+    <td class="mono" style="${pctColor(a.pct2)}">${a.pct2}</td>
+  </tr>`).join('') || '<tr><td colspan="3" style="color:var(--text3);text-align:center;padding:16px">Aucune donnée importée</td></tr>';
 }
 
 function importerAbribus() {
@@ -3016,7 +3037,7 @@ function importerAbribus() {
   saveState(); renderAbribus();
   toastMsg(`${resultats.length} abribus importés ✓`, 'success');
 }
-function clearAbribus() { state.abribus = []; saveState(); renderAbribus(); document.getElementById('abribus-resume').innerHTML = '<div class="alert-box info">Importez des données pour voir les statistiques.</div>'; }
+function clearAbribus() { state.abribus = []; saveState(); renderAbribus(); }
 
 // ═══════════════════════════════════════════════════════
 //  PERSONNEL / FCO
@@ -4009,17 +4030,17 @@ function importerDispoPub() {
     else if (nu.startsWith('TRAM-'))   type = 'TRAM';
 
     // Index de PubAutorisée (Oui/Non) : cols[3] si commence par tab, cols[2] sinon
-    const idxPub = cols[1] && cols[1].includes('n°') ? 3 : 2;
-    const pubAutorisee = (cols[idxPub] || '').toLowerCase().includes('oui');
-    
-    // Affectation = cols[idxPub+1]
-    // "Non" ou "Libre" → pas affecté, date (XX/XX/XXXX) ou "Oui" → affecté
-    const affRaw = cols[idxPub + 1] || 'Non';
-    const aAffectation = /\d{2}\/\d{2}\/\d{4}/.test(affRaw) || affRaw === 'Oui';
-    const affectation  = aAffectation ? affRaw : 'Non';
+    // col[1]=Vehicule, col[2]=vide, col[3]=Affectation(Oui/Non/date), col[4..9]=6 supports
+    // "Pub autorisée" est une image non copiable — ignorée
+    const idxAff = cols[1] && cols[1].includes('n°') ? 3 : 2;
 
-    // 6 supports à partir de idxPub+2
-    const idxS   = idxPub + 2;
+    // "Non" = pas affecté, tout le reste = affecté
+    const affRaw       = cols[idxAff] || 'Non';
+    const aAffectation = affRaw !== 'Non';
+    const affectation  = affRaw;
+
+    // 6 supports à partir de idxAff+1
+    const idxS   = idxAff + 1;
     const panAv  = cols[idxS]   || '';
     const panLat = cols[idxS+1] || '';
     const livLat = cols[idxS+2] || '';
@@ -4028,10 +4049,10 @@ function importerDispoPub() {
     const ecran  = cols[idxS+5] || '';
 
     const isUsed = v => v && v !== 'Libre' && v !== 'Non équipé' && v !== '';
-    const aPub     = [panAv, panLat, livLat, panArr, livArr, ecran].some(isUsed);
-    const toutLibre = !aPub; // pas de pub active = tout libre pour la pub
+    const aPub      = [panAv, panLat, livLat, panArr, livArr, ecran].some(isUsed);
+    const toutLibre = !aPub;
 
-    buses.push({ nom, type, places, pubAutorisee, affectation, aAffectation, aPub, toutLibre,
+    buses.push({ nom, type, places, affectation, aAffectation, aPub, toutLibre,
       panAv, panLat, livLat, panArr, livArr, ecran });
   });
 
@@ -4100,6 +4121,7 @@ function renderPubDispoAlertes() {
     // Candidats remplaçants : même type, tout libre (aucune pub active), a une affectation, places >=
     const candidats = data.filter(c =>
       c.type === b.type &&
+      !c.nom.startsWith('00-') &&
       c.toutLibre &&
       c.aAffectation &&
       c.places >= b.places &&
@@ -4142,9 +4164,8 @@ function renderPubDispoTableau() {
     return `<tr style="${rowBg}">
       <td style="font-size:11px"><b>${b.nom}</b></td>
       <td class="mono">${b.places}</td>
-      <td>${b.pubAutorisee ? '<span class="badge badge-green">Oui</span>' : '<span class="badge badge-gray">Non</span>'}</td>
       <td>${b.aAffectation
-        ? `<span class="badge badge-green">✓</span>`
+        ? `<span class="badge badge-green">✓ ${b.affectation}</span>`
         : `<span class="badge badge-red">Non</span>`}</td>
       <td>${cellPub(b.panAv)}</td>
       <td>${cellPub(b.panLat)}</td>
