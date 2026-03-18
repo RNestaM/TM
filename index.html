@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title> 22- Transport Manager — Gestion Parc</title>
+<title>-3- Transport Manager — Gestion Parc</title>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -1651,14 +1651,6 @@ let state = loadState() || {
 };
 if (!state.config) state.config = { argentDepart: 0 };
 if (!state.statsLignes) state.statsLignes = [];
-// Pré-charger les données historiques prix/km si pas encore dans le state
-if (!state.prixKm || Object.keys(state.prixKm).length === 0) {
-  state.prixKm = {};
-  Object.entries(PRIX_KM_INIT).forEach(([id, data]) => {
-    state.prixKm[id] = data;
-  });
-  saveState();
-}
 
 function loadState() {
   try { return JSON.parse(localStorage.getItem('tm_state')); } catch(e) { return null; }
@@ -2385,6 +2377,14 @@ const PRIX_KM_INIT = {
   88982:{prix:73216,km:730945},131175:{prix:230000,km:24714},100820:{prix:160000,km:485674},
   165202:{prix:134700,km:434141},165203:{prix:134700,km:434141}
 };
+
+// Pré-charger les données prix/km dans le state si premier lancement
+if (!state.prixKm || Object.keys(state.prixKm).length === 0) {
+  state.prixKm = {};
+  Object.entries(PRIX_KM_INIT).forEach(([id, data]) => { state.prixKm[id] = data; });
+  saveState();
+}
+
 function parserBus(rows) {
   // Colonnes CSV bus.csv (60 colonnes) :
   // 0=ID, 1=NumParc, 2=Patrimoine, 3=FinLocation, 4=TypeVehicule, 5=Marque, 6=Modele, 7=Type,
