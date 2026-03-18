@@ -647,7 +647,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v8</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v10</span>
       <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
     </div>
@@ -1248,67 +1248,56 @@
 
     <!-- ═══════════════════════════════════════════ PUB ═══ -->
     <div id="page-pub" class="page">
-      <div class="grid-2">
+
+      <!-- Stat cards gains par mois -->
+      <div id="pub-stat-cards" class="stat-cards"></div>
+
+      <div class="grid-2" style="margin-top:14px">
+        <!-- Import texte brut -->
         <div class="card">
-          <div class="card-header"><div class="card-title">Nouveau contrat pub</div></div>
+          <div class="card-header"><div class="card-title">📋 Importer les contrats</div></div>
           <div class="card-body">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Annonceur</label>
-                <input type="text" id="pub-annonceur" placeholder="Nom de l'annonceur">
-              </div>
-              <div class="form-group">
-                <label>Montant / mois (€)</label>
-                <input type="number" id="pub-montant" placeholder="0">
-              </div>
+            <p style="font-size:11px;color:var(--text3);margin-bottom:10px">Colle le tableau copié depuis le jeu (onglet pub) :</p>
+            <textarea id="pub-texte-brut" rows="10" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:8px;resize:vertical;outline:none" placeholder="1618551  Super R  53  Abribus  05/03/2026  19/03/2026  222 600 € (100.0%)  Voir&#10;1623401  BelOs  4  Panneau de pub Avant  10/03/2026  20/03/2026  3 360 € (87.5%)  Voir&#10;..."></textarea>
+            <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+              <button class="btn btn-primary" onclick="importerContratsPub()">✓ Importer</button>
+              <button class="btn btn-ghost btn-sm" onclick="if(confirm('Remplacer tous les contrats ?')){state.contratsPub=[];saveState();renderPub();}">🗑 Vider</button>
+              <span id="pub-import-status" style="font-size:11px;color:var(--text3)"></span>
             </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Bus concerné</label>
-                <select id="pub-bus"></select>
-              </div>
-              <div class="form-group">
-                <label>Durée (mois)</label>
-                <input type="number" id="pub-duree" value="12" min="1">
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Date début</label>
-                <input type="date" id="pub-debut">
-              </div>
-              <div class="form-group">
-                <label>Type</label>
-                <select id="pub-type-contrat">
-                  <option>Habillage total</option>
-                  <option>Bandeaux latéraux</option>
-                  <option>Arrière</option>
-                  <option>Intérieur</option>
-                </select>
-              </div>
-            </div>
-            <button class="btn btn-primary" onclick="ajouterContratPub()">+ Ajouter contrat</button>
           </div>
         </div>
+
+        <!-- Résumé par mois -->
         <div class="card">
-          <div class="card-header"><div class="card-title">Revenus pub</div></div>
-          <div class="card-body">
-            <div class="stat-card blue" style="margin-bottom:10px">
-              <div class="stat-label">Recette mensuelle pub</div>
-              <div class="stat-value" id="pub-total-mensuel" style="font-size:22px">0 €</div>
-            </div>
-            <div id="pub-par-bus"></div>
-          </div>
+          <div class="card-header"><div class="card-title">💰 Gains anticipés par mois</div></div>
+          <div class="card-body" id="pub-gains-mois"></div>
         </div>
       </div>
+
+      <!-- Tableau contrats triés par date fin -->
       <div class="card" style="margin-top:14px">
         <div class="card-header">
-          <div class="card-title">Contrats actifs</div>
-          <button class="btn btn-danger btn-sm" onclick="supprimerTousContracts()">Supprimer tous</button>
+          <div class="card-title">Contrats en cours <span id="pub-count-badge" class="badge badge-blue" style="margin-left:8px">0</span></div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-ghost btn-sm" onclick="setPubFiltre('tous')" id="pub-f-tous">Tous</button>
+            <button class="btn btn-ghost btn-sm" onclick="setPubFiltre('encours')" id="pub-f-encours">En cours</button>
+            <button class="btn btn-ghost btn-sm" onclick="setPubFiltre('avenir')" id="pub-f-avenir">À venir</button>
+          </div>
         </div>
-        <div class="card-body" style="padding:0">
-          <table class="data-table">
-            <thead><tr><th>Annonceur</th><th>Bus</th><th>Type</th><th>Montant/mois</th><th>Durée</th><th>Fin</th><th>Statut</th><th>Actions</th></tr></thead>
+        <div class="card-body" style="padding:0;overflow-x:auto">
+          <table class="data-table" id="pub-table">
+            <thead><tr>
+              <th>N° Contrat</th>
+              <th onclick="sortTable('pub','annonceur')" class="sortable">Annonceur <span class="sort-icon" data-col="annonceur">↕</span></th>
+              <th>Support</th>
+              <th onclick="sortTable('pub','nb')" class="sortable">Nb <span class="sort-icon" data-col="nb">↕</span></th>
+              <th onclick="sortTable('pub','debut')" class="sortable">Début <span class="sort-icon" data-col="debut">↕</span></th>
+              <th onclick="sortTable('pub','fin')" class="sortable">Fin <span class="sort-icon" data-col="fin">↕</span></th>
+              <th onclick="sortTable('pub','gains')" class="sortable">Gains <span class="sort-icon" data-col="gains">↕</span></th>
+              <th>Taux</th>
+              <th>Mois</th>
+              <th></th>
+            </tr></thead>
             <tbody id="pub-tbody"></tbody>
           </table>
         </div>
@@ -3130,49 +3119,145 @@ function ajouterOperation() {
 // ═══════════════════════════════════════════════════════
 //  PUB
 // ═══════════════════════════════════════════════════════
-function renderPub() {
-  document.getElementById('pub-bus').innerHTML = '<option value="">Choisir...</option>' + state.bus.map(b=>`<option>${b.nom}</option>`).join('');
+// ═══════════════════════════════════════════════════════
+//  PUBLICITÉ
+// ═══════════════════════════════════════════════════════
+let pubFiltre = 'tous';
 
-  const total = state.contratsPub.filter(c=>c.statut==='Actif').reduce((s,c)=>s+c.montant,0);
-  document.getElementById('pub-total-mensuel').textContent = fmt(total);
-
-  const byBus = {};
-  state.contratsPub.filter(c=>c.statut==='Actif').forEach(c => { byBus[c.bus] = (byBus[c.bus]||0) + c.montant; });
-  document.getElementById('pub-par-bus').innerHTML = Object.entries(byBus).map(([bus, val]) => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)">
-      <span style="font-size:12px;color:var(--text2)">${bus}</span>
-      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--green)">${fmt(val)}/mois</span>
-    </div>`).join('') || '<div style="color:var(--text3);font-size:12px">Aucun contrat actif</div>';
-
-  const tbody = document.getElementById('pub-tbody');
-  tbody.innerHTML = state.contratsPub.map((c,i) => {
-    const fin = new Date(new Date(c.debut).setMonth(new Date(c.debut).getMonth()+c.duree)).toISOString().slice(0,10);
-    const expired = new Date(fin) < new Date();
-    return `<tr>
-      <td><b>${c.annonceur}</b></td>
-      <td>${c.bus}</td>
-      <td><span class="badge badge-purple">${c.type}</span></td>
-      <td class="mono" style="color:var(--green)">${fmt(c.montant)}</td>
-      <td>${c.duree} mois</td>
-      <td class="mono">${fin}</td>
-      <td>${expired?'<span class="badge badge-red">Expiré</span>':'<span class="badge badge-green">Actif</span>'}</td>
-      <td><button class="btn btn-danger btn-xs" onclick="supprimerContrat(${i})">✕</button></td>
-    </tr>`;
-  }).join('') || '<tr><td colspan="8" style="color:var(--text3);text-align:center;padding:16px">Aucun contrat</td></tr>';
+function setPubFiltre(f) {
+  pubFiltre = f;
+  ['tous','encours','avenir'].forEach(k => {
+    const btn = document.getElementById('pub-f-' + k);
+    if (btn) btn.style.background = k === f ? 'rgba(0,212,255,0.15)' : '';
+  });
+  renderPubTableau();
 }
 
-function ajouterContratPub() {
-  const annonceur = document.getElementById('pub-annonceur').value.trim();
-  const bus = document.getElementById('pub-bus').value;
-  if (!annonceur || !bus) { toastMsg('Annonceur et bus requis', 'error'); return; }
-  const montant = parseFloat(document.getElementById('pub-montant').value)||0;
-  state.contratsPub.push({ id: Date.now(), annonceur, bus, type: document.getElementById('pub-type-contrat').value, montant, duree: parseInt(document.getElementById('pub-duree').value)||12, debut: document.getElementById('pub-debut').value || today(), statut: 'Actif' });
-  journalLog(`Contrat pub ${annonceur} sur ${bus} (${fmt(montant)}/mois)`, 'ok');
+function importerContratsPub() {
+  const texte = document.getElementById('pub-texte-brut').value.trim();
+  if (!texte) { toastMsg('Texte vide', 'error'); return; }
+  const lines = texte.replace(/\r/g,'').split('\n').filter(l => l.trim() && !l.startsWith('Numéro'));
+  const contrats = [];
+  lines.forEach(line => {
+    const cols = line.split(/\t/).map(c => c.trim()).filter(c => c);
+    if (cols.length < 6) return;
+    const numContrat = cols[0];
+    const annonceur  = cols[1];
+    const nb         = parseInt(cols[2]) || 0;
+    const support    = cols[3];
+    const debut      = parseDateFR(cols[4]);
+    const fin        = parseDateFR(cols[5]);
+    const gainsStr   = cols[6] || '';
+    const gainsMatch = gainsStr.match(/([\d\s]+)\s*€/);
+    const tauxMatch  = gainsStr.match(/\((\d+\.?\d*)%\)/);
+    const gains = gainsMatch ? parseInt(gainsMatch[1].replace(/\s/g,'')) : 0;
+    const taux  = tauxMatch  ? parseFloat(tauxMatch[1]) : 100;
+    if (!annonceur || !fin) return;
+    contrats.push({ id: Date.now() + contrats.length, numContrat, annonceur, nb, support, debut, fin, gains, taux });
+  });
+  if (!contrats.length) {
+    toastMsg('Aucun contrat reconnu — vérifie le format (colonnes séparées par tabulations)', 'error');
+    document.getElementById('pub-import-status').textContent = '⚠ Aucun contrat trouvé';
+    return;
+  }
+  state.contratsPub = contrats;
+  journalLog(contrats.length + ' contrats pub importés', 'ok');
   saveState(); renderPub();
-  toastMsg(`Contrat ${annonceur} ajouté ✓`, 'success');
+  document.getElementById('pub-texte-brut').value = '';
+  document.getElementById('pub-import-status').textContent = '✓ ' + contrats.length + ' contrats importés';
+  toastMsg(contrats.length + ' contrats pub importés ✓', 'success');
 }
-function supprimerContrat(i) { state.contratsPub.splice(i, 1); saveState(); renderPub(); }
+
+function renderPub() {
+  renderPubStatCards();
+  renderPubGainsMois();
+  renderPubTableau();
+  const badge = document.getElementById('pub-count-badge');
+  if (badge) badge.textContent = state.contratsPub.length + ' contrats';
+}
+
+function gainsPourMois(moisStr) {
+  const [y, m] = moisStr.split('-').map(Number);
+  const debutMois = new Date(y, m-1, 1);
+  const finMois   = new Date(y, m, 0);
+  return state.contratsPub.reduce((total, c) => {
+    if (!c.fin || !c.debut) return total;
+    const df = new Date(c.debut);
+    const ff = new Date(c.fin);
+    if (ff < debutMois || df > finMois) return total;
+    const debut = df > debutMois ? df : debutMois;
+    const fin   = ff < finMois   ? ff : finMois;
+    const jours = Math.round((fin - debut) / (1000*60*60*24)) + 1;
+    const dureeContrat = Math.round((ff - df) / (1000*60*60*24)) + 1;
+    const gainJour = dureeContrat > 0 ? c.gains / dureeContrat : 0;
+    return total + gainJour * jours;
+  }, 0);
+}
+
+function renderPubStatCards() {
+  const now = new Date();
+  const moisCours = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+  const next = new Date(now.getFullYear(), now.getMonth()+1, 1);
+  const moisSuiv = next.getFullYear() + '-' + String(next.getMonth()+1).padStart(2,'0');
+  const gc = gainsPourMois(moisCours);
+  const gs = gainsPourMois(moisSuiv);
+  const total = state.contratsPub.reduce((s,c) => s + c.gains, 0);
+  document.getElementById('pub-stat-cards').innerHTML =
+    '<div class="stat-card blue"><div class="stat-label">Gains mois en cours</div><div class="stat-value" style="font-size:20px;color:var(--accent)">' + fmt(Math.round(gc)) + '</div></div>' +
+    '<div class="stat-card green"><div class="stat-label">Gains mois suivant</div><div class="stat-value" style="font-size:20px;color:var(--green)">' + fmt(Math.round(gs)) + '</div></div>' +
+    '<div class="stat-card yellow"><div class="stat-label">Total contrats</div><div class="stat-value" style="font-size:20px">' + fmt(total) + '</div></div>' +
+    '<div class="stat-card purple"><div class="stat-label">Nb contrats</div><div class="stat-value" style="font-size:20px">' + state.contratsPub.length + '</div></div>';
+}
+
+function renderPubGainsMois() {
+  const now = new Date();
+  const mois = [];
+  for (let i = 0; i < 6; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+    const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    const label = d.toLocaleDateString('fr-FR', { month:'long', year:'numeric' });
+    mois.push({ key, label, gains: gainsPourMois(key) });
+  }
+  const max = Math.max(...mois.map(m => m.gains), 1);
+  document.getElementById('pub-gains-mois').innerHTML = mois.map((m, i) => {
+    const pct = Math.round(m.gains / max * 100);
+    const color = i === 0 ? 'var(--accent)' : i === 1 ? 'var(--green)' : 'var(--accent3)';
+    return '<div class="gauge-row"><div class="gauge-label" style="font-size:11px;min-width:110px">' + m.label + '</div><div class="gauge-bar"><div class="gauge-fill" style="width:' + pct + '%;background:' + color + '"></div></div><div class="gauge-val" style="font-family:'JetBrains Mono',monospace">' + fmt(Math.round(m.gains)) + '</div></div>';
+  }).join('');
+}
+
+function renderPubTableau() {
+  const now = new Date().toISOString().slice(0,10);
+  let contrats = [...state.contratsPub];
+  if (pubFiltre === 'encours') contrats = contrats.filter(c => (c.debut||'') <= now && c.fin >= now);
+  else if (pubFiltre === 'avenir') contrats = contrats.filter(c => (c.debut||'') > now);
+  contrats = sortData(contrats, 'pub', 'fin');
+  const tbody = document.getElementById('pub-tbody');
+  tbody.innerHTML = contrats.map(c => {
+    const diff = Math.round((new Date(c.fin) - new Date()) / (1000*60*60*24));
+    const finColor = diff < 0 ? 'color:var(--red)' : diff <= 3 ? 'color:var(--orange)' : diff <= 7 ? 'color:var(--yellow)' : '';
+    const finDate = new Date(c.fin);
+    const moisFin = finDate.toLocaleDateString('fr-FR', { month:'short', year:'2-digit' });
+    return '<tr>' +
+      '<td class="mono" style="color:var(--text3);font-size:10px">' + (c.numContrat||'—') + '</td>' +
+      '<td><b>' + c.annonceur + '</b></td>' +
+      '<td style="font-size:11px">' + (c.support||'—') + '</td>' +
+      '<td class="mono">' + (c.nb||'—') + '</td>' +
+      '<td class="mono" style="font-size:11px">' + (c.debut||'—') + '</td>' +
+      '<td class="mono" style="font-size:11px;' + finColor + '">' + (c.fin||'—') + (diff>=0&&diff<=7?' <span style="font-size:9px">(J-'+diff+')</span>':'') + '</td>' +
+      '<td class="mono" style="color:var(--green);font-weight:600">' + fmt(c.gains) + '</td>' +
+      '<td class="mono" style="font-size:11px">' + (c.taux ? c.taux.toFixed(1)+'%' : '—') + '</td>' +
+      '<td style="font-size:10px;color:var(--text3)">' + moisFin + '</td>' +
+      '<td><button class="btn btn-danger btn-xs" onclick="supprimerContratPub(' + c.id + ')">✕</button></td>' +
+      '</tr>';
+  }).join('') || '<tr><td colspan="10" style="color:var(--text3);text-align:center;padding:20px">Aucun contrat — colle les données depuis le jeu</td></tr>';
+}
+
+function supprimerContratPub(id) { state.contratsPub = state.contratsPub.filter(c => c.id !== id); saveState(); renderPub(); }
 function supprimerTousContracts() { if (confirm('Supprimer tous les contrats ?')) { state.contratsPub = []; saveState(); renderPub(); } }
+function ajouterContratPub() {}
+function supprimerContrat(i) { state.contratsPub.splice(i,1); saveState(); renderPub(); }
+
 
 // ═══════════════════════════════════════════════════════
 //  ACHATS
