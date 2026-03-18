@@ -1,1 +1,3478 @@
 
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transport Manager — Gestion Parc</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0d14;
+    --surface: #111520;
+    --surface2: #171c2d;
+    --border: #1e2640;
+    --accent: #00d4ff;
+    --accent2: #ff6b35;
+    --accent3: #7c3aed;
+    --green: #10b981;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+    --orange: #f97316;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --glow: 0 0 20px rgba(0,212,255,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* SIDEBAR */
+  #sidebar {
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    width: 220px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sidebar-logo {
+    padding: 20px 16px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-logo h1 {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+  .sidebar-logo span {
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    display: block;
+    margin-top: 2px;
+  }
+
+  .sidebar-section {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-section-title {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text3);
+    padding: 4px 16px 8px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 16px;
+    cursor: pointer;
+    color: var(--text2);
+    transition: all 0.15s;
+    border-left: 3px solid transparent;
+    font-size: 12.5px;
+  }
+  .nav-item:hover { background: rgba(0,212,255,0.05); color: var(--text); }
+  .nav-item.active { 
+    background: rgba(0,212,255,0.08); 
+    color: var(--accent); 
+    border-left-color: var(--accent);
+  }
+  .nav-item .icon { font-size: 14px; width: 18px; text-align: center; }
+
+  .sidebar-bottom {
+    margin-top: auto;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text3);
+  }
+
+  /* MAIN */
+  #main {
+    margin-left: 220px;
+    min-height: 100vh;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* TOPBAR */
+  #topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  #topbar-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--text);
+  }
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  #date-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+    background: var(--surface2);
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  /* CONTENT */
+  #content { padding: 20px 24px; }
+
+  /* PAGES */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* STAT CARDS ROW */
+  .stat-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .stat-card.blue::before { background: var(--accent); }
+  .stat-card.orange::before { background: var(--accent2); }
+  .stat-card.green::before { background: var(--green); }
+  .stat-card.yellow::before { background: var(--yellow); }
+  .stat-card.red::before { background: var(--red); }
+  .stat-card.purple::before { background: var(--accent3); }
+
+  .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); margin-bottom: 6px; }
+  .stat-value { font-family: 'Rajdhani', sans-serif; font-size: 28px; font-weight: 700; line-height: 1; }
+  .stat-card.blue .stat-value { color: var(--accent); }
+  .stat-card.orange .stat-value { color: var(--accent2); }
+  .stat-card.green .stat-value { color: var(--green); }
+  .stat-card.yellow .stat-value { color: var(--yellow); }
+  .stat-card.red .stat-value { color: var(--red); }
+  .stat-card.purple .stat-value { color: var(--accent3); }
+  .stat-sub { font-size: 10px; color: var(--text3); margin-top: 4px; }
+
+  /* GRID 2-COL */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  @media (max-width: 1200px) { .grid-3 { grid-template-columns: 1fr 1fr; } }
+
+  /* CARD */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .card-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+  .card-body { padding: 14px 16px; }
+
+  /* TABLE */
+  .data-table { width: 100%; border-collapse: collapse; }
+  .data-table th {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text3);
+    padding: 6px 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    font-weight: 500;
+  }
+  .data-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(30,38,64,0.5);
+    color: var(--text2);
+    font-size: 12px;
+  }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: rgba(0,212,255,0.03); }
+  .data-table td.mono { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+
+  /* BADGES */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .badge-green { background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid rgba(16,185,129,0.3); }
+  .badge-yellow { background: rgba(245,158,11,0.15); color: var(--yellow); border: 1px solid rgba(245,158,11,0.3); }
+  .badge-red { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+  .badge-blue { background: rgba(0,212,255,0.1); color: var(--accent); border: 1px solid rgba(0,212,255,0.3); }
+  .badge-orange { background: rgba(249,115,22,0.15); color: var(--orange); border: 1px solid rgba(249,115,22,0.3); }
+  .badge-purple { background: rgba(124,58,237,0.15); color: var(--accent3); border: 1px solid rgba(124,58,237,0.3); }
+  .badge-gray { background: rgba(100,116,139,0.15); color: var(--text3); border: 1px solid rgba(100,116,139,0.3); }
+
+  /* BUTTONS */
+  .btn {
+    padding: 6px 14px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-primary:hover { background: #00bbdd; }
+  .btn-danger { background: rgba(239,68,68,0.2); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+  .btn-danger:hover { background: rgba(239,68,68,0.35); }
+  .btn-warning { background: rgba(245,158,11,0.2); color: var(--yellow); border: 1px solid rgba(245,158,11,0.3); }
+  .btn-warning:hover { background: rgba(245,158,11,0.35); }
+  .btn-success { background: rgba(16,185,129,0.2); color: var(--green); border: 1px solid rgba(16,185,129,0.3); }
+  .btn-success:hover { background: rgba(16,185,129,0.35); }
+  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-sm { padding: 3px 8px; font-size: 11px; }
+  .btn-xs { padding: 2px 6px; font-size: 10px; }
+
+  /* FORMS */
+  .form-row { display: flex; gap: 12px; margin-bottom: 12px; align-items: flex-end; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+  .form-group label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); }
+  .form-group input, .form-group select, .form-group textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 7px 10px;
+    color: var(--text);
+    font-size: 12px;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    border-color: var(--accent);
+  }
+  .form-group select option { background: var(--surface); }
+
+  /* SEARCH BAR */
+  .search-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .search-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 7px 12px;
+    color: var(--text);
+    font-size: 12px;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    width: 240px;
+    transition: border-color 0.15s;
+  }
+  .search-input:focus { border-color: var(--accent); }
+
+  /* PROGRESS BAR */
+  .progress-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 6px;
+  }
+  .progress-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    width: 500px;
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+  }
+  .modal-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .modal-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .modal-close { cursor: pointer; color: var(--text3); font-size: 18px; line-height: 1; }
+  .modal-close:hover { color: var(--text); }
+  .modal-body { padding: 20px; }
+  .modal-footer { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
+
+  /* TABS */
+  .tabs { display: flex; gap: 2px; margin-bottom: 14px; background: var(--surface2); padding: 3px; border-radius: 6px; border: 1px solid var(--border); width: fit-content; }
+  .tab {
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--text3);
+    transition: all 0.15s;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { background: var(--accent); color: #000; font-weight: 600; }
+
+  /* BUS TYPE colors */
+  .type-mini { color: #06b6d4; }
+  .type-midi { color: #8b5cf6; }
+  .type-std { color: var(--green); }
+  .type-art { color: var(--yellow); }
+  .type-car { color: var(--orange); }
+  .type-tram { color: var(--red); }
+  .type-remp { color: var(--text3); }
+
+  /* ALERT BOX */
+  .alert-box {
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 12px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .alert-box.warning { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.25); color: var(--yellow); }
+  .alert-box.danger { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: var(--red); }
+  .alert-box.info { background: rgba(0,212,255,0.08); border: 1px solid rgba(0,212,255,0.2); color: var(--accent); }
+  .alert-box.success { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); color: var(--green); }
+
+  /* KPI GAUGE */
+  .gauge-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .gauge-label { font-size: 11px; color: var(--text2); width: 100px; flex-shrink: 0; }
+  .gauge-bar { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .gauge-fill { height: 100%; border-radius: 3px; }
+  .gauge-val { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text2); width: 40px; text-align: right; }
+
+  /* TIMELINE */
+  .timeline { position: relative; padding-left: 20px; }
+  .timeline::before { content: ''; position: absolute; left: 6px; top: 0; bottom: 0; width: 1px; background: var(--border); }
+  .timeline-item { position: relative; margin-bottom: 14px; }
+  .timeline-item::before { 
+    content: ''; position: absolute; left: -17px; top: 4px;
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent); border: 1px solid var(--bg);
+  }
+  .timeline-item.warn::before { background: var(--yellow); }
+  .timeline-item.danger::before { background: var(--red); }
+  .timeline-item.ok::before { background: var(--green); }
+  .timeline-date { font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+  .timeline-text { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+  /* DIVIDER */
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+  /* TAG */
+  .tag { display: inline-block; padding: 1px 6px; border-radius: 2px; font-size: 10px; font-family: 'JetBrains Mono', monospace; }
+
+  /* TOAST */
+  #toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+  .toast {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 16px;
+    font-size: 12px;
+    color: var(--text);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: slideIn 0.2s ease;
+    max-width: 280px;
+  }
+  .toast.success { border-left: 3px solid var(--green); }
+  .toast.error { border-left: 3px solid var(--red); }
+  .toast.info { border-left: 3px solid var(--accent); }
+  @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    #sidebar { transform: translateX(-220px); }
+    #main { margin-left: 0; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text3);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* PULSE ANIMATION */
+  .pulse { animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+  /* GLOW TEXT */
+  .glow { text-shadow: 0 0 10px currentColor; }
+
+  /* INLINE ICON */
+  .ico { display: inline-block; width: 1.2em; text-align: center; }
+
+  /* SORTABLE COLUMNS */
+  th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+  th.sortable:hover { color: var(--accent); }
+  .sort-icon { font-size: 10px; color: var(--text3); margin-left: 2px; }
+  th.sort-asc .sort-icon, th.sort-desc .sort-icon { color: var(--accent); }
+  th.sort-asc .sort-icon::after  { content: ' ↑'; }
+  th.sort-desc .sort-icon::after { content: ' ↓'; }
+
+  /* Full view scrollable */
+  #parc-view-full .card-body { overflow-x: auto; }
+  #parc-table-full { min-width: 2800px; }
+  #parc-table-full td, #parc-table-full th { padding: 5px 6px; font-size: 11px; white-space: nowrap; }
+
+  /* INLINE STATUS SELECT */
+  .status-select {
+    background: transparent;
+    border: none;
+    color: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    padding: 3px 6px;
+    border-radius: 4px;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  .status-select:focus { outline: 1px solid var(--accent); }
+  .status-en-service  { background: rgba(16,185,129,0.15); color: #10b981; }
+  .status-en-revision { background: rgba(245,158,11,0.15); color: #f59e0b; }
+  .status-indispo     { background: rgba(239,68,68,0.15);  color: #ef4444; }
+  .status-nouveau     { background: rgba(0,212,255,0.15);  color: #00d4ff; }
+  .status-ct-urgent   { background: rgba(249,115,22,0.15); color: #f97316; }
+  .status-musee       { background: rgba(100,116,139,0.15);color: #64748b; }
+</style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="sidebar-logo">
+    <h1>🚌 TM Manager</h1>
+    <span>Transport Manager — Parc</span>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Vue générale</div>
+    <div class="nav-item active" data-page="dashboard" onclick="nav(this)">
+      <span class="icon">📊</span> Tableau de bord
+    </div>
+    <div class="nav-item" data-page="alertes" onclick="nav(this)">
+      <span class="icon">🔔</span> Alertes
+      <span id="alert-badge" style="margin-left:auto;background:var(--red);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700;">0</span>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Parc de bus</div>
+    <div class="nav-item" data-page="parc" onclick="nav(this)">
+      <span class="icon">🚍</span> Gestion du parc
+    </div>
+    <div class="nav-item" data-page="affectations" onclick="nav(this)">
+      <span class="icon">📋</span> Affectations
+    </div>
+    <div class="nav-item" data-page="maintenance" onclick="nav(this)">
+      <span class="icon">🔧</span> Maintenance / CT
+    </div>
+    <div class="nav-item" data-page="abribus" onclick="nav(this)">
+      <span class="icon">🏠</span> Abribus
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Ressources</div>
+    <div class="nav-item" data-page="personnel" onclick="nav(this)">
+      <span class="icon">👤</span> Personnel / FCO
+    </div>
+    <div class="nav-item" data-page="lignes" onclick="nav(this)">
+      <span class="icon">🛣️</span> Lignes & Stats
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Finance</div>
+    <div class="nav-item" data-page="compta" onclick="nav(this)">
+      <span class="icon">💰</span> Comptabilité
+    </div>
+    <div class="nav-item" data-page="pub" onclick="nav(this)">
+      <span class="icon">📢</span> Publicité
+    </div>
+    <div class="nav-item" data-page="achats" onclick="nav(this)">
+      <span class="icon">🛒</span> Achats de bus
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Carburant</div>
+    <div class="nav-item" data-page="gasoil" onclick="nav(this)">
+      <span class="icon">⛽</span> Gasoil / Conso
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Système</div>
+    <div class="nav-item" data-page="config" onclick="nav(this)">
+      <span class="icon">⚙️</span> Configuration
+    </div>
+  </div>
+
+  <div class="sidebar-bottom">
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="game-day">TM</span>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div id="topbar">
+    <div id="topbar-title">Tableau de bord</div>
+    <div id="topbar-solde" style="position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px">
+      <span style="font-size:11px;color:var(--text3);letter-spacing:1px;text-transform:uppercase">Solde</span>
+      <span id="topbar-solde-val" style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:var(--green)">0 €</span>
+    </div>
+    <div class="topbar-right">
+      <div id="date-badge">--/--/----</div>
+      <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
+      <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
+    </div>
+  </div>
+  <div id="content">
+
+    <!-- ═══════════════════════════════════════════ DASHBOARD ═══ -->
+    <div id="page-dashboard" class="page active">
+      <div class="stat-cards">
+        <div class="stat-card blue">
+          <div class="stat-label">Bus total</div>
+          <div class="stat-value" id="stat-total">0</div>
+          <div class="stat-sub">dans le parc</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-label">En service</div>
+          <div class="stat-value" id="stat-service">0</div>
+          <div class="stat-sub">affectés aujourd'hui</div>
+        </div>
+        <div class="stat-card yellow">
+          <div class="stat-label">En révision</div>
+          <div class="stat-value" id="stat-revision">0</div>
+          <div class="stat-sub">révision en cours</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-label">CT urgent</div>
+          <div class="stat-value" id="stat-ct">0</div>
+          <div class="stat-sub">contrôle à planifier</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-label">FCO requis</div>
+          <div class="stat-value" id="stat-fco">0</div>
+          <div class="stat-sub">conducteurs concernés</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-label">Solde</div>
+          <div class="stat-value" id="stat-solde" style="font-size:20px;">0 €</div>
+          <div class="stat-sub">trésorerie actuelle</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Parc par type -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Répartition du parc</div>
+          </div>
+          <div class="card-body" id="repartition-parc">
+          </div>
+        </div>
+
+        <!-- Alertes récentes -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">⚠️ Alertes actives</div>
+          </div>
+          <div class="card-body" id="alertes-recap">
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Derniers achats -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Derniers achats de bus</div>
+            <button class="btn btn-ghost btn-sm" onclick="nav(document.querySelector('[data-page=achats]'))">Voir tout</button>
+          </div>
+          <div class="card-body" style="padding:0">
+            <table class="data-table" id="last-achats-table">
+              <thead><tr><th>Modèle</th><th>Prix</th><th>KM</th><th>Date</th></tr></thead>
+              <tbody id="last-achats-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Journal -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Journal d'activité</div>
+          </div>
+          <div class="card-body">
+            <div class="timeline" id="journal-timeline"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ ALERTES ═══ -->
+    <div id="page-alertes" class="page">
+      <div id="alertes-list"></div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ PARC ═══ -->
+    <div id="page-parc" class="page">
+      <div class="search-bar">
+        <input class="search-input" type="text" id="search-parc" placeholder="🔍 Rechercher un bus..." oninput="filterParc()">
+        <div class="tabs" id="tabs-parc">
+          <div class="tab active" onclick="filterByType(this,'all')">Tous</div>
+          <div class="tab" onclick="filterByType(this,'MIN')">Mini</div>
+          <div class="tab" onclick="filterByType(this,'MID')">Midi</div>
+          <div class="tab" onclick="filterByType(this,'STD')">Standard</div>
+          <div class="tab" onclick="filterByType(this,'ART')">Articulé</div>
+          <div class="tab" onclick="filterByType(this,'CAR')">Car</div>
+          <div class="tab" onclick="filterByType(this,'TRAM')">Tram</div>
+        </div>
+        <div class="tabs" style="margin-left:8px" id="parc-view-tabs">
+          <div class="tab active" onclick="setParcView(this,'compact')">Compact</div>
+          <div class="tab" onclick="setParcView(this,'full')">Complet</div>
+        </div>
+      </div>
+
+      <!-- Vue COMPACTE -->
+      <div id="parc-view-compact">
+        <div class="card">
+          <div class="card-body" style="padding:0;overflow-x:auto">
+            <table class="data-table" id="parc-table">
+              <thead><tr>
+                <th onclick="sortTable('parc','idJeu')" class="sortable">ID <span class="sort-icon" data-col="idJeu">↕</span></th>
+                <th onclick="sortTable('parc','nom')" class="sortable">Numéro Parc <span class="sort-icon" data-col="nom">↕</span></th>
+                <th onclick="sortTable('parc','marque')" class="sortable">Modèle <span class="sort-icon" data-col="marque">↕</span></th>
+                <th onclick="sortTable('parc','anneMES')" class="sortable">MES <span class="sort-icon" data-col="anneMES">↕</span></th>
+                <th onclick="sortTable('parc','revisionDate')" class="sortable">Révision <span class="sort-icon" data-col="revisionDate">↕</span></th>
+                <th onclick="sortTable('parc','ct')" class="sortable">CT <span class="sort-icon" data-col="ct">↕</span></th>
+                <th onclick="sortTable('parc','capa')" class="sortable">Places <span class="sort-icon" data-col="capa">↕</span></th>
+                <th onclick="sortTable('parc','energie')" class="sortable">Énergie <span class="sort-icon" data-col="energie">↕</span></th>
+                <th onclick="sortTable('parc','prixAchat')" class="sortable">Prix Achat <span class="sort-icon" data-col="prixAchat">↕</span></th>
+                <th onclick="sortTable('parc','kmDepart')" class="sortable">KM Départ <span class="sort-icon" data-col="kmDepart">↕</span></th>
+                <th onclick="sortTable('parc','km')" class="sortable">KM Actuel <span class="sort-icon" data-col="km">↕</span></th>
+                <th onclick="sortTable('parc','etatTech')" class="sortable">Tech <span class="sort-icon" data-col="etatTech">↕</span></th>
+                <th onclick="sortTable('parc','etatInt')" class="sortable">Int. <span class="sort-icon" data-col="etatInt">↕</span></th>
+                <th onclick="sortTable('parc','diffKm')" class="sortable">Diff KM <span class="sort-icon" data-col="diffKm">↕</span></th>
+                <th>Statut</th>
+                <th>Actions</th>
+              </tr></thead>
+              <tbody id="parc-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vue COMPLÈTE (toutes les options) -->
+      <div id="parc-view-full" style="display:none">
+        <div class="card">
+          <div class="card-body" style="padding:0;overflow-x:auto">
+            <table class="data-table" id="parc-table-full">
+              <thead><tr>
+                <th>ID</th><th>Numéro Parc</th><th>Modèle</th><th>Type</th><th>Énergie</th>
+                <th>Places</th><th>KM Actuel</th><th>KM Départ</th><th>Diff KM</th>
+                <th>CT</th><th>Révision</th><th>Tech</th><th>Int.</th>
+                <th>Balise</th><th>Self-S.</th><th>Btn Arrêt</th><th>Caméra</th>
+                <th>Pub Arr.</th><th>Pub Av.</th><th>Pub Lat.</th>
+                <th>Rack Bag.</th><th>Rack Vél.</th><th>Ethylo</th>
+                <th>Radio</th><th>USB</th><th>WiFi</th><th>Bandeau</th>
+                <th>Écran TFT</th><th>HP</th><th>Tél.</th><th>Pupitre</th><th>Billetique</th>
+                <th>Vente possible</th><th>Statut</th>
+              </tr></thead>
+              <tbody id="parc-tbody-full"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panneau détail bus (masqué par défaut) -->
+      <div id="bus-detail-panel" style="display:none;margin-top:14px">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title" id="bus-detail-title">Détail bus</div>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('bus-detail-panel').style.display='none'">✕ Fermer</button>
+          </div>
+          <div class="card-body" id="bus-detail-body"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ AFFECTATIONS ═══ -->
+    <div id="page-affectations" class="page">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Affecter un bus</div></div>
+          <div class="card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Bus</label>
+                <select id="aff-bus">
+                  <option value="">Choisir un bus...</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Ligne</label>
+                <select id="aff-ligne">
+                  <option value="">Choisir une ligne...</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Conducteur</label>
+                <select id="aff-conducteur">
+                  <option value="">Choisir un conducteur...</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Service</label>
+                <select id="aff-service">
+                  <option>Matin</option>
+                  <option>Après-midi</option>
+                  <option>Journée</option>
+                  <option>Nuit</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Note</label>
+                <input type="text" id="aff-note" placeholder="Commentaire...">
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="ajouterAffectation()">✓ Affecter</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Résumé du jour</div></div>
+          <div class="card-body" id="aff-resume">
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-header">
+          <div class="card-title">Affectations actives</div>
+          <button class="btn btn-ghost btn-sm" onclick="clearAffectations()">Réinitialiser le jour</button>
+        </div>
+        <div class="card-body" style="padding:0">
+          <table class="data-table">
+            <thead><tr><th>Bus</th><th>Ligne</th><th>Conducteur</th><th>Service</th><th>Note</th><th>Actions</th></tr></thead>
+            <tbody id="affectations-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ MAINTENANCE ═══ -->
+    <div id="page-maintenance" class="page">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">🔧 Envoyer en révision</div></div>
+          <div class="card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Bus</label>
+                <select id="rev-bus"></select>
+              </div>
+              <div class="form-group">
+                <label>Type</label>
+                <select id="rev-type">
+                  <option value="Révision">Révision standard</option>
+                  <option value="Rénovation">Rénovation</option>
+                  <option value="Réparation">Réparation urgente</option>
+                  <option value="Rev avant CT">Révision avant CT</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Durée estimée (jours)</label>
+                <input type="number" id="rev-duree" value="3" min="1">
+              </div>
+              <div class="form-group">
+                <label>Coût estimé (€)</label>
+                <input type="number" id="rev-cout" placeholder="0">
+              </div>
+            </div>
+            <button class="btn btn-warning" onclick="envoyerRevision()">🔧 Envoyer en révision</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">🔍 Planifier un CT</div></div>
+          <div class="card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Bus</label>
+                <select id="ct-bus"></select>
+              </div>
+              <div class="form-group">
+                <label>Date CT prévue</label>
+                <input type="date" id="ct-date">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>KM actuels</label>
+                <input type="number" id="ct-km" placeholder="0">
+              </div>
+              <div class="form-group">
+                <label>Résultat</label>
+                <select id="ct-resultat">
+                  <option value="">À venir</option>
+                  <option value="Favorable">✓ Favorable</option>
+                  <option value="Contre-visite">⚠ Contre-visite</option>
+                  <option value="Refus">✗ Refus</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="planifierCT()">📅 Enregistrer CT</button>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-header">
+          <div class="card-title">Bus en maintenance</div>
+        </div>
+        <div class="card-body" style="padding:0">
+          <table class="data-table">
+            <thead><tr><th>Bus</th><th>Type maintenance</th><th>Depuis</th><th>Durée</th><th>Coût</th><th>Statut</th><th>Actions</th></tr></thead>
+            <tbody id="maintenance-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-header"><div class="card-title">Historique CT</div></div>
+        <div class="card-body" style="padding:0">
+          <table class="data-table">
+            <thead><tr><th>Bus</th><th>Date</th><th>KM</th><th>Résultat</th></tr></thead>
+            <tbody id="ct-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ ABRIBUS ═══ -->
+    <div id="page-abribus" class="page">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Importer données abribus</div></div>
+          <div class="card-body">
+            <div class="alert-box info">💡 Colle le texte brut issu du jeu. Le système détectera les numéros d'abribus et leurs pourcentages de remplissage.</div>
+            <div class="form-group" style="margin-bottom:10px">
+              <label>Texte brut</label>
+              <textarea id="abribus-texte" rows="8" placeholder="Colle ici le texte brut du jeu contenant les données d'abribus...&#10;&#10;Ex:&#10;42&#10;Abribus Nord &lt;&gt;&#10;85%&#10;72%"></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="importerAbribus()">📥 Importer</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Résumé équipement</div></div>
+          <div class="card-body" id="abribus-resume">
+            <div class="alert-box info">Importez des données pour voir les statistiques.</div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-header">
+          <div class="card-title">Données abribus</div>
+          <button class="btn btn-danger btn-sm" onclick="clearAbribus()">Effacer</button>
+        </div>
+        <div class="card-body" style="padding:0">
+          <table class="data-table">
+            <thead><tr><th>N° Abribus</th><th>Équipement 1</th><th>Équipement 2</th><th>Évaluation</th></tr></thead>
+            <tbody id="abribus-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ PERSONNEL ═══ -->
+    <div id="page-personnel" class="page">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Ajouter un conducteur</div></div>
+          <div class="card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Nom</label>
+                <input type="text" id="pers-nom" placeholder="Nom du conducteur">
+              </div>
+              <div class="form-group">
+                <label>Matricule</label>
+                <input type="text" id="pers-mat" placeholder="EX: P001">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Date dernière FCO</label>
+                <input type="date" id="pers-fco">
+              </div>
+              <div class="form-group">
+                <label>Type permis</label>
+                <select id="pers-permis">
+                  <option>D (Bus)</option>
+                  <option>D+E (Articulé)</option>
+                  <option>B (Minibus)</option>
+                  <option>Tous</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Statut</label>
+                <select id="pers-statut">
+                  <option value="Actif">Actif</option>
+                  <option value="FCO requise">FCO requise</option>
+                  <option value="Arrêt maladie">Arrêt maladie</option>
+                  <option value="Congés">Congés</option>
+                  <option value="Formation">En formation</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="ajouterPersonnel()">+ Ajouter conducteur</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">FCO — Suivi obligatoire</div></div>
+          <div class="card-body">
+            <div class="alert-box warning" id="fco-alerte">Chargement...</div>
+            <div id="fco-list"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-header">
+          <div class="card-title">Liste du personnel</div>
+          <input class="search-input" type="text" id="search-pers" placeholder="🔍 Rechercher..." oninput="filterPersonnel()" style="width:180px">
+        </div>
+        <div class="card-body" style="padding:0">
+          <table class="data-table">
+            <thead><tr>
+              <th onclick="sortTable('personnel','matricule')" class="sortable">Matricule <span class="sort-icon" data-col="matricule">↕</span></th>
+              <th onclick="sortTable('personnel','nom')" class="sortable">Nom <span class="sort-icon" data-col="nom">↕</span></th>
+              <th onclick="sortTable('personnel','poste')" class="sortable">Poste <span class="sort-icon" data-col="poste">↕</span></th>
+              <th onclick="sortTable('personnel','salaire')" class="sortable">Salaire <span class="sort-icon" data-col="salaire">↕</span></th>
+              <th onclick="sortTable('personnel','satisfaction')" class="sortable">Satisf. <span class="sort-icon" data-col="satisfaction">↕</span></th>
+              <th onclick="sortTable('personnel','fco')" class="sortable">FCO <span class="sort-icon" data-col="fco">↕</span></th>
+              <th onclick="sortTable('personnel','statut')" class="sortable">Statut <span class="sort-icon" data-col="statut">↕</span></th>
+              <th>État</th>
+            </tr></thead>
+            <tbody id="personnel-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ LIGNES ═══ -->
+    <div id="page-lignes" class="page">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Ajouter une ligne</div></div>
+          <div class="card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Numéro ligne</label>
+                <input type="text" id="ligne-num" placeholder="Ex: L42">
+              </div>
+              <div class="form-group">
+                <label>Nom</label>
+                <input type="text" id="ligne-nom" placeholder="Ex: Centre — Nord">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Fréquentation (passagers/j)</label>
+                <input type="number" id="ligne-freq" value="0">
+              </div>
+              <div class="form-group">
+                <label>Recette journalière (€)</label>
+                <input type="number" id="ligne-recette" value="0">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Bus requis</label>
+                <input type="number" id="ligne-bus" value="1">
+              </div>
+              <div class="form-group">
+                <label>Type bus</label>
+                <select id="ligne-type-bus">
+                  <option>MIN</option><option>MID</option><option selected>STD</option>
+                  <option>ART</option><option>CAR</option><option>TRAM</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="ajouterLigne()">+ Ajouter ligne</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Statistiques globales</div></div>
+          <div class="card-body" id="stats-lignes-recap"></div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-header">
+          <div class="card-title">Stats par ligne (depuis CSV)</div>
+          <button class="btn btn-ghost btn-sm" onclick="if(confirm('Effacer tout l\'historique stats ?')){state.statsLignes=[];saveState();renderLignes();}">🗑 Réinitialiser</button>
+        </div>
+        <div class="card-body" style="padding:0">
+          <table class="data-table">
+            <thead><tr><th>Ligne</th><th>Tickets total</th><th>Abonnés</th><th>Gains total</th><th>Jours</th><th>Part des gains</th></tr></thead>
+            <tbody id="lignes-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-header"><div class="card-title">Historique détaillé (30 dernières entrées)</div></div>
+        <div class="card-body" style="padding:0">
+          <table class="data-table">
+            <thead><tr><th>Date</th><th>Ligne</th><th>Créneau</th><th>Tickets</th><th>Abonnés</th><th>Gains</th></tr></thead>
+            <tbody id="stats-hist-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ COMPTA ═══ -->
+    <div id="page-compta" class="page">
+      <div class="stat-cards">
+        <div class="stat-card green">
+          <div class="stat-label">Recettes du mois</div>
+          <div class="stat-value" id="compta-recettes" style="font-size:20px">0 €</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-label">Dépenses du mois</div>
+          <div class="stat-value" id="compta-depenses" style="font-size:20px">0 €</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-label">Bénéfice net</div>
+          <div class="stat-value" id="compta-benefice" style="font-size:20px">0 €</div>
+        </div>
+        <div class="stat-card yellow">
+          <div class="stat-label">Trésorerie</div>
+          <div class="stat-value" id="compta-tresor" style="font-size:20px">0 €</div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Ajouter une opération</div></div>
+          <div class="card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Type</label>
+                <select id="op-type">
+                  <option value="recette">Recette</option>
+                  <option value="depense">Dépense</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Catégorie</label>
+                <select id="op-cat">
+                  <option>Lignes</option>
+                  <option>Contrats pub</option>
+                  <option>Achat véhicule</option>
+                  <option>Maintenance</option>
+                  <option>Salaires</option>
+                  <option>Carburant</option>
+                  <option>CT</option>
+                  <option>Autres</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Montant (€)</label>
+                <input type="number" id="op-montant" placeholder="0">
+              </div>
+              <div class="form-group">
+                <label>Description</label>
+                <input type="text" id="op-desc" placeholder="Description...">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Date</label>
+                <input type="date" id="op-date">
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="ajouterOperation()">+ Enregistrer</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Répartition dépenses</div></div>
+          <div class="card-body" id="compta-repartition"></div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-header"><div class="card-title">Historique des opérations</div></div>
+        <div class="card-body" style="padding:0">
+          <table class="data-table">
+            <thead><tr>
+              <th onclick="sortTable('compta','date')" class="sortable">Date <span class="sort-icon" data-col="date">↕</span></th>
+              <th onclick="sortTable('compta','type')" class="sortable">Type <span class="sort-icon" data-col="type">↕</span></th>
+              <th onclick="sortTable('compta','cat')" class="sortable">Catégorie <span class="sort-icon" data-col="cat">↕</span></th>
+              <th>Description</th>
+              <th onclick="sortTable('compta','montant')" class="sortable">Montant <span class="sort-icon" data-col="montant">↕</span></th>
+            </tr></thead>
+            <tbody id="compta-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ PUB ═══ -->
+    <div id="page-pub" class="page">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Nouveau contrat pub</div></div>
+          <div class="card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Annonceur</label>
+                <input type="text" id="pub-annonceur" placeholder="Nom de l'annonceur">
+              </div>
+              <div class="form-group">
+                <label>Montant / mois (€)</label>
+                <input type="number" id="pub-montant" placeholder="0">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Bus concerné</label>
+                <select id="pub-bus"></select>
+              </div>
+              <div class="form-group">
+                <label>Durée (mois)</label>
+                <input type="number" id="pub-duree" value="12" min="1">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Date début</label>
+                <input type="date" id="pub-debut">
+              </div>
+              <div class="form-group">
+                <label>Type</label>
+                <select id="pub-type-contrat">
+                  <option>Habillage total</option>
+                  <option>Bandeaux latéraux</option>
+                  <option>Arrière</option>
+                  <option>Intérieur</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="ajouterContratPub()">+ Ajouter contrat</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Revenus pub</div></div>
+          <div class="card-body">
+            <div class="stat-card blue" style="margin-bottom:10px">
+              <div class="stat-label">Recette mensuelle pub</div>
+              <div class="stat-value" id="pub-total-mensuel" style="font-size:22px">0 €</div>
+            </div>
+            <div id="pub-par-bus"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-header">
+          <div class="card-title">Contrats actifs</div>
+          <button class="btn btn-danger btn-sm" onclick="supprimerTousContracts()">Supprimer tous</button>
+        </div>
+        <div class="card-body" style="padding:0">
+          <table class="data-table">
+            <thead><tr><th>Annonceur</th><th>Bus</th><th>Type</th><th>Montant/mois</th><th>Durée</th><th>Fin</th><th>Statut</th><th>Actions</th></tr></thead>
+            <tbody id="pub-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ ACHATS ═══ -->
+    <div id="page-achats" class="page">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">➕ Enregistrer un achat</div></div>
+          <div class="card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label>ID jeu</label>
+                <input type="number" id="achat-id" placeholder="91346">
+              </div>
+              <div class="form-group">
+                <label>Prix d'achat (€)</label>
+                <input type="number" id="achat-prix" placeholder="115000">
+              </div>
+              <div class="form-group">
+                <label>KM au compteur</label>
+                <input type="number" id="achat-km" placeholder="0">
+              </div>
+            </div>
+            <div class="alert-box info" style="margin-bottom:12px;font-size:11px">
+              💡 Une fois importé, le bus.csv mettra à jour automatiquement le modèle et les autres infos dans le parc.
+            </div>
+            <button class="btn btn-success" onclick="ajouterAchatManuel()">+ Enregistrer</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">📊 Résumé achats</div></div>
+          <div class="card-body" id="achats-resume"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <div class="card-header">
+          <div class="card-title">Log des achats</div>
+          <span class="badge badge-blue" id="achats-count-badge">0 achats</span>
+        </div>
+        <div class="card-body" style="padding:0">
+          <table class="data-table">
+            <thead><tr><th>ID jeu</th><th>Prix</th><th>KM départ</th><th>Date</th><th></th></tr></thead>
+            <tbody id="achats-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ GASOIL ═══ -->
+    <div id="page-gasoil" class="page">
+      <div class="stat-cards">
+        <div class="stat-card blue">
+          <div class="stat-label">Niveau citerne actuel</div>
+          <div class="stat-value" id="conso-niveau">0 L</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-label">Conso aujourd'hui</div>
+          <div class="stat-value" id="conso-jour">0 L</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-label">Dernier plein citerne</div>
+          <div class="stat-value" id="conso-dernier-plein" style="font-size:14px">—</div>
+        </div>
+        <div class="stat-card yellow">
+          <div class="stat-label">Conso moy./bus/j</div>
+          <div class="stat-value" id="conso-moy">0 L</div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">⛽ Nouveau plein citerne</div></div>
+          <div class="card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Volume (L)</label>
+                <input type="number" id="plein-volume" placeholder="5000">
+              </div>
+              <div class="form-group">
+                <label>Prix par litre (€)</label>
+                <input type="number" id="plein-prix" step="0.001" placeholder="1.42">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Date</label>
+                <input type="date" id="plein-date">
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="enregistrerPlein()">⛽ Enregistrer le plein</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Consommation journalière</div></div>
+          <div class="card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Bus (sélection)</label>
+                <select id="conso-bus"></select>
+              </div>
+              <div class="form-group">
+                <label>Litres consommés</label>
+                <input type="number" id="conso-litres" placeholder="0">
+              </div>
+            </div>
+            <button class="btn btn-warning" onclick="enregistrerConso()">Enregistrer conso</button>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-header"><div class="card-title">Historique pleins citerne</div></div>
+        <div class="card-body" style="padding:0">
+          <table class="data-table">
+            <thead><tr><th>Date</th><th>Volume (L)</th><th>Prix/L</th><th>Coût total</th><th>Niveau avant</th></tr></thead>
+            <tbody id="gasoil-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ CONFIG ═══ -->
+    <div id="page-config" class="page">
+      <div class="grid-2">
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">⚙️ Paramètres financiers</div></div>
+          <div class="card-body">
+            <div class="form-group" style="margin-bottom:16px">
+              <label style="display:block;margin-bottom:6px;color:var(--text2)">Argent de départ (€)</label>
+              <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Montant initial de ton compte avant tout import compta. Le solde affiché sera : argent de départ + recettes − dépenses.</p>
+              <div style="display:flex;gap:8px;align-items:center">
+                <input type="number" id="cfg-argent-depart" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 10px;font-size:14px" placeholder="Ex: 5000000">
+                <button class="btn btn-primary" onclick="sauvegarderConfig()">✓ Enregistrer</button>
+              </div>
+              <div style="margin-top:10px;font-size:12px;color:var(--text2)">Valeur actuelle : <b id="cfg-argent-actuel" style="color:var(--green)">0 €</b></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">📊 Résumé de la base</div></div>
+          <div class="card-body" id="cfg-resume"></div>
+        </div>
+
+      </div>
+
+      <div class="card" style="margin-top:14px;border-color:rgba(239,68,68,0.3)">
+        <div class="card-header" style="border-bottom-color:rgba(239,68,68,0.2)">
+          <div class="card-title" style="color:var(--red)">⚠️ Zone dangereuse</div>
+        </div>
+        <div class="card-body">
+          <p style="color:var(--text2);font-size:12px;margin-bottom:16px">Ces actions sont irréversibles. Toutes les données importées seront perdues définitivement.</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn" onclick="resetSection('bus')" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:var(--red)">🚍 Vider le parc</button>
+            <button class="btn" onclick="resetSection('compta')" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:var(--red)">💰 Vider la compta</button>
+            <button class="btn" onclick="resetSection('personnel')" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:var(--red)">👤 Vider le personnel</button>
+            <button class="btn" onclick="resetSection('statsLignes')" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:var(--red)">📊 Vider les stats</button>
+            <button class="btn" onclick="resetSection('affectations')" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:var(--red)">📋 Vider les affectations</button>
+          </div>
+          <div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(239,68,68,0.2)">
+            <button class="btn" onclick="resetTotal()" style="background:rgba(239,68,68,0.15);border:1px solid var(--red);color:var(--red);font-weight:700;padding:10px 20px">
+              🗑 RÉINITIALISATION COMPLÈTE — Tout effacer
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ═══════════════════════════════════════════ MODALS ═══ -->
+
+<!-- Modal Ajouter Bus -->
+<div class="modal-overlay" id="modal-add-bus">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Ajouter un bus</div>
+      <div class="modal-close" onclick="closeModal('modal-add-bus')">✕</div>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Modèle / Nom</label>
+          <input type="text" id="new-bus-nom" placeholder="Ex: STD-B-001 ou Citaro">
+        </div>
+        <div class="form-group">
+          <label>ID jeu</label>
+          <input type="number" id="new-bus-id" placeholder="Ex: 91346">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Type</label>
+          <select id="new-bus-type">
+            <option value="MIN">Minibus (MIN)</option>
+            <option value="MID">Midibus (MID)</option>
+            <option value="STD" selected>Standard (STD)</option>
+            <option value="ART">Articulé (ART)</option>
+            <option value="CAR">Car (CAR)</option>
+            <option value="TRAM">Tram (TRAM)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Kilométrage</label>
+          <input type="number" id="new-bus-km" value="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Statut initial</label>
+          <select id="new-bus-statut">
+            <option value="En service">En service</option>
+            <option value="Indispo">Indisponible</option>
+            <option value="En révision">En révision</option>
+            <option value="Nouveau">Nouveau</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Prochain CT</label>
+          <input type="date" id="new-bus-ct">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Capacité (places)</label>
+          <input type="number" id="new-bus-capa" value="60">
+        </div>
+        <div class="form-group">
+          <label>Motorisation</label>
+          <select id="new-bus-motorisation">
+            <option>Diesel</option>
+            <option>Hybride</option>
+            <option>Électrique</option>
+            <option>GNV</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-bus')">Annuler</button>
+      <button class="btn btn-primary" onclick="ajouterBus()">+ Ajouter au parc</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ MODAL MAJ CSV ═══════════════════════ -->
+<div class="modal-overlay" id="modal-maj-csv">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-header">
+      <div class="modal-title">📥 Mise à jour via CSV</div>
+      <div class="modal-close" onclick="closeModal('modal-maj-csv')">✕</div>
+    </div>
+    <div class="modal-body">
+      <!-- Onglets type CSV -->
+      <div class="tabs" style="margin-bottom:16px" id="csv-type-tabs">
+        <div class="tab active" onclick="selectCsvType(this,'bus')">🚍 Parc Bus</div>
+        <div class="tab" onclick="selectCsvType(this,'affects')">📋 Affectations</div>
+        <div class="tab" onclick="selectCsvType(this,'stats')">📊 Stats Lignes</div>
+        <div class="tab" onclick="selectCsvType(this,'salaries')">👤 Personnels</div>
+        <div class="tab" onclick="selectCsvType(this,'compta')">💰 Comptabilité</div>
+      </div>
+
+      <!-- Info selon type -->
+      <div id="csv-type-info" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px;margin-bottom:12px;font-size:11px;color:var(--text3)"></div>
+
+      <!-- Zone de drop / upload -->
+      <div id="csv-dropzone" onclick="document.getElementById('csv-file-input').click()"
+        style="border:2px dashed var(--border);border-radius:8px;padding:28px;text-align:center;cursor:pointer;transition:.2s;margin-bottom:12px"
+        ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
+        ondragleave="this.style.borderColor='var(--border)'"
+        ondrop="handleCsvDrop(event)">
+        <div style="font-size:28px;margin-bottom:8px">📂</div>
+        <div style="color:var(--text2);font-size:13px">Glisse ton fichier CSV ici</div>
+        <div style="color:var(--text3);font-size:11px;margin-top:4px">ou clique pour choisir le fichier</div>
+        <input type="file" id="csv-file-input" accept=".csv,.txt" style="display:none" onchange="handleCsvFile(this)">
+      </div>
+
+      <!-- Ou coller texte -->
+      <details style="margin-bottom:12px">
+        <summary style="cursor:pointer;color:var(--text2);font-size:11px;margin-bottom:6px">▶ Ou coller le contenu manuellement</summary>
+        <textarea id="csv-paste-text" style="width:100%;height:120px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:8px;resize:vertical;outline:none;margin-top:8px" placeholder="Colle ici le contenu du CSV..."></textarea>
+      </details>
+
+      <!-- Résultat preview -->
+      <div id="csv-preview-zone" style="display:none">
+        <div id="csv-preview-label" style="font-size:12px;margin-bottom:8px;padding:8px 10px;border-radius:6px"></div>
+        <div id="csv-preview-list" style="max-height:180px;overflow-y:auto;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px;font-size:11px;font-family:'JetBrains Mono',monospace"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="btn-ext-fetch" onclick="fetchViaExtension()" style="display:none;background:rgba(124,58,237,0.15);border-color:var(--accent3);color:var(--accent3)">🦊 Récupérer via Extension</button>
+      <button class="btn btn-ghost" onclick="csvPreview()">👁 Prévisualiser</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-maj-csv')">Annuler</button>
+      <button class="btn btn-primary" id="csv-import-btn" onclick="csvImporter()">✓ Importer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Edit Bus -->
+<div class="modal-overlay" id="modal-edit-bus">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Modifier le bus</div>
+      <div class="modal-close" onclick="closeModal('modal-edit-bus')">✕</div>
+    </div>
+    <div class="modal-body" id="modal-edit-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-edit-bus')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveEditBus()">✓ Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  ÉTAT GLOBAL
+// ═══════════════════════════════════════════════════════
+let state = loadState() || {
+  bus: [],
+  affectations: [],
+  maintenance: [],
+  ct: [],
+  personnel: [],
+  lignes: [],
+  statsLignes: [],
+  achats: [],
+  abribus: [],
+  contratsPub: [],
+  compta: [],
+  gasoil: [],
+  journal: [],
+  conso: { niveau: 5000, moy: 0 },
+  config: { argentDepart: 0 },
+  prixKm: {}
+};
+if (!state.config) state.config = { argentDepart: 0 };
+if (!state.statsLignes) state.statsLignes = [];
+// Pré-charger les données historiques prix/km si pas encore dans le state
+if (!state.prixKm || Object.keys(state.prixKm).length === 0) {
+  state.prixKm = {};
+  Object.entries(PRIX_KM_INIT).forEach(([id, data]) => {
+    state.prixKm[id] = data;
+  });
+  saveState();
+}
+
+function loadState() {
+  try { return JSON.parse(localStorage.getItem('tm_state')); } catch(e) { return null; }
+}
+function saveState() {
+  try { localStorage.setItem('tm_state', JSON.stringify(state)); } catch(e) {}
+}
+function resetTotal() {
+  if (!confirm('⚠️ Réinitialisation complète !\n\nToutes les données seront effacées définitivement :\n• Parc de bus\n• Affectations\n• Personnel\n• Comptabilité\n• Stats lignes\n• Maintenance\n• Tout le reste\n\nContinuer ?')) return;
+  if (!confirm('Dernière confirmation — cette action est irréversible.')) return;
+  // Supprimer toutes les clés liées à TM
+  ['tm_state','tm_ext_present','tm_ext_request'].forEach(k => localStorage.removeItem(k));
+  ['bus','affects','stats','salaries','compta'].forEach(t => localStorage.removeItem('tm_ext_csv_' + t));
+  // Recharger la page pour repartir de zéro
+  location.reload();
+}
+
+
+// Pas de données de démo — état vide par défaut
+// Utilise le bouton "MAJ via CSV" pour importer tes données réelles
+
+
+let currentParcTypeFilter = 'all';
+let editBusId = null;
+let parcView = 'compact'; // DOIT être déclaré ici, avant tout appel à renderParc
+
+// ═══════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════
+function nav(el) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  const page = el.dataset.page;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  const titles = { dashboard:'Tableau de bord', alertes:'Alertes', parc:'Gestion du parc',
+    affectations:'Affectations', maintenance:'Maintenance & CT', abribus:'Équipement Abribus',
+    personnel:'Personnel & FCO', lignes:'Lignes & Statistiques', compta:'Comptabilité',
+    pub:'Contrats Publicitaires', achats:'Achats de bus', gasoil:'Gasoil & Consommation', config:'Configuration' };
+  document.getElementById('topbar-title').textContent = titles[page] || page;
+  renderPage(page);
+}
+
+function renderPage(page) {
+  const r = { dashboard: renderDashboard, alertes: renderAlertes, parc: renderParc,
+    affectations: renderAffectations, maintenance: renderMaintenance, abribus: renderAbribus,
+    personnel: renderPersonnel, lignes: renderLignes, compta: renderCompta,
+    pub: renderPub, achats: renderAchats, gasoil: renderGasoil, config: renderConfig };
+  if (r[page]) r[page]();
+}
+
+// ═══════════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════════
+function fmt(n) { return Number(n).toLocaleString('fr-FR') + ' €'; }
+function fmtNum(n) { return Number(n).toLocaleString('fr-FR'); }
+function today() { return new Date().toISOString().slice(0,10); }
+function toastMsg(msg, type='info') {
+  const t = document.getElementById('toast-container');
+  const d = document.createElement('div');
+  d.className = 'toast ' + type;
+  d.textContent = msg;
+  t.appendChild(d);
+  setTimeout(() => d.remove(), 3000);
+}
+function journalLog(text, type='info') {
+  state.journal.unshift({ date: today(), text, type });
+  if (state.journal.length > 50) state.journal.pop();
+  saveState();
+}
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function getStatusBadge(s) {
+  const m = { 'En service': 'badge-green', 'En révision': 'badge-yellow', 'Indispo': 'badge-gray',
+    'Nouveau': 'badge-blue', 'CT urgent': 'badge-red', 'Rénovation': 'badge-orange' };
+  return `<span class="badge ${m[s]||'badge-gray'}">${s}</span>`;
+}
+function getTypeBadge(t) {
+  const m = { MIN:'blue', MID:'purple', STD:'green', ART:'yellow', CAR:'orange', TRAM:'red' };
+  return `<span class="badge badge-${m[t]||'gray'}">${t}</span>`;
+}
+function ctStatus(dateStr) {
+  if (!dateStr) return '<span class="badge badge-gray">N/A</span>';
+  const d = new Date(dateStr), now = new Date();
+  const diff = Math.round((d - now) / (1000*60*60*24));
+  if (diff < 0) return `<span class="badge badge-red glow">EXPIRÉ</span>`;
+  if (diff < 30) return `<span class="badge badge-red">J-${diff}</span>`;
+  if (diff < 90) return `<span class="badge badge-yellow">J-${diff}</span>`;
+  return `<span class="badge badge-green">J-${diff}</span>`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════════════════
+function renderDashboard() {
+  const enService = state.bus.filter(b => b.statut === 'En service').length;
+  const enRev = state.bus.filter(b => b.statut === 'En révision').length;
+  const ctUrgent = state.bus.filter(b => {
+    if (!b.ct) return false;
+    const d = new Date(b.ct), diff = Math.round((d - new Date()) / (1000*60*60*24));
+    return diff < 30;
+  }).length;
+  const fcoReq = state.personnel.filter(p => p.statut === 'FCO requise').length;
+  const argentDepart = (state.config && state.config.argentDepart) || 0;
+  const mouvements = state.compta.reduce((a,o) => o.type === 'recette' ? a + o.montant : a - o.montant, 0);
+  const solde = argentDepart + mouvements;
+
+  document.getElementById('stat-total').textContent = state.bus.length;
+  document.getElementById('stat-service').textContent = enService;
+  document.getElementById('stat-revision').textContent = enRev;
+  document.getElementById('stat-ct').textContent = ctUrgent;
+  document.getElementById('stat-fco').textContent = fcoReq;
+  document.getElementById('stat-solde').textContent = fmt(solde);
+
+  // Solde dans la topbar
+  const topbarSolde = document.getElementById('topbar-solde-val');
+  if (topbarSolde) {
+    topbarSolde.textContent = fmt(solde);
+    topbarSolde.style.color = solde >= 0 ? 'var(--green)' : 'var(--red)';
+  }
+
+  // Répartition
+  const types = {};
+  state.bus.forEach(b => { types[b.type] = (types[b.type]||0) + 1; });
+  const colors = { MIN:'var(--accent)', MID:'var(--accent3)', STD:'var(--green)', ART:'var(--yellow)', CAR:'var(--orange)', TRAM:'var(--red)' };
+  const tNames = { MIN:'Minibus', MID:'Midibus', STD:'Standard', ART:'Articulé', CAR:'Car', TRAM:'Tram' };
+  let rep = '';
+  Object.entries(types).forEach(([t, n]) => {
+    const pct = Math.round(n / state.bus.length * 100);
+    rep += `<div class="gauge-row">
+      <div class="gauge-label">${tNames[t]||t}</div>
+      <div class="gauge-bar"><div class="gauge-fill" style="width:${pct}%;background:${colors[t]||'var(--accent)'}"></div></div>
+      <div class="gauge-val">${n} (${pct}%)</div>
+    </div>`;
+  });
+  document.getElementById('repartition-parc').innerHTML = rep || '<div style="color:var(--text3)">Aucun bus.</div>';
+
+  // Alertes recap — seulement ce qui se passe AUJOURD'HUI
+  let alerts = '';
+  const today0 = today();
+  state.bus.forEach(b => {
+    // CT qui expire aujourd'hui ou déjà expiré
+    if (b.ct) {
+      const diff = Math.round((new Date(b.ct) - new Date()) / (1000*60*60*24));
+      if (diff <= 0) alerts += `<div class="alert-box danger" style="margin-bottom:6px;padding:7px 10px">
+        🔍 <b>${b.nom}</b> — CT ${diff < 0 ? 'expiré depuis '+Math.abs(diff)+' j' : 'expire aujourd\'hui'}</div>`;
+    }
+    // Révision qui commence/finit aujourd'hui
+    if (b.revisionDate === today0) alerts += `<div class="alert-box warning" style="margin-bottom:6px;padding:7px 10px">
+      🔧 <b>${b.nom}</b> — Révision prévue aujourd'hui</div>`;
+  });
+  if (!alerts) alerts = '<div class="alert-box success">✅ Aucune alerte pour aujourd\'hui</div>';
+  document.getElementById('alertes-recap').innerHTML = alerts;
+
+  // Last achats
+  const tbody = document.getElementById('last-achats-body');
+  tbody.innerHTML = state.achats.slice(-5).reverse().map(a => `<tr>
+    <td>${a.modele}</td>
+    <td class="mono" style="color:var(--red)">${fmt(a.prix)}</td>
+    <td class="mono">${fmtNum(a.km)} km</td>
+    <td class="mono">${a.date}</td>
+  </tr>`).join('') || '<tr><td colspan="4" style="color:var(--text3);text-align:center">Aucun achat</td></tr>';
+
+  // Journal
+  const tl = document.getElementById('journal-timeline');
+  tl.innerHTML = state.journal.slice(0,8).map(j => `<div class="timeline-item ${j.type}">
+    <div class="timeline-date">${j.date}</div>
+    <div class="timeline-text">${j.text}</div>
+  </div>`).join('') || '<div style="color:var(--text3)">Aucune activité.</div>';
+
+  // Badge alertes — cohérent avec la page alertes (seuil 5 jours)
+  const SEUIL = 5;
+  const ctBadge  = state.bus.filter(b => b.ct && Math.round((new Date(b.ct) - new Date()) / (1000*60*60*24)) <= SEUIL).length;
+  const revBadge = state.bus.filter(b => b.revisionDate && Math.round((new Date(b.revisionDate) - new Date()) / (1000*60*60*24)) <= SEUIL).length;
+  const fcoBadge = state.personnel.filter(p => p.statut === 'FCO requise' || p.statut === 'FCO bientôt').length;
+  const badgeTotal = ctBadge + revBadge + fcoBadge;
+  document.getElementById('alert-badge').textContent = badgeTotal;
+  document.getElementById('alert-badge').style.display = badgeTotal > 0 ? '' : 'none';
+}
+
+// ═══════════════════════════════════════════════════════
+//  ALERTES
+// ═══════════════════════════════════════════════════════
+function renderAlertes() {
+  const SEUIL_JOURS = 5;
+  let html = `<div class="section-title">CT dans les ${SEUIL_JOURS} prochains jours</div>`;
+
+  const ctAlerts = state.bus.filter(b => {
+    if (!b.ct) return false;
+    const diff = Math.round((new Date(b.ct) - new Date()) / (1000*60*60*24));
+    return diff <= SEUIL_JOURS;
+  }).sort((a,b) => new Date(a.ct) - new Date(b.ct));
+
+  if (ctAlerts.length) {
+    ctAlerts.forEach(b => {
+      const diff = Math.round((new Date(b.ct) - new Date()) / (1000*60*60*24));
+      const label = diff < 0 ? `<b>EXPIRÉ depuis ${Math.abs(diff)} j</b>` : diff === 0 ? "<b>AUJOURD'HUI</b>" : `Dans <b>${diff} j</b> (${b.ct})`;
+      html += `<div class="alert-box ${diff<=0?'danger':'warning'}" style="margin-bottom:8px;display:flex;align-items:center;gap:8px">
+        <span>🔍 <b>${b.nom}</b> — CT le ${b.ct} — ${label}</span>
+        <button class="btn btn-ghost btn-xs" style="margin-left:auto" onclick="ouvrirCTPlanif('${b.nom}')">Planifier</button>
+      </div>`;
+    });
+  } else html += `<div class="alert-box success" style="margin-bottom:8px">✅ Aucun CT dans les ${SEUIL_JOURS} prochains jours.</div>`;
+
+  html += `<div class="section-title" style="margin-top:16px">Révisions dans les ${SEUIL_JOURS} prochains jours</div>`;
+  const revAlerts = state.bus.filter(b => {
+    if (!b.revisionDate) return false;
+    const diff = Math.round((new Date(b.revisionDate) - new Date()) / (1000*60*60*24));
+    return diff <= SEUIL_JOURS;
+  }).sort((a,b) => new Date(a.revisionDate) - new Date(b.revisionDate));
+
+  if (revAlerts.length) {
+    revAlerts.forEach(b => {
+      const diff = Math.round((new Date(b.revisionDate) - new Date()) / (1000*60*60*24));
+      html += `<div class="alert-box warning" style="margin-bottom:8px">
+        🔧 <b>${b.nom}</b> — Révision le ${b.revisionDate} — ${diff<=0?'<b>Aujourd\'hui</b>':'Dans '+diff+' j'}
+      </div>`;
+    });
+  } else html += `<div class="alert-box success" style="margin-bottom:8px">✅ Aucune révision dans les ${SEUIL_JOURS} prochains jours.</div>`;
+
+  html += `<div class="section-title" style="margin-top:16px">FCO conducteurs expirées</div>`;
+  const fcoAlerts = state.personnel.filter(p => p.statut === 'FCO requise' || p.statut === 'FCO bientôt');
+  if (fcoAlerts.length) {
+    fcoAlerts.forEach(p => {
+      html += `<div class="alert-box ${p.statut==='FCO requise'?'danger':'warning'}" style="margin-bottom:8px">
+        🎓 <b>${p.nom}</b> (${p.matricule}) — ${p.statut} — FCO le : ${p.fco||'inconnue'}
+      </div>`;
+    });
+  } else html += '<div class="alert-box success" style="margin-bottom:8px">✅ Toutes les FCO sont à jour.</div>';
+
+  document.getElementById('alertes-list').innerHTML = html;
+  const total = ctAlerts.length + revAlerts.length + fcoAlerts.length;
+  document.getElementById('alert-badge').textContent = total;
+  document.getElementById('alert-badge').style.display = total > 0 ? '' : 'none';
+}
+
+// ═══════════════════════════════════════════════════════
+//  SYSTÈME DE TRI GÉNÉRIQUE
+// ═══════════════════════════════════════════════════════
+const sortState = {};
+
+function sortTable(tableId, col) {
+  if (!sortState[tableId]) sortState[tableId] = { col: null, dir: 'asc' };
+  const s = sortState[tableId];
+  s.dir = (s.col === col && s.dir === 'asc') ? 'desc' : 'asc';
+  s.col = col;
+  // Mettre à jour les icônes
+  const thead = document.querySelector(`#parc-table thead, #page-${tableId} table thead`);
+  if (thead) {
+    thead.querySelectorAll('th').forEach(th => th.classList.remove('sort-asc','sort-desc'));
+    const icon = thead.querySelector(`.sort-icon[data-col="${col}"]`);
+    if (icon) icon.closest('th').classList.add(s.dir === 'asc' ? 'sort-asc' : 'sort-desc');
+  }
+  const renders = { parc: renderParc, personnel: renderPersonnel, compta: renderCompta };
+  if (renders[tableId]) renders[tableId]();
+}
+
+function sortData(arr, tableId, defaultCol) {
+  const s = sortState[tableId];
+  const col = (s && s.col) || defaultCol;
+  const dir = (s && s.col) ? s.dir : 'asc';
+  return [...arr].sort((a, b) => {
+    let va = a[col] ?? '', vb = b[col] ?? '';
+    if (!isNaN(Number(va)) && !isNaN(Number(vb)) && va !== '') {
+      return dir === 'asc' ? Number(va) - Number(vb) : Number(vb) - Number(va);
+    }
+    const cmp = String(va).localeCompare(String(vb), 'fr', { numeric: true });
+    return dir === 'asc' ? cmp : -cmp;
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  PARC
+// ═══════════════════════════════════════════════════════
+const STATUS_OPTIONS = ['En service','En révision','Indispo','Nouveau','CT urgent','Musée','Réserve'];
+const STATUS_CLASS = {
+  'En service':  'status-en-service',
+  'En révision': 'status-en-revision',
+  'Indispo':     'status-indispo',
+  'Nouveau':     'status-nouveau',
+  'CT urgent':   'status-ct-urgent',
+  'Musée':       'status-musee',
+  'Réserve':     'status-indispo'
+};
+
+function ouvrirCTPlanif(nomBus) {
+  // Naviguer vers maintenance et pré-remplir le bus CT
+  nav(document.querySelector('[data-page=maintenance]'));
+  setTimeout(() => {
+    const sel = document.getElementById('ct-bus');
+    if (sel) {
+      for (let i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === nomBus) { sel.selectedIndex = i; break; }
+      }
+    }
+  }, 100);
+}
+
+function setParcView(el, view) {
+  parcView = view;
+  document.querySelectorAll('#parc-view-tabs .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('parc-view-compact').style.display = view === 'compact' ? '' : 'none';
+  document.getElementById('parc-view-full').style.display    = view === 'full'    ? '' : 'none';
+  renderParc();
+}
+
+function renderParc() {
+  const search = (document.getElementById('search-parc').value||'').toLowerCase();
+  let filtered = state.bus.filter(b => {
+    const matchType   = currentParcTypeFilter === 'all' || b.type === currentParcTypeFilter;
+    const matchSearch = !search || b.nom.toLowerCase().includes(search)
+      || String(b.idJeu||'').includes(search)
+      || (b.marque||'').toLowerCase().includes(search)
+      || (b.modele||'').toLowerCase().includes(search)
+      || (b.immat||'').toLowerCase().includes(search);
+    return matchType && matchSearch;
+  });
+  filtered = sortData(filtered, 'parc', 'nom');
+
+  const statusOptions = ['En service','En révision','Indispo','Nouveau','CT urgent','Musée','Réserve'];
+
+  if (parcView === 'compact') {
+    const tbody = document.getElementById('parc-tbody');
+    tbody.innerHTML = filtered.map(b => {
+      const cls  = STATUS_CLASS[b.statut] || 'status-indispo';
+      const opts = statusOptions.map(s => `<option value="${s}"${b.statut===s?' selected':''}>${s}</option>`).join('');
+      const ctDiff = b.ct ? Math.round((new Date(b.ct) - new Date()) / (1000*60*60*24)) : null;
+      const ctStyle = ctDiff !== null && ctDiff <= 0 ? 'color:var(--red)' : ctDiff !== null && ctDiff <= 5 ? 'color:var(--orange)' : '';
+      return `<tr>
+        <td class="mono" style="color:var(--text3);font-size:11px">${b.idJeu||'—'}</td>
+        <td><b>${b.nom}</b></td>
+        <td style="font-size:10px;color:var(--text3)">${b.marque||''} ${b.modele||''}</td>
+        <td class="mono" style="font-size:11px">${b.anneMES ? b.anneMES.substring(0,4) : '—'}</td>
+        <td class="mono" style="font-size:11px;${b.revisionDate&&b.revisionDate<=today()?'color:var(--orange)':''}">${b.revisionDate||'—'}</td>
+        <td class="mono" style="font-size:11px;${ctStyle}">${b.ct||'—'}</td>
+        <td class="mono">${b.capa||'—'}</td>
+        <td style="font-size:11px">${b.energie||'—'}</td>
+        <td class="mono" style="color:var(--text2)">${b.prixAchat ? fmt(b.prixAchat) : '—'}</td>
+        <td class="mono" style="color:var(--text3)">${b.kmDepart ? fmtNum(b.kmDepart) : '—'}</td>
+        <td class="mono">${fmtNum(b.km)}</td>
+        <td class="mono" style="color:${(b.etatTech||0)>=80?'var(--green)':(b.etatTech||0)>=60?'var(--yellow)':'var(--red)'}">${b.etatTech||'—'}</td>
+        <td class="mono" style="color:${(b.etatInt||0)>=80?'var(--green)':(b.etatInt||0)>=60?'var(--yellow)':'var(--red)'}">${b.etatInt||'—'}</td>
+        <td class="mono">${b.diffKm ? fmtNum(b.diffKm) : '—'}</td>
+        <td><select class="status-select ${cls}" onchange="changerStatutBus(${b.id},this.value,this)">${opts}</select></td>
+        <td>
+          <button class="btn btn-ghost btn-xs" onclick="showBusDetail(${b.id})" title="Détail complet">🔍</button>
+          <button class="btn btn-warning btn-xs" onclick="quickRevision(${b.id})" title="Envoyer en révision">🔧</button>
+          <button class="btn btn-danger btn-xs" onclick="retirerBus(${b.id})" title="Retirer du parc">🗑️</button>
+        </td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="16" style="color:var(--text3);text-align:center;padding:20px">Aucun bus — Importe ton bus.csv</td></tr>';
+
+  } else {
+    const yn = v => v ? '<span style="color:var(--green)">✓</span>' : '<span style="color:var(--red);font-size:10px">✗</span>';
+    const tbody = document.getElementById('parc-tbody-full');
+    tbody.innerHTML = filtered.map(b => {
+      const cls  = STATUS_CLASS[b.statut] || 'status-indispo';
+      const opts = statusOptions.map(s => `<option value="${s}"${b.statut===s?' selected':''}>${s}</option>`).join('');
+      const venteOk = b.reventeDate && new Date(b.reventeDate) <= new Date();
+      return `<tr>
+        <td class="mono" style="font-size:10px;color:var(--text3)">${b.idJeu||'—'}</td>
+        <td style="font-size:11px"><b>${b.nom}</b></td>
+        <td style="font-size:10px;color:var(--text2)">${b.marque||''} ${b.modele||''}</td>
+        <td>${getTypeBadge(b.type)}</td>
+        <td style="font-size:11px">${b.energie||'—'}</td>
+        <td class="mono">${b.capa||'—'}</td>
+        <td class="mono">${fmtNum(b.km)}</td>
+        <td class="mono" style="color:var(--text3)">${b.kmDepart?fmtNum(b.kmDepart):'—'}</td>
+        <td class="mono">${b.diffKm?fmtNum(b.diffKm):'—'}</td>
+        <td class="mono" style="font-size:10px">${b.ct||'—'}</td>
+        <td class="mono" style="font-size:10px">${b.revisionDate||'—'}</td>
+        <td class="mono" style="color:${(b.etatTech||0)>=80?'var(--green)':(b.etatTech||0)>=60?'var(--yellow)':'var(--red)'}">${b.etatTech||'—'}</td>
+        <td class="mono" style="color:${(b.etatInt||0)>=80?'var(--green)':(b.etatInt||0)>=60?'var(--yellow)':'var(--red)'}">${b.etatInt||'—'}</td>
+        <td>${yn(b.balisePrio)}</td><td>${yn(b.selfService)}</td><td>${yn(b.boutonsArret)}</td>
+        <td>${yn(b.camera)}</td>
+        <td style="font-size:9px">${b.pubArr||'—'}</td><td style="font-size:9px">${b.pubAv||'—'}</td><td style="font-size:9px">${b.pubLat||'—'}</td>
+        <td>${yn(b.rackBagages)}</td><td>${yn(b.rackVelos)}</td><td>${yn(b.ethylotest)}</td>
+        <td>${yn(b.radio)}</td><td>${yn(b.usb)}</td><td>${yn(b.wifi)}</td>
+        <td>${yn(b.bandeau)}</td><td>${yn(b.ecranTFT)}</td><td>${yn(b.hautParleurs)}</td>
+        <td>${yn(b.telephone)}</td><td>${yn(b.pupitre)}</td>
+        <td style="font-size:10px">${b.billetique||'—'}</td>
+        <td style="font-size:10px;color:${venteOk?'var(--green)':'var(--text3)'}">${b.reventeDate||'—'}${venteOk?' ✓':''}</td>
+        <td><select class="status-select ${cls}" style="font-size:10px" onchange="changerStatutBus(${b.id},this.value,this)">${opts}</select></td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="34" style="color:var(--text3);text-align:center;padding:20px">Aucun bus</td></tr>';
+  }
+}
+
+function showBusDetail(id) {
+  const b = state.bus.find(x => x.id === id);
+  if (!b) return;
+  const yn = v => v ? '<span style="color:var(--green)">✓ Oui</span>' : '<span style="color:var(--red)">✗ Non</span>';
+  const row = (label, val) => val !== undefined && val !== '' && val !== null
+    ? `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)">
+        <span style="color:var(--text3);font-size:11px">${label}</span>
+        <span style="font-size:12px;font-weight:500;text-align:right;max-width:60%">${val}</span>
+       </div>` : '';
+  const venteOk = b.reventeDate && new Date(b.reventeDate) <= new Date();
+  const kmParcourus = (b.km||0) - (b.kmDepart||0);
+  const coefUsure   = b.prixAchat && kmParcourus > 0 ? (b.prixAchat / kmParcourus).toFixed(2) : null;
+
+  document.getElementById('bus-detail-title').textContent = `🚍 ${b.nom} — ${b.marque||''} ${b.modele||''}`;
+  document.getElementById('bus-detail-body').innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px">
+      <div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:8px;font-weight:700">Identification</div>
+        ${row('ID Jeu', b.idJeu)} ${row('Numéro de parc', `<b>${b.nom}</b>`)} ${row('Immatriculation', b.immat)}
+        ${row('Marque', b.marque)} ${row('Modèle', b.modele)} ${row('Type véhicule', b.typeVehicule||b.type)}
+        ${row('Énergie', b.energie)} ${row('Conso.', b.conso ? b.conso+' L/100km' : '')}
+        ${row('Places', b.capa)} ${row('Dépôt', b.depot)} ${row('Patrimoine', b.patrimoine)}
+        ${row('BHNS', yn(b.bhns))} ${row('Ligne Express', yn(b.le))}
+      </div>
+      <div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:8px;font-weight:700">Achat & Kilométrage</div>
+        ${row('Prix d\'achat', b.prixAchat ? fmt(b.prixAchat) : '')}
+        ${row('KM au départ', b.kmDepart ? fmtNum(b.kmDepart)+' km' : '')}
+        ${row('KM actuel', fmtNum(b.km)+' km')}
+        ${row('KM parcourus', fmtNum(kmParcourus)+' km')}
+        ${coefUsure ? row('Coût au km', coefUsure+' €/km') : ''}
+        ${row('Mise en service', b.anneMES)} ${row('Révision prévue', b.revisionDate)}
+        ${row('Prochain CT', b.ct)} ${row('Garantie', b.garantie)}
+        ${row('Vente possible le', b.reventeDate ? b.reventeDate+(venteOk?' <b style="color:var(--green)">✅ DISPONIBLE</b>':' ⏳') : '')}
+        ${row('Argus', b.argus ? fmt(b.argus) : '')}
+      </div>
+      <div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:8px;font-weight:700">État & Équipement</div>
+        ${row('Statut', `<b>${b.statut}</b>`)} ${row('État technique', b.etatTech ? b.etatTech+'/100' : '')}
+        ${row('État intérieur', b.etatInt ? b.etatInt+'/100' : '')} ${row('Propreté', b.proprete ? b.proprete+'/100' : '')}
+        ${row('Girouette avant', b.girAvant)} ${row('Girouette latérale', b.girLat)} ${row('Girouette arrière', b.girArr)}
+        ${row('Climatisation/Air', b.airCond)} ${row('Nb portes', b.nbPortes)} ${row('Type portes', b.typePortes)}
+        ${row('Billettique', b.billetique)} ${row('Agenouilleur', yn(b.agenouillement))}
+        ${row('Emplacement UFR', yn(b.ufr))} ${row('Plateforme rétractable', yn(b.plateformeRet))}
+      </div>
+      <div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:8px;font-weight:700">Options</div>
+        ${row('Balise priorité feu', yn(b.balisePrio))} ${row('Self-Service', yn(b.selfService))}
+        ${row('Boutons arrêt supp.', yn(b.boutonsArret))} ${row('Caméra vidéo', yn(b.camera))}
+        ${row('Pub arrière', b.pubArr||'Non')} ${row('Pub avant', b.pubAv||'Non')} ${row('Pub latéral', b.pubLat||'Non')}
+        ${row('Rack à bagages', yn(b.rackBagages))} ${row('Rack à vélos', yn(b.rackVelos))}
+        ${row('Ethylotest', yn(b.ethylotest))} ${row('Radio FM', yn(b.radio))}
+        ${row('Ports USB', yn(b.usb))} ${row('WiFi', yn(b.wifi))}
+        ${row('Bandeau lumineux', yn(b.bandeau))} ${row('Écran TFT', yn(b.ecranTFT))}
+        ${row('Haut-parleurs', yn(b.hautParleurs))} ${row('Téléphone Radio', yn(b.telephone))}
+        ${row('Pupitre conducteur', yn(b.pupitre))}
+        ${row('Précâblage Self-S.', yn(b.precablage))} ${row('Vitre anti-agression', yn(b.vitreAnti))}
+        ${row('Vitre teintée', yn(b.vitreTein))} ${row('Baies basses', yn(b.baiesBasses))}
+        ${row('Pavillon Lumibus', yn(b.lumibus))}
+      </div>
+    </div>`;
+  document.getElementById('bus-detail-panel').style.display = '';
+  document.getElementById('bus-detail-panel').scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+function changerStatutBus(id, newStatut, sel) {
+  const b = state.bus.find(x => x.id === id);
+  if (!b) return;
+  b.statut = newStatut;
+  sel.className = 'status-select ' + (STATUS_CLASS[newStatut]||'status-indispo');
+  journalLog(`${b.nom} → ${newStatut}`, 'info');
+  saveState(); renderDashboard();
+  toastMsg(`${b.nom} : ${newStatut}`, 'info');
+}
+
+function filterParc() { renderParc(); }
+function filterByType(el, type) {
+  document.querySelectorAll('#tabs-parc .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  currentParcTypeFilter = type;
+  renderParc();
+}
+
+function ajouterBus() {
+  const nom = document.getElementById('new-bus-nom').value.trim();
+  if (!nom) { toastMsg('Nom requis', 'error'); return; }
+  const b = {
+    id: Date.now(),
+    nom,
+    idJeu: parseInt(document.getElementById('new-bus-id').value)||null,
+    type: document.getElementById('new-bus-type').value,
+    km: parseInt(document.getElementById('new-bus-km').value)||0,
+    statut: document.getElementById('new-bus-statut').value,
+    ct: document.getElementById('new-bus-ct').value,
+    capa: parseInt(document.getElementById('new-bus-capa').value)||60,
+    motorisation: document.getElementById('new-bus-motorisation').value,
+    revision: null
+  };
+  state.bus.push(b);
+  journalLog(`Bus ${nom} ajouté au parc`, 'ok');
+  saveState();
+  closeModal('modal-add-bus');
+  toastMsg(`${nom} ajouté au parc ✓`, 'success');
+  updateBusSelects();
+  renderParc();
+  renderDashboard();
+}
+
+function editBus(id) {
+  editBusId = id;
+  const b = state.bus.find(x => x.id === id);
+  if (!b) return;
+  document.getElementById('modal-edit-body').innerHTML = `
+    <div class="form-row">
+      <div class="form-group"><label>Modèle / Nom</label><input id="eb-nom" value="${b.nom}"></div>
+      <div class="form-group"><label>KM</label><input type="number" id="eb-km" value="${b.km}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Statut</label>
+        <select id="eb-statut">
+          ${['En service','En révision','Indispo','Nouveau','CT urgent'].map(s=>`<option ${b.statut===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label>Prochain CT</label><input type="date" id="eb-ct" value="${b.ct||''}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Type révision en cours</label>
+        <input id="eb-rev" value="${b.revision||''}" placeholder="Laisser vide si aucune">
+      </div>
+      <div class="form-group"><label>Motorisation</label>
+        <select id="eb-motor">
+          ${['Diesel','Hybride','Électrique','GNV'].map(m=>`<option ${b.motorisation===m?'selected':''}>${m}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+  `;
+  openModal('modal-edit-bus');
+}
+
+function saveEditBus() {
+  const b = state.bus.find(x => x.id === editBusId);
+  if (!b) return;
+  b.nom = document.getElementById('eb-nom').value.trim();
+  b.km = parseInt(document.getElementById('eb-km').value)||b.km;
+  b.statut = document.getElementById('eb-statut').value;
+  b.ct = document.getElementById('eb-ct').value;
+  b.revision = document.getElementById('eb-rev').value.trim() || null;
+  b.motorisation = document.getElementById('eb-motor').value;
+  journalLog(`Bus ${b.nom} mis à jour`, 'info');
+  saveState(); updateBusSelects();
+  closeModal('modal-edit-bus');
+  renderParc();
+  toastMsg(`${b.nom} mis à jour ✓`, 'success');
+}
+
+function retirerBus(id) {
+  const b = state.bus.find(x => x.id === id);
+  if (!b) return;
+  if (!confirm(`Retirer définitivement ${b.nom} du parc ?`)) return;
+  state.bus = state.bus.filter(x => x.id !== id);
+  journalLog(`Bus ${b.nom} retiré du parc`, 'warn');
+  saveState(); updateBusSelects(); renderParc(); renderDashboard();
+  toastMsg(`${b.nom} retiré`, 'info');
+}
+
+function quickRevision(id) {
+  const b = state.bus.find(x => x.id === id);
+  if (!b) return;
+  b.statut = 'En révision';
+  b.revision = 'Révision standard';
+  state.maintenance.push({ id: Date.now(), bus: b.nom, type: 'Révision standard', depuis: today(), duree: 3, cout: 0, statut: 'En cours' });
+  journalLog(`${b.nom} envoyé en révision rapide`, 'warn');
+  saveState(); renderParc();
+  toastMsg(`${b.nom} en révision`, 'info');
+}
+
+// ═══════════════════════════════════════════════════════
+//  IMPORT CSV UNIVERSEL
+// ═══════════════════════════════════════════════════════
+
+let currentCsvType = 'bus';
+let csvRawContent = '';
+
+const CSV_INFO = {
+  bus:      '🚍 <b>bus.csv</b> — Met à jour le parc complet : KM, statut, révision, CT, énergie, modèle. Nouveaux bus ajoutés automatiquement.',
+  affects:  '📋 <b>affects.csv</b> — Importe les affectations bus/lignes par créneau (Semaine/Samedi/Dimanche × Creuse/Pointe/Soir/Nocturne).',
+  stats:    '📊 <b>statslignes.csv</b> — Ajoute les données de fréquentation (tickets, abonnés, gains) par ligne et créneau.',
+  salaries: '👤 <b>salaries.csv</b> — Met à jour le personnel : contrat, poste, salaire, FCO, état, satisfaction.',
+  compta:   '💰 <b>compta.csv</b> — Importe toutes les opérations comptables (dépenses et revenus).'
+};
+
+function selectCsvType(el, type) {
+  currentCsvType = type;
+  document.querySelectorAll('#csv-type-tabs .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('csv-type-info').innerHTML = CSV_INFO[type];
+  document.getElementById('csv-preview-zone').style.display = 'none';
+  document.getElementById('csv-paste-text').value = '';
+  csvRawContent = '';
+  document.getElementById('csv-dropzone').querySelector('div:nth-child(2)').textContent = `Glisse ton fichier ${type}.csv ici`;
+}
+
+function handleCsvDrop(e) {
+  e.preventDefault();
+  document.getElementById('csv-dropzone').style.borderColor = 'var(--border)';
+  const file = e.dataTransfer.files[0];
+  if (file) readCsvFile(file);
+}
+
+function handleCsvFile(input) {
+  const file = input.files[0];
+  if (file) readCsvFile(file);
+}
+
+function readCsvFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    csvRawContent = e.target.result;
+    document.getElementById('csv-paste-text').value = csvRawContent;
+    document.getElementById('csv-dropzone').style.borderColor = 'var(--green)';
+    document.getElementById('csv-dropzone').querySelector('div:nth-child(2)').textContent = `✅ ${file.name} chargé (${file.size > 1024 ? Math.round(file.size/1024)+'KB' : file.size+'B'})`;
+    csvPreview();
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function parseCSV(texte) {
+  const txt = texte.replace(/^\uFEFF/, '').replace(/\r/g, '');
+  const lines = txt.split('\n').filter(l => l.trim());
+  return lines.map(line => {
+    const cols = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { inQ = !inQ; continue; }
+      if (c === ';' && !inQ) { cols.push(cur.trim()); cur = ''; continue; }
+      cur += c;
+    }
+    cols.push(cur.trim());
+    return cols;
+  });
+}
+
+function parseDateFR(d) {
+  if (!d) return '';
+  const p = d.split('/');
+  if (p.length === 3) return `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
+  return d;
+}
+
+// Données prix/km initiales — chargées dans state.prixKm au premier lancement
+const PRIX_KM_INIT = {
+  45347:{prix:60000,km:422562},16931:{prix:68266,km:236441},16929:{prix:68266,km:243800},
+  102311:{prix:76000,km:337855},102312:{prix:76000,km:338058},146653:{prix:103000,km:0},
+  69604:{prix:92167,km:75249},72423:{prix:88139,km:92302},61878:{prix:39500,km:848981},
+  38636:{prix:128092,km:220140},81130:{prix:96000,km:589383},52299:{prix:62500,km:1249342},
+  4605:{prix:104000,km:322287},32076:{prix:73500,km:923453},21386:{prix:79796,km:229258},
+  82274:{prix:101500,km:396519},1848:{prix:116408,km:131423},107491:{prix:136000,km:107491},
+  76173:{prix:136000,km:31702},76174:{prix:136000,km:15483},4755:{prix:261000,km:354502},
+  34907:{prix:145579,km:911643},35262:{prix:72000,km:932159},4758:{prix:82000,km:367547},
+  8755:{prix:142738,km:339479},79212:{prix:140500,km:432711},79213:{prix:184000,km:448174},
+  79626:{prix:184000,km:408994},79627:{prix:184000,km:440273},80277:{prix:184000,km:426945},
+  80278:{prix:184000,km:406143},80601:{prix:184000,km:402644},80602:{prix:184000,km:416905},
+  81092:{prix:184000,km:425663},81365:{prix:184000,km:428589},33196:{prix:184000,km:172934},
+  63941:{prix:160500,km:547646},36314:{prix:105000,km:526496},4756:{prix:87000,km:364432},
+  88355:{prix:142738,km:549529},88359:{prix:102008,km:572375},70072:{prix:110000,km:638846},
+  60858:{prix:110000,km:614306},4757:{prix:106000,km:385427},91870:{prix:137054,km:564442},
+  80974:{prix:105000,km:562417},83043:{prix:114500,km:547476},82577:{prix:105000,km:137977},
+  81954:{prix:224074,km:166794},43553:{prix:224074,km:597716},28616:{prix:135000,km:266238},
+  46159:{prix:140000,km:161383},28615:{prix:140000,km:231037},56067:{prix:140000,km:146187},
+  56066:{prix:144444,km:162648},24164:{prix:141142,km:256190},7138:{prix:159000,km:736273},
+  111094:{prix:100000,km:658694},111095:{prix:106000,km:652463},111766:{prix:106000,km:657964},
+  111767:{prix:106000,km:661996},112066:{prix:106000,km:646600},98147:{prix:106000,km:80724},
+  450:{prix:167000,km:156881},52401:{prix:211013,km:157072},105460:{prix:185500,km:512781},
+  58704:{prix:75500,km:534412},101162:{prix:75500,km:708835},25942:{prix:109400,km:685777},
+  103409:{prix:83000,km:480354},70394:{prix:100000,km:113912},112543:{prix:155500,km:432408},
+  103962:{prix:119600,km:471086},107660:{prix:128712,km:490338},566:{prix:117700,km:70174},
+  27540:{prix:147864,km:228505},78930:{prix:115000,km:124533},2220:{prix:130000,km:653806},
+  2793:{prix:158624,km:18492},121520:{prix:22000,km:62520},7547:{prix:121000,km:320203},
+  59004:{prix:197000,km:260224},129284:{prix:149000,km:260224},13333:{prix:157500,km:260224},
+  13334:{prix:151500,km:260224},23754:{prix:149000,km:50296},3479:{prix:123030,km:438426},
+  164605:{prix:0,km:438426},90938:{prix:0,km:438426},136700:{prix:146000,km:243802},
+  101327:{prix:190000,km:85048},101328:{prix:250000,km:88731},101329:{prix:250000,km:87273},
+  101330:{prix:250000,km:90007},101331:{prix:250000,km:86419},101332:{prix:250000,km:85115},
+  101333:{prix:250000,km:66582},101334:{prix:250000,km:80961},101335:{prix:250000,km:86570},
+  101336:{prix:250000,km:87051},101337:{prix:250000,km:96144},101338:{prix:250000,km:94331},
+  80856:{prix:250000,km:60859},80857:{prix:308539,km:58675},80873:{prix:308539,km:67454},
+  101339:{prix:308539,km:57865},77127:{prix:250000,km:134147},100270:{prix:190000,km:745482},
+  83460:{prix:109000,km:68027},107269:{prix:105000,km:438123},114809:{prix:106000,km:790115},
+  32953:{prix:97000,km:561674},32687:{prix:92000,km:558636},73838:{prix:67478,km:172164},
+  73839:{prix:261000,km:172464},73840:{prix:261000,km:175024},76002:{prix:261000,km:174623},
+  32023:{prix:232937,km:260224},76000:{prix:244000,km:140238},14065:{prix:269339,km:140979},
+  13997:{prix:269339,km:118073},53834:{prix:250000,km:5369},48287:{prix:193000,km:438123},
+  41050:{prix:201500,km:277612},54877:{prix:296000,km:157556},54881:{prix:215000,km:161183},
+  54886:{prix:215000,km:143138},87296:{prix:222000,km:384475},87297:{prix:222000,km:383503},
+  29992:{prix:126000,km:698977},29991:{prix:103000,km:812016},77823:{prix:85500,km:953143},
+  49174:{prix:105000,km:828322},57342:{prix:285000,km:161376},75210:{prix:292000,km:110642},
+  75214:{prix:296000,km:120917},23309:{prix:296000,km:720969},36052:{prix:342000,km:605100},
+  87694:{prix:135000,km:697917},89319:{prix:125000,km:678376},70191:{prix:113000,km:987028},
+  3075:{prix:222613,km:162441},102096:{prix:197000,km:134496},91346:{prix:115000,km:799958},
+  101340:{prix:342000,km:95068},101341:{prix:342000,km:79932},101342:{prix:342000,km:94405},
+  101343:{prix:342000,km:88670},101344:{prix:342000,km:110395},101345:{prix:342000,km:109610},
+  101346:{prix:342000,km:117835},101347:{prix:342000,km:116879},101348:{prix:342000,km:108886},
+  101349:{prix:342000,km:106052},101350:{prix:342000,km:101982},101351:{prix:342000,km:97310},
+  101352:{prix:342000,km:97737},101353:{prix:342000,km:95053},101354:{prix:342000,km:95987},
+  101355:{prix:342000,km:94906},83323:{prix:416000,km:69819},68687:{prix:90500,km:825687},
+  101356:{prix:342000,km:67672},61670:{prix:320000,km:194039},88124:{prix:373000,km:95928},
+  88114:{prix:366500,km:110510},86050:{prix:330000,km:86899},35836:{prix:191000,km:232234},
+  35838:{prix:181000,km:237281},16582:{prix:270750,km:182781},16583:{prix:275700,km:162913},
+  34135:{prix:375400,km:146594},97344:{prix:349000,km:88090},78037:{prix:195600,km:91654},
+  145107:{prix:290787,km:186704},101230:{prix:266000,km:304929},54155:{prix:272000,km:145580},
+  131138:{prix:241000,km:0},131139:{prix:241000,km:0},131140:{prix:241000,km:0},
+  131141:{prix:241000,km:0},131142:{prix:241000,km:0},131143:{prix:241000,km:0},
+  131144:{prix:241000,km:0},131145:{prix:241000,km:0},131146:{prix:241000,km:0},
+  131147:{prix:241000,km:0},131148:{prix:241000,km:0},131149:{prix:241000,km:0},
+  131150:{prix:241000,km:0},131151:{prix:241000,km:0},131152:{prix:241000,km:0},
+  131153:{prix:241000,km:0},131154:{prix:241000,km:0},131155:{prix:241000,km:0},
+  131156:{prix:241000,km:0},131157:{prix:241000,km:0},131158:{prix:241000,km:0},
+  131159:{prix:241000,km:0},131160:{prix:241000,km:0},131161:{prix:241000,km:0},
+  131162:{prix:241000,km:0},131163:{prix:241000,km:0},131164:{prix:241000,km:0},
+  131165:{prix:241000,km:0},131166:{prix:241000,km:0},131167:{prix:241000,km:0},
+  131168:{prix:241000,km:0},131169:{prix:241000,km:0},131170:{prix:241000,km:0},
+  131171:{prix:241000,km:0},131172:{prix:241000,km:0},131173:{prix:241000,km:0},
+  131174:{prix:241000,km:0},100034:{prix:241000,km:0},154386:{prix:252000,km:0},
+  154387:{prix:252000,km:0},154388:{prix:252000,km:0},154389:{prix:252000,km:0},
+  154390:{prix:252000,km:0},75636:{prix:0,km:0},132041:{prix:239177,km:177121},
+  133010:{prix:251992,km:145329},81894:{prix:120000,km:459476},132105:{prix:258194,km:136619},
+  117060:{prix:150000,km:93200},100430:{prix:150709,km:276987},100426:{prix:158950,km:257903},
+  111486:{prix:225551,km:165669},96448:{prix:181472,km:240747},100429:{prix:192078,km:181185},
+  146859:{prix:250000,km:14990},146860:{prix:250000,km:17366},146861:{prix:250000,km:16743},
+  146862:{prix:250000,km:12836},107661:{prix:199636,km:88258},99945:{prix:104000,km:824917},
+  91375:{prix:290787,km:113176},106844:{prix:230000,km:926106},99954:{prix:56963,km:536501},
+  66863:{prix:93000,km:831411},37648:{prix:109500,km:216483},100651:{prix:122000,km:867006},
+  88982:{prix:73216,km:730945},131175:{prix:230000,km:24714},100820:{prix:160000,km:485674},
+  165202:{prix:134700,km:434141},165203:{prix:134700,km:434141}
+};
+function parserBus(rows) {
+  // Colonnes CSV bus.csv (60 colonnes) :
+  // 0=ID, 1=NumParc, 2=Patrimoine, 3=FinLocation, 4=TypeVehicule, 5=Marque, 6=Modele, 7=Type,
+  // 8=BHNS, 9=LE, 10=Energie, 11=Conso, 12=Places, 13=Immatriculation, 14=MiseEnService,
+  // 15=Kilometrage, 16=Revision, 17=CT, 18=Garantie, 19=Statut, 20=Depot, 21=Musee,
+  // 22=Proprete, 23=EtatTechnique, 24=EtatInterieur, 25=GirouetteAvant, 26=GirouetteLat,
+  // 27=GirouetteArr, 28=Billetique, 29=Agenouillement, 30=EmplacementUFR,
+  // 31=PlateformeRetractable, 32=SystemeAir, 33=NombrePortes, 34=TypePortes,
+  // 35=PrecablageSSelf, 36=VitreAntiAgr, 37=VitreTeinee, 38=BaiesBasses, 39=PavillonLumibus,
+  // 40=BalisePrioFeu, 41=BoutonsSelfService, 42=BoutonsArretSupp, 43=Camera,
+  // 44=PanneauPubArr, 45=PanneauPubAv, 46=PanneauPubLat, 47=RackBagages, 48=RackVelos,
+  // 49=EAD(Ethylotest), 50=RadioFM, 51=PortsUSB, 52=Wifi, 53=BandeauLumineux,
+  // 54=EcranTFT, 55=HautParleurs, 56=TelephoneRadio, 57=PupitreConduct, 58=ReventePossibleLe,
+  // 59=Argus
+
+  const yn = v => v && v.toUpperCase() === 'OUI';
+
+  return rows.slice(1).filter(c => c[1]).map(c => {
+    const idJeu = parseInt(c[0]) || null;
+    const nom   = c[1];
+
+    const statutJeu = (c[19] || '').toLowerCase();
+    let statut = 'En service';
+    if (statutJeu.includes('révis') || statutJeu.includes('revis')) statut = 'En révision';
+    else if (statutJeu.includes('indispo') || statutJeu.includes('panne')) statut = 'Indispo';
+    else if (statutJeu.includes('musée')) statut = 'Musée';
+    else if (statutJeu.includes('réserve') || statutJeu.includes('reserve')) statut = 'Réserve';
+
+    let type = 'STD';
+    const nu = nom.toUpperCase();
+    if (nu.startsWith('MIN-')) type = 'MIN';
+    else if (nu.startsWith('MID-')) type = 'MID';
+    else if (nu.startsWith('ART-')) type = 'ART';
+    else if (nu.startsWith('CAR-')) type = 'CAR';
+    else if (nu.startsWith('TRAM-')) type = 'TRAM';
+
+    // Récupérer prix/km depuis notre base ou depuis le CSV
+    const pkData = idJeu ? (state.prixKm && state.prixKm[idJeu] ? state.prixKm[idJeu] : {}) : {};
+
+    // Calcul âge entreprise depuis date d'achat
+    const dateAchat = parseDateFR(c[58] ? c[58].split(' ')[0] : ''); // col 58 = Revente possible le (-6mois approx)
+    // On n'a pas la date d'achat directe dans le CSV — on utilisera celle stockée si existante
+
+    // Vente possible = date achat + 6 mois
+    const reventeDate = parseDateFR((c[58]||'').trim());
+
+    const kmActuel  = parseInt((c[15]||'').replace(/\s/g,'')) || 0;
+    const kmDepart  = pkData.km !== undefined ? pkData.km : 0;
+    const diffKm    = kmActuel - kmDepart;
+
+    return {
+      idJeu,
+      nom,
+      patrimoine:   c[2]  || '',
+      finLocation:  parseDateFR(c[3]),
+      typeVehicule: c[4]  || '',
+      marque:       c[5]  || '',
+      modele:       c[6]  || '',
+      type,
+      bhns:         yn(c[8]),
+      le:           yn(c[9]),
+      energie:      c[10] || 'Diesel',
+      conso:        parseInt(c[11]) || 0,
+      capa:         parseInt(c[12]) || 0,
+      immat:        c[13] || '',
+      anneMES:      parseDateFR(c[14]),
+      km:           kmActuel,
+      kmDepart,
+      diffKm,
+      revisionDate: parseDateFR(c[16]),
+      ct:           parseDateFR(c[17]),
+      garantie:     parseDateFR(c[18]),
+      statut,
+      depot:        c[20] || '',
+      musee:        yn(c[21]),
+      proprete:     parseInt(c[22]) || 0,
+      etatTech:     parseInt(c[23]) || 0,
+      etatInt:      parseInt(c[24]) || 0,
+      girAvant:     c[25] || '',
+      girLat:       c[26] || '',
+      girArr:       c[27] || '',
+      billetique:   c[28] || '',
+      agenouillement: yn(c[29]),
+      ufr:          yn(c[30]),
+      plateformeRet: yn(c[31]),
+      airCond:      c[32] || '',
+      nbPortes:     parseInt(c[33]) || 0,
+      typePortes:   c[34] || '',
+      precablage:   yn(c[35]),
+      vitreAnti:    yn(c[36]),
+      vitreTein:    yn(c[37]),
+      baiesBasses:  yn(c[38]),
+      lumibus:      yn(c[39]),
+      balisePrio:   yn(c[40]),
+      selfService:  yn(c[41]),
+      boutonsArret: yn(c[42]),
+      camera:       yn(c[43]),
+      pubArr:       c[44] || '',
+      pubAv:        c[45] || '',
+      pubLat:       c[46] || '',
+      rackBagages:  yn(c[47]),
+      rackVelos:    yn(c[48]),
+      ethylotest:   yn(c[49]),
+      radio:        yn(c[50]),
+      usb:          yn(c[51]),
+      wifi:         yn(c[52]),
+      bandeau:      yn(c[53]),
+      ecranTFT:     yn(c[54]),
+      hautParleurs: yn(c[55]),
+      telephone:    yn(c[56]),
+      pupitre:      yn(c[57]),
+      reventeDate,
+      argus:        parseInt((c[59]||'').replace(/\s/g,'')) || 0,
+      // Données achat depuis notre base
+      prixAchat:    pkData.prix !== undefined ? pkData.prix : 0,
+    };
+  });
+}
+
+function parserAffects(rows) {
+  const creneaux = [
+    {col:3,label:'Sem. Creuse'},{col:4,label:'Sem. Pointe'},{col:5,label:'Sem. Soir'},{col:6,label:'Sem. Nocturne'},
+    {col:7,label:'Sam. Creuse'},{col:8,label:'Sam. Pointe'},{col:9,label:'Sam. Soir'},{col:10,label:'Sam. Nocturne'},
+    {col:11,label:'Dim. Creuse'},{col:12,label:'Dim. Pointe'},{col:13,label:'Dim. Nocturne'}
+  ];
+  const results = [];
+  rows.slice(1).filter(c => c[0]).forEach(c => {
+    creneaux.forEach(cr => {
+      const ligne = c[cr.col];
+      if (ligne && ligne !== '' && ligne !== '0') {
+        results.push({ bus: c[0], ligne: 'L' + ligne, service: cr.label });
+      }
+    });
+  });
+  return results;
+}
+
+function parserStats(rows) {
+  return rows.slice(1).filter(c => c[0] && c[1]).map(c => ({
+    date: c[0], ligne: 'L' + c[1], creneau: c[2]||'',
+    tickets: parseInt(c[3])||0, abonnes: parseInt(c[4])||0, gains: parseFloat(c[5])||0
+  }));
+}
+
+function parserSalaries(rows) {
+  return rows.slice(1).filter(c => c[0]).map(c => {
+    const fcoDate = parseDateFR(c[9]);
+    let statut = 'Actif';
+    if (fcoDate) {
+      const diff = Math.round((new Date(fcoDate) - new Date()) / (1000*60*60*24));
+      if (diff < 0) statut = 'FCO requise';
+      else if (diff < 90) statut = 'FCO bientôt';
+    }
+    if (c[7] && c[7] !== 'Disponible') statut = c[7];
+    return {
+      matricule: c[0], contrat: c[1]||'CDI', nom: c[2]||'',
+      embauche: parseDateFR(c[3]), age: parseInt(c[4])||0,
+      poste: c[5]||'', salaire: parseInt(c[6])||0,
+      etat: c[7]||'Disponible', satisfaction: parseFloat(c[8])||0,
+      fco: fcoDate, statut
+    };
+  });
+}
+
+function categoriserLibelle(lib) {
+  if (!lib) return 'Autre';
+  const l = lib.toLowerCase();
+  if (l.includes('achat véhicule') || l.includes('achat bus')) return 'Achat véhicule';
+  if (l.includes('révision') || l.includes('revision') || l.includes('maintenance')) return 'Maintenance';
+  if (l.includes('gasoil') || l.includes('carburant') || l.includes('fuel')) return 'Carburant';
+  if (l.includes('gain') || l.includes('jac') || l.includes('quotidien')) return 'Exploitation';
+  if (l.includes('pub') || l.includes('publicité')) return 'Publicité';
+  if (l.includes('salaire') || l.includes('personnel')) return 'Personnel';
+  if (l.includes('ct') || l.includes('contrôle')) return 'CT';
+  return 'Autre';
+}
+
+function parserCompta(rows) {
+  return rows.slice(1).filter(c => c[0]).map((c, i) => {
+    const dep = parseFloat((c[2]||'').replace(/\s/g,'').replace(',','.'))||0;
+    const rev = parseFloat((c[3]||'').replace(/\s/g,'').replace(',','.'))||0;
+    const rawDate = (c[0]||'').replace(/"/g,'').split(' ')[0];
+    return {
+      id: Date.now() + i,
+      date: parseDateFR(rawDate),
+      type: dep > 0 ? 'depense' : 'recette',
+      cat: categoriserLibelle(c[1]),
+      desc: (c[1]||'').replace(/"/g,'').replace(/\\n/g,''),
+      montant: dep > 0 ? dep : rev
+    };
+  });
+}
+
+function csvPreview() {
+  const texte = document.getElementById('csv-paste-text').value || csvRawContent;
+  if (!texte.trim()) { toastMsg('Aucun contenu CSV chargé', 'error'); return; }
+  csvRawContent = texte;
+  const rows = parseCSV(texte);
+  const zone = document.getElementById('csv-preview-zone');
+  const label = document.getElementById('csv-preview-label');
+  const list = document.getElementById('csv-preview-list');
+  zone.style.display = 'block';
+  let html = '', info = '';
+
+  if (currentCsvType === 'bus') {
+    const buses = parserBus(rows);
+    const maj = buses.filter(b => state.bus.find(x => x.nom === b.nom || (b.idJeu && x.idJeu === b.idJeu)));
+    const nouveaux = buses.filter(b => !state.bus.find(x => x.nom === b.nom || (b.idJeu && x.idJeu === b.idJeu)));
+    info = `✅ ${buses.length} bus — <span style="color:var(--accent)">${maj.length} à mettre à jour</span> · <span style="color:var(--green)">${nouveaux.length} nouveaux</span>`;
+    html = buses.slice(0,25).map(b => {
+      const exist = state.bus.find(x => x.nom === b.nom || (b.idJeu && x.idJeu === b.idJeu));
+      return `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)">
+        <span><b>${b.nom}</b> <span style="color:var(--text3)">${b.marque} ${b.modele}</span></span>
+        <span>${exist?`<span style="color:var(--accent)">KM→${b.km.toLocaleString()}</span>`:`<span style="color:var(--green)">+NOUVEAU</span>`} · ${b.statut}</span>
+      </div>`;
+    }).join('') + (buses.length>25?`<div style="color:var(--text3);padding-top:4px">...+${buses.length-25} autres</div>`:'');
+  } else if (currentCsvType === 'affects') {
+    const aff = parserAffects(rows);
+    info = `✅ ${rows.length-1} bus · ${aff.length} affectations détectées`;
+    html = aff.slice(0,15).map(a=>`<div style="padding:2px 0;border-bottom:1px solid var(--border)">${a.bus} → <b>${a.ligne}</b> · ${a.service}</div>`).join('');
+  } else if (currentCsvType === 'stats') {
+    const stats = parserStats(rows);
+    const dates = [...new Set(stats.map(s=>s.date))];
+    const gains = stats.reduce((a,s)=>a+s.gains,0);
+    info = `✅ ${stats.length} entrées · ${dates.length} jours · Gains : <b style="color:var(--green)">${fmt(gains)}</b>`;
+    html = stats.slice(0,10).map(s=>`<div style="padding:2px 0;border-bottom:1px solid var(--border)">${s.date} · ${s.ligne} · ${s.creneau} · ${s.tickets} tkts · ${fmt(s.gains)}</div>`).join('');
+  } else if (currentCsvType === 'salaries') {
+    const pers = parserSalaries(rows);
+    const fco = pers.filter(p=>p.statut==='FCO requise'||p.statut==='FCO bientôt').length;
+    info = `✅ ${pers.length} personnes · <span style="color:var(--yellow)">${fco} FCO à renouveler</span>`;
+    html = pers.slice(0,15).map(p=>`<div style="padding:2px 0;border-bottom:1px solid var(--border)">${p.matricule} · <b>${p.nom}</b> · ${p.poste} · FCO ${p.fco||'?'} · <span style="color:${p.statut==='FCO requise'?'var(--red)':p.statut==='FCO bientôt'?'var(--yellow)':'var(--green)'}">${p.statut}</span></div>`).join('');
+  } else if (currentCsvType === 'compta') {
+    const ops = parserCompta(rows);
+    const dep = ops.filter(o=>o.type==='depense').reduce((a,o)=>a+o.montant,0);
+    const rev = ops.filter(o=>o.type==='recette').reduce((a,o)=>a+o.montant,0);
+    info = `✅ ${ops.length} opérations · Dép. <span style="color:var(--red)">${fmt(dep)}</span> · Rev. <span style="color:var(--green)">${fmt(rev)}</span>`;
+    html = ops.slice(0,10).map(o=>`<div style="padding:2px 0;border-bottom:1px solid var(--border)">${o.date} · ${o.cat} · ${o.desc.substring(0,45)} · <span style="color:${o.type==='recette'?'var(--green)':'var(--red)'}">${o.type==='recette'?'+':'−'}${fmt(o.montant)}</span></div>`).join('');
+  }
+
+  label.innerHTML = info;
+  label.style.cssText = 'background:rgba(16,185,129,0.1);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:8px';
+  list.innerHTML = html || '<span style="color:var(--text3)">Aucune donnée</span>';
+}
+
+function csvImporter() {
+  const texte = document.getElementById('csv-paste-text').value || csvRawContent;
+  if (!texte.trim()) { toastMsg('Aucun contenu CSV', 'error'); return; }
+  const rows = parseCSV(texte);
+
+  if (currentCsvType === 'bus') {
+    const buses = parserBus(rows);
+    if (!buses.length) { toastMsg('Aucun bus trouvé', 'error'); return; }
+    let maj = 0, ajouts = 0;
+    buses.forEach(b => {
+      const exist = state.bus.find(x => x.nom === b.nom || (b.idJeu && x.idJeu === b.idJeu));
+      if (exist) {
+        Object.assign(exist, { km:b.km, statut:b.statut, ct:b.ct, revisionDate:b.revisionDate,
+          energie:b.energie, marque:b.marque, modele:b.modele, depot:b.depot });
+        if (b.idJeu) exist.idJeu = b.idJeu;
+        maj++;
+      } else {
+        state.bus.push({ id: Date.now() + Math.random()*1000|0, ...b });
+        ajouts++;
+      }
+    });
+    journalLog(`MAJ CSV bus : ${maj} MàJ · ${ajouts} nouveaux`, 'ok');
+    saveState(); renderParc(); renderDashboard(); updateBusSelects();
+    toastMsg(`✅ ${maj} mis à jour · ${ajouts} ajoutés`, 'success');
+
+  } else if (currentCsvType === 'affects') {
+    const aff = parserAffects(rows);
+    if (!aff.length) { toastMsg('Aucune affectation trouvée', 'error'); return; }
+    state.affectations = aff;
+    journalLog(`MAJ CSV affectations : ${aff.length} lignes`, 'ok');
+    saveState(); if (document.getElementById('page-affectations').classList.contains('active')) renderAffectations();
+    toastMsg(`✅ ${aff.length} affectations importées`, 'success');
+
+  } else if (currentCsvType === 'stats') {
+    if (!state.statsLignes) state.statsLignes = [];
+    const stats = parserStats(rows);
+    if (!stats.length) { toastMsg('Aucune stat trouvée', 'error'); return; }
+    const existKeys = new Set(state.statsLignes.map(s=>`${s.date}_${s.ligne}_${s.creneau}`));
+    const nouvelles = stats.filter(s=>!existKeys.has(`${s.date}_${s.ligne}_${s.creneau}`));
+    state.statsLignes = [...state.statsLignes, ...nouvelles];
+    journalLog(`MAJ CSV stats : ${nouvelles.length} nouvelles entrées`, 'ok');
+    saveState(); if (document.getElementById('page-lignes').classList.contains('active')) renderLignes();
+    toastMsg(`✅ ${nouvelles.length} nouvelles entrées stats`, 'success');
+
+  } else if (currentCsvType === 'salaries') {
+    const pers = parserSalaries(rows);
+    if (!pers.length) { toastMsg('Aucun personnel trouvé', 'error'); return; }
+    state.personnel = pers;
+    journalLog(`MAJ CSV personnel : ${pers.length} personnes`, 'ok');
+    saveState(); renderDashboard();
+    if (document.getElementById('page-personnel').classList.contains('active')) renderPersonnel();
+    toastMsg(`✅ ${pers.length} personnels mis à jour`, 'success');
+
+  } else if (currentCsvType === 'compta') {
+    const ops = parserCompta(rows);
+    if (!ops.length) { toastMsg('Aucune opération trouvée', 'error'); return; }
+    const existKeys = new Set(state.compta.map(o=>`${o.date}_${o.desc}_${o.montant}`));
+    const nouvelles = ops.filter(o=>!existKeys.has(`${o.date}_${o.desc}_${o.montant}`));
+    state.compta = [...state.compta, ...nouvelles];
+    journalLog(`MAJ CSV compta : ${nouvelles.length} opérations ajoutées`, 'ok');
+    saveState(); renderDashboard();
+    if (document.getElementById('page-compta').classList.contains('active')) renderCompta();
+    toastMsg(`✅ ${nouvelles.length} opérations importées`, 'success');
+  }
+
+  closeModal('modal-maj-csv');
+}
+
+
+// ═══════════════════════════════════════════════════════
+function renderAffectations() {
+  const affBus = document.getElementById('aff-bus');
+  affBus.innerHTML = '<option value="">Choisir...</option>' + state.bus.map(b => `<option>${b.nom}</option>`).join('');
+  const affLigne = document.getElementById('aff-ligne');
+  affLigne.innerHTML = '<option value="">Choisir...</option>' + [...new Set(state.affectations.map(a=>a.ligne))].sort().map(l=>`<option>${l}</option>`).join('');
+  const affCond = document.getElementById('aff-conducteur');
+  affCond.innerHTML = '<option value="">Choisir...</option>' + state.personnel.filter(p=>p.etat==='Disponible'||p.statut==='Actif').map(p=>`<option>${p.nom}</option>`).join('');
+
+  // ── Tableau affectations groupées par bus ────────
+  const parBus = {};
+  state.affectations.forEach(a => {
+    if (!parBus[a.bus]) parBus[a.bus] = [];
+    parBus[a.bus].push(a);
+  });
+
+  const tbody = document.getElementById('affectations-tbody');
+  if (Object.keys(parBus).length) {
+    tbody.innerHTML = Object.entries(parBus).sort((a,b)=>a[0].localeCompare(b[0])).map(([bus, affs]) => {
+      const lignes = [...new Set(affs.map(a=>a.ligne))].sort().join(', ');
+      const services = [...new Set(affs.map(a=>a.service))];
+      return `<tr>
+        <td><b>${bus}</b></td>
+        <td class="mono">${lignes}</td>
+        <td>${services.map(s=>`<span class="badge badge-blue" style="margin:1px">${s}</span>`).join('')}</td>
+        <td>—</td>
+        <td>—</td>
+        <td><button class="btn btn-danger btn-xs" onclick="supprimerAffectationBus('${bus}')">✕</button></td>
+      </tr>`;
+    }).join('');
+  } else {
+    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--text3);text-align:center;padding:16px">Aucune affectation — Importe ton affects.csv</td></tr>';
+  }
+
+  // résumé
+  const total = state.bus.length;
+  const affectes = new Set(state.affectations.map(a=>a.bus)).size;
+  const pct = total ? Math.round(affectes/total*100) : 0;
+  document.getElementById('aff-resume').innerHTML = `
+    <div class="stat-card blue" style="margin-bottom:8px">
+      <div class="stat-label">Taux d'affectation</div>
+      <div class="stat-value">${pct}%</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:var(--accent)"></div></div>
+    </div>
+    <div style="font-size:12px;color:var(--text2);margin-top:8px">${affectes} / ${total} bus affectés</div>
+    <div style="font-size:12px;color:var(--text2);">${state.affectations.length} service(s) au total</div>
+  `;
+}
+
+function ajouterAffectation() {
+  const bus = document.getElementById('aff-bus').value;
+  const ligne = document.getElementById('aff-ligne').value;
+  const conducteur = document.getElementById('aff-conducteur').value;
+  if (!bus || !ligne || !conducteur) { toastMsg('Remplissez tous les champs', 'error'); return; }
+  state.affectations.push({ bus, ligne, conducteur, service: document.getElementById('aff-service').value, note: document.getElementById('aff-note').value });
+  journalLog(`${bus} affecté sur ${ligne}`, 'info');
+  saveState(); renderAffectations();
+  toastMsg('Affectation enregistrée ✓', 'success');
+}
+function supprimerAffectation(i) { state.affectations.splice(i, 1); saveState(); renderAffectations(); }
+function supprimerAffectationBus(bus) { state.affectations = state.affectations.filter(a=>a.bus!==bus); saveState(); renderAffectations(); }
+function clearAffectations() { if (confirm('Réinitialiser toutes les affectations ?')) { state.affectations = []; saveState(); renderAffectations(); } }
+
+// ═══════════════════════════════════════════════════════
+//  MAINTENANCE
+// ═══════════════════════════════════════════════════════
+function renderMaintenance() {
+  ['rev-bus','ct-bus'].forEach(id => {
+    document.getElementById(id).innerHTML = '<option value="">Choisir...</option>' + state.bus.map(b => `<option>${b.nom}</option>`).join('');
+  });
+  const tbody = document.getElementById('maintenance-tbody');
+  tbody.innerHTML = state.maintenance.map((m,i) => `<tr>
+    <td>${m.bus}</td>
+    <td><span class="badge badge-yellow">${m.type}</span></td>
+    <td class="mono">${m.depuis}</td>
+    <td>${m.duree} j</td>
+    <td class="mono">${m.cout ? fmt(m.cout) : '—'}</td>
+    <td>${getStatusBadge(m.statut)}</td>
+    <td>
+      ${m.statut==='En cours'?`<button class="btn btn-success btn-xs" onclick="terminerMaintenance(${i})">✓ Terminé</button>`:''}
+      <button class="btn btn-danger btn-xs" onclick="supprimerMaintenance(${i})">✕</button>
+    </td>
+  </tr>`).join('') || '<tr><td colspan="7" style="color:var(--text3);text-align:center;padding:16px">Aucune maintenance</td></tr>';
+
+  const ctbody = document.getElementById('ct-tbody');
+  ctbody.innerHTML = state.ct.map((c,i) => `<tr>
+    <td>${c.bus}</td>
+    <td class="mono">${c.date}</td>
+    <td class="mono">${fmtNum(c.km)} km</td>
+    <td>${c.resultat ? getStatusBadge(c.resultat) : ctStatus(c.date)}</td>
+  </tr>`).join('') || '<tr><td colspan="4" style="color:var(--text3);text-align:center;padding:16px">Aucun CT enregistré</td></tr>';
+}
+
+function envoyerRevision() {
+  const bus = document.getElementById('rev-bus').value;
+  const type = document.getElementById('rev-type').value;
+  if (!bus) { toastMsg('Choisir un bus', 'error'); return; }
+  const b = state.bus.find(x => x.nom === bus);
+  if (b) { b.statut = 'En révision'; b.revision = type; }
+  state.maintenance.push({ id: Date.now(), bus, type, depuis: today(), duree: parseInt(document.getElementById('rev-duree').value)||3, cout: parseFloat(document.getElementById('rev-cout').value)||0, statut: 'En cours' });
+  journalLog(`${bus} envoyé en ${type}`, 'warn');
+  saveState(); renderMaintenance();
+  toastMsg(`${bus} envoyé en ${type} ✓`, 'info');
+}
+
+function planifierCT() {
+  const bus = document.getElementById('ct-bus').value;
+  const date = document.getElementById('ct-date').value;
+  if (!bus || !date) { toastMsg('Bus et date requis', 'error'); return; }
+  const b = state.bus.find(x => x.nom === bus);
+  if (b) b.ct = date;
+  const res = document.getElementById('ct-resultat').value;
+  state.ct.push({ id: Date.now(), bus, date, km: parseInt(document.getElementById('ct-km').value)||0, resultat: res });
+  journalLog(`CT planifié pour ${bus} le ${date}`, 'info');
+  saveState(); renderMaintenance();
+  toastMsg(`CT enregistré pour ${bus} ✓`, 'success');
+}
+
+function terminerMaintenance(i) {
+  const m = state.maintenance[i];
+  m.statut = 'Terminé';
+  const b = state.bus.find(x => x.nom === m.bus);
+  if (b) { b.statut = 'En service'; b.revision = null; }
+  journalLog(`${m.bus} — ${m.type} terminée`, 'ok');
+  saveState(); renderMaintenance();
+  toastMsg(`${m.bus} de retour en service ✓`, 'success');
+}
+function supprimerMaintenance(i) { state.maintenance.splice(i, 1); saveState(); renderMaintenance(); }
+
+// ═══════════════════════════════════════════════════════
+//  ABRIBUS
+// ═══════════════════════════════════════════════════════
+function renderAbribus() {
+  const tbody = document.getElementById('abribus-tbody');
+  tbody.innerHTML = state.abribus.map(a => `<tr>
+    <td class="mono"><b>#${a.num}</b></td>
+    <td>${a.pct1}</td>
+    <td>${a.pct2}</td>
+    <td>${parseInt(a.pct1)>70&&parseInt(a.pct2)>70?'<span class="badge badge-green">Bon équipement</span>':parseInt(a.pct1)<40||parseInt(a.pct2)<40?'<span class="badge badge-red">À améliorer</span>':'<span class="badge badge-yellow">Correct</span>'}</td>
+  </tr>`).join('') || '<tr><td colspan="4" style="color:var(--text3);text-align:center;padding:16px">Aucune donnée importée</td></tr>';
+}
+
+function importerAbribus() {
+  const texte = document.getElementById('abribus-texte').value;
+  if (!texte.trim()) { toastMsg('Texte vide', 'error'); return; }
+  const lines = texte.replace(/\r/g, '\n').replace(/\u00A0/g, ' ').split('\n');
+  const resultats = [];
+  const seen = new Set();
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line.indexOf('<>') !== -1) {
+      let numero = null;
+      for (let j = i-1; j >= 0; j--) {
+        const l = lines[j].trim();
+        if (l === '') continue;
+        const m = l.match(/^(\d+)$/);
+        if (m) { numero = m[1]; break; }
+      }
+      if (!numero || seen.has(numero)) continue;
+      seen.add(numero);
+      const pcts = [];
+      for (let k = i+1; k < lines.length && pcts.length < 2; k++) {
+        const f = lines[k].match(/(\d{1,3})\s*%/);
+        if (f) pcts.push(f[0].replace(/\s*/g,''));
+      }
+      if (pcts.length >= 2) resultats.push({ num: numero, pct1: pcts[0], pct2: pcts[1] });
+    }
+  }
+  if (!resultats.length) { toastMsg('Aucune donnée trouvée. Vérifie le format.', 'error'); return; }
+  state.abribus = resultats;
+
+  // Résumé
+  const moy1 = Math.round(resultats.reduce((s,r)=>s+parseInt(r.pct1),0)/resultats.length);
+  const moy2 = Math.round(resultats.reduce((s,r)=>s+parseInt(r.pct2),0)/resultats.length);
+  document.getElementById('abribus-resume').innerHTML = `
+    <div class="alert-box success">${resultats.length} abribus importés avec succès ✓</div>
+    <div class="gauge-row"><div class="gauge-label">Équip. moyen 1</div><div class="gauge-bar"><div class="gauge-fill" style="width:${moy1}%;background:var(--accent)"></div></div><div class="gauge-val">${moy1}%</div></div>
+    <div class="gauge-row"><div class="gauge-label">Équip. moyen 2</div><div class="gauge-bar"><div class="gauge-fill" style="width:${moy2}%;background:var(--accent2)"></div></div><div class="gauge-val">${moy2}%</div></div>
+    <div style="font-size:11px;color:var(--text3);margin-top:8px">${resultats.filter(r=>parseInt(r.pct1)<40||parseInt(r.pct2)<40).length} abribus à améliorer</div>
+  `;
+  journalLog(`${resultats.length} abribus importés`, 'ok');
+  saveState(); renderAbribus();
+  toastMsg(`${resultats.length} abribus importés ✓`, 'success');
+}
+function clearAbribus() { state.abribus = []; saveState(); renderAbribus(); document.getElementById('abribus-resume').innerHTML = '<div class="alert-box info">Importez des données pour voir les statistiques.</div>'; }
+
+// ═══════════════════════════════════════════════════════
+//  PERSONNEL / FCO
+// ═══════════════════════════════════════════════════════
+function renderPersonnel() {
+  const fcoList = state.personnel.filter(p => p.statut === 'FCO requise' || p.statut === 'FCO bientôt');
+  const fcoUrgents = state.personnel.filter(p => p.statut === 'FCO requise');
+  document.getElementById('fco-alerte').className = 'alert-box ' + (fcoUrgents.length > 0 ? 'warning' : 'success');
+  document.getElementById('fco-alerte').innerHTML = fcoUrgents.length > 0
+    ? `⚠️ ${fcoUrgents.length} conducteur(s) FCO expirée — ${fcoList.length - fcoUrgents.length} bientôt à renouveler`
+    : '✅ Toutes les FCO sont à jour';
+
+  document.getElementById('fco-list').innerHTML = fcoList.map(p => `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:6px 8px;background:rgba(245,158,11,0.06);border-radius:4px;flex-wrap:wrap">
+      <span>👤 <b>${p.nom}</b> <span style="color:var(--text3);font-size:11px">${p.matricule}</span></span>
+      <span style="font-size:11px;color:var(--text3)">FCO le : <b>${p.fco||'?'}</b></span>
+      <span class="badge ${p.statut==='FCO requise'?'badge-red':'badge-yellow'}" style="margin-left:4px">${p.statut}</span>
+    </div>`).join('');
+
+  const search = (document.getElementById('search-pers').value||'').toLowerCase();
+  let filtered = state.personnel.filter(p => !search || p.nom.toLowerCase().includes(search) || String(p.matricule).toLowerCase().includes(search) || (p.poste||'').toLowerCase().includes(search));
+  filtered = sortData(filtered, 'personnel', 'nom');
+  const tbody = document.getElementById('personnel-tbody');
+  tbody.innerHTML = filtered.map(p => {
+    const satColor = p.satisfaction >= 16 ? 'var(--green)' : p.satisfaction >= 12 ? 'var(--yellow)' : 'var(--red)';
+    const fcoColor = p.statut === 'FCO requise' ? 'var(--red)' : p.statut === 'FCO bientôt' ? 'var(--yellow)' : 'var(--green)';
+    return `<tr>
+      <td class="mono">${p.matricule}</td>
+      <td><b>${p.nom}</b>${p.age?`<span style="color:var(--text3);font-size:10px"> ${p.age}ans</span>`:''}</td>
+      <td style="font-size:11px">${p.poste||p.permis||'—'}</td>
+      <td class="mono">${p.salaire?fmt(p.salaire):'—'}</td>
+      <td class="mono" style="color:${satColor}">${p.satisfaction?p.satisfaction+'/20':'—'}</td>
+      <td class="mono" style="color:${fcoColor}">${p.fco||'—'}</td>
+      <td>${getStatusBadge(p.statut)}</td>
+      <td>${p.etat||'—'}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="8" style="color:var(--text3);text-align:center;padding:16px">Aucun personnel — Importe ton salaries.csv</td></tr>';
+}
+function filterPersonnel() { renderPersonnel(); }
+
+function ajouterPersonnel() {
+  const nom = document.getElementById('pers-nom').value.trim();
+  if (!nom) { toastMsg('Nom requis', 'error'); return; }
+  state.personnel.push({
+    id: Date.now(), nom, matricule: document.getElementById('pers-mat').value.trim(),
+    permis: document.getElementById('pers-permis').value,
+    fco: document.getElementById('pers-fco').value,
+    statut: document.getElementById('pers-statut').value
+  });
+  journalLog(`Conducteur ${nom} ajouté`, 'ok');
+  saveState(); renderPersonnel();
+  document.getElementById('pers-nom').value = '';
+  toastMsg(`${nom} ajouté ✓`, 'success');
+}
+function marquerFCO(id) {
+  const p = state.personnel.find(x => x.id === id);
+  if (!p) return;
+  p.fco = today(); p.statut = 'Actif';
+  journalLog(`FCO effectuée pour ${p.nom}`, 'ok');
+  saveState(); renderPersonnel(); renderDashboard();
+  toastMsg(`FCO de ${p.nom} mise à jour ✓`, 'success');
+}
+function supprimerPersonnel(id) {
+  state.personnel = state.personnel.filter(x => x.id !== id);
+  saveState(); renderPersonnel();
+}
+
+// ═══════════════════════════════════════════════════════
+//  LIGNES
+// ═══════════════════════════════════════════════════════
+function renderLignes() {
+  if (!state.statsLignes) state.statsLignes = [];
+
+  // ── Calcul depuis statsLignes CSV ──────────────────
+  // Grouper par ligne : tickets totaux, gains totaux, nombre de jours
+  const byLigne = {};
+  state.statsLignes.forEach(s => {
+    if (!byLigne[s.ligne]) byLigne[s.ligne] = { tickets:0, abonnes:0, gains:0, jours:new Set() };
+    byLigne[s.ligne].tickets  += s.tickets;
+    byLigne[s.ligne].abonnes  += s.abonnes;
+    byLigne[s.ligne].gains    += s.gains;
+    byLigne[s.ligne].jours.add(s.date);
+  });
+
+  const totalTickets = state.statsLignes.reduce((s,x)=>s+x.tickets,0);
+  const totalGains   = state.statsLignes.reduce((s,x)=>s+x.gains,0);
+  const dates        = [...new Set(state.statsLignes.map(s=>s.date))].sort().reverse();
+
+  document.getElementById('stats-lignes-recap').innerHTML = `
+    <div class="gauge-row"><div class="gauge-label">Lignes actives</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--accent)"></div></div><div class="gauge-val">${Object.keys(byLigne).length || state.lignes.length}</div></div>
+    <div class="gauge-row"><div class="gauge-label">Tickets total</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--green)"></div></div><div class="gauge-val">${fmtNum(totalTickets)}</div></div>
+    <div class="gauge-row"><div class="gauge-label">Gains total</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--yellow)"></div></div><div class="gauge-val">${fmt(totalGains)}</div></div>
+    <div class="gauge-row"><div class="gauge-label">Jours de données</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--accent3)"></div></div><div class="gauge-val">${dates.length}</div></div>
+  `;
+
+  // ── Tableau stats par ligne ────────────────────────
+  const tbody = document.getElementById('lignes-tbody');
+  if (Object.keys(byLigne).length) {
+    const maxGains = Math.max(...Object.values(byLigne).map(v=>v.gains), 1);
+    tbody.innerHTML = Object.entries(byLigne)
+      .sort((a,b) => b[1].gains - a[1].gains)
+      .map(([ligne, d]) => {
+        const jours = d.jours.size || 1;
+        const gainJour = d.gains / jours;
+        const tkJour   = d.tickets / jours;
+        const pct      = Math.round(d.gains / maxGains * 100);
+        return `<tr>
+          <td class="mono"><b>${ligne}</b></td>
+          <td>${fmtNum(d.tickets)} <span style="color:var(--text3);font-size:10px">(${Math.round(tkJour)}/j)</span></td>
+          <td class="mono">${fmtNum(d.abonnes)}</td>
+          <td class="mono" style="color:var(--green)">${fmt(d.gains)} <span style="color:var(--text3);font-size:10px">(${fmt(gainJour)}/j)</span></td>
+          <td>${jours} j</td>
+          <td><div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:var(--green)"></div></div></td>
+        </tr>`;
+      }).join('');
+  } else {
+    // Afficher les lignes manuelles si pas de données CSV
+    tbody.innerHTML = state.lignes.map((l,i) => {
+      const renta = l.freq > 0 ? (l.recette / l.freq * 100).toFixed(1) : 0;
+      return `<tr>
+        <td class="mono"><b>${l.num}</b></td>
+        <td>${fmtNum(l.freq)}</td>
+        <td class="mono">—</td>
+        <td class="mono" style="color:var(--green)">${fmt(l.recette)}</td>
+        <td>—</td>
+        <td><div class="progress-bar"><div class="progress-fill" style="width:${Math.min(renta,100)}%;background:var(--green)"></div></div></td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="6" style="color:var(--text3);text-align:center;padding:16px">Aucune donnée — Importe ton statslignes.csv</td></tr>';
+  }
+
+  // ── Historique récent (10 dernières lignes CSV) ────
+  const histTbody = document.getElementById('stats-hist-tbody');
+  if (histTbody) {
+    histTbody.innerHTML = [...state.statsLignes].reverse().slice(0,30).map(s => `<tr>
+      <td class="mono">${s.date}</td>
+      <td class="mono"><b>${s.ligne}</b></td>
+      <td>${s.creneau}</td>
+      <td class="mono">${fmtNum(s.tickets)}</td>
+      <td class="mono">${fmtNum(s.abonnes)}</td>
+      <td class="mono" style="color:var(--green)">${fmt(s.gains)}</td>
+    </tr>`).join('') || '<tr><td colspan="6" style="color:var(--text3);text-align:center;padding:16px">Aucune donnée CSV importée</td></tr>';
+  }
+}
+
+
+function ajouterLigne() {
+  const num = document.getElementById('ligne-num').value.trim();
+  if (!num) { toastMsg('Numéro requis', 'error'); return; }
+  state.lignes.push({ id: Date.now(), num, nom: document.getElementById('ligne-nom').value, freq: parseInt(document.getElementById('ligne-freq').value)||0, recette: parseInt(document.getElementById('ligne-recette').value)||0, nbBus: parseInt(document.getElementById('ligne-bus').value)||1, typeBus: document.getElementById('ligne-type-bus').value });
+  journalLog(`Ligne ${num} ajoutée`, 'ok');
+  saveState(); renderLignes();
+  toastMsg(`Ligne ${num} ajoutée ✓`, 'success');
+}
+function supprimerLigne(i) { state.lignes.splice(i, 1); saveState(); renderLignes(); }
+
+// ═══════════════════════════════════════════════════════
+//  COMPTA
+// ═══════════════════════════════════════════════════════
+function renderCompta() {
+  const argentDepart = (state.config && state.config.argentDepart) || 0;
+  const recettes = state.compta.filter(o=>o.type==='recette').reduce((s,o)=>s+o.montant,0);
+  const depenses = state.compta.filter(o=>o.type==='depense').reduce((s,o)=>s+o.montant,0);
+  const benefice = recettes - depenses;
+  const solde    = argentDepart + benefice;
+  document.getElementById('compta-recettes').textContent = fmt(recettes);
+  document.getElementById('compta-depenses').textContent = fmt(depenses);
+  document.getElementById('compta-benefice').textContent = fmt(benefice);
+  document.getElementById('compta-tresor').textContent   = fmt(solde);
+  document.getElementById('stat-solde').textContent      = fmt(solde);
+  const topbarSolde = document.getElementById('topbar-solde-val');
+  if (topbarSolde) { topbarSolde.textContent = fmt(solde); topbarSolde.style.color = solde >= 0 ? 'var(--green)' : 'var(--red)'; }
+
+  // Répartition dépenses
+  const cats = {};
+  state.compta.filter(o=>o.type==='depense').forEach(o => { cats[o.cat] = (cats[o.cat]||0) + o.montant; });
+  let rep = '';
+  Object.entries(cats).sort((a,b)=>b[1]-a[1]).forEach(([cat, val]) => {
+    const pct = depenses > 0 ? Math.round(val/depenses*100) : 0;
+    rep += `<div class="gauge-row"><div class="gauge-label" style="font-size:11px">${cat}</div><div class="gauge-bar"><div class="gauge-fill" style="width:${pct}%;background:var(--accent2)"></div></div><div class="gauge-val">${pct}%</div></div>`;
+  });
+  document.getElementById('compta-repartition').innerHTML = rep || '<div style="color:var(--text3)">Aucune dépense.</div>';
+
+  // Tableau trié
+  const sorted = sortData([...state.compta], 'compta', 'date').reverse();
+  const tbody = document.getElementById('compta-tbody');
+  tbody.innerHTML = sorted.map(o => `<tr>
+    <td class="mono">${o.date}</td>
+    <td>${o.type==='recette'?'<span class="badge badge-green">Recette</span>':'<span class="badge badge-red">Dépense</span>'}</td>
+    <td><span class="badge badge-gray">${o.cat}</span></td>
+    <td>${o.desc}</td>
+    <td class="mono" style="color:${o.type==='recette'?'var(--green)':'var(--red)'}">${o.type==='recette'?'+':'−'}${fmt(o.montant)}</td>
+  </tr>`).join('') || '<tr><td colspan="5" style="color:var(--text3);text-align:center;padding:16px">Aucune opération</td></tr>';
+}
+
+function ajouterOperation() {
+  const montant = parseFloat(document.getElementById('op-montant').value)||0;
+  if (!montant) { toastMsg('Montant requis', 'error'); return; }
+  state.compta.push({ id: Date.now(), date: document.getElementById('op-date').value || today(), type: document.getElementById('op-type').value, cat: document.getElementById('op-cat').value, desc: document.getElementById('op-desc').value, montant });
+  journalLog(`${document.getElementById('op-type').value === 'recette' ? 'Recette' : 'Dépense'} : ${fmt(montant)} (${document.getElementById('op-cat').value})`, 'info');
+  saveState(); renderCompta();
+  toastMsg('Opération enregistrée ✓', 'success');
+}
+
+// ═══════════════════════════════════════════════════════
+//  PUB
+// ═══════════════════════════════════════════════════════
+function renderPub() {
+  document.getElementById('pub-bus').innerHTML = '<option value="">Choisir...</option>' + state.bus.map(b=>`<option>${b.nom}</option>`).join('');
+
+  const total = state.contratsPub.filter(c=>c.statut==='Actif').reduce((s,c)=>s+c.montant,0);
+  document.getElementById('pub-total-mensuel').textContent = fmt(total);
+
+  const byBus = {};
+  state.contratsPub.filter(c=>c.statut==='Actif').forEach(c => { byBus[c.bus] = (byBus[c.bus]||0) + c.montant; });
+  document.getElementById('pub-par-bus').innerHTML = Object.entries(byBus).map(([bus, val]) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:12px;color:var(--text2)">${bus}</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--green)">${fmt(val)}/mois</span>
+    </div>`).join('') || '<div style="color:var(--text3);font-size:12px">Aucun contrat actif</div>';
+
+  const tbody = document.getElementById('pub-tbody');
+  tbody.innerHTML = state.contratsPub.map((c,i) => {
+    const fin = new Date(new Date(c.debut).setMonth(new Date(c.debut).getMonth()+c.duree)).toISOString().slice(0,10);
+    const expired = new Date(fin) < new Date();
+    return `<tr>
+      <td><b>${c.annonceur}</b></td>
+      <td>${c.bus}</td>
+      <td><span class="badge badge-purple">${c.type}</span></td>
+      <td class="mono" style="color:var(--green)">${fmt(c.montant)}</td>
+      <td>${c.duree} mois</td>
+      <td class="mono">${fin}</td>
+      <td>${expired?'<span class="badge badge-red">Expiré</span>':'<span class="badge badge-green">Actif</span>'}</td>
+      <td><button class="btn btn-danger btn-xs" onclick="supprimerContrat(${i})">✕</button></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="8" style="color:var(--text3);text-align:center;padding:16px">Aucun contrat</td></tr>';
+}
+
+function ajouterContratPub() {
+  const annonceur = document.getElementById('pub-annonceur').value.trim();
+  const bus = document.getElementById('pub-bus').value;
+  if (!annonceur || !bus) { toastMsg('Annonceur et bus requis', 'error'); return; }
+  const montant = parseFloat(document.getElementById('pub-montant').value)||0;
+  state.contratsPub.push({ id: Date.now(), annonceur, bus, type: document.getElementById('pub-type-contrat').value, montant, duree: parseInt(document.getElementById('pub-duree').value)||12, debut: document.getElementById('pub-debut').value || today(), statut: 'Actif' });
+  journalLog(`Contrat pub ${annonceur} sur ${bus} (${fmt(montant)}/mois)`, 'ok');
+  saveState(); renderPub();
+  toastMsg(`Contrat ${annonceur} ajouté ✓`, 'success');
+}
+function supprimerContrat(i) { state.contratsPub.splice(i, 1); saveState(); renderPub(); }
+function supprimerTousContracts() { if (confirm('Supprimer tous les contrats ?')) { state.contratsPub = []; saveState(); renderPub(); } }
+
+// ═══════════════════════════════════════════════════════
+//  ACHATS
+// ═══════════════════════════════════════════════════════
+
+function ajouterAchatManuel() {
+  const idJeu = parseInt(document.getElementById('achat-id').value) || null;
+  const prix  = parseInt(document.getElementById('achat-prix').value) || 0;
+  const km    = parseInt(document.getElementById('achat-km').value) || 0;
+
+  if (!idJeu) { toastMsg('ID jeu requis', 'error'); return; }
+
+  // Enregistrer dans le log
+  state.achats.push({ id: Date.now(), idJeu, prix, km, date: today() });
+
+  // Mettre à jour state.prixKm
+  if (!state.prixKm) state.prixKm = {};
+  state.prixKm[idJeu] = { prix, km };
+
+  // Mettre à jour le bus dans le parc si présent
+  const busExist = state.bus.find(b => b.idJeu === idJeu);
+  if (busExist) {
+    busExist.prixAchat = prix;
+    busExist.kmDepart  = km;
+    busExist.diffKm    = (busExist.km || 0) - km;
+    if (document.getElementById('page-parc').classList.contains('active')) renderParc();
+    toastMsg(`Bus ID ${idJeu} mis à jour dans le parc ✓`, 'info');
+  }
+
+  journalLog(`Achat ID ${idJeu} — ${fmt(prix)} — ${fmtNum(km)} km départ`, 'info');
+  saveState(); renderAchats();
+
+  // Reset
+  ['achat-id','achat-prix','achat-km'].forEach(id => document.getElementById(id).value = '');
+  toastMsg(`Achat ID ${idJeu} enregistré ✓`, 'success');
+}
+
+function renderAchats() {
+  const tbody = document.getElementById('achats-tbody');
+  document.getElementById('achats-count-badge').textContent = state.achats.length + ' achats';
+
+  tbody.innerHTML = [...state.achats].reverse().map(a => `<tr>
+    <td class="mono"><b>${a.idJeu||'—'}</b></td>
+    <td class="mono" style="color:var(--red)">${a.prix ? fmt(a.prix) : '—'}</td>
+    <td class="mono">${a.km ? fmtNum(a.km)+' km' : '—'}</td>
+    <td class="mono" style="color:var(--text3)">${a.date||'—'}</td>
+    <td><button class="btn btn-danger btn-xs" onclick="supprimerAchat(${a.id})">✕</button></td>
+  </tr>`).join('') || '<tr><td colspan="5" style="color:var(--text3);text-align:center;padding:16px">Aucun achat enregistré</td></tr>';
+
+  const resume = document.getElementById('achats-resume');
+  if (resume) {
+    const total   = state.achats.reduce((s,a) => s + (a.prix||0), 0);
+    const moyPrix = state.achats.length ? Math.round(total / state.achats.length) : 0;
+    const enPrixKm = Object.keys(state.prixKm||{}).length;
+    resume.innerHTML = `
+      <div class="gauge-row"><div class="gauge-label">Total investi</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--red)"></div></div><div class="gauge-val" style="color:var(--red)">${fmt(total)}</div></div>
+      <div class="gauge-row"><div class="gauge-label">Nb achats</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--accent)"></div></div><div class="gauge-val">${state.achats.length}</div></div>
+      <div class="gauge-row"><div class="gauge-label">Prix moyen</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--yellow)"></div></div><div class="gauge-val">${fmt(moyPrix)}</div></div>
+      <div class="gauge-row"><div class="gauge-label">Bus avec données prix/km</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--green)"></div></div><div class="gauge-val">${enPrixKm}</div></div>
+    `;
+  }
+}
+
+function supprimerAchat(id) {
+  state.achats = state.achats.filter(a => a.id !== id);
+  saveState(); renderAchats();
+}
+
+// ═══════════════════════════════════════════════════════
+//  GASOIL
+// ═══════════════════════════════════════════════════════
+function renderGasoil() {
+  document.getElementById('conso-bus').innerHTML = '<option value="">Choisir...</option>' + state.bus.map(b=>`<option>${b.nom}</option>`).join('');
+  document.getElementById('conso-niveau').textContent = fmtNum(state.conso.niveau) + ' L';
+  document.getElementById('conso-jour').textContent = fmtNum(state.conso.jour||0) + ' L';
+  const last = state.gasoil[state.gasoil.length-1];
+  document.getElementById('conso-dernier-plein').textContent = last ? `${last.date} (${fmtNum(last.volume)}L)` : '—';
+  document.getElementById('conso-moy').textContent = state.bus.length > 0 ? Math.round((state.conso.jour||0)/Math.max(state.bus.length,1)) + ' L' : '0 L';
+
+  const tbody = document.getElementById('gasoil-tbody');
+  tbody.innerHTML = [...state.gasoil].reverse().map(g => `<tr>
+    <td class="mono">${g.date}</td>
+    <td class="mono">${fmtNum(g.volume)} L</td>
+    <td class="mono">${Number(g.prix).toFixed(3)} €/L</td>
+    <td class="mono" style="color:var(--red)">${fmt(g.volume * g.prix)}</td>
+    <td class="mono">${fmtNum(g.niveauAvant)} L</td>
+  </tr>`).join('') || '<tr><td colspan="5" style="color:var(--text3);text-align:center;padding:16px">Aucun plein</td></tr>';
+}
+
+function enregistrerPlein() {
+  const vol = parseInt(document.getElementById('plein-volume').value)||0;
+  const prix = parseFloat(document.getElementById('plein-prix').value)||0;
+  if (!vol) { toastMsg('Volume requis', 'error'); return; }
+  const avant = state.conso.niveau;
+  state.conso.niveau += vol;
+  state.gasoil.push({ id: Date.now(), date: document.getElementById('plein-date').value || today(), volume: vol, prix, niveauAvant: avant });
+  const cout = vol * prix;
+  state.compta.push({ id: Date.now(), date: today(), type: 'depense', cat: 'Carburant', desc: `Plein citerne ${vol}L`, montant: cout });
+  journalLog(`Plein citerne : ${fmtNum(vol)}L pour ${fmt(cout)}`, 'ok');
+  saveState(); renderGasoil();
+  toastMsg(`Plein de ${fmtNum(vol)}L enregistré ✓`, 'success');
+}
+
+function enregistrerConso() {
+  const litres = parseInt(document.getElementById('conso-litres').value)||0;
+  const bus = document.getElementById('conso-bus').value;
+  if (!litres) { toastMsg('Litres requis', 'error'); return; }
+  state.conso.niveau = Math.max(0, (state.conso.niveau||0) - litres);
+  state.conso.jour = (state.conso.jour||0) + litres;
+  saveState(); renderGasoil();
+  toastMsg(`${litres}L consommés (${bus})`, 'info');
+}
+
+// ═══════════════════════════════════════════════════════
+//  EXTENSION FIREFOX — COMMUNICATION
+// ═══════════════════════════════════════════════════════
+
+// Détecte si l'extension est active (elle écrit 'tm_ext_present' toutes les 5s)
+function detectExtension() {
+  const present = localStorage.getItem('tm_ext_present') === '1';
+  const extStatus = document.getElementById('ext-status');
+  const btnExt    = document.getElementById('btn-ext-fetch');
+  if (extStatus) {
+    extStatus.textContent = present ? '🦊 Extension active' : '';
+    extStatus.style.color = 'var(--accent3)';
+  }
+  if (btnExt) btnExt.style.display = present ? '' : 'none';
+  return present;
+}
+setInterval(detectExtension, 2000);
+
+// Importe directement un contenu CSV pour un type donné (sans passer par le modal)
+function importerCSVDirect(type, contenu) {
+  if (!contenu || !contenu.trim()) return;
+  const rows = parseCSV(contenu);
+  if (type === 'bus') {
+    const buses = parserBus(rows);
+    if (!buses.length) { toastMsg('bus.csv : aucun bus trouvé', 'error'); return; }
+    let maj = 0, ajouts = 0;
+    buses.forEach(b => {
+      const exist = state.bus.find(x => x.nom === b.nom || (b.idJeu && x.idJeu === b.idJeu));
+      if (exist) {
+        // Mise à jour de tous les champs CSV, en préservant dateAchat si déjà renseignée
+        const dateAchatSaved = exist.dateAchat;
+        Object.assign(exist, b);
+        if (dateAchatSaved && !exist.dateAchat) exist.dateAchat = dateAchatSaved;
+        maj++;
+      } else {
+        state.bus.push({ id: Date.now() + Math.random()*1000|0, ...b });
+        ajouts++;
+      }
+    });
+    journalLog(`MAJ bus.csv : ${maj} MàJ · ${ajouts} nouveaux`, 'ok');
+    saveState(); renderParc(); renderDashboard(); updateBusSelects();
+    toastMsg(`🚍 ${maj} bus mis à jour · ${ajouts} ajoutés`, 'success');
+
+  } else if (type === 'affects') {
+    const aff = parserAffects(rows);
+    if (!aff.length) { toastMsg('affects.csv : aucune affectation', 'error'); return; }
+    state.affectations = aff;
+    journalLog(`MAJ affects.csv : ${aff.length} lignes`, 'ok');
+    saveState(); if (document.getElementById('page-affectations').classList.contains('active')) renderAffectations();
+    toastMsg(`📋 ${aff.length} affectations importées`, 'success');
+
+  } else if (type === 'stats') {
+    if (!state.statsLignes) state.statsLignes = [];
+    const stats = parserStats(rows);
+    if (!stats.length) { toastMsg('statslignes.csv : aucune donnée', 'error'); return; }
+    const existKeys = new Set(state.statsLignes.map(s=>`${s.date}_${s.ligne}_${s.creneau}`));
+    const nouvelles = stats.filter(s => !existKeys.has(`${s.date}_${s.ligne}_${s.creneau}`));
+    state.statsLignes = [...state.statsLignes, ...nouvelles];
+    journalLog(`MAJ statslignes.csv : ${nouvelles.length} nouvelles entrées`, 'ok');
+    saveState(); if (document.getElementById('page-lignes').classList.contains('active')) renderLignes();
+    toastMsg(`📊 ${nouvelles.length} nouvelles entrées stats`, 'success');
+
+  } else if (type === 'salaries') {
+    const pers = parserSalaries(rows);
+    if (!pers.length) { toastMsg('salaries.csv : aucun personnel', 'error'); return; }
+    state.personnel = pers;
+    journalLog(`MAJ salaries.csv : ${pers.length} personnes`, 'ok');
+    saveState(); renderDashboard();
+    if (document.getElementById('page-personnel').classList.contains('active')) renderPersonnel();
+    toastMsg(`👤 ${pers.length} personnels mis à jour`, 'success');
+
+  } else if (type === 'compta') {
+    const ops = parserCompta(rows);
+    if (!ops.length) { toastMsg('compta.csv : aucune opération', 'error'); return; }
+    const existKeys = new Set(state.compta.map(o=>`${o.date}_${o.desc}_${o.montant}`));
+    const nouvelles = ops.filter(o => !existKeys.has(`${o.date}_${o.desc}_${o.montant}`));
+    state.compta = [...state.compta, ...nouvelles];
+    journalLog(`MAJ compta.csv : ${nouvelles.length} opérations`, 'ok');
+    saveState(); renderDashboard();
+    if (document.getElementById('page-compta').classList.contains('active')) renderCompta();
+    toastMsg(`💰 ${nouvelles.length} opérations importées`, 'success');
+  }
+}
+
+// Polling localStorage : récupère les CSV déposés par l'extension
+setInterval(() => {
+  ['bus','affects','stats','salaries','compta'].forEach(type => {
+    const raw = localStorage.getItem('tm_ext_csv_' + type);
+    if (!raw) return;
+    localStorage.removeItem('tm_ext_csv_' + type); // supprimer AVANT de parser pour éviter double import
+    try {
+      const payload = JSON.parse(raw);
+      importerCSVDirect(type, payload.content);
+    } catch(err) { console.error('TM import error:', err); }
+  });
+}, 500);
+
+// Bouton "Récupérer via Extension" dans le modal
+function fetchViaExtension() {
+  const type  = currentCsvType;
+  const btn   = document.getElementById('btn-ext-fetch');
+  btn.textContent = '⏳ En cours (~5s)...';
+  btn.disabled = true;
+
+  // Écrire la requête pour l'extension
+  localStorage.setItem('tm_ext_request', JSON.stringify({ type, timestamp: Date.now() }));
+
+  let waited  = 0;
+  let keySeen = false; // a-t-on vu la clé apparaître ?
+
+  const check = setInterval(() => {
+    waited += 500;
+    const keyPresent = !!localStorage.getItem('tm_ext_csv_' + type);
+
+    if (keyPresent) keySeen = true; // la clé est apparue, l'extension a répondu
+
+    // Le polling du site consomme la clé → import fait
+    if (keySeen && !keyPresent) {
+      clearInterval(check);
+      btn.textContent = '🦊 Récupérer via Extension';
+      btn.disabled = false;
+      closeModal('modal-maj-csv');
+      return;
+    }
+
+    if (waited >= 13000) {
+      clearInterval(check);
+      btn.textContent = '🦊 Récupérer via Extension';
+      btn.disabled = false;
+      if (!keySeen) toastMsg('Extension : pas de réponse — vérifie que tu es connecté sur transport-manager.net', 'error');
+    }
+  }, 500);
+}
+
+
+
+// ═══════════════════════════════════════════════════════
+//  CONFIGURATION
+// ═══════════════════════════════════════════════════════
+function renderConfig() {
+  const cfg = state.config || { argentDepart: 0 };
+  document.getElementById('cfg-argent-depart').value = cfg.argentDepart || 0;
+  document.getElementById('cfg-argent-actuel').textContent = fmt(cfg.argentDepart || 0);
+
+  const argentDepart = cfg.argentDepart || 0;
+  const mouvements   = state.compta.reduce((a,o) => o.type === 'recette' ? a + o.montant : a - o.montant, 0);
+  const solde        = argentDepart + mouvements;
+
+  document.getElementById('cfg-resume').innerHTML = `
+    <div class="gauge-row"><div class="gauge-label">🚍 Bus dans le parc</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--accent)"></div></div><div class="gauge-val">${state.bus.length}</div></div>
+    <div class="gauge-row"><div class="gauge-label">👤 Personnel</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--accent3)"></div></div><div class="gauge-val">${state.personnel.length}</div></div>
+    <div class="gauge-row"><div class="gauge-label">💰 Opérations compta</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--green)"></div></div><div class="gauge-val">${state.compta.length}</div></div>
+    <div class="gauge-row"><div class="gauge-label">📊 Entrées stats</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--yellow)"></div></div><div class="gauge-val">${(state.statsLignes||[]).length}</div></div>
+    <div class="gauge-row"><div class="gauge-label">📋 Affectations</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--orange)"></div></div><div class="gauge-val">${state.affectations.length}</div></div>
+    <div style="margin-top:14px;padding:10px;background:rgba(0,212,255,0.05);border:1px solid var(--border);border-radius:6px">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Solde calculé</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:${solde>=0?'var(--green)':'var(--red)'}">
+        ${fmt(solde)}
+      </div>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px">${fmt(argentDepart)} départ + ${fmt(mouvements)} mouvements</div>
+    </div>
+  `;
+}
+
+function sauvegarderConfig() {
+  const val = parseFloat(document.getElementById('cfg-argent-depart').value) || 0;
+  if (!state.config) state.config = {};
+  state.config.argentDepart = val;
+  saveState();
+  renderDashboard();
+  renderConfig();
+  toastMsg(`Argent de départ : ${fmt(val)} enregistré ✓`, 'success');
+  journalLog(`Config : argent de départ = ${fmt(val)}`, 'info');
+}
+
+function resetSection(section) {
+  const labels = {
+    bus:          'tout le parc de bus',
+    compta:       'toutes les opérations comptables',
+    personnel:    'tout le personnel',
+    statsLignes:  'toutes les statistiques de lignes',
+    affectations: 'toutes les affectations'
+  };
+  if (!confirm(`Vider ${labels[section]||section} ?\nCette action est irréversible.`)) return;
+  if (section === 'statsLignes') state.statsLignes = [];
+  else state[section] = [];
+  saveState();
+  renderDashboard();
+  renderConfig();
+  const renders = { bus: renderParc, compta: renderCompta, personnel: renderPersonnel, affectations: renderAffectations };
+  if (renders[section]) renders[section]();
+  toastMsg(`${labels[section]||section} vidé ✓`, 'info');
+}
+
+function updateBusSelects() {
+  const opts = '<option value="">Choisir...</option>' + state.bus.map(b=>`<option>${b.nom}</option>`).join('');
+  ['rev-bus','ct-bus','pub-bus','conso-bus'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = opts;
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  CLOCK
+// ═══════════════════════════════════════════════════════
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('fr-FR');
+  document.getElementById('date-badge').textContent = now.toLocaleDateString('fr-FR', { weekday:'short', day:'2-digit', month:'2-digit', year:'numeric' });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('input[type=date]').forEach(el => { if (!el.value) el.value = today(); });
+  updateBusSelects();
+  renderDashboard();
+  document.getElementById('csv-type-info').innerHTML = CSV_INFO['bus'];
+  detectExtension();
+});
+
+// Click outside modal
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+});
+</script>
+</body>
+</html>
