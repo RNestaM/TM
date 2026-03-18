@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Transport Manager — Gestion Parc - TEST</title>
+<title>2- Transport Manager — Gestion Parc</title>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -3329,18 +3329,20 @@ function importerCSVDirect(type, contenu) {
   }
 }
 
-// Polling localStorage : récupère les CSV déposés par l'extension
-setInterval(() => {
-  ['bus','affects','stats','salaries','compta'].forEach(type => {
-    const raw = localStorage.getItem('tm_ext_csv_' + type);
-    if (!raw) return;
-    localStorage.removeItem('tm_ext_csv_' + type); // supprimer AVANT de parser pour éviter double import
-    try {
-      const payload = JSON.parse(raw);
-      importerCSVDirect(type, payload.content);
-    } catch(err) { console.error('TM import error:', err); }
-  });
-}, 500);
+// Polling localStorage : démarré dans DOMContentLoaded
+function demarrerPollingExtension() {
+  setInterval(() => {
+    ['bus','affects','stats','salaries','compta'].forEach(type => {
+      const raw = localStorage.getItem('tm_ext_csv_' + type);
+      if (!raw) return;
+      localStorage.removeItem('tm_ext_csv_' + type);
+      try {
+        const payload = JSON.parse(raw);
+        importerCSVDirect(type, payload.content);
+      } catch(err) { console.error('TM import error:', err); }
+    });
+  }, 500);
+}
 
 // Bouton "Récupérer via Extension" dans le modal
 function fetchViaExtension() {
@@ -3500,8 +3502,11 @@ document.addEventListener('DOMContentLoaded', () => {
   updateClock();
   setInterval(updateClock, 1000);
 
-  // Compteur de version GitHub (commit count)
+  // Compteur de version GitHub
   fetchGithubVersion();
+
+  // Polling extension — DOIT être ici, après que le DOM et les fonctions sont prêts
+  demarrerPollingExtension();
 });
 
 // Click outside modal
