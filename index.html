@@ -529,6 +529,11 @@
   th.sort-asc .sort-icon::after  { content: ' ↑'; }
   th.sort-desc .sort-icon::after { content: ' ↓'; }
 
+  /* Full view scrollable */
+  #parc-view-full .card-body { overflow-x: auto; }
+  #parc-table-full { min-width: 2800px; }
+  #parc-table-full td, #parc-table-full th { padding: 5px 6px; font-size: 11px; white-space: nowrap; }
+
   /* INLINE STATUS SELECT */
   .status-select {
     background: transparent;
@@ -740,33 +745,79 @@
       <div class="search-bar">
         <input class="search-input" type="text" id="search-parc" placeholder="🔍 Rechercher un bus..." oninput="filterParc()">
         <div class="tabs" id="tabs-parc">
-          <div class="tab active" onclick="filterByType(this, 'all')">Tous</div>
-          <div class="tab" onclick="filterByType(this, 'MIN')">Mini</div>
-          <div class="tab" onclick="filterByType(this, 'MID')">Midi</div>
-          <div class="tab" onclick="filterByType(this, 'STD')">Standard</div>
-          <div class="tab" onclick="filterByType(this, 'ART')">Articulé</div>
-          <div class="tab" onclick="filterByType(this, 'CAR')">Car</div>
-          <div class="tab" onclick="filterByType(this, 'TRAM')">Tram</div>
+          <div class="tab active" onclick="filterByType(this,'all')">Tous</div>
+          <div class="tab" onclick="filterByType(this,'MIN')">Mini</div>
+          <div class="tab" onclick="filterByType(this,'MID')">Midi</div>
+          <div class="tab" onclick="filterByType(this,'STD')">Standard</div>
+          <div class="tab" onclick="filterByType(this,'ART')">Articulé</div>
+          <div class="tab" onclick="filterByType(this,'CAR')">Car</div>
+          <div class="tab" onclick="filterByType(this,'TRAM')">Tram</div>
         </div>
-        <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="openModal('modal-add-bus')">+ Ajouter</button>
+        <div class="tabs" style="margin-left:8px" id="parc-view-tabs">
+          <div class="tab active" onclick="setParcView(this,'compact')">Compact</div>
+          <div class="tab" onclick="setParcView(this,'full')">Complet</div>
+        </div>
       </div>
-      <div class="card">
-        <div class="card-body" style="padding:0">
-          <table class="data-table" id="parc-table">
-            <thead>
-              <tr>
+
+      <!-- Vue COMPACTE -->
+      <div id="parc-view-compact">
+        <div class="card">
+          <div class="card-body" style="padding:0;overflow-x:auto">
+            <table class="data-table" id="parc-table">
+              <thead><tr>
                 <th onclick="sortTable('parc','idJeu')" class="sortable">ID <span class="sort-icon" data-col="idJeu">↕</span></th>
-                <th onclick="sortTable('parc','nom')" class="sortable">Modèle / Nom <span class="sort-icon" data-col="nom">↕</span></th>
-                <th onclick="sortTable('parc','type')" class="sortable">Type <span class="sort-icon" data-col="type">↕</span></th>
-                <th onclick="sortTable('parc','km')" class="sortable">KM <span class="sort-icon" data-col="km">↕</span></th>
-                <th onclick="sortTable('parc','depot')" class="sortable">Dépôt <span class="sort-icon" data-col="depot">↕</span></th>
+                <th onclick="sortTable('parc','nom')" class="sortable">Numéro Parc <span class="sort-icon" data-col="nom">↕</span></th>
+                <th onclick="sortTable('parc','marque')" class="sortable">Modèle <span class="sort-icon" data-col="marque">↕</span></th>
+                <th onclick="sortTable('parc','anneMES')" class="sortable">MES <span class="sort-icon" data-col="anneMES">↕</span></th>
+                <th onclick="sortTable('parc','revisionDate')" class="sortable">Révision <span class="sort-icon" data-col="revisionDate">↕</span></th>
+                <th onclick="sortTable('parc','ct')" class="sortable">CT <span class="sort-icon" data-col="ct">↕</span></th>
+                <th onclick="sortTable('parc','capa')" class="sortable">Places <span class="sort-icon" data-col="capa">↕</span></th>
+                <th onclick="sortTable('parc','energie')" class="sortable">Énergie <span class="sort-icon" data-col="energie">↕</span></th>
+                <th onclick="sortTable('parc','prixAchat')" class="sortable">Prix Achat <span class="sort-icon" data-col="prixAchat">↕</span></th>
+                <th onclick="sortTable('parc','kmDepart')" class="sortable">KM Départ <span class="sort-icon" data-col="kmDepart">↕</span></th>
+                <th onclick="sortTable('parc','km')" class="sortable">KM Actuel <span class="sort-icon" data-col="km">↕</span></th>
+                <th onclick="sortTable('parc','etatTech')" class="sortable">Tech <span class="sort-icon" data-col="etatTech">↕</span></th>
+                <th onclick="sortTable('parc','etatInt')" class="sortable">Int. <span class="sort-icon" data-col="etatInt">↕</span></th>
+                <th onclick="sortTable('parc','diffKm')" class="sortable">Diff KM <span class="sort-icon" data-col="diffKm">↕</span></th>
                 <th>Statut</th>
-                <th onclick="sortTable('parc','ct')" class="sortable">Prochain CT <span class="sort-icon" data-col="ct">↕</span></th>
                 <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="parc-tbody"></tbody>
-          </table>
+              </tr></thead>
+              <tbody id="parc-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vue COMPLÈTE (toutes les options) -->
+      <div id="parc-view-full" style="display:none">
+        <div class="card">
+          <div class="card-body" style="padding:0;overflow-x:auto">
+            <table class="data-table" id="parc-table-full">
+              <thead><tr>
+                <th>ID</th><th>Numéro Parc</th><th>Modèle</th><th>Type</th><th>Énergie</th>
+                <th>Places</th><th>KM Actuel</th><th>KM Départ</th><th>Diff KM</th>
+                <th>CT</th><th>Révision</th><th>Tech</th><th>Int.</th>
+                <th>Balise</th><th>Self-S.</th><th>Btn Arrêt</th><th>Caméra</th>
+                <th>Pub Arr.</th><th>Pub Av.</th><th>Pub Lat.</th>
+                <th>Rack Bag.</th><th>Rack Vél.</th><th>Ethylo</th>
+                <th>Radio</th><th>USB</th><th>WiFi</th><th>Bandeau</th>
+                <th>Écran TFT</th><th>HP</th><th>Tél.</th><th>Pupitre</th><th>Billetique</th>
+                <th>Vente possible</th><th>Statut</th>
+              </tr></thead>
+              <tbody id="parc-tbody-full"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panneau détail bus (masqué par défaut) -->
+      <div id="bus-detail-panel" style="display:none;margin-top:14px">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title" id="bus-detail-title">Détail bus</div>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('bus-detail-panel').style.display='none'">✕ Fermer</button>
+          </div>
+          <div class="card-body" id="bus-detail-body"></div>
         </div>
       </div>
     </div>
@@ -1267,18 +1318,7 @@
     <div id="page-achats" class="page">
       <div class="grid-2">
         <div class="card">
-          <div class="card-header"><div class="card-title">Coller messages d'achat</div></div>
-          <div class="card-body">
-            <div class="alert-box info">📋 Colle les messages d'achat du jeu (un par ligne). Le format attendu : <br><em>DD/MM/YYYY HH:MM | Vous avez acheté le [Modèle] (ID XXXXX) à ... pour XXXXX €</em></div>
-            <div class="form-group" style="margin-bottom:10px">
-              <label>Messages d'achat</label>
-              <textarea id="achat-texte" rows="6" placeholder="10/03/2026 21:24 | Vous avez acheté le Citaro G (ID 91346) à xxx pour 115000 €..."></textarea>
-            </div>
-            <button class="btn btn-primary" onclick="traiterAchats()">📥 Importer les achats</button>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header"><div class="card-title">Ajouter achat manuel</div></div>
+          <div class="card-header"><div class="card-title">➕ Enregistrer un achat</div></div>
           <div class="card-body">
             <div class="form-row">
               <div class="form-group">
@@ -1292,24 +1332,38 @@
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label>Prix (€)</label>
+                <label>Prix d'achat (€)</label>
                 <input type="number" id="achat-prix" placeholder="115000">
               </div>
               <div class="form-group">
-                <label>KM au compteur</label>
+                <label>KM au compteur (départ)</label>
                 <input type="number" id="achat-km" placeholder="0">
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label>Date</label>
+                <label>Date d'achat</label>
                 <input type="date" id="achat-date">
               </div>
+              <div class="form-group">
+                <label>Note</label>
+                <input type="text" id="achat-note" placeholder="Optionnel">
+              </div>
             </div>
-            <button class="btn btn-success" onclick="ajouterAchatManuel()">+ Ajouter</button>
+            <div class="alert-box info" style="margin-bottom:12px;font-size:11px">
+              💡 L'ID + Prix + KM seront automatiquement utilisés dans la gestion du parc pour calculer la différence kilométrique et le coût au km.
+            </div>
+            <button class="btn btn-success" onclick="ajouterAchatManuel()">+ Enregistrer l'achat</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">📊 Résumé achats</div></div>
+          <div class="card-body" id="achats-resume">
           </div>
         </div>
       </div>
+
       <div class="card" style="margin-top:14px">
         <div class="card-header">
           <div class="card-title">Log des achats</div>
@@ -1317,7 +1371,7 @@
         </div>
         <div class="card-body" style="padding:0">
           <table class="data-table">
-            <thead><tr><th>Date</th><th>Modèle</th><th>ID jeu</th><th>Prix</th><th>KM</th><th>Prix/KM</th><th>Note</th></tr></thead>
+            <thead><tr><th>Date</th><th>Modèle</th><th>ID jeu</th><th>Prix</th><th>KM départ</th><th>€/km</th><th>Note</th><th></th></tr></thead>
             <tbody id="achats-tbody"></tbody>
           </table>
         </div>
@@ -1608,10 +1662,19 @@ let state = loadState() || {
   gasoil: [],
   journal: [],
   conso: { niveau: 5000, moy: 0 },
-  config: { argentDepart: 0 }
+  config: { argentDepart: 0 },
+  prixKm: {}
 };
 if (!state.config) state.config = { argentDepart: 0 };
 if (!state.statsLignes) state.statsLignes = [];
+// Pré-charger les données historiques prix/km si pas encore dans le state
+if (!state.prixKm || Object.keys(state.prixKm).length === 0) {
+  state.prixKm = {};
+  Object.entries(PRIX_KM_INIT).forEach(([id, data]) => {
+    state.prixKm[id] = data;
+  });
+  saveState();
+}
 
 function loadState() {
   try { return JSON.parse(localStorage.getItem('tm_state')); } catch(e) { return null; }
@@ -1649,7 +1712,7 @@ function nav(el) {
   const titles = { dashboard:'Tableau de bord', alertes:'Alertes', parc:'Gestion du parc',
     affectations:'Affectations', maintenance:'Maintenance & CT', abribus:'Équipement Abribus',
     personnel:'Personnel & FCO', lignes:'Lignes & Statistiques', compta:'Comptabilité',
-    pub:'Contrats Publicitaires', achats:'Achats de bus', gasoil:'Gasoil & Consommation' };
+    pub:'Contrats Publicitaires', achats:'Achats de bus', gasoil:'Gasoil & Consommation', config:'Configuration' };
   document.getElementById('topbar-title').textContent = titles[page] || page;
   renderPage(page);
 }
@@ -1749,19 +1812,21 @@ function renderDashboard() {
   });
   document.getElementById('repartition-parc').innerHTML = rep || '<div style="color:var(--text3)">Aucun bus.</div>';
 
-  // Alertes recap
+  // Alertes recap — seulement ce qui se passe AUJOURD'HUI
   let alerts = '';
+  const today0 = today();
   state.bus.forEach(b => {
-    if (!b.ct) return;
-    const diff = Math.round((new Date(b.ct) - new Date()) / (1000*60*60*24));
-    if (diff < 30) alerts += `<div class="alert-box ${diff<0?'danger':'warning'}" style="margin-bottom:6px;padding:7px 10px">
-      🔍 <b>${b.nom}</b> — CT ${diff<0?'expiré depuis '+Math.abs(diff)+' j':'dans '+diff+' j'} (${b.ct})
-    </div>`;
+    // CT qui expire aujourd'hui ou déjà expiré
+    if (b.ct) {
+      const diff = Math.round((new Date(b.ct) - new Date()) / (1000*60*60*24));
+      if (diff <= 0) alerts += `<div class="alert-box danger" style="margin-bottom:6px;padding:7px 10px">
+        🔍 <b>${b.nom}</b> — CT ${diff < 0 ? 'expiré depuis '+Math.abs(diff)+' j' : 'expire aujourd\'hui'}</div>`;
+    }
+    // Révision qui commence/finit aujourd'hui
+    if (b.revisionDate === today0) alerts += `<div class="alert-box warning" style="margin-bottom:6px;padding:7px 10px">
+      🔧 <b>${b.nom}</b> — Révision prévue aujourd'hui</div>`;
   });
-  state.personnel.filter(p => p.statut === 'FCO requise').forEach(p => {
-    alerts += `<div class="alert-box warning" style="margin-bottom:6px;padding:7px 10px">🎓 FCO requise pour <b>${p.nom}</b> (${p.matricule})</div>`;
-  });
-  if (!alerts) alerts = '<div class="alert-box success">✅ Aucune alerte active</div>';
+  if (!alerts) alerts = '<div class="alert-box success">✅ Aucune alerte pour aujourd\'hui</div>';
   document.getElementById('alertes-recap').innerHTML = alerts;
 
   // Last achats
@@ -1790,43 +1855,54 @@ function renderDashboard() {
 //  ALERTES
 // ═══════════════════════════════════════════════════════
 function renderAlertes() {
-  let html = '<div class="section-title">CT urgents / expirés</div>';
+  const SEUIL_JOURS = 5;
+  let html = `<div class="section-title">CT dans les ${SEUIL_JOURS} prochains jours</div>`;
+
   const ctAlerts = state.bus.filter(b => {
     if (!b.ct) return false;
-    return Math.round((new Date(b.ct) - new Date()) / (1000*60*60*24)) < 60;
+    const diff = Math.round((new Date(b.ct) - new Date()) / (1000*60*60*24));
+    return diff <= SEUIL_JOURS;
   }).sort((a,b) => new Date(a.ct) - new Date(b.ct));
+
   if (ctAlerts.length) {
     ctAlerts.forEach(b => {
       const diff = Math.round((new Date(b.ct) - new Date()) / (1000*60*60*24));
-      html += `<div class="alert-box ${diff<0?'danger':diff<30?'danger':'warning'}" style="margin-bottom:8px">
-        🔍 <b>${b.nom}</b> — CT prévu le <b>${b.ct}</b> — ${diff<0?'<b>EXPIRÉ depuis '+Math.abs(diff)+' jours</b>':'Dans <b>'+diff+' jours</b>'}
+      const label = diff < 0 ? `<b>EXPIRÉ depuis ${Math.abs(diff)} j</b>` : diff === 0 ? "<b>AUJOURD'HUI</b>" : `Dans <b>${diff} j</b> (${b.ct})`;
+      html += `<div class="alert-box ${diff<=0?'danger':'warning'}" style="margin-bottom:8px;display:flex;align-items:center;gap:8px">
+        <span>🔍 <b>${b.nom}</b> — CT le ${b.ct} — ${label}</span>
         <button class="btn btn-ghost btn-xs" style="margin-left:auto" onclick="ouvrirCTPlanif('${b.nom}')">Planifier</button>
       </div>`;
     });
-  } else html += '<div class="alert-box success" style="margin-bottom:8px">✅ Aucun CT urgent.</div>';
+  } else html += `<div class="alert-box success" style="margin-bottom:8px">✅ Aucun CT dans les ${SEUIL_JOURS} prochains jours.</div>`;
 
-  html += '<div class="section-title" style="margin-top:16px">FCO conducteurs</div>';
-  const fcoAlerts = state.personnel.filter(p => p.statut === 'FCO requise');
+  html += `<div class="section-title" style="margin-top:16px">Révisions dans les ${SEUIL_JOURS} prochains jours</div>`;
+  const revAlerts = state.bus.filter(b => {
+    if (!b.revisionDate) return false;
+    const diff = Math.round((new Date(b.revisionDate) - new Date()) / (1000*60*60*24));
+    return diff <= SEUIL_JOURS;
+  }).sort((a,b) => new Date(a.revisionDate) - new Date(b.revisionDate));
+
+  if (revAlerts.length) {
+    revAlerts.forEach(b => {
+      const diff = Math.round((new Date(b.revisionDate) - new Date()) / (1000*60*60*24));
+      html += `<div class="alert-box warning" style="margin-bottom:8px">
+        🔧 <b>${b.nom}</b> — Révision le ${b.revisionDate} — ${diff<=0?'<b>Aujourd\'hui</b>':'Dans '+diff+' j'}
+      </div>`;
+    });
+  } else html += `<div class="alert-box success" style="margin-bottom:8px">✅ Aucune révision dans les ${SEUIL_JOURS} prochains jours.</div>`;
+
+  html += `<div class="section-title" style="margin-top:16px">FCO conducteurs expirées</div>`;
+  const fcoAlerts = state.personnel.filter(p => p.statut === 'FCO requise' || p.statut === 'FCO bientôt');
   if (fcoAlerts.length) {
     fcoAlerts.forEach(p => {
-      html += `<div class="alert-box warning" style="margin-bottom:8px">
-        🎓 <b>${p.nom}</b> (${p.matricule}) — FCO requise. Dernière FCO : ${p.fco || 'inconnue'}
+      html += `<div class="alert-box ${p.statut==='FCO requise'?'danger':'warning'}" style="margin-bottom:8px">
+        🎓 <b>${p.nom}</b> (${p.matricule}) — ${p.statut} — FCO le : ${p.fco||'inconnue'}
       </div>`;
     });
-  } else html += '<div class="alert-box success" style="margin-bottom:8px">✅ Tous les conducteurs sont à jour.</div>';
-
-  html += '<div class="section-title" style="margin-top:16px">Maintenances en cours</div>';
-  const maintsActives = state.maintenance.filter(m => m.statut === 'En cours');
-  if (maintsActives.length) {
-    maintsActives.forEach(m => {
-      html += `<div class="alert-box info" style="margin-bottom:8px">
-        🔧 <b>${m.bus}</b> — ${m.type} depuis le ${m.depuis} (${m.duree} j prévus)
-      </div>`;
-    });
-  } else html += '<div class="alert-box success">✅ Aucune maintenance active.</div>';
+  } else html += '<div class="alert-box success" style="margin-bottom:8px">✅ Toutes les FCO sont à jour.</div>';
 
   document.getElementById('alertes-list').innerHTML = html;
-  const total = ctAlerts.length + fcoAlerts.length;
+  const total = ctAlerts.length + revAlerts.length + fcoAlerts.length;
   document.getElementById('alert-badge').textContent = total;
   document.getElementById('alert-badge').style.display = total > 0 ? '' : 'none';
 }
@@ -1869,15 +1945,39 @@ function sortData(arr, tableId, defaultCol) {
 // ═══════════════════════════════════════════════════════
 //  PARC
 // ═══════════════════════════════════════════════════════
-const STATUS_OPTIONS = ['En service','En révision','Indispo','Nouveau','CT urgent','Musée'];
+const STATUS_OPTIONS = ['En service','En révision','Indispo','Nouveau','CT urgent','Musée','Réserve'];
 const STATUS_CLASS = {
   'En service':  'status-en-service',
   'En révision': 'status-en-revision',
   'Indispo':     'status-indispo',
   'Nouveau':     'status-nouveau',
   'CT urgent':   'status-ct-urgent',
-  'Musée':       'status-musee'
+  'Musée':       'status-musee',
+  'Réserve':     'status-indispo'
 };
+
+function ouvrirCTPlanif(nomBus) {
+  // Naviguer vers maintenance et pré-remplir le bus CT
+  nav(document.querySelector('[data-page=maintenance]'));
+  setTimeout(() => {
+    const sel = document.getElementById('ct-bus');
+    if (sel) {
+      for (let i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === nomBus) { sel.selectedIndex = i; break; }
+      }
+    }
+  }, 100);
+}
+
+let parcView = 'compact';
+function setParcView(el, view) {
+  parcView = view;
+  document.querySelectorAll('#parc-view-tabs .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('parc-view-compact').style.display = view === 'compact' ? '' : 'none';
+  document.getElementById('parc-view-full').style.display    = view === 'full'    ? '' : 'none';
+  renderParc();
+}
 
 function renderParc() {
   const search = (document.getElementById('search-parc').value||'').toLowerCase();
@@ -1886,33 +1986,144 @@ function renderParc() {
     const matchSearch = !search || b.nom.toLowerCase().includes(search)
       || String(b.idJeu||'').includes(search)
       || (b.marque||'').toLowerCase().includes(search)
-      || (b.modele||'').toLowerCase().includes(search);
+      || (b.modele||'').toLowerCase().includes(search)
+      || (b.immat||'').toLowerCase().includes(search);
     return matchType && matchSearch;
   });
+  filtered = sortData(filtered, 'parc', 'nom');
 
-  filtered = sortData(filtered, 'parc', 'nom'); // tri par défaut : nom
+  const statusOptions = ['En service','En révision','Indispo','Nouveau','CT urgent','Musée','Réserve'];
 
-  const tbody = document.getElementById('parc-tbody');
-  tbody.innerHTML = filtered.map(b => {
-    const cls  = STATUS_CLASS[b.statut] || 'status-indispo';
-    const opts = STATUS_OPTIONS.map(s =>
-      `<option value="${s}"${b.statut===s?' selected':''}>${s}</option>`
-    ).join('');
-    return `<tr>
-      <td class="mono" style="color:var(--text3)">${b.idJeu||'—'}</td>
-      <td><b>${b.nom}</b>${b.marque?`<br><span style="color:var(--text3);font-size:10px">${b.marque} ${b.modele||''}</span>`:''}</td>
-      <td>${getTypeBadge(b.type)}</td>
-      <td class="mono">${fmtNum(b.km)} km</td>
-      <td style="font-size:11px;color:var(--text2)">${b.depot||'—'}</td>
-      <td><select class="status-select ${cls}" onchange="changerStatutBus(${b.id},this.value,this)">${opts}</select></td>
-      <td>${ctStatus(b.ct)}</td>
-      <td>
-        <button class="btn btn-ghost btn-xs" onclick="editBus(${b.id})">✏️</button>
-        <button class="btn btn-warning btn-xs" onclick="quickRevision(${b.id})">🔧</button>
-        <button class="btn btn-danger btn-xs" onclick="retirerBus(${b.id})">🗑️</button>
-      </td>
-    </tr>`;
-  }).join('') || '<tr><td colspan="8" style="color:var(--text3);text-align:center;padding:20px">Aucun bus — Importe ton bus.csv</td></tr>';
+  if (parcView === 'compact') {
+    const tbody = document.getElementById('parc-tbody');
+    tbody.innerHTML = filtered.map(b => {
+      const cls  = STATUS_CLASS[b.statut] || 'status-indispo';
+      const opts = statusOptions.map(s => `<option value="${s}"${b.statut===s?' selected':''}>${s}</option>`).join('');
+      const ctDiff = b.ct ? Math.round((new Date(b.ct) - new Date()) / (1000*60*60*24)) : null;
+      const ctStyle = ctDiff !== null && ctDiff <= 0 ? 'color:var(--red)' : ctDiff !== null && ctDiff <= 5 ? 'color:var(--orange)' : '';
+      return `<tr>
+        <td class="mono" style="color:var(--text3);font-size:11px">${b.idJeu||'—'}</td>
+        <td><b>${b.nom}</b></td>
+        <td style="font-size:10px;color:var(--text3)">${b.marque||''} ${b.modele||''}</td>
+        <td class="mono" style="font-size:11px">${b.anneMES ? b.anneMES.substring(0,4) : '—'}</td>
+        <td class="mono" style="font-size:11px;${b.revisionDate&&b.revisionDate<=today()?'color:var(--orange)':''}">${b.revisionDate||'—'}</td>
+        <td class="mono" style="font-size:11px;${ctStyle}">${b.ct||'—'}</td>
+        <td class="mono">${b.capa||'—'}</td>
+        <td style="font-size:11px">${b.energie||'—'}</td>
+        <td class="mono" style="color:var(--text2)">${b.prixAchat ? fmt(b.prixAchat) : '—'}</td>
+        <td class="mono" style="color:var(--text3)">${b.kmDepart ? fmtNum(b.kmDepart) : '—'}</td>
+        <td class="mono">${fmtNum(b.km)}</td>
+        <td class="mono" style="color:${(b.etatTech||0)>=80?'var(--green)':(b.etatTech||0)>=60?'var(--yellow)':'var(--red)'}">${b.etatTech||'—'}</td>
+        <td class="mono" style="color:${(b.etatInt||0)>=80?'var(--green)':(b.etatInt||0)>=60?'var(--yellow)':'var(--red)'}">${b.etatInt||'—'}</td>
+        <td class="mono">${b.diffKm ? fmtNum(b.diffKm) : '—'}</td>
+        <td><select class="status-select ${cls}" onchange="changerStatutBus(${b.id},this.value,this)">${opts}</select></td>
+        <td>
+          <button class="btn btn-ghost btn-xs" onclick="showBusDetail(${b.id})" title="Détail complet">🔍</button>
+          <button class="btn btn-warning btn-xs" onclick="quickRevision(${b.id})" title="Envoyer en révision">🔧</button>
+          <button class="btn btn-danger btn-xs" onclick="retirerBus(${b.id})" title="Retirer du parc">🗑️</button>
+        </td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="16" style="color:var(--text3);text-align:center;padding:20px">Aucun bus — Importe ton bus.csv</td></tr>';
+
+  } else {
+    const yn = v => v ? '<span style="color:var(--green)">✓</span>' : '<span style="color:var(--red);font-size:10px">✗</span>';
+    const tbody = document.getElementById('parc-tbody-full');
+    tbody.innerHTML = filtered.map(b => {
+      const cls  = STATUS_CLASS[b.statut] || 'status-indispo';
+      const opts = statusOptions.map(s => `<option value="${s}"${b.statut===s?' selected':''}>${s}</option>`).join('');
+      const venteOk = b.reventeDate && new Date(b.reventeDate) <= new Date();
+      return `<tr>
+        <td class="mono" style="font-size:10px;color:var(--text3)">${b.idJeu||'—'}</td>
+        <td style="font-size:11px"><b>${b.nom}</b></td>
+        <td style="font-size:10px;color:var(--text2)">${b.marque||''} ${b.modele||''}</td>
+        <td>${getTypeBadge(b.type)}</td>
+        <td style="font-size:11px">${b.energie||'—'}</td>
+        <td class="mono">${b.capa||'—'}</td>
+        <td class="mono">${fmtNum(b.km)}</td>
+        <td class="mono" style="color:var(--text3)">${b.kmDepart?fmtNum(b.kmDepart):'—'}</td>
+        <td class="mono">${b.diffKm?fmtNum(b.diffKm):'—'}</td>
+        <td class="mono" style="font-size:10px">${b.ct||'—'}</td>
+        <td class="mono" style="font-size:10px">${b.revisionDate||'—'}</td>
+        <td class="mono" style="color:${(b.etatTech||0)>=80?'var(--green)':(b.etatTech||0)>=60?'var(--yellow)':'var(--red)'}">${b.etatTech||'—'}</td>
+        <td class="mono" style="color:${(b.etatInt||0)>=80?'var(--green)':(b.etatInt||0)>=60?'var(--yellow)':'var(--red)'}">${b.etatInt||'—'}</td>
+        <td>${yn(b.balisePrio)}</td><td>${yn(b.selfService)}</td><td>${yn(b.boutonsArret)}</td>
+        <td>${yn(b.camera)}</td>
+        <td style="font-size:9px">${b.pubArr||'—'}</td><td style="font-size:9px">${b.pubAv||'—'}</td><td style="font-size:9px">${b.pubLat||'—'}</td>
+        <td>${yn(b.rackBagages)}</td><td>${yn(b.rackVelos)}</td><td>${yn(b.ethylotest)}</td>
+        <td>${yn(b.radio)}</td><td>${yn(b.usb)}</td><td>${yn(b.wifi)}</td>
+        <td>${yn(b.bandeau)}</td><td>${yn(b.ecranTFT)}</td><td>${yn(b.hautParleurs)}</td>
+        <td>${yn(b.telephone)}</td><td>${yn(b.pupitre)}</td>
+        <td style="font-size:10px">${b.billetique||'—'}</td>
+        <td style="font-size:10px;color:${venteOk?'var(--green)':'var(--text3)'}">${b.reventeDate||'—'}${venteOk?' ✓':''}</td>
+        <td><select class="status-select ${cls}" style="font-size:10px" onchange="changerStatutBus(${b.id},this.value,this)">${opts}</select></td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="34" style="color:var(--text3);text-align:center;padding:20px">Aucun bus</td></tr>';
+  }
+}
+
+function showBusDetail(id) {
+  const b = state.bus.find(x => x.id === id);
+  if (!b) return;
+  const yn = v => v ? '<span style="color:var(--green)">✓ Oui</span>' : '<span style="color:var(--red)">✗ Non</span>';
+  const row = (label, val) => val !== undefined && val !== '' && val !== null
+    ? `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)">
+        <span style="color:var(--text3);font-size:11px">${label}</span>
+        <span style="font-size:12px;font-weight:500;text-align:right;max-width:60%">${val}</span>
+       </div>` : '';
+  const venteOk = b.reventeDate && new Date(b.reventeDate) <= new Date();
+  const kmParcourus = (b.km||0) - (b.kmDepart||0);
+  const coefUsure   = b.prixAchat && kmParcourus > 0 ? (b.prixAchat / kmParcourus).toFixed(2) : null;
+
+  document.getElementById('bus-detail-title').textContent = `🚍 ${b.nom} — ${b.marque||''} ${b.modele||''}`;
+  document.getElementById('bus-detail-body').innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px">
+      <div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:8px;font-weight:700">Identification</div>
+        ${row('ID Jeu', b.idJeu)} ${row('Numéro de parc', `<b>${b.nom}</b>`)} ${row('Immatriculation', b.immat)}
+        ${row('Marque', b.marque)} ${row('Modèle', b.modele)} ${row('Type véhicule', b.typeVehicule||b.type)}
+        ${row('Énergie', b.energie)} ${row('Conso.', b.conso ? b.conso+' L/100km' : '')}
+        ${row('Places', b.capa)} ${row('Dépôt', b.depot)} ${row('Patrimoine', b.patrimoine)}
+        ${row('BHNS', yn(b.bhns))} ${row('Ligne Express', yn(b.le))}
+      </div>
+      <div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:8px;font-weight:700">Achat & Kilométrage</div>
+        ${row('Prix d\'achat', b.prixAchat ? fmt(b.prixAchat) : '')}
+        ${row('KM au départ', b.kmDepart ? fmtNum(b.kmDepart)+' km' : '')}
+        ${row('KM actuel', fmtNum(b.km)+' km')}
+        ${row('KM parcourus', fmtNum(kmParcourus)+' km')}
+        ${coefUsure ? row('Coût au km', coefUsure+' €/km') : ''}
+        ${row('Mise en service', b.anneMES)} ${row('Révision prévue', b.revisionDate)}
+        ${row('Prochain CT', b.ct)} ${row('Garantie', b.garantie)}
+        ${row('Vente possible le', b.reventeDate ? b.reventeDate+(venteOk?' <b style="color:var(--green)">✅ DISPONIBLE</b>':' ⏳') : '')}
+        ${row('Argus', b.argus ? fmt(b.argus) : '')}
+      </div>
+      <div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:8px;font-weight:700">État & Équipement</div>
+        ${row('Statut', `<b>${b.statut}</b>`)} ${row('État technique', b.etatTech ? b.etatTech+'/100' : '')}
+        ${row('État intérieur', b.etatInt ? b.etatInt+'/100' : '')} ${row('Propreté', b.proprete ? b.proprete+'/100' : '')}
+        ${row('Girouette avant', b.girAvant)} ${row('Girouette latérale', b.girLat)} ${row('Girouette arrière', b.girArr)}
+        ${row('Climatisation/Air', b.airCond)} ${row('Nb portes', b.nbPortes)} ${row('Type portes', b.typePortes)}
+        ${row('Billettique', b.billetique)} ${row('Agenouilleur', yn(b.agenouillement))}
+        ${row('Emplacement UFR', yn(b.ufr))} ${row('Plateforme rétractable', yn(b.plateformeRet))}
+      </div>
+      <div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:8px;font-weight:700">Options</div>
+        ${row('Balise priorité feu', yn(b.balisePrio))} ${row('Self-Service', yn(b.selfService))}
+        ${row('Boutons arrêt supp.', yn(b.boutonsArret))} ${row('Caméra vidéo', yn(b.camera))}
+        ${row('Pub arrière', b.pubArr||'Non')} ${row('Pub avant', b.pubAv||'Non')} ${row('Pub latéral', b.pubLat||'Non')}
+        ${row('Rack à bagages', yn(b.rackBagages))} ${row('Rack à vélos', yn(b.rackVelos))}
+        ${row('Ethylotest', yn(b.ethylotest))} ${row('Radio FM', yn(b.radio))}
+        ${row('Ports USB', yn(b.usb))} ${row('WiFi', yn(b.wifi))}
+        ${row('Bandeau lumineux', yn(b.bandeau))} ${row('Écran TFT', yn(b.ecranTFT))}
+        ${row('Haut-parleurs', yn(b.hautParleurs))} ${row('Téléphone Radio', yn(b.telephone))}
+        ${row('Pupitre conducteur', yn(b.pupitre))}
+        ${row('Précâblage Self-S.', yn(b.precablage))} ${row('Vitre anti-agression', yn(b.vitreAnti))}
+        ${row('Vitre teintée', yn(b.vitreTein))} ${row('Baies basses', yn(b.baiesBasses))}
+        ${row('Pavillon Lumibus', yn(b.lumibus))}
+      </div>
+    </div>`;
+  document.getElementById('bus-detail-panel').style.display = '';
+  document.getElementById('bus-detail-panel').scrollIntoView({ behavior:'smooth', block:'nearest' });
 }
 
 function changerStatutBus(id, newStatut, sel) {
@@ -2100,16 +2311,120 @@ function parseDateFR(d) {
   return d;
 }
 
+// Données prix/km initiales — chargées dans state.prixKm au premier lancement
+const PRIX_KM_INIT = {
+  45347:{prix:60000,km:422562},16931:{prix:68266,km:236441},16929:{prix:68266,km:243800},
+  102311:{prix:76000,km:337855},102312:{prix:76000,km:338058},146653:{prix:103000,km:0},
+  69604:{prix:92167,km:75249},72423:{prix:88139,km:92302},61878:{prix:39500,km:848981},
+  38636:{prix:128092,km:220140},81130:{prix:96000,km:589383},52299:{prix:62500,km:1249342},
+  4605:{prix:104000,km:322287},32076:{prix:73500,km:923453},21386:{prix:79796,km:229258},
+  82274:{prix:101500,km:396519},1848:{prix:116408,km:131423},107491:{prix:136000,km:107491},
+  76173:{prix:136000,km:31702},76174:{prix:136000,km:15483},4755:{prix:261000,km:354502},
+  34907:{prix:145579,km:911643},35262:{prix:72000,km:932159},4758:{prix:82000,km:367547},
+  8755:{prix:142738,km:339479},79212:{prix:140500,km:432711},79213:{prix:184000,km:448174},
+  79626:{prix:184000,km:408994},79627:{prix:184000,km:440273},80277:{prix:184000,km:426945},
+  80278:{prix:184000,km:406143},80601:{prix:184000,km:402644},80602:{prix:184000,km:416905},
+  81092:{prix:184000,km:425663},81365:{prix:184000,km:428589},33196:{prix:184000,km:172934},
+  63941:{prix:160500,km:547646},36314:{prix:105000,km:526496},4756:{prix:87000,km:364432},
+  88355:{prix:142738,km:549529},88359:{prix:102008,km:572375},70072:{prix:110000,km:638846},
+  60858:{prix:110000,km:614306},4757:{prix:106000,km:385427},91870:{prix:137054,km:564442},
+  80974:{prix:105000,km:562417},83043:{prix:114500,km:547476},82577:{prix:105000,km:137977},
+  81954:{prix:224074,km:166794},43553:{prix:224074,km:597716},28616:{prix:135000,km:266238},
+  46159:{prix:140000,km:161383},28615:{prix:140000,km:231037},56067:{prix:140000,km:146187},
+  56066:{prix:144444,km:162648},24164:{prix:141142,km:256190},7138:{prix:159000,km:736273},
+  111094:{prix:100000,km:658694},111095:{prix:106000,km:652463},111766:{prix:106000,km:657964},
+  111767:{prix:106000,km:661996},112066:{prix:106000,km:646600},98147:{prix:106000,km:80724},
+  450:{prix:167000,km:156881},52401:{prix:211013,km:157072},105460:{prix:185500,km:512781},
+  58704:{prix:75500,km:534412},101162:{prix:75500,km:708835},25942:{prix:109400,km:685777},
+  103409:{prix:83000,km:480354},70394:{prix:100000,km:113912},112543:{prix:155500,km:432408},
+  103962:{prix:119600,km:471086},107660:{prix:128712,km:490338},566:{prix:117700,km:70174},
+  27540:{prix:147864,km:228505},78930:{prix:115000,km:124533},2220:{prix:130000,km:653806},
+  2793:{prix:158624,km:18492},121520:{prix:22000,km:62520},7547:{prix:121000,km:320203},
+  59004:{prix:197000,km:260224},129284:{prix:149000,km:260224},13333:{prix:157500,km:260224},
+  13334:{prix:151500,km:260224},23754:{prix:149000,km:50296},3479:{prix:123030,km:438426},
+  164605:{prix:0,km:438426},90938:{prix:0,km:438426},136700:{prix:146000,km:243802},
+  101327:{prix:190000,km:85048},101328:{prix:250000,km:88731},101329:{prix:250000,km:87273},
+  101330:{prix:250000,km:90007},101331:{prix:250000,km:86419},101332:{prix:250000,km:85115},
+  101333:{prix:250000,km:66582},101334:{prix:250000,km:80961},101335:{prix:250000,km:86570},
+  101336:{prix:250000,km:87051},101337:{prix:250000,km:96144},101338:{prix:250000,km:94331},
+  80856:{prix:250000,km:60859},80857:{prix:308539,km:58675},80873:{prix:308539,km:67454},
+  101339:{prix:308539,km:57865},77127:{prix:250000,km:134147},100270:{prix:190000,km:745482},
+  83460:{prix:109000,km:68027},107269:{prix:105000,km:438123},114809:{prix:106000,km:790115},
+  32953:{prix:97000,km:561674},32687:{prix:92000,km:558636},73838:{prix:67478,km:172164},
+  73839:{prix:261000,km:172464},73840:{prix:261000,km:175024},76002:{prix:261000,km:174623},
+  32023:{prix:232937,km:260224},76000:{prix:244000,km:140238},14065:{prix:269339,km:140979},
+  13997:{prix:269339,km:118073},53834:{prix:250000,km:5369},48287:{prix:193000,km:438123},
+  41050:{prix:201500,km:277612},54877:{prix:296000,km:157556},54881:{prix:215000,km:161183},
+  54886:{prix:215000,km:143138},87296:{prix:222000,km:384475},87297:{prix:222000,km:383503},
+  29992:{prix:126000,km:698977},29991:{prix:103000,km:812016},77823:{prix:85500,km:953143},
+  49174:{prix:105000,km:828322},57342:{prix:285000,km:161376},75210:{prix:292000,km:110642},
+  75214:{prix:296000,km:120917},23309:{prix:296000,km:720969},36052:{prix:342000,km:605100},
+  87694:{prix:135000,km:697917},89319:{prix:125000,km:678376},70191:{prix:113000,km:987028},
+  3075:{prix:222613,km:162441},102096:{prix:197000,km:134496},91346:{prix:115000,km:799958},
+  101340:{prix:342000,km:95068},101341:{prix:342000,km:79932},101342:{prix:342000,km:94405},
+  101343:{prix:342000,km:88670},101344:{prix:342000,km:110395},101345:{prix:342000,km:109610},
+  101346:{prix:342000,km:117835},101347:{prix:342000,km:116879},101348:{prix:342000,km:108886},
+  101349:{prix:342000,km:106052},101350:{prix:342000,km:101982},101351:{prix:342000,km:97310},
+  101352:{prix:342000,km:97737},101353:{prix:342000,km:95053},101354:{prix:342000,km:95987},
+  101355:{prix:342000,km:94906},83323:{prix:416000,km:69819},68687:{prix:90500,km:825687},
+  101356:{prix:342000,km:67672},61670:{prix:320000,km:194039},88124:{prix:373000,km:95928},
+  88114:{prix:366500,km:110510},86050:{prix:330000,km:86899},35836:{prix:191000,km:232234},
+  35838:{prix:181000,km:237281},16582:{prix:270750,km:182781},16583:{prix:275700,km:162913},
+  34135:{prix:375400,km:146594},97344:{prix:349000,km:88090},78037:{prix:195600,km:91654},
+  145107:{prix:290787,km:186704},101230:{prix:266000,km:304929},54155:{prix:272000,km:145580},
+  131138:{prix:241000,km:0},131139:{prix:241000,km:0},131140:{prix:241000,km:0},
+  131141:{prix:241000,km:0},131142:{prix:241000,km:0},131143:{prix:241000,km:0},
+  131144:{prix:241000,km:0},131145:{prix:241000,km:0},131146:{prix:241000,km:0},
+  131147:{prix:241000,km:0},131148:{prix:241000,km:0},131149:{prix:241000,km:0},
+  131150:{prix:241000,km:0},131151:{prix:241000,km:0},131152:{prix:241000,km:0},
+  131153:{prix:241000,km:0},131154:{prix:241000,km:0},131155:{prix:241000,km:0},
+  131156:{prix:241000,km:0},131157:{prix:241000,km:0},131158:{prix:241000,km:0},
+  131159:{prix:241000,km:0},131160:{prix:241000,km:0},131161:{prix:241000,km:0},
+  131162:{prix:241000,km:0},131163:{prix:241000,km:0},131164:{prix:241000,km:0},
+  131165:{prix:241000,km:0},131166:{prix:241000,km:0},131167:{prix:241000,km:0},
+  131168:{prix:241000,km:0},131169:{prix:241000,km:0},131170:{prix:241000,km:0},
+  131171:{prix:241000,km:0},131172:{prix:241000,km:0},131173:{prix:241000,km:0},
+  131174:{prix:241000,km:0},100034:{prix:241000,km:0},154386:{prix:252000,km:0},
+  154387:{prix:252000,km:0},154388:{prix:252000,km:0},154389:{prix:252000,km:0},
+  154390:{prix:252000,km:0},75636:{prix:0,km:0},132041:{prix:239177,km:177121},
+  133010:{prix:251992,km:145329},81894:{prix:120000,km:459476},132105:{prix:258194,km:136619},
+  117060:{prix:150000,km:93200},100430:{prix:150709,km:276987},100426:{prix:158950,km:257903},
+  111486:{prix:225551,km:165669},96448:{prix:181472,km:240747},100429:{prix:192078,km:181185},
+  146859:{prix:250000,km:14990},146860:{prix:250000,km:17366},146861:{prix:250000,km:16743},
+  146862:{prix:250000,km:12836},107661:{prix:199636,km:88258},99945:{prix:104000,km:824917},
+  91375:{prix:290787,km:113176},106844:{prix:230000,km:926106},99954:{prix:56963,km:536501},
+  66863:{prix:93000,km:831411},37648:{prix:109500,km:216483},100651:{prix:122000,km:867006},
+  88982:{prix:73216,km:730945},131175:{prix:230000,km:24714},100820:{prix:160000,km:485674},
+  165202:{prix:134700,km:434141},165203:{prix:134700,km:434141}
+};
 function parserBus(rows) {
-  // Col: 0=ID, 1=NumParc, 2=Patrimoine, 3=FinLoc, 4=TypeVeh, 5=Marque, 6=Modele, 7=Type,
-  //      10=Energie, 12=Places, 14=MiseEnService, 15=KM, 16=RevisionDate, 17=CT, 19=Statut, 20=Depot
+  // Colonnes CSV bus.csv (60 colonnes) :
+  // 0=ID, 1=NumParc, 2=Patrimoine, 3=FinLocation, 4=TypeVehicule, 5=Marque, 6=Modele, 7=Type,
+  // 8=BHNS, 9=LE, 10=Energie, 11=Conso, 12=Places, 13=Immatriculation, 14=MiseEnService,
+  // 15=Kilometrage, 16=Revision, 17=CT, 18=Garantie, 19=Statut, 20=Depot, 21=Musee,
+  // 22=Proprete, 23=EtatTechnique, 24=EtatInterieur, 25=GirouetteAvant, 26=GirouetteLat,
+  // 27=GirouetteArr, 28=Billetique, 29=Agenouillement, 30=EmplacementUFR,
+  // 31=PlateformeRetractable, 32=SystemeAir, 33=NombrePortes, 34=TypePortes,
+  // 35=PrecablageSSelf, 36=VitreAntiAgr, 37=VitreTeinee, 38=BaiesBasses, 39=PavillonLumibus,
+  // 40=BalisePrioFeu, 41=BoutonsSelfService, 42=BoutonsArretSupp, 43=Camera,
+  // 44=PanneauPubArr, 45=PanneauPubAv, 46=PanneauPubLat, 47=RackBagages, 48=RackVelos,
+  // 49=EAD(Ethylotest), 50=RadioFM, 51=PortsUSB, 52=Wifi, 53=BandeauLumineux,
+  // 54=EcranTFT, 55=HautParleurs, 56=TelephoneRadio, 57=PupitreConduct, 58=ReventePossibleLe,
+  // 59=Argus
+
+  const yn = v => v && v.toUpperCase() === 'OUI';
+
   return rows.slice(1).filter(c => c[1]).map(c => {
+    const idJeu = parseInt(c[0]) || null;
+    const nom   = c[1];
+
     const statutJeu = (c[19] || '').toLowerCase();
     let statut = 'En service';
     if (statutJeu.includes('révis') || statutJeu.includes('revis')) statut = 'En révision';
     else if (statutJeu.includes('indispo') || statutJeu.includes('panne')) statut = 'Indispo';
     else if (statutJeu.includes('musée')) statut = 'Musée';
-    const nom = c[1];
+    else if (statutJeu.includes('réserve') || statutJeu.includes('reserve')) statut = 'Réserve';
+
     let type = 'STD';
     const nu = nom.toUpperCase();
     if (nu.startsWith('MIN-')) type = 'MIN';
@@ -2117,14 +2432,86 @@ function parserBus(rows) {
     else if (nu.startsWith('ART-')) type = 'ART';
     else if (nu.startsWith('CAR-')) type = 'CAR';
     else if (nu.startsWith('TRAM-')) type = 'TRAM';
+
+    // Récupérer prix/km depuis notre base ou depuis le CSV
+    const pkData = idJeu ? (state.prixKm && state.prixKm[idJeu] ? state.prixKm[idJeu] : {}) : {};
+
+    // Calcul âge entreprise depuis date d'achat
+    const dateAchat = parseDateFR(c[58] ? c[58].split(' ')[0] : ''); // col 58 = Revente possible le (-6mois approx)
+    // On n'a pas la date d'achat directe dans le CSV — on utilisera celle stockée si existante
+
+    // Vente possible = date achat + 6 mois
+    const reventeDate = parseDateFR((c[58]||'').trim());
+
+    const kmActuel  = parseInt((c[15]||'').replace(/\s/g,'')) || 0;
+    const kmDepart  = pkData.km !== undefined ? pkData.km : 0;
+    const diffKm    = kmActuel - kmDepart;
+
     return {
-      idJeu: parseInt(c[0]) || null,
-      nom, marque: c[5]||'', modele: c[6]||'', type,
-      energie: c[10]||'Diesel', capa: parseInt(c[12])||60,
-      km: parseInt((c[15]||'').replace(/\s/g,''))||0,
+      idJeu,
+      nom,
+      patrimoine:   c[2]  || '',
+      finLocation:  parseDateFR(c[3]),
+      typeVehicule: c[4]  || '',
+      marque:       c[5]  || '',
+      modele:       c[6]  || '',
+      type,
+      bhns:         yn(c[8]),
+      le:           yn(c[9]),
+      energie:      c[10] || 'Diesel',
+      conso:        parseInt(c[11]) || 0,
+      capa:         parseInt(c[12]) || 0,
+      immat:        c[13] || '',
+      anneMES:      parseDateFR(c[14]),
+      km:           kmActuel,
+      kmDepart,
+      diffKm,
       revisionDate: parseDateFR(c[16]),
-      ct: parseDateFR(c[17]),
-      statut, depot: c[20]||'', patrimoine: c[2]||''
+      ct:           parseDateFR(c[17]),
+      garantie:     parseDateFR(c[18]),
+      statut,
+      depot:        c[20] || '',
+      musee:        yn(c[21]),
+      proprete:     parseInt(c[22]) || 0,
+      etatTech:     parseInt(c[23]) || 0,
+      etatInt:      parseInt(c[24]) || 0,
+      girAvant:     c[25] || '',
+      girLat:       c[26] || '',
+      girArr:       c[27] || '',
+      billetique:   c[28] || '',
+      agenouillement: yn(c[29]),
+      ufr:          yn(c[30]),
+      plateformeRet: yn(c[31]),
+      airCond:      c[32] || '',
+      nbPortes:     parseInt(c[33]) || 0,
+      typePortes:   c[34] || '',
+      precablage:   yn(c[35]),
+      vitreAnti:    yn(c[36]),
+      vitreTein:    yn(c[37]),
+      baiesBasses:  yn(c[38]),
+      lumibus:      yn(c[39]),
+      balisePrio:   yn(c[40]),
+      selfService:  yn(c[41]),
+      boutonsArret: yn(c[42]),
+      camera:       yn(c[43]),
+      pubArr:       c[44] || '',
+      pubAv:        c[45] || '',
+      pubLat:       c[46] || '',
+      rackBagages:  yn(c[47]),
+      rackVelos:    yn(c[48]),
+      ethylotest:   yn(c[49]),
+      radio:        yn(c[50]),
+      usb:          yn(c[51]),
+      wifi:         yn(c[52]),
+      bandeau:      yn(c[53]),
+      ecranTFT:     yn(c[54]),
+      hautParleurs: yn(c[55]),
+      telephone:    yn(c[56]),
+      pupitre:      yn(c[57]),
+      reventeDate,
+      argus:        parseInt((c[59]||'').replace(/\s/g,'')) || 0,
+      // Données achat depuis notre base
+      prixAchat:    pkData.prix !== undefined ? pkData.prix : 0,
     };
   });
 }
@@ -2761,59 +3148,83 @@ function supprimerTousContracts() { if (confirm('Supprimer tous les contrats ?')
 // ═══════════════════════════════════════════════════════
 //  ACHATS
 // ═══════════════════════════════════════════════════════
-function renderAchats() {
-  const tbody = document.getElementById('achats-tbody');
-  document.getElementById('achats-count-badge').textContent = state.achats.length + ' achats';
-  tbody.innerHTML = [...state.achats].reverse().map(a => {
-    const prixKm = a.km > 0 ? (a.prix / a.km).toFixed(2) : '—';
-    return `<tr>
-      <td class="mono">${a.date}</td>
-      <td><b>${a.modele}</b></td>
-      <td class="mono">${a.idJeu||'—'}</td>
-      <td class="mono" style="color:var(--red)">${fmt(a.prix)}</td>
-      <td class="mono">${fmtNum(a.km)} km</td>
-      <td class="mono">${prixKm !== '—' ? prixKm + ' €/km' : '—'}</td>
-      <td>${a.note||'—'}</td>
-    </tr>`;
-  }).join('') || '<tr><td colspan="7" style="color:var(--text3);text-align:center;padding:16px">Aucun achat</td></tr>';
-}
-
-function traiterAchats() {
-  const texte = document.getElementById('achat-texte').value;
-  if (!texte.trim()) { toastMsg('Texte vide', 'error'); return; }
-  const lignes = texte.split('\n').filter(l => l.trim());
-  let ok = 0, erreurs = 0;
-  lignes.forEach(ligne => {
-    const idMatch = ligne.match(/\(ID\s*(\d+)\)/i);
-    const prixMatch = ligne.match(/pour\s+([\d\s\u00a0]+)\s*€/i);
-    const modMatch = ligne.match(/acheté le (.+?) \(ID/i);
-    const dateMatch = ligne.match(/^(\d{2}\/\d{2}\/\d{4})/);
-    if (idMatch && prixMatch) {
-      const idJeu = parseInt(idMatch[1]);
-      const prix = parseInt(prixMatch[1].replace(/[\s\u00a0]/g,''));
-      const modele = modMatch ? modMatch[1] : 'Inconnu';
-      let date = today();
-      if (dateMatch) {
-        const p = dateMatch[1].split('/');
-        date = `${p[2]}-${p[1]}-${p[0]}`;
-      }
-      state.achats.push({ id: Date.now() + ok, modele, idJeu, prix, km: 0, date, note: '' });
-      ok++;
-    } else erreurs++;
-  });
-  journalLog(`${ok} achat(s) importé(s)`, ok > 0 ? 'ok' : 'warn');
-  saveState(); renderAchats();
-  toastMsg(`${ok} achat(s) importé(s)${erreurs > 0 ? ', ' + erreurs + ' erreur(s)' : ''} ✓`, ok > 0 ? 'success' : 'error');
-}
 
 function ajouterAchatManuel() {
   const modele = document.getElementById('achat-modele').value.trim();
   if (!modele) { toastMsg('Modèle requis', 'error'); return; }
-  const a = { id: Date.now(), modele, idJeu: parseInt(document.getElementById('achat-id').value)||null, prix: parseInt(document.getElementById('achat-prix').value)||0, km: parseInt(document.getElementById('achat-km').value)||0, date: document.getElementById('achat-date').value || today(), note: '' };
+  const idJeu  = parseInt(document.getElementById('achat-id').value) || null;
+  const prix   = parseInt(document.getElementById('achat-prix').value) || 0;
+  const km     = parseInt(document.getElementById('achat-km').value) || 0;
+  const date   = document.getElementById('achat-date').value || today();
+  const note   = document.getElementById('achat-note').value.trim();
+
+  // Enregistrer dans le log d'achats
+  const a = { id: Date.now(), modele, idJeu, prix, km, date, note };
   state.achats.push(a);
-  journalLog(`Achat ${modele} (${fmt(a.prix)})`, 'info');
-  saveState(); renderAchats();
+
+  // Mettre à jour state.prixKm pour que le parc puisse l'utiliser
+  if (idJeu) {
+    if (!state.prixKm) state.prixKm = {};
+    state.prixKm[idJeu] = { prix, km };
+    // Mettre à jour le bus existant dans le parc si présent
+    const busExist = state.bus.find(b => b.idJeu === idJeu);
+    if (busExist) {
+      busExist.prixAchat = prix;
+      busExist.kmDepart  = km;
+      busExist.diffKm    = (busExist.km || 0) - km;
+      toastMsg(`${modele} mis à jour dans le parc ✓`, 'info');
+    }
+  }
+
+  journalLog(`Achat ${modele} — ${fmt(prix)} — ${fmtNum(km)} km`, 'info');
+  saveState(); renderAchats(); renderDashboard();
+  if (document.getElementById('page-parc').classList.contains('active')) renderParc();
+
+  // Reset form
+  ['achat-modele','achat-note'].forEach(id => document.getElementById(id).value = '');
+  ['achat-id','achat-prix','achat-km'].forEach(id => document.getElementById(id).value = '');
+
   toastMsg(`Achat ${modele} enregistré ✓`, 'success');
+}
+
+function renderAchats() {
+  const tbody = document.getElementById('achats-tbody');
+  const sorted = sortData([...state.achats], 'achats', 'date').reverse();
+  document.getElementById('achats-count-badge').textContent = state.achats.length + ' achats';
+
+  tbody.innerHTML = sorted.map(a => {
+    const prixKm = a.km > 0 ? (a.prix / a.km).toFixed(2) : '—';
+    return `<tr>
+      <td class="mono">${a.date}</td>
+      <td><b>${a.modele}</b></td>
+      <td class="mono" style="color:var(--text3)">${a.idJeu||'—'}</td>
+      <td class="mono" style="color:var(--red)">${a.prix ? fmt(a.prix) : '—'}</td>
+      <td class="mono">${a.km ? fmtNum(a.km)+' km' : '—'}</td>
+      <td class="mono" style="color:var(--text2)">${prixKm !== '—' ? prixKm+' €/km' : '—'}</td>
+      <td style="font-size:11px;color:var(--text3)">${a.note||'—'}</td>
+      <td><button class="btn btn-danger btn-xs" onclick="supprimerAchat(${a.id})">✕</button></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="8" style="color:var(--text3);text-align:center;padding:16px">Aucun achat enregistré</td></tr>';
+
+  // Résumé
+  const resume = document.getElementById('achats-resume');
+  if (resume) {
+    const total = state.achats.reduce((s,a) => s + (a.prix||0), 0);
+    const nbAvecKm = state.achats.filter(a => a.km > 0).length;
+    const moyPrix = state.achats.length ? Math.round(total / state.achats.length) : 0;
+    const enPrixKm = Object.keys(state.prixKm||{}).length;
+    resume.innerHTML = `
+      <div class="gauge-row"><div class="gauge-label">Total investi</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--red)"></div></div><div class="gauge-val" style="color:var(--red)">${fmt(total)}</div></div>
+      <div class="gauge-row"><div class="gauge-label">Nombre d'achats</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--accent)"></div></div><div class="gauge-val">${state.achats.length}</div></div>
+      <div class="gauge-row"><div class="gauge-label">Prix moyen</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--yellow)"></div></div><div class="gauge-val">${fmt(moyPrix)}</div></div>
+      <div class="gauge-row"><div class="gauge-label">Bus avec KM départ</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--green)"></div></div><div class="gauge-val">${enPrixKm}</div></div>
+    `;
+  }
+}
+
+function supprimerAchat(id) {
+  state.achats = state.achats.filter(a => a.id !== id);
+  saveState(); renderAchats();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2889,8 +3300,16 @@ function importerCSVDirect(type, contenu) {
     let maj = 0, ajouts = 0;
     buses.forEach(b => {
       const exist = state.bus.find(x => x.nom === b.nom || (b.idJeu && x.idJeu === b.idJeu));
-      if (exist) { Object.assign(exist, { km:b.km, statut:b.statut, ct:b.ct, revisionDate:b.revisionDate, energie:b.energie, marque:b.marque, modele:b.modele, depot:b.depot }); if (b.idJeu) exist.idJeu = b.idJeu; maj++; }
-      else { state.bus.push({ id: Date.now() + Math.random()*1000|0, ...b }); ajouts++; }
+      if (exist) {
+        // Mise à jour de tous les champs CSV, en préservant dateAchat si déjà renseignée
+        const dateAchatSaved = exist.dateAchat;
+        Object.assign(exist, b);
+        if (dateAchatSaved && !exist.dateAchat) exist.dateAchat = dateAchatSaved;
+        maj++;
+      } else {
+        state.bus.push({ id: Date.now() + Math.random()*1000|0, ...b });
+        ajouts++;
+      }
     });
     journalLog(`MAJ bus.csv : ${maj} MàJ · ${ajouts} nouveaux`, 'ok');
     saveState(); renderParc(); renderDashboard(); updateBusSelects();
