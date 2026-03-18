@@ -1322,45 +1322,28 @@
           <div class="card-body">
             <div class="form-row">
               <div class="form-group">
-                <label>Modèle</label>
-                <input type="text" id="achat-modele" placeholder="Ex: Citaro G">
-              </div>
-              <div class="form-group">
                 <label>ID jeu</label>
                 <input type="number" id="achat-id" placeholder="91346">
               </div>
-            </div>
-            <div class="form-row">
               <div class="form-group">
                 <label>Prix d'achat (€)</label>
                 <input type="number" id="achat-prix" placeholder="115000">
               </div>
               <div class="form-group">
-                <label>KM au compteur (départ)</label>
+                <label>KM au compteur</label>
                 <input type="number" id="achat-km" placeholder="0">
               </div>
             </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Date d'achat</label>
-                <input type="date" id="achat-date">
-              </div>
-              <div class="form-group">
-                <label>Note</label>
-                <input type="text" id="achat-note" placeholder="Optionnel">
-              </div>
-            </div>
             <div class="alert-box info" style="margin-bottom:12px;font-size:11px">
-              💡 L'ID + Prix + KM seront automatiquement utilisés dans la gestion du parc pour calculer la différence kilométrique et le coût au km.
+              💡 Une fois importé, le bus.csv mettra à jour automatiquement le modèle et les autres infos dans le parc.
             </div>
-            <button class="btn btn-success" onclick="ajouterAchatManuel()">+ Enregistrer l'achat</button>
+            <button class="btn btn-success" onclick="ajouterAchatManuel()">+ Enregistrer</button>
           </div>
         </div>
 
         <div class="card">
           <div class="card-header"><div class="card-title">📊 Résumé achats</div></div>
-          <div class="card-body" id="achats-resume">
-          </div>
+          <div class="card-body" id="achats-resume"></div>
         </div>
       </div>
 
@@ -1371,7 +1354,7 @@
         </div>
         <div class="card-body" style="padding:0">
           <table class="data-table">
-            <thead><tr><th>Date</th><th>Modèle</th><th>ID jeu</th><th>Prix</th><th>KM départ</th><th>€/km</th><th>Note</th><th></th></tr></thead>
+            <thead><tr><th>ID jeu</th><th>Prix</th><th>KM départ</th><th>Date</th><th></th></tr></thead>
             <tbody id="achats-tbody"></tbody>
           </table>
         </div>
@@ -1699,6 +1682,7 @@ function resetTotal() {
 
 let currentParcTypeFilter = 'all';
 let editBusId = null;
+let parcView = 'compact'; // DOIT être déclaré ici, avant tout appel à renderParc
 
 // ═══════════════════════════════════════════════════════
 //  NAVIGATION
@@ -1845,10 +1829,14 @@ function renderDashboard() {
     <div class="timeline-text">${j.text}</div>
   </div>`).join('') || '<div style="color:var(--text3)">Aucune activité.</div>';
 
-  // Badge alertes
-  const total = ctUrgent + fcoReq;
-  document.getElementById('alert-badge').textContent = total;
-  document.getElementById('alert-badge').style.display = total > 0 ? '' : 'none';
+  // Badge alertes — cohérent avec la page alertes (seuil 5 jours)
+  const SEUIL = 5;
+  const ctBadge  = state.bus.filter(b => b.ct && Math.round((new Date(b.ct) - new Date()) / (1000*60*60*24)) <= SEUIL).length;
+  const revBadge = state.bus.filter(b => b.revisionDate && Math.round((new Date(b.revisionDate) - new Date()) / (1000*60*60*24)) <= SEUIL).length;
+  const fcoBadge = state.personnel.filter(p => p.statut === 'FCO requise' || p.statut === 'FCO bientôt').length;
+  const badgeTotal = ctBadge + revBadge + fcoBadge;
+  document.getElementById('alert-badge').textContent = badgeTotal;
+  document.getElementById('alert-badge').style.display = badgeTotal > 0 ? '' : 'none';
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1969,7 +1957,6 @@ function ouvrirCTPlanif(nomBus) {
   }, 100);
 }
 
-let parcView = 'compact';
 function setParcView(el, view) {
   parcView = view;
   document.querySelectorAll('#parc-view-tabs .tab').forEach(t => t.classList.remove('active'));
@@ -3150,74 +3137,59 @@ function supprimerTousContracts() { if (confirm('Supprimer tous les contrats ?')
 // ═══════════════════════════════════════════════════════
 
 function ajouterAchatManuel() {
-  const modele = document.getElementById('achat-modele').value.trim();
-  if (!modele) { toastMsg('Modèle requis', 'error'); return; }
-  const idJeu  = parseInt(document.getElementById('achat-id').value) || null;
-  const prix   = parseInt(document.getElementById('achat-prix').value) || 0;
-  const km     = parseInt(document.getElementById('achat-km').value) || 0;
-  const date   = document.getElementById('achat-date').value || today();
-  const note   = document.getElementById('achat-note').value.trim();
+  const idJeu = parseInt(document.getElementById('achat-id').value) || null;
+  const prix  = parseInt(document.getElementById('achat-prix').value) || 0;
+  const km    = parseInt(document.getElementById('achat-km').value) || 0;
 
-  // Enregistrer dans le log d'achats
-  const a = { id: Date.now(), modele, idJeu, prix, km, date, note };
-  state.achats.push(a);
+  if (!idJeu) { toastMsg('ID jeu requis', 'error'); return; }
 
-  // Mettre à jour state.prixKm pour que le parc puisse l'utiliser
-  if (idJeu) {
-    if (!state.prixKm) state.prixKm = {};
-    state.prixKm[idJeu] = { prix, km };
-    // Mettre à jour le bus existant dans le parc si présent
-    const busExist = state.bus.find(b => b.idJeu === idJeu);
-    if (busExist) {
-      busExist.prixAchat = prix;
-      busExist.kmDepart  = km;
-      busExist.diffKm    = (busExist.km || 0) - km;
-      toastMsg(`${modele} mis à jour dans le parc ✓`, 'info');
-    }
+  // Enregistrer dans le log
+  state.achats.push({ id: Date.now(), idJeu, prix, km, date: today() });
+
+  // Mettre à jour state.prixKm
+  if (!state.prixKm) state.prixKm = {};
+  state.prixKm[idJeu] = { prix, km };
+
+  // Mettre à jour le bus dans le parc si présent
+  const busExist = state.bus.find(b => b.idJeu === idJeu);
+  if (busExist) {
+    busExist.prixAchat = prix;
+    busExist.kmDepart  = km;
+    busExist.diffKm    = (busExist.km || 0) - km;
+    if (document.getElementById('page-parc').classList.contains('active')) renderParc();
+    toastMsg(`Bus ID ${idJeu} mis à jour dans le parc ✓`, 'info');
   }
 
-  journalLog(`Achat ${modele} — ${fmt(prix)} — ${fmtNum(km)} km`, 'info');
-  saveState(); renderAchats(); renderDashboard();
-  if (document.getElementById('page-parc').classList.contains('active')) renderParc();
+  journalLog(`Achat ID ${idJeu} — ${fmt(prix)} — ${fmtNum(km)} km départ`, 'info');
+  saveState(); renderAchats();
 
-  // Reset form
-  ['achat-modele','achat-note'].forEach(id => document.getElementById(id).value = '');
+  // Reset
   ['achat-id','achat-prix','achat-km'].forEach(id => document.getElementById(id).value = '');
-
-  toastMsg(`Achat ${modele} enregistré ✓`, 'success');
+  toastMsg(`Achat ID ${idJeu} enregistré ✓`, 'success');
 }
 
 function renderAchats() {
   const tbody = document.getElementById('achats-tbody');
-  const sorted = sortData([...state.achats], 'achats', 'date').reverse();
   document.getElementById('achats-count-badge').textContent = state.achats.length + ' achats';
 
-  tbody.innerHTML = sorted.map(a => {
-    const prixKm = a.km > 0 ? (a.prix / a.km).toFixed(2) : '—';
-    return `<tr>
-      <td class="mono">${a.date}</td>
-      <td><b>${a.modele}</b></td>
-      <td class="mono" style="color:var(--text3)">${a.idJeu||'—'}</td>
-      <td class="mono" style="color:var(--red)">${a.prix ? fmt(a.prix) : '—'}</td>
-      <td class="mono">${a.km ? fmtNum(a.km)+' km' : '—'}</td>
-      <td class="mono" style="color:var(--text2)">${prixKm !== '—' ? prixKm+' €/km' : '—'}</td>
-      <td style="font-size:11px;color:var(--text3)">${a.note||'—'}</td>
-      <td><button class="btn btn-danger btn-xs" onclick="supprimerAchat(${a.id})">✕</button></td>
-    </tr>`;
-  }).join('') || '<tr><td colspan="8" style="color:var(--text3);text-align:center;padding:16px">Aucun achat enregistré</td></tr>';
+  tbody.innerHTML = [...state.achats].reverse().map(a => `<tr>
+    <td class="mono"><b>${a.idJeu||'—'}</b></td>
+    <td class="mono" style="color:var(--red)">${a.prix ? fmt(a.prix) : '—'}</td>
+    <td class="mono">${a.km ? fmtNum(a.km)+' km' : '—'}</td>
+    <td class="mono" style="color:var(--text3)">${a.date||'—'}</td>
+    <td><button class="btn btn-danger btn-xs" onclick="supprimerAchat(${a.id})">✕</button></td>
+  </tr>`).join('') || '<tr><td colspan="5" style="color:var(--text3);text-align:center;padding:16px">Aucun achat enregistré</td></tr>';
 
-  // Résumé
   const resume = document.getElementById('achats-resume');
   if (resume) {
-    const total = state.achats.reduce((s,a) => s + (a.prix||0), 0);
-    const nbAvecKm = state.achats.filter(a => a.km > 0).length;
+    const total   = state.achats.reduce((s,a) => s + (a.prix||0), 0);
     const moyPrix = state.achats.length ? Math.round(total / state.achats.length) : 0;
     const enPrixKm = Object.keys(state.prixKm||{}).length;
     resume.innerHTML = `
       <div class="gauge-row"><div class="gauge-label">Total investi</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--red)"></div></div><div class="gauge-val" style="color:var(--red)">${fmt(total)}</div></div>
-      <div class="gauge-row"><div class="gauge-label">Nombre d'achats</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--accent)"></div></div><div class="gauge-val">${state.achats.length}</div></div>
+      <div class="gauge-row"><div class="gauge-label">Nb achats</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--accent)"></div></div><div class="gauge-val">${state.achats.length}</div></div>
       <div class="gauge-row"><div class="gauge-label">Prix moyen</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--yellow)"></div></div><div class="gauge-val">${fmt(moyPrix)}</div></div>
-      <div class="gauge-row"><div class="gauge-label">Bus avec KM départ</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--green)"></div></div><div class="gauge-val">${enPrixKm}</div></div>
+      <div class="gauge-row"><div class="gauge-label">Bus avec données prix/km</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--green)"></div></div><div class="gauge-val">${enPrixKm}</div></div>
     `;
   }
 }
