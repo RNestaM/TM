@@ -1364,70 +1364,111 @@
 
     <!-- ═══════════════════════════════════════════ GASOIL ═══ -->
     <div id="page-gasoil" class="page">
+
+      <!-- Stats cards -->
       <div class="stat-cards">
         <div class="stat-card blue">
-          <div class="stat-label">Niveau citerne actuel</div>
-          <div class="stat-value" id="conso-niveau">0 L</div>
-        </div>
-        <div class="stat-card orange">
-          <div class="stat-label">Conso aujourd'hui</div>
-          <div class="stat-value" id="conso-jour">0 L</div>
+          <div class="stat-label">Diesel aujourd'hui</div>
+          <div class="stat-value" id="gas-diesel-today" style="font-size:20px">—</div>
         </div>
         <div class="stat-card green">
-          <div class="stat-label">Dernier plein citerne</div>
-          <div class="stat-value" id="conso-dernier-plein" style="font-size:14px">—</div>
+          <div class="stat-label">GNV aujourd'hui</div>
+          <div class="stat-value" id="gas-gnv-today" style="font-size:20px">—</div>
         </div>
         <div class="stat-card yellow">
-          <div class="stat-label">Conso moy./bus/j</div>
-          <div class="stat-value" id="conso-moy">0 L</div>
+          <div class="stat-label">Moy. Diesel (30j)</div>
+          <div class="stat-value" id="gas-diesel-moy" style="font-size:20px">—</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-label">Moy. GNV (30j)</div>
+          <div class="stat-value" id="gas-gnv-moy" style="font-size:20px">—</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-label">Meilleur Diesel (30j)</div>
+          <div class="stat-value" id="gas-diesel-min" style="font-size:20px">—</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-label">Meilleur GNV (30j)</div>
+          <div class="stat-value" id="gas-gnv-min" style="font-size:20px">—</div>
         </div>
       </div>
-      <div class="grid-2">
+
+      <div class="grid-2" style="margin-top:14px">
+
+        <!-- Saisie texte brut -->
         <div class="card">
-          <div class="card-header"><div class="card-title">⛽ Nouveau plein citerne</div></div>
+          <div class="card-header"><div class="card-title">⛽ Coller les prix du jeu</div></div>
           <div class="card-body">
-            <div class="form-row">
+            <p style="font-size:11px;color:var(--text3);margin-bottom:12px">Colle directement le texte depuis le jeu :</p>
+            <textarea id="gas-texte-brut" rows="6" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;padding:10px;resize:vertical;outline:none" placeholder="Diesel&#10;1.990 €&#10;GNV&#10;2.080 €"></textarea>
+            <div class="form-row" style="margin-top:10px">
               <div class="form-group">
-                <label>Volume (L)</label>
-                <input type="number" id="plein-volume" placeholder="5000">
-              </div>
-              <div class="form-group">
-                <label>Prix par litre (€)</label>
-                <input type="number" id="plein-prix" step="0.001" placeholder="1.42">
+                <label>Date (optionnel — aujourd'hui par défaut)</label>
+                <input type="date" id="gas-date">
               </div>
             </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Date</label>
-                <input type="date" id="plein-date">
-              </div>
-            </div>
-            <button class="btn btn-primary" onclick="enregistrerPlein()">⛽ Enregistrer le plein</button>
+            <button class="btn btn-primary" style="margin-top:8px" onclick="saisirPrixCarburant()">✓ Enregistrer</button>
           </div>
         </div>
+
+        <!-- Saisie manuelle -->
         <div class="card">
-          <div class="card-header"><div class="card-title">Consommation journalière</div></div>
+          <div class="card-header"><div class="card-title">✏️ Saisie manuelle</div></div>
           <div class="card-body">
+            <p style="font-size:11px;color:var(--text3);margin-bottom:12px">Pour rattraper une date oubliée :</p>
+            <div class="form-group" style="margin-bottom:10px">
+              <label>Date</label>
+              <input type="date" id="gas-manual-date">
+            </div>
             <div class="form-row">
               <div class="form-group">
-                <label>Bus (sélection)</label>
-                <select id="conso-bus"></select>
+                <label>Prix Diesel (€/L)</label>
+                <input type="number" id="gas-manual-diesel" step="0.001" placeholder="1.990">
               </div>
               <div class="form-group">
-                <label>Litres consommés</label>
-                <input type="number" id="conso-litres" placeholder="0">
+                <label>Prix GNV (€/L)</label>
+                <input type="number" id="gas-manual-gnv" step="0.001" placeholder="2.080">
               </div>
             </div>
-            <button class="btn btn-warning" onclick="enregistrerConso()">Enregistrer conso</button>
+            <button class="btn btn-success" style="margin-top:8px" onclick="saisirManuelCarburant()">✓ Ajouter</button>
           </div>
         </div>
       </div>
+
+      <!-- Records + graphique -->
+      <div class="grid-2" style="margin-top:14px">
+        <div class="card">
+          <div class="card-header"><div class="card-title">🏆 Records de prix</div></div>
+          <div class="card-body" id="gas-records"></div>
+        </div>
+
+        <!-- Graphique -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📈 Évolution des prix</div>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-ghost btn-sm" onclick="setGasPeriode(30)" id="gas-btn-30">30j</button>
+              <button class="btn btn-ghost btn-sm" onclick="setGasPeriode(90)" id="gas-btn-90">3m</button>
+              <button class="btn btn-ghost btn-sm" onclick="setGasPeriode(180)" id="gas-btn-180">6m</button>
+              <button class="btn btn-ghost btn-sm" onclick="setGasPeriode(0)" id="gas-btn-0">Tout</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <canvas id="gas-chart" style="width:100%;height:220px"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Historique -->
       <div class="card" style="margin-top:14px">
-        <div class="card-header"><div class="card-title">Historique pleins citerne</div></div>
+        <div class="card-header">
+          <div class="card-title">Historique des prix</div>
+          <button class="btn btn-ghost btn-sm" onclick="if(confirm('Vider tout l\'historique ?')){state.carburant=[];saveState();renderGasoil();}">🗑 Vider</button>
+        </div>
         <div class="card-body" style="padding:0">
           <table class="data-table">
-            <thead><tr><th>Date</th><th>Volume (L)</th><th>Prix/L</th><th>Coût total</th><th>Niveau avant</th></tr></thead>
-            <tbody id="gasoil-tbody"></tbody>
+            <thead><tr><th>Date</th><th>Diesel (€/L)</th><th>GNV (€/L)</th><th></th></tr></thead>
+            <tbody id="gas-tbody"></tbody>
           </table>
         </div>
       </div>
@@ -1647,7 +1688,8 @@ let state = loadState() || {
   journal: [],
   conso: { niveau: 5000, moy: 0 },
   config: { argentDepart: 0 },
-  prixKm: {}
+  prixKm: {},
+  carburant: []
 };
 if (!state.config) state.config = { argentDepart: 0 };
 if (!state.statsLignes) state.statsLignes = [];
@@ -3202,47 +3244,296 @@ function supprimerAchat(id) {
 // ═══════════════════════════════════════════════════════
 //  GASOIL
 // ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+//  GASOIL — SUIVI PRIX CARBURANT
+// ═══════════════════════════════════════════════════════
+let gasPeriode = 30;
+let gasChartInstance = null;
+
+function setGasPeriode(jours) {
+  gasPeriode = jours;
+  ['30','90','180','0'].forEach(j => {
+    const btn = document.getElementById('gas-btn-' + j);
+    if (btn) btn.style.background = j == jours ? 'rgba(0,212,255,0.15)' : '';
+  });
+  renderGasoilGraphique();
+}
+
+function saisirPrixCarburant() {
+  const texte = document.getElementById('gas-texte-brut').value.trim();
+  const date  = document.getElementById('gas-date').value || today();
+  if (!texte) { toastMsg('Texte vide', 'error'); return; }
+
+  // Parser le texte brut : "Diesel\n1.990 €\nGNV\n2.080 €"
+  const lines = texte.replace(/\r/g,'').split('\n').map(l => l.trim()).filter(l => l);
+  let diesel = null, gnv = null;
+
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i].toLowerCase();
+    const next = lines[i+1] || '';
+    // Cherche un prix sur la ligne suivante
+    const prixMatch = next.match(/([\d,\.]+)\s*€/);
+    if (prixMatch) {
+      const val = parseFloat(prixMatch[1].replace(',','.'));
+      if (l.includes('diesel') || l.includes('gasoil')) diesel = val;
+      else if (l.includes('gnv') || l.includes('gaz')) gnv = val;
+    }
+    // Ou prix directement sur la même ligne
+    const selfMatch = l.match(/([\d,\.]+)\s*€/);
+    if (selfMatch && !prixMatch) {
+      // fallback si format différent
+    }
+  }
+
+  // Si pas trouvé via label, chercher tous les prix dans l'ordre
+  if (diesel === null && gnv === null) {
+    const prix = [];
+    lines.forEach(l => {
+      const m = l.match(/([\d,\.]+)\s*€/);
+      if (m) prix.push(parseFloat(m[1].replace(',','.')));
+    });
+    if (prix[0]) diesel = prix[0];
+    if (prix[1]) gnv    = prix[1];
+  }
+
+  if (!diesel && !gnv) { toastMsg('Aucun prix trouvé — vérifie le format', 'error'); return; }
+
+  // Vérifier doublons sur la même date
+  if (!state.carburant) state.carburant = [];
+  const existIdx = state.carburant.findIndex(e => e.date === date);
+  if (existIdx >= 0) {
+    // Mettre à jour
+    if (diesel) state.carburant[existIdx].diesel = diesel;
+    if (gnv)    state.carburant[existIdx].gnv    = gnv;
+    toastMsg(`Prix mis à jour pour le ${date}`, 'info');
+  } else {
+    state.carburant.push({ id: Date.now(), date, diesel: diesel||null, gnv: gnv||null });
+    toastMsg(`Prix enregistrés ✓ — Diesel: ${diesel||'—'} € · GNV: ${gnv||'—'} €`, 'success');
+  }
+
+  state.carburant.sort((a,b) => a.date.localeCompare(b.date));
+  document.getElementById('gas-texte-brut').value = '';
+  journalLog(`Prix carburant ${date} — Diesel: ${diesel||'—'}€ GNV: ${gnv||'—'}€`, 'ok');
+  saveState();
+  renderGasoil();
+}
+
+function saisirManuelCarburant() {
+  const date   = document.getElementById('gas-manual-date').value;
+  const diesel = parseFloat(document.getElementById('gas-manual-diesel').value) || null;
+  const gnv    = parseFloat(document.getElementById('gas-manual-gnv').value)    || null;
+
+  if (!date) { toastMsg('Date requise', 'error'); return; }
+  if (!diesel && !gnv) { toastMsg('Entrez au moins un prix', 'error'); return; }
+
+  if (!state.carburant) state.carburant = [];
+  const existIdx = state.carburant.findIndex(e => e.date === date);
+  if (existIdx >= 0) {
+    if (diesel) state.carburant[existIdx].diesel = diesel;
+    if (gnv)    state.carburant[existIdx].gnv    = gnv;
+    toastMsg(`Prix mis à jour pour le ${date}`, 'info');
+  } else {
+    state.carburant.push({ id: Date.now(), date, diesel, gnv });
+    toastMsg(`Prix ajouté pour le ${date} ✓`, 'success');
+  }
+
+  state.carburant.sort((a,b) => a.date.localeCompare(b.date));
+  document.getElementById('gas-manual-diesel').value = '';
+  document.getElementById('gas-manual-gnv').value    = '';
+  journalLog(`Prix manuel ${date} — Diesel: ${diesel||'—'}€ GNV: ${gnv||'—'}€`, 'ok');
+  saveState();
+  renderGasoil();
+}
+  state.carburant = state.carburant.filter(e => e.id !== id);
+  saveState(); renderGasoil();
+}
+
 function renderGasoil() {
-  document.getElementById('conso-bus').innerHTML = '<option value="">Choisir...</option>' + state.bus.map(b=>`<option>${b.nom}</option>`).join('');
-  document.getElementById('conso-niveau').textContent = fmtNum(state.conso.niveau) + ' L';
-  document.getElementById('conso-jour').textContent = fmtNum(state.conso.jour||0) + ' L';
-  const last = state.gasoil[state.gasoil.length-1];
-  document.getElementById('conso-dernier-plein').textContent = last ? `${last.date} (${fmtNum(last.volume)}L)` : '—';
-  document.getElementById('conso-moy').textContent = state.bus.length > 0 ? Math.round((state.conso.jour||0)/Math.max(state.bus.length,1)) + ' L' : '0 L';
+  if (!state.carburant) state.carburant = [];
 
-  const tbody = document.getElementById('gasoil-tbody');
-  tbody.innerHTML = [...state.gasoil].reverse().map(g => `<tr>
-    <td class="mono">${g.date}</td>
-    <td class="mono">${fmtNum(g.volume)} L</td>
-    <td class="mono">${Number(g.prix).toFixed(3)} €/L</td>
-    <td class="mono" style="color:var(--red)">${fmt(g.volume * g.prix)}</td>
-    <td class="mono">${fmtNum(g.niveauAvant)} L</td>
-  </tr>`).join('') || '<tr><td colspan="5" style="color:var(--text3);text-align:center;padding:16px">Aucun plein</td></tr>';
+  const data    = [...state.carburant].sort((a,b) => b.date.localeCompare(a.date));
+  const now     = new Date();
+  const last30  = data.filter(e => {
+    const diff = Math.round((now - new Date(e.date)) / (1000*60*60*24));
+    return diff <= 30;
+  });
+
+  // Stats cards
+  const latest = data[0];
+  document.getElementById('gas-diesel-today').textContent = latest?.diesel ? latest.diesel.toFixed(3)+' €' : '—';
+  document.getElementById('gas-gnv-today').textContent    = latest?.gnv    ? latest.gnv.toFixed(3)+' €'    : '—';
+
+  const dieselVals = last30.filter(e => e.diesel).map(e => e.diesel);
+  const gnvVals    = last30.filter(e => e.gnv).map(e => e.gnv);
+  const moy = arr => arr.length ? (arr.reduce((s,v)=>s+v,0)/arr.length).toFixed(3) : '—';
+  const min = arr => arr.length ? Math.min(...arr).toFixed(3) : '—';
+
+  document.getElementById('gas-diesel-moy').textContent = dieselVals.length ? moy(dieselVals)+' €' : '—';
+  document.getElementById('gas-gnv-moy').textContent    = gnvVals.length    ? moy(gnvVals)+' €'    : '—';
+  document.getElementById('gas-diesel-min').textContent = dieselVals.length ? min(dieselVals)+' €' : '—';
+  document.getElementById('gas-gnv-min').textContent    = gnvVals.length    ? min(gnvVals)+' €'    : '—';
+
+  // Records
+  const allDiesel = data.filter(e=>e.diesel).map(e=>e.diesel);
+  const allGnv    = data.filter(e=>e.gnv).map(e=>e.gnv);
+  const recordDieselMin = allDiesel.length ? Math.min(...allDiesel) : null;
+  const recordDieselMax = allDiesel.length ? Math.max(...allDiesel) : null;
+  const recordGnvMin    = allGnv.length    ? Math.min(...allGnv)    : null;
+  const recordGnvMax    = allGnv.length    ? Math.max(...allGnv)    : null;
+  const dateOf = (val, key) => data.find(e => e[key] === val)?.date || '—';
+
+  const rec = document.getElementById('gas-records');
+  if (rec) rec.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:8px">🛢 Diesel</div>
+        <div style="padding:8px;background:rgba(16,185,129,0.08);border-radius:6px;margin-bottom:6px">
+          <div style="font-size:10px;color:var(--text3)">Meilleur prix</div>
+          <div style="font-size:18px;font-weight:700;color:var(--green);font-family:'JetBrains Mono',monospace">${recordDieselMin ? recordDieselMin.toFixed(3)+' €' : '—'}</div>
+          <div style="font-size:10px;color:var(--text3)">${dateOf(recordDieselMin,'diesel')}</div>
+        </div>
+        <div style="padding:8px;background:rgba(239,68,68,0.08);border-radius:6px">
+          <div style="font-size:10px;color:var(--text3)">Prix le plus haut</div>
+          <div style="font-size:18px;font-weight:700;color:var(--red);font-family:'JetBrains Mono',monospace">${recordDieselMax ? recordDieselMax.toFixed(3)+' €' : '—'}</div>
+          <div style="font-size:10px;color:var(--text3)">${dateOf(recordDieselMax,'diesel')}</div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--accent3);margin-bottom:8px">💨 GNV</div>
+        <div style="padding:8px;background:rgba(16,185,129,0.08);border-radius:6px;margin-bottom:6px">
+          <div style="font-size:10px;color:var(--text3)">Meilleur prix</div>
+          <div style="font-size:18px;font-weight:700;color:var(--green);font-family:'JetBrains Mono',monospace">${recordGnvMin ? recordGnvMin.toFixed(3)+' €' : '—'}</div>
+          <div style="font-size:10px;color:var(--text3)">${dateOf(recordGnvMin,'gnv')}</div>
+        </div>
+        <div style="padding:8px;background:rgba(239,68,68,0.08);border-radius:6px">
+          <div style="font-size:10px;color:var(--text3)">Prix le plus haut</div>
+          <div style="font-size:18px;font-weight:700;color:var(--red);font-family:'JetBrains Mono',monospace">${recordGnvMax ? recordGnvMax.toFixed(3)+' €' : '—'}</div>
+          <div style="font-size:10px;color:var(--text3)">${dateOf(recordGnvMax,'gnv')}</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:12px;font-size:11px;color:var(--text3);text-align:center">${data.length} jour(s) de données</div>
+  `;
+
+  // Tableau historique
+  const tbody = document.getElementById('gas-tbody');
+  tbody.innerHTML = data.slice(0,50).map(e => {
+    const dcolor = e.diesel ? (e.diesel === recordDieselMin ? 'color:var(--green);font-weight:700' : e.diesel === recordDieselMax ? 'color:var(--red)' : '') : '';
+    const gcolor = e.gnv    ? (e.gnv === recordGnvMin    ? 'color:var(--green);font-weight:700' : e.gnv === recordGnvMax    ? 'color:var(--red)' : '') : '';
+    return `<tr>
+      <td class="mono">${e.date}</td>
+      <td class="mono" style="${dcolor}">${e.diesel ? e.diesel.toFixed(3)+' €' : '—'}</td>
+      <td class="mono" style="${gcolor}">${e.gnv    ? e.gnv.toFixed(3)+' €'    : '—'}</td>
+      <td><button class="btn btn-danger btn-xs" onclick="supprimerPrixCarburant(${e.id})">✕</button></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="4" style="color:var(--text3);text-align:center;padding:16px">Aucune donnée — colle les prix du jeu</td></tr>';
+
+  renderGasoilGraphique();
 }
 
-function enregistrerPlein() {
-  const vol = parseInt(document.getElementById('plein-volume').value)||0;
-  const prix = parseFloat(document.getElementById('plein-prix').value)||0;
-  if (!vol) { toastMsg('Volume requis', 'error'); return; }
-  const avant = state.conso.niveau;
-  state.conso.niveau += vol;
-  state.gasoil.push({ id: Date.now(), date: document.getElementById('plein-date').value || today(), volume: vol, prix, niveauAvant: avant });
-  const cout = vol * prix;
-  state.compta.push({ id: Date.now(), date: today(), type: 'depense', cat: 'Carburant', desc: `Plein citerne ${vol}L`, montant: cout });
-  journalLog(`Plein citerne : ${fmtNum(vol)}L pour ${fmt(cout)}`, 'ok');
-  saveState(); renderGasoil();
-  toastMsg(`Plein de ${fmtNum(vol)}L enregistré ✓`, 'success');
+function renderGasoilGraphique() {
+  const canvas = document.getElementById('gas-chart');
+  if (!canvas) return;
+
+  let data = [...(state.carburant||[])].sort((a,b) => a.date.localeCompare(b.date));
+  if (gasPeriode > 0) {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - gasPeriode);
+    const cutoffStr = cutoff.toISOString().slice(0,10);
+    data = data.filter(e => e.date >= cutoffStr);
+  }
+
+  if (!data.length) {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    return;
+  }
+
+  const labels  = data.map(e => e.date.slice(5)); // MM-DD
+  const diesel  = data.map(e => e.diesel || null);
+  const gnv     = data.map(e => e.gnv    || null);
+
+  if (gasChartInstance) { gasChartInstance.destroy(); gasChartInstance = null; }
+
+  // Dessin manuel sur canvas
+  const W = canvas.offsetWidth || 800;
+  const H = 260;
+  canvas.width  = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+
+  const allVals = [...diesel.filter(v=>v), ...gnv.filter(v=>v)];
+  if (!allVals.length) return;
+
+  const vmin   = Math.min(...allVals) * 0.995;
+  const vmax   = Math.max(...allVals) * 1.005;
+  const pad    = { top:20, right:20, bottom:40, left:55 };
+  const cw     = W - pad.left - pad.right;
+  const ch     = H - pad.top  - pad.bottom;
+  const xStep  = data.length > 1 ? cw / (data.length - 1) : cw;
+
+  const toX = i => pad.left + i * xStep;
+  const toY = v => pad.top + ch - ((v - vmin) / (vmax - vmin)) * ch;
+
+  // Grille
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.top + (ch / 4) * i;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+    const val = vmax - ((vmax - vmin) / 4) * i;
+    ctx.fillStyle = 'rgba(148,163,184,0.7)';
+    ctx.font = '10px JetBrains Mono, monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(val.toFixed(3), pad.left - 6, y + 4);
+  }
+
+  // Labels X (max 10)
+  const step = Math.max(1, Math.floor(data.length / 10));
+  ctx.fillStyle = 'rgba(100,116,139,0.9)';
+  ctx.font = '9px monospace';
+  ctx.textAlign = 'center';
+  data.forEach((e, i) => {
+    if (i % step === 0 || i === data.length - 1) {
+      ctx.fillText(e.date.slice(5), toX(i), H - 8);
+    }
+  });
+
+  const drawLine = (values, color) => {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    let started = false;
+    values.forEach((v, i) => {
+      if (!v) { started = false; return; }
+      if (!started) { ctx.moveTo(toX(i), toY(v)); started = true; }
+      else ctx.lineTo(toX(i), toY(v));
+    });
+    ctx.stroke();
+    // Points
+    ctx.fillStyle = color;
+    values.forEach((v, i) => {
+      if (!v) return;
+      ctx.beginPath();
+      ctx.arc(toX(i), toY(v), 3, 0, Math.PI*2);
+      ctx.fill();
+    });
+  };
+
+  drawLine(diesel, '#00d4ff');  // cyan = Diesel
+  drawLine(gnv,    '#7c3aed');  // violet = GNV
+
+  // Légende
+  ctx.font = '11px monospace';
+  ctx.fillStyle = '#00d4ff'; ctx.fillRect(pad.left, 4, 14, 10); ctx.fillStyle='#e2e8f0'; ctx.fillText('Diesel', pad.left+18, 13);
+  ctx.fillStyle = '#7c3aed'; ctx.fillRect(pad.left+70, 4, 14, 10); ctx.fillStyle='#e2e8f0'; ctx.fillText('GNV', pad.left+88, 13);
 }
 
-function enregistrerConso() {
-  const litres = parseInt(document.getElementById('conso-litres').value)||0;
-  const bus = document.getElementById('conso-bus').value;
-  if (!litres) { toastMsg('Litres requis', 'error'); return; }
-  state.conso.niveau = Math.max(0, (state.conso.niveau||0) - litres);
-  state.conso.jour = (state.conso.jour||0) + litres;
-  saveState(); renderGasoil();
-  toastMsg(`${litres}L consommés (${bus})`, 'info');
-}
+function enregistrerPlein() {}
+function enregistrerConso() {}
+
 
 // ═══════════════════════════════════════════════════════
 //  EXTENSION FIREFOX — COMMUNICATION
@@ -3442,7 +3733,7 @@ function resetSection(section) {
 
 function updateBusSelects() {
   const opts = '<option value="">Choisir...</option>' + state.bus.map(b=>`<option>${b.nom}</option>`).join('');
-  ['rev-bus','ct-bus','pub-bus','conso-bus'].forEach(id => {
+  ['rev-bus','ct-bus','pub-bus'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = opts;
   });
