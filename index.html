@@ -654,7 +654,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v18</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v19</span>
       <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
     </div>
@@ -1163,13 +1163,15 @@
 
     <!-- ═══════════════════════════════════════════ COMPTA ═══ -->
     <div id="page-compta" class="page">
+
+      <!-- Stats globales -->
       <div class="stat-cards">
         <div class="stat-card green">
-          <div class="stat-label">Recettes du mois</div>
+          <div class="stat-label">Recettes totales</div>
           <div class="stat-value" id="compta-recettes" style="font-size:20px">0 €</div>
         </div>
         <div class="stat-card red">
-          <div class="stat-label">Dépenses du mois</div>
+          <div class="stat-label">Dépenses totales</div>
           <div class="stat-value" id="compta-depenses" style="font-size:20px">0 €</div>
         </div>
         <div class="stat-card blue">
@@ -1181,49 +1183,19 @@
           <div class="stat-value" id="compta-tresor" style="font-size:20px">0 €</div>
         </div>
       </div>
-      <div class="grid-2">
+
+      <!-- Vue annuelle + filtre mois -->
+      <div class="grid-2" style="margin-top:14px">
         <div class="card">
-          <div class="card-header"><div class="card-title">Ajouter une opération</div></div>
-          <div class="card-body">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Type</label>
-                <select id="op-type">
-                  <option value="recette">Recette</option>
-                  <option value="depense">Dépense</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>Catégorie</label>
-                <select id="op-cat">
-                  <option>Lignes</option>
-                  <option>Contrats pub</option>
-                  <option>Achat véhicule</option>
-                  <option>Maintenance</option>
-                  <option>Salaires</option>
-                  <option>Carburant</option>
-                  <option>CT</option>
-                  <option>Autres</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Montant (€)</label>
-                <input type="number" id="op-montant" placeholder="0">
-              </div>
-              <div class="form-group">
-                <label>Description</label>
-                <input type="text" id="op-desc" placeholder="Description...">
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Date</label>
-                <input type="date" id="op-date">
-              </div>
-            </div>
-            <button class="btn btn-primary" onclick="ajouterOperation()">+ Enregistrer</button>
+          <div class="card-header">
+            <div class="card-title">📅 Suivi par mois</div>
+            <select id="compta-annee-select" onchange="renderCompta()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:3px 8px;font-size:12px"></select>
+          </div>
+          <div class="card-body" style="padding:0">
+            <table class="data-table" id="compta-mois-table">
+              <thead><tr><th>Mois</th><th>Recettes</th><th>Dépenses</th><th>Solde mois</th><th>Opérations</th><th></th></tr></thead>
+              <tbody id="compta-mois-tbody"></tbody>
+            </table>
           </div>
         </div>
         <div class="card">
@@ -1231,8 +1203,26 @@
           <div class="card-body" id="compta-repartition"></div>
         </div>
       </div>
+
+      <!-- Graphique évolution annuelle -->
       <div class="card" style="margin-top:14px">
-        <div class="card-header"><div class="card-title">Historique des opérations</div></div>
+        <div class="card-header"><div class="card-title" id="compta-chart-title">📈 Évolution mensuelle</div></div>
+        <div class="card-body"><canvas id="compta-chart" style="width:100%;height:240px"></canvas></div>
+      </div>
+
+      <!-- Détail mois sélectionné -->
+      <div class="card" style="margin-top:14px">
+        <div class="card-header">
+          <div class="card-title">Opérations — <span id="compta-mois-label" style="color:var(--accent)">tous les mois</span></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn btn-ghost btn-sm" onclick="setComptaMoisFiltre(null)">Tous</button>
+            <select id="compta-type-filtre" onchange="renderComptaTableau()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:3px 8px;font-size:12px">
+              <option value="">Tout</option>
+              <option value="recette">Recettes</option>
+              <option value="depense">Dépenses</option>
+            </select>
+          </div>
+        </div>
         <div class="card-body" style="padding:0">
           <table class="data-table">
             <thead><tr>
@@ -1244,6 +1234,43 @@
             </tr></thead>
             <tbody id="compta-tbody"></tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- Ajouter opération manuelle -->
+      <div class="card" style="margin-top:14px">
+        <div class="card-header"><div class="card-title">➕ Ajouter une opération manuelle</div></div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Type</label>
+              <select id="op-type">
+                <option value="recette">Recette</option>
+                <option value="depense">Dépense</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Catégorie</label>
+              <select id="op-cat">
+                <option>Lignes</option><option>Contrats pub</option><option>Achat véhicule</option>
+                <option>Maintenance</option><option>Salaires</option><option>Carburant</option>
+                <option>CT</option><option>Autres</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Montant (€)</label>
+              <input type="number" id="op-montant" placeholder="0">
+            </div>
+            <div class="form-group">
+              <label>Date</label>
+              <input type="date" id="op-date">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <input type="text" id="op-desc" placeholder="Description...">
+          </div>
+          <button class="btn btn-primary" style="margin-top:8px" onclick="ajouterOperation()">+ Enregistrer</button>
         </div>
       </div>
     </div>
@@ -1699,7 +1726,8 @@
         <div class="tab" onclick="selectCsvType(this,'affects')">📋 Affectations</div>
         <div class="tab" onclick="selectCsvType(this,'stats')">📊 Stats Lignes</div>
         <div class="tab" onclick="selectCsvType(this,'salaries')">👤 Personnels</div>
-        <div class="tab" onclick="selectCsvType(this,'compta')">💰 Comptabilité</div>
+        <div class="tab" onclick="selectCsvType(this,'compta')">💰 Compta mois</div>
+        <div class="tab" onclick="selectCsvType(this,'lastmonth')">📅 Fin de mois</div>
       </div>
 
       <!-- Info selon type -->
@@ -1768,7 +1796,8 @@ let state = loadState() || {
   achats: [],
   abribus: [],
   contratsPub: [],
-  compta: [],
+  compta: [],      // legacy — migré vers comptaMois au démarrage
+  comptaMois: {},   // { 'YYYY-MM': [...ops] }
   gasoil: [],
   journal: [],
   conso: { niveau: 5000, moy: 0 },
@@ -1885,7 +1914,7 @@ function renderDashboard() {
   }).length;
   const fcoReq = state.personnel.filter(p => p.statut === 'FCO requise').length;
   const argentDepart = (state.config && state.config.argentDepart) || 0;
-  const mouvements = state.compta.reduce((a,o) => o.type === 'recette' ? a + o.montant : a - o.montant, 0);
+  const mouvements = allOps().reduce((a,o) => o.type === 'recette' ? a + o.montant : a - o.montant, 0);
   const solde = argentDepart + mouvements;
 
   document.getElementById('stat-total').textContent = state.bus.length;
@@ -2353,11 +2382,12 @@ let currentCsvType = 'bus';
 let csvRawContent = '';
 
 const CSV_INFO = {
-  bus:      '🚍 <b>bus.csv</b> — Met à jour le parc complet : KM, statut, révision, CT, énergie, modèle. Nouveaux bus ajoutés automatiquement.',
-  affects:  '📋 <b>affects.csv</b> — Importe les affectations bus/lignes par créneau (Semaine/Samedi/Dimanche × Creuse/Pointe/Soir/Nocturne).',
-  stats:    '📊 <b>statslignes.csv</b> — Ajoute les données de fréquentation (tickets, abonnés, gains) par ligne et créneau.',
-  salaries: '👤 <b>salaries.csv</b> — Met à jour le personnel : contrat, poste, salaire, FCO, état, satisfaction.',
-  compta:   '💰 <b>compta.csv</b> — Importe toutes les opérations comptables (dépenses et revenus).'
+  bus:       '🚍 <b>bus.csv</b> — Met à jour le parc complet : KM, statut, révision, CT, énergie, modèle. Nouveaux bus ajoutés automatiquement.',
+  affects:   '📋 <b>affects.csv</b> — Importe les affectations bus/lignes par créneau (Semaine/Samedi/Dimanche × Creuse/Pointe/Soir/Nocturne).',
+  stats:     '📊 <b>statslignes.csv</b> — Ajoute les données de fréquentation (tickets, abonnés, gains) par ligne et créneau.',
+  salaries:  '👤 <b>salaries.csv</b> — Met à jour le personnel : contrat, poste, salaire, FCO, état, satisfaction.',
+  compta:    '💰 <b>compta.csv (mois en cours)</b> — Importe les opérations du 01 au jour actuel. Les lignes du 01 activées tardivement sont aussi ajoutées au mois précédent.',
+  lastmonth: '📅 <b>compta.csv (fin de mois)</b> — Importe les opérations du mois précédent complet (csvcomptalastmonth). Ajout sans conflit avec les lignes existantes.'
 };
 
 function selectCsvType(el, type) {
@@ -2505,6 +2535,20 @@ const PRIX_KM_INIT = {
   88982:{prix:73216,km:730945},131175:{prix:230000,km:24714},100820:{prix:160000,km:485674},
   165202:{prix:134700,km:434141},165203:{prix:134700,km:434141}
 };
+
+// Migration compta plat → comptaMois
+if (state.compta && state.compta.length > 0 && (!state.comptaMois || Object.keys(state.comptaMois).length === 0)) {
+  state.comptaMois = {};
+  state.compta.forEach(op => {
+    const mois = (op.date || '').substring(0, 7); // YYYY-MM
+    if (!mois) return;
+    if (!state.comptaMois[mois]) state.comptaMois[mois] = [];
+    state.comptaMois[mois].push(op);
+  });
+  state.compta = []; // vider l'ancien
+  saveState();
+}
+if (!state.comptaMois) state.comptaMois = {};
 
 // Pré-charger les données prix/km dans le state si premier lancement
 if (!state.prixKm || Object.keys(state.prixKm).length === 0) {
@@ -2744,11 +2788,13 @@ function csvPreview() {
     const fco = pers.filter(p=>p.statut==='FCO requise'||p.statut==='FCO bientôt').length;
     info = `✅ ${pers.length} personnes · <span style="color:var(--yellow)">${fco} FCO à renouveler</span>`;
     html = pers.slice(0,15).map(p=>`<div style="padding:2px 0;border-bottom:1px solid var(--border)">${p.matricule} · <b>${p.nom}</b> · ${p.poste} · FCO ${p.fco||'?'} · <span style="color:${p.statut==='FCO requise'?'var(--red)':p.statut==='FCO bientôt'?'var(--yellow)':'var(--green)'}">${p.statut}</span></div>`).join('');
-  } else if (currentCsvType === 'compta') {
+  } else if (currentCsvType === 'compta' || currentCsvType === 'lastmonth') {
     const ops = parserCompta(rows);
     const dep = ops.filter(o=>o.type==='depense').reduce((a,o)=>a+o.montant,0);
     const rev = ops.filter(o=>o.type==='recette').reduce((a,o)=>a+o.montant,0);
-    info = `✅ ${ops.length} opérations · Dép. <span style="color:var(--red)">${fmt(dep)}</span> · Rev. <span style="color:var(--green)">${fmt(rev)}</span>`;
+    const mois = ops[0]?.date?.substring(0,7) || '?';
+    const label2 = currentCsvType === 'lastmonth' ? 'Fin de mois' : 'Mois en cours';
+    info = `✅ ${ops.length} opérations (${label2} — ${mois}) · Dép. <span style="color:var(--red)">${fmt(dep)}</span> · Rev. <span style="color:var(--green)">${fmt(rev)}</span>`;
     html = ops.slice(0,10).map(o=>`<div style="padding:2px 0;border-bottom:1px solid var(--border)">${o.date} · ${o.cat} · ${o.desc.substring(0,45)} · <span style="color:${o.type==='recette'?'var(--green)':'var(--red)'}">${o.type==='recette'?'+':'−'}${fmt(o.montant)}</span></div>`).join('');
   }
 
@@ -2810,16 +2856,24 @@ function csvImporter() {
     if (document.getElementById('page-personnel').classList.contains('active')) renderPersonnel();
     toastMsg(`✅ ${pers.length} personnels mis à jour`, 'success');
 
-  } else if (currentCsvType === 'compta') {
+  } else if (currentCsvType === 'compta' || currentCsvType === 'lastmonth') {
     const ops = parserCompta(rows);
     if (!ops.length) { toastMsg('Aucune opération trouvée', 'error'); return; }
-    const existKeys = new Set(state.compta.map(o=>`${o.date}_${o.desc}_${o.montant}`));
-    const nouvelles = ops.filter(o=>!existKeys.has(`${o.date}_${o.desc}_${o.montant}`));
-    state.compta = [...state.compta, ...nouvelles];
-    journalLog(`MAJ CSV compta : ${nouvelles.length} opérations ajoutées`, 'ok');
+    const mois = ops[0].date ? ops[0].date.substring(0, 7) : null;
+    if (!mois) { toastMsg('Impossible de détecter le mois', 'error'); return; }
+    const nb = importerOpsMois(mois, ops);
+    if (currentCsvType === 'compta') {
+      // Lignes du 01 potentiellement pour le mois précédent
+      const opsJ1 = ops.filter(o => o.date && o.date.endsWith('-01'));
+      if (opsJ1.length) {
+        const dp = new Date(mois + '-01'); dp.setMonth(dp.getMonth()-1);
+        importerOpsMois(dp.toISOString().substring(0,7), opsJ1);
+      }
+    }
+    journalLog(`MAJ CSV compta ${mois} : ${nb} opérations`, 'ok');
     saveState(); renderDashboard();
     if (document.getElementById('page-compta').classList.contains('active')) renderCompta();
-    toastMsg(`✅ ${nouvelles.length} opérations importées`, 'success');
+    toastMsg(`✅ ${nb} opérations importées (${mois})`, 'success');
   }
 
   closeModal('modal-maj-csv');
@@ -3196,12 +3250,49 @@ function supprimerLigne(i) { state.lignes.splice(i, 1); saveState(); renderLigne
 // ═══════════════════════════════════════════════════════
 //  COMPTA
 // ═══════════════════════════════════════════════════════
+// Helper : aplatit toutes les opérations de comptaMois en tableau trié
+function allOps() {
+  const ops = [];
+  Object.values(state.comptaMois || {}).forEach(arr => arr.forEach(o => ops.push(o)));
+  return ops.sort((a,b) => (a.date||'').localeCompare(b.date||''));
+}
+
+// Helper : opérations d'un mois donné (YYYY-MM)
+function opsDuMois(mois) {
+  return state.comptaMois[mois] || [];
+}
+
+// Importer des ops dans un mois — sans doublon, sans écraser
+function importerOpsMois(mois, ops) {
+  if (!state.comptaMois[mois]) state.comptaMois[mois] = [];
+  const existKeys = new Set(state.comptaMois[mois].map(o => o.date+'_'+o.desc+'_'+o.montant));
+  const nouvelles = ops.filter(o => !existKeys.has(o.date+'_'+o.desc+'_'+o.montant));
+  state.comptaMois[mois] = [...state.comptaMois[mois], ...nouvelles];
+  return nouvelles.length;
+}
+
+// Remplacer (écraser) le mois en cours
+function remplacerOpsMois(mois, ops) {
+  state.comptaMois[mois] = ops;
+}
+
+let comptaMoisFiltre = null; // null = tous, 'YYYY-MM' = un mois
+
+function setComptaMoisFiltre(mois) {
+  comptaMoisFiltre = mois;
+  const label = document.getElementById('compta-mois-label');
+  if (label) label.textContent = mois ? mois : 'tous les mois';
+  renderComptaTableau();
+}
+
 function renderCompta() {
   const argentDepart = (state.config && state.config.argentDepart) || 0;
-  const recettes = state.compta.filter(o=>o.type==='recette').reduce((s,o)=>s+o.montant,0);
-  const depenses = state.compta.filter(o=>o.type==='depense').reduce((s,o)=>s+o.montant,0);
+  const allOpsArr = allOps();
+  const recettes = allOpsArr.filter(o=>o.type==='recette').reduce((s,o)=>s+o.montant,0);
+  const depenses = allOpsArr.filter(o=>o.type==='depense').reduce((s,o)=>s+o.montant,0);
   const benefice = recettes - depenses;
   const solde    = argentDepart + benefice;
+
   document.getElementById('compta-recettes').textContent = fmt(recettes);
   document.getElementById('compta-depenses').textContent = fmt(depenses);
   document.getElementById('compta-benefice').textContent = fmt(benefice);
@@ -3210,9 +3301,9 @@ function renderCompta() {
   const topbarSolde = document.getElementById('topbar-solde-val');
   if (topbarSolde) { topbarSolde.textContent = fmt(solde); topbarSolde.style.color = solde >= 0 ? 'var(--green)' : 'var(--red)'; }
 
-  // Répartition dépenses
+  // Répartition dépenses globale
   const cats = {};
-  state.compta.filter(o=>o.type==='depense').forEach(o => { cats[o.cat] = (cats[o.cat]||0) + o.montant; });
+  allOpsArr.filter(o=>o.type==='depense').forEach(o => { cats[o.cat] = (cats[o.cat]||0) + o.montant; });
   let rep = '';
   Object.entries(cats).sort((a,b)=>b[1]-a[1]).forEach(([cat, val]) => {
     const pct = depenses > 0 ? Math.round(val/depenses*100) : 0;
@@ -3220,14 +3311,121 @@ function renderCompta() {
   });
   document.getElementById('compta-repartition').innerHTML = rep || '<div style="color:var(--text3)">Aucune dépense.</div>';
 
-  // Tableau trié
-  const sorted = sortData([...state.compta], 'compta', 'date').reverse();
+  // Selector années
+  const annees = [...new Set(Object.keys(state.comptaMois).map(m => m.substring(0,4)))].sort().reverse();
+  const selAnnee = document.getElementById('compta-annee-select');
+  const anneeActuelle = selAnnee.value || (annees[0] || new Date().getFullYear().toString());
+  selAnnee.innerHTML = annees.map(a => `<option value="${a}" ${a===anneeActuelle?'selected':''}>${a}</option>`).join('');
+
+  // Tableau par mois pour l'année sélectionnée
+  const moisDeLannee = Object.keys(state.comptaMois)
+    .filter(m => m.startsWith(anneeActuelle))
+    .sort().reverse();
+
+  const tbody = document.getElementById('compta-mois-tbody');
+  tbody.innerHTML = moisDeLannee.map(m => {
+    const ops = state.comptaMois[m];
+    const rec = ops.filter(o=>o.type==='recette').reduce((s,o)=>s+o.montant,0);
+    const dep = ops.filter(o=>o.type==='depense').reduce((s,o)=>s+o.montant,0);
+    const sol = rec - dep;
+    const label = new Date(m+'-01').toLocaleDateString('fr-FR', {month:'long', year:'numeric'});
+    const isSelected = comptaMoisFiltre === m;
+    return `<tr style="${isSelected?'background:rgba(0,212,255,0.08)':''}" onclick="setComptaMoisFiltre('${m}')" style="cursor:pointer">
+      <td><b style="color:var(--accent)">${label}</b></td>
+      <td class="mono" style="color:var(--green)">${fmt(rec)}</td>
+      <td class="mono" style="color:var(--red)">${fmt(dep)}</td>
+      <td class="mono" style="color:${sol>=0?'var(--green)':'var(--red)'};font-weight:700">${sol>=0?'+':''}${fmt(sol)}</td>
+      <td class="mono" style="color:var(--text3)">${ops.length}</td>
+      <td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();if(confirm('Supprimer tout le mois ${m} ?')){delete state.comptaMois['${m}'];saveState();renderCompta();}">🗑</button></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" style="color:var(--text3);text-align:center;padding:16px">Aucune donnée pour cette année</td></tr>';
+
+  // Graphique évolution solde annuel
+  renderComptaChart(anneeActuelle);
+  renderComptaTableau();
+}
+
+function renderComptaChart(annee) {
+  const canvas = document.getElementById('compta-chart');
+  if (!canvas) return;
+  const moisDeLannee = Object.keys(state.comptaMois).filter(m => m.startsWith(annee)).sort();
+  if (!moisDeLannee.length) { canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height); return; }
+
+  const W = canvas.offsetWidth || 800, H = 240;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+
+  const data = moisDeLannee.map(m => {
+    const ops = state.comptaMois[m];
+    const rec = ops.filter(o=>o.type==='recette').reduce((s,o)=>s+o.montant,0);
+    const dep = ops.filter(o=>o.type==='depense').reduce((s,o)=>s+o.montant,0);
+    return { m, rec, dep, sol: rec - dep };
+  });
+
+  const vals = [...data.map(d=>d.rec), ...data.map(d=>d.dep)];
+  const vmax = Math.max(...vals, 1);
+  const pad = { top:20, right:20, bottom:36, left:70 };
+  const cw = W - pad.left - pad.right;
+  const ch = H - pad.top - pad.bottom;
+  const bw = Math.min(30, cw / data.length / 3);
+  const gap = cw / data.length;
+
+  // Grille
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.top + (ch/4)*i;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W-pad.right, y); ctx.stroke();
+    ctx.fillStyle = 'rgba(148,163,184,0.7)'; ctx.font = '10px monospace'; ctx.textAlign = 'right';
+    ctx.fillText(fmt(Math.round(vmax - (vmax/4)*i)), pad.left-6, y+4);
+  }
+
+  data.forEach((d, i) => {
+    const cx = pad.left + gap*i + gap/2;
+    const toH = v => Math.max(2, (v/vmax)*ch);
+
+    // Barre recettes (cyan)
+    ctx.fillStyle = 'rgba(0,212,255,0.7)';
+    const hRec = toH(d.rec);
+    ctx.fillRect(cx - bw - 2, pad.top + ch - hRec, bw, hRec);
+
+    // Barre dépenses (rouge)
+    ctx.fillStyle = 'rgba(239,68,68,0.7)';
+    const hDep = toH(d.dep);
+    ctx.fillRect(cx + 2, pad.top + ch - hDep, bw, hDep);
+
+    // Label mois
+    ctx.fillStyle = 'rgba(100,116,139,0.9)'; ctx.font = '9px monospace'; ctx.textAlign = 'center';
+    const mLabel = new Date(d.m+'-15').toLocaleDateString('fr-FR', {month:'short'});
+    ctx.fillText(mLabel, cx, H - 8);
+
+    // Solde point
+    const ySol = pad.top + ch - (Math.max(0,d.sol)/vmax)*ch;
+    ctx.fillStyle = d.sol >= 0 ? '#10b981' : '#ef4444';
+    ctx.beginPath(); ctx.arc(cx, ySol, 4, 0, Math.PI*2); ctx.fill();
+  });
+
+  // Légende
+  ctx.font = '10px monospace';
+  ctx.fillStyle = 'rgba(0,212,255,0.9)'; ctx.fillRect(pad.left, 4, 12, 9);
+  ctx.fillStyle='#e2e8f0'; ctx.textAlign='left'; ctx.fillText('Recettes', pad.left+15, 12);
+  ctx.fillStyle = 'rgba(239,68,68,0.9)'; ctx.fillRect(pad.left+75, 4, 12, 9);
+  ctx.fillStyle='#e2e8f0'; ctx.fillText('Dépenses', pad.left+90, 12);
+  ctx.fillStyle = '#10b981'; ctx.beginPath(); ctx.arc(pad.left+160, 8, 4, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle='#e2e8f0'; ctx.fillText('Solde mois', pad.left+168, 12);
+}
+
+function renderComptaTableau() {
+  const typeFiltre = (document.getElementById('compta-type-filtre')||{}).value || '';
+  let ops = comptaMoisFiltre ? (state.comptaMois[comptaMoisFiltre] || []) : allOps();
+  if (typeFiltre) ops = ops.filter(o => o.type === typeFiltre);
+  const sorted = sortData([...ops], 'compta', 'date').reverse();
   const tbody = document.getElementById('compta-tbody');
   tbody.innerHTML = sorted.map(o => `<tr>
     <td class="mono">${o.date}</td>
     <td>${o.type==='recette'?'<span class="badge badge-green">Recette</span>':'<span class="badge badge-red">Dépense</span>'}</td>
     <td><span class="badge badge-gray">${o.cat}</span></td>
-    <td>${o.desc}</td>
+    <td style="font-size:11px">${o.desc}</td>
     <td class="mono" style="color:${o.type==='recette'?'var(--green)':'var(--red)'}">${o.type==='recette'?'+':'−'}${fmt(o.montant)}</td>
   </tr>`).join('') || '<tr><td colspan="5" style="color:var(--text3);text-align:center;padding:16px">Aucune opération</td></tr>';
 }
@@ -3235,8 +3433,15 @@ function renderCompta() {
 function ajouterOperation() {
   const montant = parseFloat(document.getElementById('op-montant').value)||0;
   if (!montant) { toastMsg('Montant requis', 'error'); return; }
-  state.compta.push({ id: Date.now(), date: document.getElementById('op-date').value || today(), type: document.getElementById('op-type').value, cat: document.getElementById('op-cat').value, desc: document.getElementById('op-desc').value, montant });
-  journalLog(`${document.getElementById('op-type').value === 'recette' ? 'Recette' : 'Dépense'} : ${fmt(montant)} (${document.getElementById('op-cat').value})`, 'info');
+  const date  = document.getElementById('op-date').value || today();
+  const type  = document.getElementById('op-type').value;
+  const cat   = document.getElementById('op-cat').value;
+  const desc  = document.getElementById('op-desc').value;
+  const mois  = date.substring(0, 7);
+  const op    = { id: Date.now(), date, type, cat, desc, montant };
+  if (!state.comptaMois[mois]) state.comptaMois[mois] = [];
+  state.comptaMois[mois].push(op);
+  journalLog(`${type === 'recette' ? 'Recette' : 'Dépense'} : ${fmt(montant)} (${cat})`, 'info');
   saveState(); renderCompta();
   toastMsg('Opération enregistrée ✓', 'success');
 }
@@ -3815,23 +4020,44 @@ function importerCSVDirect(type, contenu) {
     if (document.getElementById('page-personnel').classList.contains('active')) renderPersonnel();
     toastMsg(`👤 ${pers.length} personnels mis à jour`, 'success');
 
-  } else if (type === 'compta') {
+  } else if (type === 'compta' || type === 'lastmonth') {
     const ops = parserCompta(rows);
     if (!ops.length) { toastMsg('compta.csv : aucune opération', 'error'); return; }
-    const existKeys = new Set(state.compta.map(o=>`${o.date}_${o.desc}_${o.montant}`));
-    const nouvelles = ops.filter(o => !existKeys.has(`${o.date}_${o.desc}_${o.montant}`));
-    state.compta = [...state.compta, ...nouvelles];
-    journalLog(`MAJ compta.csv : ${nouvelles.length} opérations`, 'ok');
+
+    // Détecter le mois des données (depuis la première op)
+    const mois = ops[0].date ? ops[0].date.substring(0, 7) : null;
+    if (!mois) { toastMsg('Impossible de détecter le mois', 'error'); return; }
+
+    let nbNouvelles;
+    if (type === 'compta') {
+      // Mois en cours : fusionner sans doublon (certaines lignes du 01 comptent pour le mois précédent)
+      nbNouvelles = importerOpsMois(mois, ops);
+      // Vérifier aussi si certaines ops du 01 appartiennent au mois précédent
+      const opsJ1 = ops.filter(o => o.date && o.date.endsWith('-01'));
+      if (opsJ1.length) {
+        const moisPrec = new Date(mois + '-01');
+        moisPrec.setMonth(moisPrec.getMonth() - 1);
+        const moisPrecStr = moisPrec.toISOString().substring(0, 7);
+        importerOpsMois(moisPrecStr, opsJ1); // ajout silencieux au mois précédent
+      }
+      journalLog(`MAJ compta ${mois} : ${nbNouvelles} nouvelles opérations`, 'ok');
+      toastMsg(`💰 ${nbNouvelles} opérations importées (${mois})`, 'success');
+    } else {
+      // Mois précédent (lastmonth) : ajout sans écraser
+      nbNouvelles = importerOpsMois(mois, ops);
+      journalLog(`MAJ compta fin de mois ${mois} : ${nbNouvelles} opérations ajoutées`, 'ok');
+      toastMsg(`💰 FDM ${mois} : ${nbNouvelles} opérations ajoutées`, 'success');
+    }
+
     saveState(); renderDashboard();
     if (document.getElementById('page-compta').classList.contains('active')) renderCompta();
-    toastMsg(`💰 ${nouvelles.length} opérations importées`, 'success');
   }
 }
 
 // Polling localStorage : démarré dans DOMContentLoaded
 function demarrerPollingExtension() {
   setInterval(() => {
-    ['bus','affects','stats','salaries','compta'].forEach(type => {
+    ['bus','affects','stats','salaries','compta','lastmonth'].forEach(type => {
       const raw = localStorage.getItem('tm_ext_csv_' + type);
       if (!raw) return;
       localStorage.removeItem('tm_ext_csv_' + type);
@@ -3891,13 +4117,13 @@ function renderConfig() {
   document.getElementById('cfg-argent-actuel').textContent = fmt(cfg.argentDepart || 0);
 
   const argentDepart = cfg.argentDepart || 0;
-  const mouvements   = state.compta.reduce((a,o) => o.type === 'recette' ? a + o.montant : a - o.montant, 0);
+  const mouvements   = allOps().reduce((a,o) => o.type === 'recette' ? a + o.montant : a - o.montant, 0);
   const solde        = argentDepart + mouvements;
 
   document.getElementById('cfg-resume').innerHTML = `
     <div class="gauge-row"><div class="gauge-label">🚍 Bus dans le parc</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--accent)"></div></div><div class="gauge-val">${state.bus.length}</div></div>
     <div class="gauge-row"><div class="gauge-label">👤 Personnel</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--accent3)"></div></div><div class="gauge-val">${state.personnel.length}</div></div>
-    <div class="gauge-row"><div class="gauge-label">💰 Opérations compta</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--green)"></div></div><div class="gauge-val">${state.compta.length}</div></div>
+    <div class="gauge-row"><div class="gauge-label">💰 Opérations compta</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--green)"></div></div><div class="gauge-val">${allOps().length}</div></div>
     <div class="gauge-row"><div class="gauge-label">📊 Entrées stats</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--yellow)"></div></div><div class="gauge-val">${(state.statsLignes||[]).length}</div></div>
     <div class="gauge-row"><div class="gauge-label">📋 Affectations</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--orange)"></div></div><div class="gauge-val">${state.affectations.length}</div></div>
     <div style="margin-top:14px;padding:10px;background:rgba(0,212,255,0.05);border:1px solid var(--border);border-radius:6px">
