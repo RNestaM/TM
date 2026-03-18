@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>-3- Transport Manager — Gestion Parc</title>
+<title>Transport Manager — Gestion Parc</title>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -647,7 +647,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="Dernière mise à jour GitHub">↑ chargement...</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v8</span>
       <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
     </div>
@@ -1822,12 +1822,11 @@ function renderDashboard() {
     <div class="timeline-text">${j.text}</div>
   </div>`).join('') || '<div style="color:var(--text3)">Aucune activité.</div>';
 
-  // Badge alertes — cohérent avec la page alertes (seuil 5 jours)
+  // Badge alertes — CT + révisions dans 5 jours uniquement (pas FCO = trop nombreux)
   const SEUIL = 5;
   const ctBadge  = state.bus.filter(b => b.ct && Math.round((new Date(b.ct) - new Date()) / (1000*60*60*24)) <= SEUIL).length;
   const revBadge = state.bus.filter(b => b.revisionDate && Math.round((new Date(b.revisionDate) - new Date()) / (1000*60*60*24)) <= SEUIL).length;
-  const fcoBadge = state.personnel.filter(p => p.statut === 'FCO requise' || p.statut === 'FCO bientôt').length;
-  const badgeTotal = ctBadge + revBadge + fcoBadge;
+  const badgeTotal = ctBadge + revBadge;
   document.getElementById('alert-badge').textContent = badgeTotal;
   document.getElementById('alert-badge').style.display = badgeTotal > 0 ? '' : 'none';
 }
@@ -1883,7 +1882,7 @@ function renderAlertes() {
   } else html += '<div class="alert-box success" style="margin-bottom:8px">✅ Toutes les FCO sont à jour.</div>';
 
   document.getElementById('alertes-list').innerHTML = html;
-  const total = ctAlerts.length + revAlerts.length + fcoAlerts.length;
+  const total = ctAlerts.length + revAlerts.length;
   document.getElementById('alert-badge').textContent = total;
   document.getElementById('alert-badge').style.display = total > 0 ? '' : 'none';
 }
@@ -3441,34 +3440,6 @@ function resetSection(section) {
   toastMsg(`${labels[section]||section} vidé ✓`, 'info');
 }
 
-// ═══════════════════════════════════════════════════════
-//  VERSION GITHUB
-// ═══════════════════════════════════════════════════════
-async function fetchGithubVersion() {
-  const el = document.getElementById('github-version');
-  if (!el) return;
-  try {
-    const resp = await fetch('https://api.github.com/repos/RNestaM/TM/commits?per_page=1', {
-      headers: { 'Accept': 'application/vnd.github.v3+json' }
-    });
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const data = await resp.json();
-    if (data && data[0]) {
-      const commit  = data[0];
-      const date    = new Date(commit.commit.author.date);
-      const msg     = commit.commit.message.split('\n')[0].substring(0, 35);
-      const dateStr = date.toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit' })
-                    + ' ' + date.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
-      el.textContent = `↑ ${dateStr} · ${msg}`;
-      el.title = 'Commit ' + commit.sha.substring(0,7);
-      el.style.color = 'var(--green)';
-    }
-  } catch(e) {
-    el.textContent = '↑ —';
-    el.style.color = 'var(--text3)';
-  }
-}
-
 function updateBusSelects() {
   const opts = '<option value="">Choisir...</option>' + state.bus.map(b=>`<option>${b.nom}</option>`).join('');
   ['rev-bus','ct-bus','pub-bus','conso-bus'].forEach(id => {
@@ -3502,8 +3473,7 @@ document.addEventListener('DOMContentLoaded', () => {
   updateClock();
   setInterval(updateClock, 1000);
 
-  // Compteur de version GitHub
-  fetchGithubVersion();
+  // Compteur de version — statique, incrémenté à chaque livraison
 
   // Polling extension — DOIT être ici, après que le DOM et les fonctions sont prêts
   demarrerPollingExtension();
