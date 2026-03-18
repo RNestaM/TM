@@ -634,6 +634,9 @@
 
   <div class="sidebar-section">
     <div class="sidebar-section-title">Système</div>
+    <div class="nav-item" data-page="historique" onclick="nav(this)">
+      <span class="icon">📜</span> Import Historique
+    </div>
     <div class="nav-item" data-page="config" onclick="nav(this)">
       <span class="icon">⚙️</span> Configuration
     </div>
@@ -654,7 +657,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v19</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v20</span>
       <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
     </div>
@@ -1275,6 +1278,55 @@
       </div>
     </div>
 
+    <!-- ═══════════════════════════════════════════ HISTORIQUE ═══ -->
+    <div id="page-historique" class="page">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div style="font-size:20px;font-weight:700;color:var(--accent)">📜 Import Historique Comptabilité</div>
+        <div style="font-size:11px;color:var(--text3);background:var(--surface2);padding:4px 10px;border-radius:4px;border:1px solid var(--border)">Format : tableau Google Sheets tabulé — tous les mois côte à côte</div>
+      </div>
+
+      <div class="stat-cards" id="histo-stats" style="margin-bottom:14px">
+        <div class="stat-card blue"><div class="stat-label">Ops importées</div><div class="stat-value" id="histo-stat-ops">—</div></div>
+        <div class="stat-card green"><div class="stat-label">Mois couverts</div><div class="stat-value" id="histo-stat-mois">—</div></div>
+        <div class="stat-card yellow"><div class="stat-label">Doublons ignorés</div><div class="stat-value" id="histo-stat-dup">—</div></div>
+        <div class="stat-card" style="background:var(--surface2)"><div class="stat-label">Années détectées</div><div class="stat-value" id="histo-stat-annees" style="font-size:14px">—</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📋 Coller le tableau brut ici</div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('histo-textarea').value=''">🗑 Vider</button>
+            <button class="btn btn-primary" onclick="analyserHistorique()">🔍 Analyser</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <p style="font-size:11px;color:var(--text3);margin-bottom:8px">
+            Colle le contenu de ton tableau (Google Sheets → Copier tout). Le parser détecte automatiquement les années (2023, 2024, 2025, 2026…) et les 12 mois en colonnes côte à côte.
+            Format attendu : <code style="background:var(--surface);padding:1px 4px;border-radius:3px">vide | Date | Libellé | Dépenses | Revenus</code> × 12 colonnes.
+          </p>
+          <textarea id="histo-textarea" rows="12" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:8px;resize:vertical;outline:none;line-height:1.4" placeholder="Colle ici le tableau copié depuis Google Sheets...&#10;&#10;La première ligne doit contenir les en-têtes (Date de l'opération, Libellé, Dépenses, Revenus...)"></textarea>
+          <div id="histo-preview" style="margin-top:12px;display:none">
+            <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:var(--accent)">Aperçu de l'analyse :</div>
+            <div id="histo-preview-content" style="font-size:11px;color:var(--text2);background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px;max-height:200px;overflow-y:auto"></div>
+            <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+              <button class="btn btn-primary" id="histo-import-btn" onclick="importerHistorique()" style="display:none">✅ Importer dans la comptabilité</button>
+              <span id="histo-import-msg" style="font-size:11px;color:var(--text3)"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mois déjà présents -->
+      <div class="card" style="margin-top:14px">
+        <div class="card-header">
+          <div class="card-title">📅 Mois déjà dans la base</div>
+          <button class="btn btn-ghost btn-sm" onclick="renderHistoriqueBase()">↺ Actualiser</button>
+        </div>
+        <div class="card-body" id="histo-base-content" style="font-size:11px;color:var(--text2)">Chargement…</div>
+      </div>
+    </div>
+
     <!-- ═══════════════════════════════════════════ PUB ═══ -->
     <div id="page-pub" class="page">
 
@@ -1856,7 +1908,7 @@ function renderPage(page) {
   const r = { dashboard: renderDashboard, alertes: renderAlertes, parc: renderParc,
     affectations: renderAffectations, maintenance: renderMaintenance, abribus: renderAbribus,
     personnel: renderPersonnel, lignes: renderLignes, compta: renderCompta,
-    pub: renderPub, achats: renderAchats, gasoil: renderGasoil, config: renderConfig, pubdispo: renderPubDispo };
+    pub: renderPub, achats: renderAchats, gasoil: renderGasoil, config: renderConfig, pubdispo: renderPubDispo, historique: renderHistoriqueBase };
   if (r[page]) r[page]();
 }
 
@@ -3275,6 +3327,195 @@ function importerOpsMois(mois, ops) {
 function remplacerOpsMois(mois, ops) {
   state.comptaMois[mois] = ops;
 }
+
+// ═══════════════════════════════════════════════════════════
+// IMPORT HISTORIQUE — tableau Google Sheets tabulé
+// Format : colonnes par groupes de 5 : vide|date|libellé|dépenses|revenus
+//          répété 12 fois sur chaque ligne (un groupe par mois)
+// ═══════════════════════════════════════════════════════════
+
+let _histoParsed = null; // résultat de l'analyse en attente d'import
+
+function analyserHistorique() {
+  const texte = document.getElementById('histo-textarea').value.trim();
+  if (!texte) { toastMsg('Textarea vide !', 'error'); return; }
+
+  const lines = texte.split('\n').map(l => l.split('\t'));
+  if (lines.length < 2) { toastMsg('Format non reconnu', 'error'); return; }
+
+  // Détecter les années dans la ligne d'en-tête (ex: "01/01/2025", "01/01/2024"...)
+  const headerLine = lines[0];
+  // Chercher les années dans toutes les lignes (les dates contiennent l'année)
+  const anneesDetectees = new Set();
+  lines.slice(1).forEach(cols => {
+    cols.forEach(cell => {
+      const m = cell.match(/(\d{4})/);
+      if (m && parseInt(m[1]) >= 2020 && parseInt(m[1]) <= 2030) anneesDetectees.add(m[1]);
+    });
+  });
+
+  // Identifier les groupes de colonnes (chaque groupe = 5 colonnes : vide, date, libellé, dép, rev)
+  // On repère les colonnes "date" par leur contenu dans les premières lignes de données
+  const nbCols = headerLine.length;
+  const groupes = []; // { startCol, moisKey } — déterminé dynamiquement par le parsing
+
+  // Parser : on itère ligne par ligne, groupe par groupe de 5
+  const opsByMois = {}; // { 'YYYY-MM': [op, ...] }
+  let totalOps = 0;
+
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i];
+    // Groupes de 5 colonnes
+    for (let g = 0; g * 5 + 4 < cols.length; g++) {
+      const base = g * 5;
+      const dateRaw = (cols[base + 1] || '').trim();
+      const libelle = (cols[base + 2] || '').trim();
+      const depRaw  = (cols[base + 3] || '').trim();
+      const revRaw  = (cols[base + 4] || '').trim();
+
+      if (!dateRaw || !libelle) continue;
+
+      // Parser la date — plusieurs formats possibles
+      const dateStr = parseDateHistorique(dateRaw);
+      if (!dateStr) continue;
+
+      const mois = dateStr.substring(0, 7); // 'YYYY-MM'
+      if (!mois.match(/^\d{4}-\d{2}$/)) continue;
+
+      const dep = parseFloat(depRaw.replace(/[€\s\u00a0]/g,'').replace(/\./g,'').replace(',','.')) || 0;
+      const rev = parseFloat(revRaw.replace(/[€\s\u00a0]/g,'').replace(/\./g,'').replace(',','.')) || 0;
+      const montant = dep > 0 ? dep : rev;
+      if (montant === 0 && libelle === '') continue;
+
+      if (!opsByMois[mois]) opsByMois[mois] = [];
+      opsByMois[mois].push({
+        id: `histo_${mois}_${totalOps}`,
+        date: dateStr,
+        type: dep > 0 ? 'depense' : 'recette',
+        cat: categoriserLibelle(libelle),
+        desc: libelle.replace(/&#039;/g, "'"),
+        montant
+      });
+      totalOps++;
+    }
+  }
+
+  _histoParsed = opsByMois;
+  const moisList = Object.keys(opsByMois).sort();
+  const anneesStr = [...new Set(moisList.map(m => m.substring(0,4)))].sort().join(', ');
+
+  // Calculer doublons potentiels
+  let dup = 0;
+  moisList.forEach(mois => {
+    const existing = state.comptaMois[mois] || [];
+    const existKeys = new Set(existing.map(o => o.date+'_'+o.desc+'_'+o.montant));
+    opsByMois[mois].forEach(o => { if (existKeys.has(o.date+'_'+o.desc+'_'+o.montant)) dup++; });
+  });
+
+  // Afficher l'aperçu
+  document.getElementById('histo-preview').style.display = 'block';
+  document.getElementById('histo-import-btn').style.display = 'inline-flex';
+  document.getElementById('histo-import-msg').textContent = '';
+
+  document.getElementById('histo-stat-ops').textContent = totalOps.toLocaleString();
+  document.getElementById('histo-stat-mois').textContent = moisList.length;
+  document.getElementById('histo-stat-dup').textContent = dup.toLocaleString();
+  document.getElementById('histo-stat-annees').textContent = anneesStr || '—';
+
+  // Tableau récap par mois
+  const previewHtml = moisList.map(m => {
+    const ops = opsByMois[m];
+    const rec = ops.filter(o=>o.type==='recette').reduce((a,o)=>a+o.montant,0);
+    const dep = ops.filter(o=>o.type==='depense').reduce((a,o)=>a+o.montant,0);
+    const existCount = (state.comptaMois[m]||[]).length;
+    const badge = existCount > 0 ? `<span style="color:var(--yellow);margin-left:6px">⚠ ${existCount} déjà présentes</span>` : '<span style="color:var(--green);margin-left:6px">✓ nouveau</span>';
+    return `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)">
+      <span><b>${m}</b>${badge}</span>
+      <span>${ops.length} ops · <span style="color:var(--green)">+${fmt(rec)}</span> · <span style="color:var(--red)">-${fmt(dep)}</span></span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('histo-preview-content').innerHTML = previewHtml ||
+    '<span style="color:var(--text3)">Aucune opération trouvée — vérifier le format</span>';
+}
+
+function parseDateHistorique(raw) {
+  raw = raw.replace(/"/g,'').trim();
+  // Format Excel numérique (ex: 45734.35347)
+  const numMatch = raw.match(/^(\d{5})(\.\d+)?$/);
+  if (numMatch) {
+    const serial = parseFloat(raw);
+    // Excel date serial (base 1900-01-01, corrigé pour bug 1900)
+    const excelEpoch = new Date(1899, 11, 30);
+    const d = new Date(excelEpoch.getTime() + serial * 86400000);
+    if (!isNaN(d.getTime())) return d.toISOString().substring(0,10);
+    return null;
+  }
+  // Format JJ/MM/AAAA ou JJ/MM/AAAA HH:MM
+  const frMatch = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (frMatch) {
+    const [, j, m, a] = frMatch;
+    return `${a}-${m.padStart(2,'0')}-${j.padStart(2,'0')}`;
+  }
+  // ISO déjà
+  if (raw.match(/^\d{4}-\d{2}-\d{2}/)) return raw.substring(0,10);
+  return null;
+}
+
+function importerHistorique() {
+  if (!_histoParsed) { toastMsg('Lance d\'abord l\'analyse', 'error'); return; }
+  let totalNew = 0, totalDup = 0;
+  Object.entries(_histoParsed).forEach(([mois, ops]) => {
+    const nb = importerOpsMois(mois, ops);
+    totalNew += nb;
+    totalDup += ops.length - nb;
+  });
+  saveState();
+  const msg = `✅ ${totalNew} opérations importées · ${totalDup} doublons ignorés`;
+  document.getElementById('histo-import-msg').textContent = msg;
+  document.getElementById('histo-import-btn').style.display = 'none';
+  toastMsg(msg, 'success');
+  renderHistoriqueBase();
+  if (document.getElementById('page-compta').classList.contains('active')) renderCompta();
+  _histoParsed = null;
+}
+
+function renderHistoriqueBase() {
+  const el = document.getElementById('histo-base-content');
+  if (!el) return;
+  const moisList = Object.keys(state.comptaMois).sort();
+  if (!moisList.length) { el.innerHTML = '<span style="color:var(--text3)">Aucune donnée comptable dans la base.</span>'; return; }
+  const byAnnee = {};
+  moisList.forEach(m => {
+    const a = m.substring(0,4);
+    if (!byAnnee[a]) byAnnee[a] = [];
+    byAnnee[a].push(m);
+  });
+  el.innerHTML = Object.entries(byAnnee).sort((a,b)=>b[0].localeCompare(a[0])).map(([annee, mois]) => {
+    const mosHtml = mois.map(m => {
+      const ops = state.comptaMois[m];
+      const rec = ops.filter(o=>o.type==='recette').reduce((a,o)=>a+o.montant,0);
+      const dep = ops.filter(o=>o.type==='depense').reduce((a,o)=>a+o.montant,0);
+      const solde = rec - dep;
+      const color = solde >= 0 ? 'var(--green)' : 'var(--red)';
+      return `<span style="display:inline-block;margin:2px;padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:4px;cursor:pointer" onclick="nav(document.querySelector('[data-page=compta]'));setComptaMoisFiltre('${m}')" title="${ops.length} ops · ${fmt(rec)} rec · ${fmt(dep)} dep">
+        <b style="color:var(--accent)">${m.substring(5)}</b>
+        <span style="color:${color};margin-left:4px">${solde>=0?'+':''}${fmt(solde)}</span>
+        <span style="color:var(--text3);font-size:10px;margin-left:3px">${ops.length}op</span>
+      </span>`;
+    }).join('');
+    const totalRec = mois.reduce((a,m)=>a+(state.comptaMois[m]||[]).filter(o=>o.type==='recette').reduce((b,o)=>b+o.montant,0),0);
+    const totalDep = mois.reduce((a,m)=>a+(state.comptaMois[m]||[]).filter(o=>o.type==='depense').reduce((b,o)=>b+o.montant,0),0);
+    return `<div style="margin-bottom:12px">
+      <div style="font-weight:700;color:var(--accent2);margin-bottom:4px;font-size:13px">
+        ${annee} &nbsp; <span style="font-size:11px;color:var(--text3);font-weight:400">Rec: <span style="color:var(--green)">${fmt(totalRec)}</span> · Dép: <span style="color:var(--red)">${fmt(totalDep)}</span> · Solde: <span style="color:${totalRec-totalDep>=0?'var(--green)':'var(--red)'}">${fmt(totalRec-totalDep)}</span></span>
+      </div>
+      <div>${mosHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+
 
 let comptaMoisFiltre = null; // null = tous, 'YYYY-MM' = un mois
 
