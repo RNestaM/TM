@@ -3344,6 +3344,8 @@ function saisirManuelCarburant() {
   saveState();
   renderGasoil();
 }
+
+function supprimerPrixCarburant(id) {
   state.carburant = state.carburant.filter(e => e.id !== id);
   saveState(); renderGasoil();
 }
