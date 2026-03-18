@@ -610,11 +610,18 @@
     <div class="nav-item" data-page="compta" onclick="nav(this)">
       <span class="icon">💰</span> Comptabilité
     </div>
-    <div class="nav-item" data-page="pub" onclick="nav(this)">
-      <span class="icon">📢</span> Publicité
-    </div>
     <div class="nav-item" data-page="achats" onclick="nav(this)">
       <span class="icon">🛒</span> Achats de bus
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Publicité</div>
+    <div class="nav-item" data-page="pub" onclick="nav(this)">
+      <span class="icon">📢</span> Contrats pub
+    </div>
+    <div class="nav-item" data-page="pubdispo" onclick="nav(this)">
+      <span class="icon">🔀</span> Optimisation bus
     </div>
   </div>
 
@@ -647,7 +654,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v10</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v13</span>
       <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
     </div>
@@ -1274,6 +1281,20 @@
         </div>
       </div>
 
+      <!-- Outil évaluation contrats — à construire -->
+      <div class="card" style="margin-top:14px;border-color:rgba(124,58,237,0.3)">
+        <div class="card-header" style="border-bottom-color:rgba(124,58,237,0.2)">
+          <div class="card-title" style="color:var(--accent3)">🧮 Évaluation des propositions de contrat</div>
+          <span class="badge" style="background:rgba(124,58,237,0.2);color:var(--accent3)">À venir</span>
+        </div>
+        <div class="card-body">
+          <div class="alert-box info" style="font-size:12px">
+            Cet outil calculera automatiquement un score pour chaque proposition de contrat pub reçue.<br>
+            Il sera construit dès que les critères de notation seront définis.
+          </div>
+        </div>
+      </div>
+
       <!-- Tableau contrats triés par date fin -->
       <div class="card" style="margin-top:14px">
         <div class="card-header">
@@ -1299,6 +1320,87 @@
               <th></th>
             </tr></thead>
             <tbody id="pub-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ ACHATS ═══ -->
+    <div id="page-pubdispo" class="page">
+
+      <div class="grid-2">
+        <!-- Import données disponibilité -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">📥 Importer les disponibilités pub</div></div>
+          <div class="card-body">
+            <p style="font-size:11px;color:var(--text3);margin-bottom:10px">
+              Colle le tableau "Disponibilité pub" copié depuis le jeu (colonnes séparées par tabulations) :
+            </p>
+            <textarea id="pubdispo-texte" rows="10" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:8px;resize:vertical;outline:none"
+              placeholder="Scania Omnicity G II n°ART-08-186&#9;&#9;Non&#9;Non équipé&#9;Libre&#9;Libre&#9;Libre&#9;Libre&#9;Libre&#10;..."></textarea>
+            <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+              <button class="btn btn-primary" onclick="importerDispoPub()">✓ Analyser</button>
+              <button class="btn btn-ghost btn-sm" onclick="if(confirm('Vider ?')){state.pubDispo=[];saveState();renderPubDispo();}">🗑 Vider</button>
+              <span id="pubdispo-status" style="font-size:11px;color:var(--text3)"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Résumé stats -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">📊 Résumé</div></div>
+          <div class="card-body" id="pubdispo-resume">
+            <div style="color:var(--text3);font-size:12px">Importe les données pour voir le résumé.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alertes : bus avec pub mais sans affectation -->
+      <div class="card" style="margin-top:14px;border-color:rgba(239,68,68,0.3)">
+        <div class="card-header" style="border-bottom-color:rgba(239,68,68,0.2)">
+          <div class="card-title" style="color:var(--red)">⚠️ Bus avec pub mais sans affectation</div>
+          <span id="pubdispo-alerte-count" class="badge" style="background:rgba(239,68,68,0.2);color:var(--red)">0</span>
+        </div>
+        <div class="card-body" style="padding:0">
+          <table class="data-table" id="pubdispo-alerte-table">
+            <thead><tr>
+              <th>Bus (avec pub)</th>
+              <th>Places</th>
+              <th>Pub(s) active(s) — date fin contrat</th>
+              <th>Affectation</th>
+              <th>→ Remplaçant(s) suggéré(s) (même type, tout libre, affecté, places ≥)</th>
+            </tr></thead>
+            <tbody id="pubdispo-alerte-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tableau complet -->
+      <div class="card" style="margin-top:14px">
+        <div class="card-header">
+          <div class="card-title">Tableau complet disponibilités</div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-ghost btn-sm" onclick="setPubDispoFiltre('tous')" id="pdf-f-tous">Tous</button>
+            <button class="btn btn-ghost btn-sm" onclick="setPubDispoFiltre('avecpub')" id="pdf-f-avecpub">Avec pub</button>
+            <button class="btn btn-ghost btn-sm" onclick="setPubDispoFiltre('sanspub')" id="pdf-f-sanspub">Tout libre</button>
+            <button class="btn btn-ghost btn-sm" onclick="setPubDispoFiltre('sansaff')" id="pdf-f-sansaff">Sans affectation</button>
+          </div>
+        </div>
+        <div class="card-body" style="padding:0;overflow-x:auto">
+          <table class="data-table">
+            <thead><tr>
+              <th>Véhicule</th>
+              <th>Places</th>
+              <th>Pub autorisée</th>
+              <th>Affectation</th>
+              <th>Pan. Avant</th>
+              <th>Pan. Latéral</th>
+              <th>Livrée Lat.</th>
+              <th>Pan. Arrière</th>
+              <th>Livrée Arr.</th>
+              <th>Écran TFT</th>
+            </tr></thead>
+            <tbody id="pubdispo-tbody"></tbody>
           </table>
         </div>
       </div>
@@ -1678,7 +1780,8 @@ let state = loadState() || {
   conso: { niveau: 5000, moy: 0 },
   config: { argentDepart: 0 },
   prixKm: {},
-  carburant: []
+  carburant: [],
+  pubDispo: []
 };
 if (!state.config) state.config = { argentDepart: 0 };
 if (!state.statsLignes) state.statsLignes = [];
@@ -1720,7 +1823,8 @@ function nav(el) {
   const titles = { dashboard:'Tableau de bord', alertes:'Alertes', parc:'Gestion du parc',
     affectations:'Affectations', maintenance:'Maintenance & CT', abribus:'Équipement Abribus',
     personnel:'Personnel & FCO', lignes:'Lignes & Statistiques', compta:'Comptabilité',
-    pub:'Contrats Publicitaires', achats:'Achats de bus', gasoil:'Gasoil & Consommation', config:'Configuration' };
+    pub:'Contrats Publicitaires', achats:'Achats de bus', gasoil:'Gasoil & Consommation', config:'Configuration',
+    pubdispo:'Optimisation Bus Pub' };
   document.getElementById('topbar-title').textContent = titles[page] || page;
   renderPage(page);
 }
@@ -1729,7 +1833,7 @@ function renderPage(page) {
   const r = { dashboard: renderDashboard, alertes: renderAlertes, parc: renderParc,
     affectations: renderAffectations, maintenance: renderMaintenance, abribus: renderAbribus,
     personnel: renderPersonnel, lignes: renderLignes, compta: renderCompta,
-    pub: renderPub, achats: renderAchats, gasoil: renderGasoil, config: renderConfig };
+    pub: renderPub, achats: renderAchats, gasoil: renderGasoil, config: renderConfig, pubdispo: renderPubDispo };
   if (r[page]) r[page]();
 }
 
@@ -3179,18 +3283,15 @@ function renderPub() {
 function gainsPourMois(moisStr) {
   const [y, m] = moisStr.split('-').map(Number);
   const debutMois = new Date(y, m-1, 1);
-  const finMois   = new Date(y, m, 0);
+  const finMois   = new Date(y, m, 0); // dernier jour du mois
+  // Le paiement se fait à la date de FIN du contrat
+  // On compte les contrats dont la date de fin tombe dans ce mois
   return state.contratsPub.reduce((total, c) => {
-    if (!c.fin || !c.debut) return total;
-    const df = new Date(c.debut);
+    if (!c.fin) return total;
     const ff = new Date(c.fin);
-    if (ff < debutMois || df > finMois) return total;
-    const debut = df > debutMois ? df : debutMois;
-    const fin   = ff < finMois   ? ff : finMois;
-    const jours = Math.round((fin - debut) / (1000*60*60*24)) + 1;
-    const dureeContrat = Math.round((ff - df) / (1000*60*60*24)) + 1;
-    const gainJour = dureeContrat > 0 ? c.gains / dureeContrat : 0;
-    return total + gainJour * jours;
+    // Le contrat est payé le jour de fin — est-ce dans ce mois ?
+    if (ff >= debutMois && ff <= finMois) return total + c.gains;
+    return total;
   }, 0);
 }
 
@@ -3212,7 +3313,7 @@ function renderPubStatCards() {
 function renderPubGainsMois() {
   const now = new Date();
   const mois = [];
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 2; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
     const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
     const label = d.toLocaleDateString('fr-FR', { month:'long', year:'numeric' });
@@ -3222,7 +3323,7 @@ function renderPubGainsMois() {
   document.getElementById('pub-gains-mois').innerHTML = mois.map((m, i) => {
     const pct = Math.round(m.gains / max * 100);
     const color = i === 0 ? 'var(--accent)' : i === 1 ? 'var(--green)' : 'var(--accent3)';
-    return '<div class="gauge-row"><div class="gauge-label" style="font-size:11px;min-width:110px">' + m.label + '</div><div class="gauge-bar"><div class="gauge-fill" style="width:' + pct + '%;background:' + color + '"></div></div><div class="gauge-val" style="font-family:'JetBrains Mono',monospace">' + fmt(Math.round(m.gains)) + '</div></div>';
+    return '<div class="gauge-row"><div class="gauge-label" style="font-size:11px;min-width:110px">' + m.label + '</div><div class="gauge-bar"><div class="gauge-fill" style="width:' + pct + '%;background:' + color + '"></div></div><div class="gauge-val" style="font-family:monospace">' + fmt(Math.round(m.gains)) + '</div></div>';
   }).join('');
 }
 
@@ -3235,7 +3336,7 @@ function renderPubTableau() {
   const tbody = document.getElementById('pub-tbody');
   tbody.innerHTML = contrats.map(c => {
     const diff = Math.round((new Date(c.fin) - new Date()) / (1000*60*60*24));
-    const finColor = diff < 0 ? 'color:var(--red)' : diff <= 3 ? 'color:var(--orange)' : diff <= 7 ? 'color:var(--yellow)' : '';
+    const finColor = diff < 0 ? '' : diff <= 1 ? 'color:var(--red)' : diff <= 5 ? 'color:var(--orange)' : '';
     const finDate = new Date(c.fin);
     const moisFin = finDate.toLocaleDateString('fr-FR', { month:'short', year:'2-digit' });
     return '<tr>' +
@@ -3857,7 +3958,205 @@ document.addEventListener('DOMContentLoaded', () => {
   demarrerPollingExtension();
 });
 
-// Click outside modal
+// ═══════════════════════════════════════════════════════
+//  OPTIMISATION BUS PUB
+// ═══════════════════════════════════════════════════════
+let pubDispoFiltre = 'tous';
+
+function setPubDispoFiltre(f) {
+  pubDispoFiltre = f;
+  ['tous','avecpub','sanspub','sansaff'].forEach(k => {
+    const btn = document.getElementById('pdf-f-' + k);
+    if (btn) btn.style.background = k === f ? 'rgba(0,212,255,0.15)' : '';
+  });
+  renderPubDispoTableau();
+}
+
+function importerDispoPub() {
+  const texte = document.getElementById('pubdispo-texte').value.trim();
+  if (!texte) { toastMsg('Texte vide', 'error'); return; }
+
+  const lines = texte.replace(/\r/g,'').split('\n').filter(l => l.trim());
+  const buses = [];
+
+  lines.forEach(line => {
+    const cols = line.split('\t').map(c => c.trim());
+    // Format attendu : [vide] [Vehicule] [vide] [PubAutorisée] [Affectation] [PanAv] [PanLat] [LivLat] [PanArr] [LivArr] [Ecran]
+    // Le véhicule est dans cols[0] ou cols[1] selon si la ligne commence par une tab
+    const desc = cols[1] && cols[1].includes('n°') ? cols[1] : (cols[0] && cols[0].includes('n°') ? cols[0] : '');
+    if (!desc) return;
+
+    const nomMatch = desc.match(/n°([A-Z0-9\-]+)/);
+    if (!nomMatch) return;
+    const nom = nomMatch[1].trim();
+
+    // Places : dernier segment numérique du nom (ex: STD-44-106 → 106, MIN-04-TAD-41 → 41)
+    const placesMatch = nom.match(/(\d+)$/);
+    const places = placesMatch ? parseInt(placesMatch[1]) : 0;
+
+    // Type depuis le préfixe
+    let type = 'STD';
+    const nu = nom.toUpperCase();
+    if      (nu.startsWith('00-ART'))  type = 'ART';
+    else if (nu.startsWith('00-CAR'))  type = 'CAR';
+    else if (nu.startsWith('00-MID'))  type = 'MID';
+    else if (nu.startsWith('00-MIN'))  type = 'MIN';
+    else if (nu.startsWith('00-STD'))  type = 'STD';
+    else if (nu.startsWith('MIN-'))    type = 'MIN';
+    else if (nu.startsWith('MID-'))    type = 'MID';
+    else if (nu.startsWith('ART-'))    type = 'ART';
+    else if (nu.startsWith('CAR-'))    type = 'CAR';
+    else if (nu.startsWith('TRAM-'))   type = 'TRAM';
+
+    // Index de PubAutorisée (Oui/Non) : cols[3] si commence par tab, cols[2] sinon
+    const idxPub = cols[1] && cols[1].includes('n°') ? 3 : 2;
+    const pubAutorisee = (cols[idxPub] || '').toLowerCase().includes('oui');
+    
+    // Affectation = cols[idxPub+1]
+    // "Non" ou "Libre" → pas affecté, date (XX/XX/XXXX) ou "Oui" → affecté
+    const affRaw = cols[idxPub + 1] || 'Non';
+    const aAffectation = /\d{2}\/\d{2}\/\d{4}/.test(affRaw) || affRaw === 'Oui';
+    const affectation  = aAffectation ? affRaw : 'Non';
+
+    // 6 supports à partir de idxPub+2
+    const idxS   = idxPub + 2;
+    const panAv  = cols[idxS]   || '';
+    const panLat = cols[idxS+1] || '';
+    const livLat = cols[idxS+2] || '';
+    const panArr = cols[idxS+3] || '';
+    const livArr = cols[idxS+4] || '';
+    const ecran  = cols[idxS+5] || '';
+
+    const isUsed = v => v && v !== 'Libre' && v !== 'Non équipé' && v !== '';
+    const aPub     = [panAv, panLat, livLat, panArr, livArr, ecran].some(isUsed);
+    const toutLibre = !aPub; // pas de pub active = tout libre pour la pub
+
+    buses.push({ nom, type, places, pubAutorisee, affectation, aAffectation, aPub, toutLibre,
+      panAv, panLat, livLat, panArr, livArr, ecran });
+  });
+
+  if (!buses.length) {
+    toastMsg('Aucune donnée reconnue — vérifie le format', 'error');
+    document.getElementById('pubdispo-status').textContent = '⚠ Aucun bus trouvé';
+    return;
+  }
+
+  state.pubDispo = buses;
+  journalLog(`${buses.length} bus pub importés`, 'ok');
+  saveState(); renderPubDispo();
+  document.getElementById('pubdispo-texte').value = '';
+  document.getElementById('pubdispo-status').textContent = `✓ ${buses.length} bus analysés`;
+  toastMsg(`${buses.length} bus analysés ✓`, 'success');
+}
+
+function renderPubDispo() {
+  if (!state.pubDispo) state.pubDispo = [];
+  renderPubDispoResume();
+  renderPubDispoAlertes();
+  renderPubDispoTableau();
+}
+
+function renderPubDispoResume() {
+  const data = state.pubDispo;
+  const avecPub     = data.filter(b => b.aPub).length;
+  const sansAff     = data.filter(b => b.aPub && !b.aAffectation).length;
+  const toutLibre   = data.filter(b => b.toutLibre && b.aAffectation).length;
+  const resume = document.getElementById('pubdispo-resume');
+  if (!resume) return;
+  resume.innerHTML = `
+    <div class="gauge-row"><div class="gauge-label">Total bus analysés</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--accent)"></div></div><div class="gauge-val">${data.length}</div></div>
+    <div class="gauge-row"><div class="gauge-label">Bus avec pub active</div><div class="gauge-bar"><div class="gauge-fill" style="width:${data.length?avecPub/data.length*100:0}%;background:var(--accent3)"></div></div><div class="gauge-val">${avecPub}</div></div>
+    <div class="gauge-row"><div class="gauge-label" style="color:var(--red)">⚠ Pub sans affectation</div><div class="gauge-bar"><div class="gauge-fill" style="width:${data.length?sansAff/data.length*100:0}%;background:var(--red)"></div></div><div class="gauge-val" style="color:var(--red)">${sansAff}</div></div>
+    <div class="gauge-row"><div class="gauge-label" style="color:var(--green)">✓ Candidats remplacement</div><div class="gauge-bar"><div class="gauge-fill" style="width:${data.length?toutLibre/data.length*100:0}%;background:var(--green)"></div></div><div class="gauge-val" style="color:var(--green)">${toutLibre}</div></div>
+  `;
+}
+
+function renderPubDispoAlertes() {
+  const data = state.pubDispo;
+  if (!data.length) return;
+
+  // Bus avec pub active ET sans affectation
+  const problemes = data.filter(b => b.aPub && !b.aAffectation);
+  document.getElementById('pubdispo-alerte-count').textContent = problemes.length;
+
+  const tbody = document.getElementById('pubdispo-alerte-tbody');
+  if (!problemes.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="color:var(--green);text-align:center;padding:16px">✅ Tous les bus avec pub ont une affectation !</td></tr>';
+    return;
+  }
+
+  const isUsed = v => v && v !== 'Libre' && v !== 'Non équipé' && v !== '';
+
+  tbody.innerHTML = problemes.map(b => {
+    // Pubs actives sur ce bus
+    const pubsActives = [];
+    if (isUsed(b.panAv))  pubsActives.push(`<span style="font-size:9px;background:rgba(249,115,22,0.15);padding:1px 4px;border-radius:3px">Pan.Av ${b.panAv}</span>`);
+    if (isUsed(b.panLat)) pubsActives.push(`<span style="font-size:9px;background:rgba(249,115,22,0.15);padding:1px 4px;border-radius:3px">Pan.Lat ${b.panLat}</span>`);
+    if (isUsed(b.livLat)) pubsActives.push(`<span style="font-size:9px;background:rgba(249,115,22,0.15);padding:1px 4px;border-radius:3px">Liv.Lat ${b.livLat}</span>`);
+    if (isUsed(b.panArr)) pubsActives.push(`<span style="font-size:9px;background:rgba(249,115,22,0.15);padding:1px 4px;border-radius:3px">Pan.Arr ${b.panArr}</span>`);
+    if (isUsed(b.livArr)) pubsActives.push(`<span style="font-size:9px;background:rgba(249,115,22,0.15);padding:1px 4px;border-radius:3px">Liv.Arr ${b.livArr}</span>`);
+    if (isUsed(b.ecran))  pubsActives.push(`<span style="font-size:9px;background:rgba(249,115,22,0.15);padding:1px 4px;border-radius:3px">TFT ${b.ecran}</span>`);
+
+    // Candidats remplaçants : même type, tout libre (aucune pub active), a une affectation, places >=
+    const candidats = data.filter(c =>
+      c.type === b.type &&
+      c.toutLibre &&
+      c.aAffectation &&
+      c.places >= b.places &&
+      c.nom !== b.nom
+    ).sort((a, c2) => a.places - c2.places); // le plus proche en nb de places
+
+    const best = candidats.slice(0, 3); // jusqu'à 3 suggestions
+
+    const suggCol = best.length
+      ? best.map(c => `<div style="margin-bottom:2px"><b style="color:var(--green)">${c.nom}</b> <span style="color:var(--text3);font-size:10px">(${c.places} pl.)</span></div>`).join('')
+      : '<span style="color:var(--text3)">Aucun disponible</span>';
+
+    return `<tr style="background:rgba(239,68,68,0.04)">
+      <td><b style="color:var(--red)">${b.nom}</b></td>
+      <td class="mono">${b.places}</td>
+      <td style="line-height:1.8">${pubsActives.join(' ') || '—'}</td>
+      <td><span class="badge badge-red">Non</span></td>
+      <td>${suggCol}</td>
+    </tr>`;
+  }).join('');
+}
+
+function cellPub(val) {
+  if (!val || val === '') return '<span style="color:var(--text3)">—</span>';
+  if (val === 'Libre') return '<span style="color:var(--green)">Libre</span>';
+  if (val === 'Non équipé') return '<span style="color:var(--text3);font-size:10px">Non éq.</span>';
+  // Date de fin de contrat
+  return `<span style="color:var(--orange);font-size:10px">${val}</span>`;
+}
+
+function renderPubDispoTableau() {
+  let data = [...(state.pubDispo || [])];
+  if (pubDispoFiltre === 'avecpub')  data = data.filter(b => b.aPub);
+  else if (pubDispoFiltre === 'sanspub')  data = data.filter(b => b.toutLibre);
+  else if (pubDispoFiltre === 'sansaff') data = data.filter(b => !b.aAffectation);
+
+  const tbody = document.getElementById('pubdispo-tbody');
+  tbody.innerHTML = data.map(b => {
+    const rowBg = b.aPub && !b.aAffectation ? 'background:rgba(239,68,68,0.05)' : '';
+    return `<tr style="${rowBg}">
+      <td style="font-size:11px"><b>${b.nom}</b></td>
+      <td class="mono">${b.places}</td>
+      <td>${b.pubAutorisee ? '<span class="badge badge-green">Oui</span>' : '<span class="badge badge-gray">Non</span>'}</td>
+      <td>${b.aAffectation
+        ? `<span class="badge badge-green">✓</span>`
+        : `<span class="badge badge-red">Non</span>`}</td>
+      <td>${cellPub(b.panAv)}</td>
+      <td>${cellPub(b.panLat)}</td>
+      <td>${cellPub(b.livLat)}</td>
+      <td>${cellPub(b.panArr)}</td>
+      <td>${cellPub(b.livArr)}</td>
+      <td>${cellPub(b.ecran)}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="10" style="color:var(--text3);text-align:center;padding:20px">Aucune donnée — importe le tableau disponibilité pub</td></tr>';
+}
+
+
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
 });
