@@ -1870,14 +1870,14 @@
     <!-- ═══════════════════════ CFG — SYNCHRONISATION ═══ -->
     <div id="page-cfg-sync" class="page">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-        <div style="font-size:20px;font-weight:700;color:var(--cfg-green)">☁️ Synchronisation GitHub Gist</div>
+        <div style="font-size:20px;font-weight:700;color:var(--cfg-green)">☁️ Synchronisation JSONBin</div>
       </div>
 
-      <!-- Statut connexion -->
+      <!-- Statut -->
       <div class="stat-cards" style="margin-bottom:14px">
         <div class="stat-card" style="border-color:var(--cfg-green-border)">
           <div class="stat-label">Statut</div>
-          <div class="stat-value" id="sync-stat-status" style="font-size:16px;color:var(--text3)">Non configuré</div>
+          <div class="stat-value" id="sync-stat-status" style="font-size:13px;color:var(--cfg-green)">✅ Configuré</div>
         </div>
         <div class="stat-card" style="border-color:var(--cfg-green-border)">
           <div class="stat-label">Dernière synchro</div>
@@ -1885,49 +1885,18 @@
         </div>
         <div class="stat-card" style="border-color:var(--cfg-green-border)">
           <div class="stat-label">Taille données</div>
-          <div class="stat-value" id="sync-stat-size" style="font-size:16px;color:var(--text3)">—</div>
-        </div>
-      </div>
-
-      <!-- Configuration -->
-      <div class="card" style="border-color:var(--cfg-green-border);margin-bottom:14px">
-        <div class="card-header" style="border-bottom-color:var(--cfg-green-border)">
-          <div class="card-title" style="color:var(--cfg-green)">🔑 Paramètres de connexion</div>
-        </div>
-        <div class="card-body">
-          <p style="font-size:11px;color:var(--text3);margin-bottom:14px">
-            Ces informations sont stockées <b>localement dans ton navigateur uniquement</b> — elles ne sont jamais envoyées ailleurs que vers l'API GitHub.
-          </p>
-          <div class="form-group" style="margin-bottom:12px">
-            <label style="color:var(--text2)">Token GitHub <span style="color:var(--text3);font-size:10px">(commence par ghp_...)</span></label>
-            <div style="display:flex;gap:8px;margin-top:4px">
-              <input type="password" id="sync-token-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-                style="flex:1;background:var(--surface2);border:1px solid var(--cfg-green-border);border-radius:6px;color:var(--text);padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:12px">
-              <button class="btn btn-ghost btn-sm" onclick="toggleSyncTokenVisibility()">👁</button>
-            </div>
-          </div>
-          <div class="form-group" style="margin-bottom:16px">
-            <label style="color:var(--text2)">ID du Gist <span style="color:var(--text3);font-size:10px">(partie après gist.github.com/RNestaM/)</span></label>
-            <input type="text" id="sync-gist-id" placeholder="abc123def456..."
-              style="width:100%;margin-top:4px;background:var(--surface2);border:1px solid var(--cfg-green-border);border-radius:6px;color:var(--text);padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:12px">
-          </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn" style="background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green)" onclick="sauvegarderConfigSync()">✓ Enregistrer</button>
-            <button class="btn btn-ghost btn-sm" onclick="testerConnexionGist()">🔍 Tester la connexion</button>
-            <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="supprimerConfigSync()">✕ Supprimer les identifiants</button>
-          </div>
-          <div id="sync-test-result" style="margin-top:10px;font-size:11px;display:none;padding:8px 10px;border-radius:6px"></div>
+          <div class="stat-value" id="sync-stat-size" style="font-size:16px;color:var(--accent)">—</div>
         </div>
       </div>
 
       <!-- Actions manuelles -->
-      <div class="grid-2">
+      <div class="grid-2" style="margin-bottom:14px">
         <div class="card" style="border-color:var(--cfg-green-border)">
           <div class="card-header" style="border-bottom-color:var(--cfg-green-border)">
-            <div class="card-title" style="color:var(--cfg-green)">📤 Pousser vers le Gist</div>
+            <div class="card-title" style="color:var(--cfg-green)">📤 Pousser vers JSONBin</div>
           </div>
           <div class="card-body">
-            <p style="font-size:11px;color:var(--text3);margin-bottom:12px">Envoie l'état actuel de ton navigateur vers le Gist. Écrase les données distantes.</p>
+            <p style="font-size:11px;color:var(--text3);margin-bottom:12px">Envoie l'état actuel vers JSONBin. Écrase les données distantes.</p>
             <button class="btn" style="background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green);width:100%" onclick="syncPush(true)">
               ☁️ Envoyer maintenant
             </button>
@@ -1935,25 +1904,35 @@
         </div>
         <div class="card" style="border-color:var(--cfg-green-border)">
           <div class="card-header" style="border-bottom-color:var(--cfg-green-border)">
-            <div class="card-title" style="color:var(--cfg-green)">📥 Tirer depuis le Gist</div>
+            <div class="card-title" style="color:var(--cfg-green)">📥 Tirer depuis JSONBin</div>
           </div>
           <div class="card-body">
-            <p style="font-size:11px;color:var(--text3);margin-bottom:12px">Charge les données depuis le Gist. Écrase les données locales.</p>
+            <p style="font-size:11px;color:var(--text3);margin-bottom:12px">Charge les données depuis JSONBin. Écrase les données locales.</p>
             <button class="btn" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:var(--red);width:100%" onclick="syncPull(true)">
-              📥 Charger depuis le Gist
+              📥 Charger depuis JSONBin
             </button>
           </div>
         </div>
       </div>
 
-      <!-- Infos -->
-      <div class="card" style="margin-top:14px;border-color:var(--border)">
+      <!-- Test + infos -->
+      <div class="card" style="border-color:var(--cfg-green-border);margin-bottom:14px">
+        <div class="card-header" style="border-bottom-color:var(--cfg-green-border)">
+          <div class="card-title" style="color:var(--cfg-green)">🔍 Tester la connexion</div>
+        </div>
+        <div class="card-body">
+          <button class="btn" style="background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green)" onclick="testerConnexionGist()">🔍 Tester</button>
+          <div id="sync-test-result" style="margin-top:10px;font-size:11px;display:none;padding:8px 10px;border-radius:6px"></div>
+        </div>
+      </div>
+
+      <div class="card" style="border-color:var(--border)">
         <div class="card-header"><div class="card-title">ℹ️ Comment ça fonctionne</div></div>
         <div class="card-body" style="font-size:12px;color:var(--text2);line-height:1.8">
-          <b style="color:var(--cfg-green)">Sauvegarde automatique</b> — chaque modification est envoyée au Gist après 3 secondes d'inactivité.<br>
-          <b style="color:var(--cfg-green)">Chargement au démarrage</b> — le Gist est consulté à chaque ouverture de la page.<br>
-          <b style="color:var(--cfg-green)">LocalStorage = tampon</b> — les données sont toujours sauvegardées localement en temps réel, le Gist reçoit la version consolidée.<br>
-          <b style="color:var(--accent)">Badge topbar</b> — ☁️ Synchro / ⏳ En cours / ❌ Erreur visible en haut à droite.
+          <b style="color:var(--cfg-green)">Aucune configuration</b> — le bin JSONBin est intégré directement dans le code, disponible sur tous tes appareils sans rien faire.<br>
+          <b style="color:var(--cfg-green)">Sauvegarde automatique</b> — chaque modification est envoyée après 3 secondes d'inactivité.<br>
+          <b style="color:var(--cfg-green)">Chargement au démarrage</b> — les données sont récupérées depuis JSONBin à chaque ouverture.<br>
+          <b style="color:var(--accent)">Badge topbar</b> — ☁️ Synchro / ⏳ En cours / ❌ Erreur.
         </div>
       </div>
     </div>
@@ -4879,23 +4858,149 @@ function resetSection(section) {
 //  SYNCHRONISATION GITHUB GIST
 // ═══════════════════════════════════════════════════════
 
-const SYNC_TOKEN_KEY = 'tm_gist_token';
-const SYNC_GIST_KEY  = 'tm_gist_id';
-const SYNC_TOKEN_DEFAULT = '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';
-const SYNC_GIST_DEFAULT  = '4d249fa03c57cce492b56e217201a3b1';
+// ═══════════════════════════════════════════════════════
+//  SYNCHRONISATION JSONBIN
+// ═══════════════════════════════════════════════════════
+
+const JSONBIN_ID  = '69bbbec1c3097a1dd53be7fe';
+const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_ID}`;
 let syncDebounceTimer = null;
-let syncEnabled = false;
 
-function getSyncCreds() {
-  return {
-    token:  localStorage.getItem(SYNC_TOKEN_KEY)  || SYNC_TOKEN_DEFAULT,
-    gistId: localStorage.getItem(SYNC_GIST_KEY)   || SYNC_GIST_DEFAULT
+function setSyncStatus(status, msg) {
+  const badge    = document.getElementById('sync-status');
+  const navBadge = document.getElementById('sync-nav-badge');
+  if (!badge) return;
+  const configs = {
+    ok:      { text: '☁️ Synchro',  color: 'var(--cfg-green)', bg: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.3)'  },
+    pending: { text: '⏳ Synchro…', color: 'var(--yellow)',    bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)' },
+    error:   { text: '❌ Synchro',  color: 'var(--red)',        bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.3)'  },
+    off:     { text: '',            color: '',                  bg: '',                       border: ''                     }
   };
+  const c = configs[status] || configs.off;
+  if (status === 'off') {
+    badge.style.display = 'none';
+    if (navBadge) navBadge.style.display = 'none';
+    return;
+  }
+  badge.style.display = 'inline-block';
+  badge.textContent   = c.text;
+  badge.style.color   = c.color;
+  badge.style.background = c.bg;
+  badge.style.border  = `1px solid ${c.border}`;
+  badge.title = msg || c.text;
+  if (navBadge) {
+    navBadge.style.display  = 'inline-block';
+    navBadge.textContent    = status === 'ok' ? '●' : status === 'error' ? '!' : '…';
+    navBadge.style.color    = c.color;
+    navBadge.style.background = c.bg;
+  }
 }
 
-function syncIsConfigured() {
-  return true; // toujours configuré grâce aux valeurs par défaut
+// Sauvegarde locale immédiate + push JSONBin après 3s d'inactivité
+function saveStateWithSync() {
+  saveState();
+  setSyncStatus('pending', 'Sauvegarde en cours…');
+  clearTimeout(syncDebounceTimer);
+  syncDebounceTimer = setTimeout(() => syncPush(false), 3000);
 }
+
+async function syncPush(manual = false) {
+  setSyncStatus('pending', 'Envoi vers JSONBin…');
+  try {
+    const dataStr = JSON.stringify(state);
+    const sizeKb  = (new Blob([dataStr]).size / 1024).toFixed(1);
+    const resp = await fetch(JSONBIN_URL, {
+      method:  'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body:    dataStr
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const now = new Date().toLocaleTimeString('fr-FR');
+    setSyncStatus('ok', `Dernière synchro : ${now}`);
+    localStorage.setItem('tm_last_sync', now);
+    localStorage.setItem('tm_last_sync_size', sizeKb + ' Ko');
+    if (manual) toastMsg(`☁️ Données envoyées (${sizeKb} Ko)`, 'success');
+    renderSyncPage();
+  } catch(e) {
+    setSyncStatus('error', `Erreur : ${e.message}`);
+    if (manual) toastMsg(`❌ Erreur sync : ${e.message}`, 'error');
+  }
+}
+
+async function syncPull(manual = false) {
+  if (manual && !confirm('Charger les données depuis JSONBin ?\n\nCela écrasera toutes tes données locales.')) return;
+  setSyncStatus('pending', 'Chargement depuis JSONBin…');
+  try {
+    const resp = await fetch(JSONBIN_URL + '/latest', {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data    = await resp.json();
+    const loaded  = data.record;
+    if (!loaded || typeof loaded !== 'object') throw new Error('Données invalides');
+    // Ne pas écraser si le bin est vide (premier démarrage)
+    if (Object.keys(loaded).length > 2) {
+      Object.assign(state, loaded);
+      saveState();
+    }
+    const now = new Date().toLocaleTimeString('fr-FR');
+    setSyncStatus('ok', `Chargé le : ${now}`);
+    localStorage.setItem('tm_last_sync', now);
+    renderDashboard();
+    if (manual) { toastMsg('☁️ Données chargées depuis JSONBin ✓', 'success'); renderSyncPage(); }
+  } catch(e) {
+    setSyncStatus('error', `Erreur : ${e.message}`);
+    if (manual) toastMsg(`❌ Erreur chargement : ${e.message}`, 'error');
+  }
+}
+
+async function testerConnexionGist() {
+  const resultEl = document.getElementById('sync-test-result');
+  if (!resultEl) return;
+  resultEl.style.display = 'block';
+  resultEl.style.background = 'rgba(245,158,11,0.1)';
+  resultEl.style.border = '1px solid rgba(245,158,11,0.3)';
+  resultEl.style.color = 'var(--yellow)';
+  resultEl.textContent = '⏳ Test en cours…';
+  try {
+    const resp = await fetch(JSONBIN_URL + '/latest', { headers: { 'Content-Type': 'application/json' } });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    resultEl.style.background = 'rgba(34,197,94,0.1)';
+    resultEl.style.border = '1px solid rgba(34,197,94,0.3)';
+    resultEl.style.color = 'var(--cfg-green)';
+    resultEl.textContent = '✅ Connexion JSONBin réussie !';
+  } catch(e) {
+    resultEl.style.background = 'rgba(239,68,68,0.1)';
+    resultEl.style.border = '1px solid rgba(239,68,68,0.3)';
+    resultEl.style.color = 'var(--red)';
+    resultEl.textContent = `❌ ${e.message}`;
+  }
+}
+
+function sauvegarderConfigSync() { toastMsg('JSONBin est configuré automatiquement — aucune action requise', 'success'); }
+function supprimerConfigSync()   { toastMsg('La configuration JSONBin est intégrée dans le code', 'info'); }
+function toggleSyncTokenVisibility() {}
+
+function renderSyncPage() {
+  const lastSync = localStorage.getItem('tm_last_sync') || '—';
+  const dataSize = (new Blob([JSON.stringify(state)]).size / 1024).toFixed(1) + ' Ko';
+  const el = (id) => document.getElementById(id);
+  if (el('sync-stat-status')) { el('sync-stat-status').textContent = '✅ Configuré (JSONBin)'; el('sync-stat-status').style.color = 'var(--cfg-green)'; el('sync-stat-status').style.fontSize = '13px'; }
+  if (el('sync-stat-last'))   { el('sync-stat-last').textContent = lastSync; el('sync-stat-last').style.fontSize = '13px'; }
+  if (el('sync-stat-size'))   { el('sync-stat-size').textContent = dataSize; el('sync-stat-size').style.color = 'var(--accent)'; }
+  // Masquer les champs inutiles
+  const tokenGroup = el('sync-token-input')?.closest('.form-group');
+  const gistGroup  = el('sync-gist-id')?.closest('.form-group');
+  if (tokenGroup) tokenGroup.style.display = 'none';
+  if (gistGroup)  gistGroup.style.display  = 'none';
+}
+
+async function initSync() {
+  setSyncStatus('pending', 'Chargement initial…');
+  await syncPull(false);
+}
+
+
 
 function setSyncStatus(status, msg) {
   // status: 'ok' | 'pending' | 'error' | 'off'
