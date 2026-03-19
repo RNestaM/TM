@@ -773,7 +773,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v23-1</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v24</span>
       <span id="sync-status" title="Synchronisation Gist" style="font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 8px;border-radius:4px;display:none"></span>
       <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
@@ -2196,11 +2196,23 @@ function saveState() {
 function resetTotal() {
   if (!confirm('⚠️ Réinitialisation complète !\n\nToutes les données seront effacées définitivement :\n• Parc de bus\n• Affectations\n• Personnel\n• Comptabilité\n• Stats lignes\n• Maintenance\n• Tout le reste\n\nContinuer ?')) return;
   if (!confirm('Dernière confirmation — cette action est irréversible.')) return;
-  // Supprimer toutes les clés liées à TM
-  ['tm_state','tm_ext_present','tm_ext_request'].forEach(k => localStorage.removeItem(k));
-  ['bus','affects','stats','salaries','compta'].forEach(t => localStorage.removeItem('tm_ext_csv_' + t));
-  // Recharger la page pour repartir de zéro
-  location.reload();
+  // Remettre l'état à zéro sans recharger la page
+  state.bus = []; state.affectations = []; state.maintenance = []; state.ct = [];
+  state.personnel = []; state.lignes = []; state.statsLignes = []; state.achats = [];
+  state.abribus = []; state.contratsPub = []; state.compta = []; state.comptaMois = {};
+  state.gasoil = []; state.journal = []; state.carburant = []; state.pubDispo = [];
+  state.conso = { niveau: 5000, moy: 0 };
+  state.config = { argentDepart: 0 };
+  state.prixKm = {}; state.categories = {}; state.cfgLignes = []; state.lastImport = {};
+  saveState();
+  // Supprimer les clés extension
+  ['tm_ext_present','tm_ext_request'].forEach(k => localStorage.removeItem(k));
+  ['bus','affects','stats','salaries','compta','lastmonth'].forEach(t => localStorage.removeItem('tm_ext_csv_' + t));
+  // Rafraîchir l'interface sans recharger
+  renderDashboard();
+  renderResetStats();
+  updateBusSelects();
+  toastMsg('✅ Réinitialisation complète effectuée', 'success');
 }
 
 
@@ -5036,15 +5048,6 @@ function setSyncStatus(status, msg) {
     navBadge.style.color = c.color;
     navBadge.style.background = c.bg;
   }
-}
-
-// Sauvegarde avec anti-rebond 3s
-function saveStateWithSync() {
-  saveStateWithSync(); // LocalStorage immédiat
-  if (!syncIsConfigured()) return;
-  setSyncStatus('pending', 'Sauvegarde en cours…');
-  clearTimeout(syncDebounceTimer);
-  syncDebounceTimer = setTimeout(() => syncPush(false), 3000);
 }
 
 async function initSync() {
