@@ -718,6 +718,10 @@
       <div class="nav-item cfg-nav" data-page="historique" onclick="navConfig(this)">
         <span class="icon">📜</span> Import Historique
       </div>
+      <div class="nav-item cfg-nav" data-page="cfg-sync" onclick="navConfig(this)">
+        <span class="icon">☁️</span> Synchronisation
+        <span id="sync-nav-badge" style="margin-left:auto;font-size:9px;padding:2px 6px;border-radius:8px;display:none"></span>
+      </div>
     </div>
 
     <div class="sidebar-section">
@@ -770,6 +774,7 @@
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
       <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v22</span>
+      <span id="sync-status" title="Synchronisation Gist" style="font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 8px;border-radius:4px;display:none"></span>
       <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
     </div>
@@ -1256,7 +1261,7 @@
       <div class="card" style="margin-top:14px">
         <div class="card-header">
           <div class="card-title">Stats par ligne (depuis CSV)</div>
-          <button class="btn btn-ghost btn-sm" onclick="if(confirm('Effacer tout l\'historique stats ?')){state.statsLignes=[];saveState();renderLignes();}">🗑 Réinitialiser</button>
+          <button class="btn btn-ghost btn-sm" onclick="if(confirm('Effacer tout l\'historique stats ?')){state.statsLignes=[];saveStateWithSync();renderLignes();}">🗑 Réinitialiser</button>
         </div>
         <div class="card-body" style="padding:0">
           <table class="data-table">
@@ -1440,7 +1445,7 @@
             <textarea id="pub-texte-brut" rows="10" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:8px;resize:vertical;outline:none" placeholder="1618551  Super R  53  Abribus  05/03/2026  19/03/2026  222 600 € (100.0%)  Voir&#10;1623401  BelOs  4  Panneau de pub Avant  10/03/2026  20/03/2026  3 360 € (87.5%)  Voir&#10;..."></textarea>
             <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
               <button class="btn btn-primary" onclick="importerContratsPub()">✓ Importer</button>
-              <button class="btn btn-ghost btn-sm" onclick="if(confirm('Remplacer tous les contrats ?')){state.contratsPub=[];saveState();renderPub();}">🗑 Vider</button>
+              <button class="btn btn-ghost btn-sm" onclick="if(confirm('Remplacer tous les contrats ?')){state.contratsPub=[];saveStateWithSync();renderPub();}">🗑 Vider</button>
               <span id="pub-import-status" style="font-size:11px;color:var(--text3)"></span>
             </div>
           </div>
@@ -1512,7 +1517,7 @@
               placeholder="Scania Omnicity G II n°ART-08-186&#9;&#9;Non&#9;Non équipé&#9;Libre&#9;Libre&#9;Libre&#9;Libre&#9;Libre&#10;..."></textarea>
             <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
               <button class="btn btn-primary" onclick="importerDispoPub()">✓ Analyser</button>
-              <button class="btn btn-ghost btn-sm" onclick="if(confirm('Vider ?')){state.pubDispo=[];saveState();renderPubDispo();}">🗑 Vider</button>
+              <button class="btn btn-ghost btn-sm" onclick="if(confirm('Vider ?')){state.pubDispo=[];saveStateWithSync();renderPubDispo();}">🗑 Vider</button>
               <span id="pubdispo-status" style="font-size:11px;color:var(--text3)"></span>
             </div>
           </div>
@@ -1709,7 +1714,7 @@
       <div class="card" style="margin-top:14px">
         <div class="card-header">
           <div class="card-title">Historique des prix</div>
-          <button class="btn btn-ghost btn-sm" onclick="if(confirm('Vider tout l\'historique ?')){state.carburant=[];saveState();renderGasoil();}">🗑 Vider</button>
+          <button class="btn btn-ghost btn-sm" onclick="if(confirm('Vider tout l\'historique ?')){state.carburant=[];saveStateWithSync();renderGasoil();}">🗑 Vider</button>
         </div>
         <div class="card-body" style="padding:0">
           <table class="data-table">
@@ -1858,6 +1863,97 @@
           <div style="margin-top:20px;padding:20px;border:2px dashed var(--cfg-green-border);border-radius:8px;text-align:center;color:var(--cfg-green);opacity:0.6">
             🚧 Fonctionnalité en cours de développement
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════ CFG — SYNCHRONISATION ═══ -->
+    <div id="page-cfg-sync" class="page">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <div style="font-size:20px;font-weight:700;color:var(--cfg-green)">☁️ Synchronisation GitHub Gist</div>
+      </div>
+
+      <!-- Statut connexion -->
+      <div class="stat-cards" style="margin-bottom:14px">
+        <div class="stat-card" style="border-color:var(--cfg-green-border)">
+          <div class="stat-label">Statut</div>
+          <div class="stat-value" id="sync-stat-status" style="font-size:16px;color:var(--text3)">Non configuré</div>
+        </div>
+        <div class="stat-card" style="border-color:var(--cfg-green-border)">
+          <div class="stat-label">Dernière synchro</div>
+          <div class="stat-value" id="sync-stat-last" style="font-size:14px;color:var(--text3)">—</div>
+        </div>
+        <div class="stat-card" style="border-color:var(--cfg-green-border)">
+          <div class="stat-label">Taille données</div>
+          <div class="stat-value" id="sync-stat-size" style="font-size:16px;color:var(--text3)">—</div>
+        </div>
+      </div>
+
+      <!-- Configuration -->
+      <div class="card" style="border-color:var(--cfg-green-border);margin-bottom:14px">
+        <div class="card-header" style="border-bottom-color:var(--cfg-green-border)">
+          <div class="card-title" style="color:var(--cfg-green)">🔑 Paramètres de connexion</div>
+        </div>
+        <div class="card-body">
+          <p style="font-size:11px;color:var(--text3);margin-bottom:14px">
+            Ces informations sont stockées <b>localement dans ton navigateur uniquement</b> — elles ne sont jamais envoyées ailleurs que vers l'API GitHub.
+          </p>
+          <div class="form-group" style="margin-bottom:12px">
+            <label style="color:var(--text2)">Token GitHub <span style="color:var(--text3);font-size:10px">(commence par ghp_...)</span></label>
+            <div style="display:flex;gap:8px;margin-top:4px">
+              <input type="password" id="sync-token-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                style="flex:1;background:var(--surface2);border:1px solid var(--cfg-green-border);border-radius:6px;color:var(--text);padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:12px">
+              <button class="btn btn-ghost btn-sm" onclick="toggleSyncTokenVisibility()">👁</button>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:16px">
+            <label style="color:var(--text2)">ID du Gist <span style="color:var(--text3);font-size:10px">(partie après gist.github.com/RNestaM/)</span></label>
+            <input type="text" id="sync-gist-id" placeholder="abc123def456..."
+              style="width:100%;margin-top:4px;background:var(--surface2);border:1px solid var(--cfg-green-border);border-radius:6px;color:var(--text);padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:12px">
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn" style="background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green)" onclick="sauvegarderConfigSync()">✓ Enregistrer</button>
+            <button class="btn btn-ghost btn-sm" onclick="testerConnexionGist()">🔍 Tester la connexion</button>
+            <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="supprimerConfigSync()">✕ Supprimer les identifiants</button>
+          </div>
+          <div id="sync-test-result" style="margin-top:10px;font-size:11px;display:none;padding:8px 10px;border-radius:6px"></div>
+        </div>
+      </div>
+
+      <!-- Actions manuelles -->
+      <div class="grid-2">
+        <div class="card" style="border-color:var(--cfg-green-border)">
+          <div class="card-header" style="border-bottom-color:var(--cfg-green-border)">
+            <div class="card-title" style="color:var(--cfg-green)">📤 Pousser vers le Gist</div>
+          </div>
+          <div class="card-body">
+            <p style="font-size:11px;color:var(--text3);margin-bottom:12px">Envoie l'état actuel de ton navigateur vers le Gist. Écrase les données distantes.</p>
+            <button class="btn" style="background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green);width:100%" onclick="syncPush(true)">
+              ☁️ Envoyer maintenant
+            </button>
+          </div>
+        </div>
+        <div class="card" style="border-color:var(--cfg-green-border)">
+          <div class="card-header" style="border-bottom-color:var(--cfg-green-border)">
+            <div class="card-title" style="color:var(--cfg-green)">📥 Tirer depuis le Gist</div>
+          </div>
+          <div class="card-body">
+            <p style="font-size:11px;color:var(--text3);margin-bottom:12px">Charge les données depuis le Gist. Écrase les données locales.</p>
+            <button class="btn" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:var(--red);width:100%" onclick="syncPull(true)">
+              📥 Charger depuis le Gist
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Infos -->
+      <div class="card" style="margin-top:14px;border-color:var(--border)">
+        <div class="card-header"><div class="card-title">ℹ️ Comment ça fonctionne</div></div>
+        <div class="card-body" style="font-size:12px;color:var(--text2);line-height:1.8">
+          <b style="color:var(--cfg-green)">Sauvegarde automatique</b> — chaque modification est envoyée au Gist après 3 secondes d'inactivité.<br>
+          <b style="color:var(--cfg-green)">Chargement au démarrage</b> — le Gist est consulté à chaque ouverture de la page.<br>
+          <b style="color:var(--cfg-green)">LocalStorage = tampon</b> — les données sont toujours sauvegardées localement en temps réel, le Gist reçoit la version consolidée.<br>
+          <b style="color:var(--accent)">Badge topbar</b> — ☁️ Synchro / ⏳ En cours / ❌ Erreur visible en haut à droite.
         </div>
       </div>
     </div>
@@ -2182,7 +2278,7 @@ function toastMsg(msg, type='info') {
 function journalLog(text, type='info') {
   state.journal.unshift({ date: today(), text, type });
   if (state.journal.length > 50) state.journal.pop();
-  saveState();
+  saveStateWithSync();
 }
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
@@ -2574,7 +2670,7 @@ function changerStatutBus(id, newStatut, sel) {
   b.statut = newStatut;
   sel.className = 'status-select ' + (STATUS_CLASS[newStatut]||'status-indispo');
   journalLog(`${b.nom} → ${newStatut}`, 'info');
-  saveState(); renderDashboard();
+  saveStateWithSync(); renderDashboard();
   toastMsg(`${b.nom} : ${newStatut}`, 'info');
 }
 
@@ -2603,7 +2699,7 @@ function ajouterBus() {
   };
   state.bus.push(b);
   journalLog(`Bus ${nom} ajouté au parc`, 'ok');
-  saveState();
+  saveStateWithSync();
   closeModal('modal-add-bus');
   toastMsg(`${nom} ajouté au parc ✓`, 'success');
   updateBusSelects();
@@ -2652,7 +2748,7 @@ function saveEditBus() {
   b.revision = document.getElementById('eb-rev').value.trim() || null;
   b.motorisation = document.getElementById('eb-motor').value;
   journalLog(`Bus ${b.nom} mis à jour`, 'info');
-  saveState(); updateBusSelects();
+  saveStateWithSync(); updateBusSelects();
   closeModal('modal-edit-bus');
   renderParc();
   toastMsg(`${b.nom} mis à jour ✓`, 'success');
@@ -2664,7 +2760,7 @@ function retirerBus(id) {
   if (!confirm(`Retirer définitivement ${b.nom} du parc ?`)) return;
   state.bus = state.bus.filter(x => x.id !== id);
   journalLog(`Bus ${b.nom} retiré du parc`, 'warn');
-  saveState(); updateBusSelects(); renderParc(); renderDashboard();
+  saveStateWithSync(); updateBusSelects(); renderParc(); renderDashboard();
   toastMsg(`${b.nom} retiré`, 'info');
 }
 
@@ -2675,7 +2771,7 @@ function quickRevision(id) {
   b.revision = 'Révision standard';
   state.maintenance.push({ id: Date.now(), bus: b.nom, type: 'Révision standard', depuis: today(), duree: 3, cout: 0, statut: 'En cours' });
   journalLog(`${b.nom} envoyé en révision rapide`, 'warn');
-  saveState(); renderParc();
+  saveStateWithSync(); renderParc();
   toastMsg(`${b.nom} en révision`, 'info');
 }
 
@@ -2861,7 +2957,7 @@ if (state.compta && state.compta.length > 0 && (!state.comptaMois || Object.keys
     state.comptaMois[mois].push(op);
   });
   state.compta = []; // vider l'ancien
-  saveState();
+  saveStateWithSync();
 }
 if (!state.comptaMois) state.comptaMois = {};
 
@@ -2869,7 +2965,7 @@ if (!state.comptaMois) state.comptaMois = {};
 if (!state.prixKm || Object.keys(state.prixKm).length === 0) {
   state.prixKm = {};
   Object.entries(PRIX_KM_INIT).forEach(([id, data]) => { state.prixKm[id] = data; });
-  saveState();
+  saveStateWithSync();
 }
 
 function parserBus(rows) {
@@ -3144,7 +3240,7 @@ function csvImporter() {
     });
     state.lastImport.bus = nowStr;
     journalLog(`MAJ CSV bus : ${maj} MàJ · ${ajouts} nouveaux`, 'ok');
-    saveState(); renderParc(); renderDashboard(); updateBusSelects();
+    saveStateWithSync(); renderParc(); renderDashboard(); updateBusSelects();
     toastMsg(`✅ ${maj} mis à jour · ${ajouts} ajoutés`, 'success');
 
   } else if (currentCsvType === 'affects') {
@@ -3153,7 +3249,7 @@ function csvImporter() {
     state.affectations = aff;
     state.lastImport.affects = nowStr;
     journalLog(`MAJ CSV affectations : ${aff.length} lignes`, 'ok');
-    saveState(); if (document.getElementById('page-affectations').classList.contains('active')) renderAffectations();
+    saveStateWithSync(); if (document.getElementById('page-affectations').classList.contains('active')) renderAffectations();
     toastMsg(`✅ ${aff.length} affectations importées`, 'success');
 
   } else if (currentCsvType === 'stats') {
@@ -3165,7 +3261,7 @@ function csvImporter() {
     state.statsLignes = [...state.statsLignes, ...nouvelles];
     state.lastImport.stats = nowStr;
     journalLog(`MAJ CSV stats : ${nouvelles.length} nouvelles entrées`, 'ok');
-    saveState(); if (document.getElementById('page-lignes').classList.contains('active')) renderLignes();
+    saveStateWithSync(); if (document.getElementById('page-lignes').classList.contains('active')) renderLignes();
     toastMsg(`✅ ${nouvelles.length} nouvelles entrées stats`, 'success');
 
   } else if (currentCsvType === 'salaries') {
@@ -3174,7 +3270,7 @@ function csvImporter() {
     state.personnel = pers;
     state.lastImport.salaries = nowStr;
     journalLog(`MAJ CSV personnel : ${pers.length} personnes`, 'ok');
-    saveState(); renderDashboard();
+    saveStateWithSync(); renderDashboard();
     if (document.getElementById('page-personnel').classList.contains('active')) renderPersonnel();
     toastMsg(`✅ ${pers.length} personnels mis à jour`, 'success');
 
@@ -3193,7 +3289,7 @@ function csvImporter() {
     }
     state.lastImport[currentCsvType] = nowStr;
     journalLog(`MAJ CSV compta ${mois} : ${nb} opérations`, 'ok');
-    saveState(); renderDashboard();
+    saveStateWithSync(); renderDashboard();
     if (document.getElementById('page-compta').classList.contains('active')) renderCompta();
     toastMsg(`✅ ${nb} opérations importées (${mois})`, 'success');
   }
@@ -3258,12 +3354,12 @@ function ajouterAffectation() {
   if (!bus || !ligne || !conducteur) { toastMsg('Remplissez tous les champs', 'error'); return; }
   state.affectations.push({ bus, ligne, conducteur, service: document.getElementById('aff-service').value, note: document.getElementById('aff-note').value });
   journalLog(`${bus} affecté sur ${ligne}`, 'info');
-  saveState(); renderAffectations();
+  saveStateWithSync(); renderAffectations();
   toastMsg('Affectation enregistrée ✓', 'success');
 }
-function supprimerAffectation(i) { state.affectations.splice(i, 1); saveState(); renderAffectations(); }
-function supprimerAffectationBus(bus) { state.affectations = state.affectations.filter(a=>a.bus!==bus); saveState(); renderAffectations(); }
-function clearAffectations() { if (confirm('Réinitialiser toutes les affectations ?')) { state.affectations = []; saveState(); renderAffectations(); } }
+function supprimerAffectation(i) { state.affectations.splice(i, 1); saveStateWithSync(); renderAffectations(); }
+function supprimerAffectationBus(bus) { state.affectations = state.affectations.filter(a=>a.bus!==bus); saveStateWithSync(); renderAffectations(); }
+function clearAffectations() { if (confirm('Réinitialiser toutes les affectations ?')) { state.affectations = []; saveStateWithSync(); renderAffectations(); } }
 
 // ═══════════════════════════════════════════════════════
 //  MAINTENANCE
@@ -3303,7 +3399,7 @@ function envoyerRevision() {
   if (b) { b.statut = 'En révision'; b.revision = type; }
   state.maintenance.push({ id: Date.now(), bus, type, depuis: today(), duree: parseInt(document.getElementById('rev-duree').value)||3, cout: parseFloat(document.getElementById('rev-cout').value)||0, statut: 'En cours' });
   journalLog(`${bus} envoyé en ${type}`, 'warn');
-  saveState(); renderMaintenance();
+  saveStateWithSync(); renderMaintenance();
   toastMsg(`${bus} envoyé en ${type} ✓`, 'info');
 }
 
@@ -3316,7 +3412,7 @@ function planifierCT() {
   const res = document.getElementById('ct-resultat').value;
   state.ct.push({ id: Date.now(), bus, date, km: parseInt(document.getElementById('ct-km').value)||0, resultat: res });
   journalLog(`CT planifié pour ${bus} le ${date}`, 'info');
-  saveState(); renderMaintenance();
+  saveStateWithSync(); renderMaintenance();
   toastMsg(`CT enregistré pour ${bus} ✓`, 'success');
 }
 
@@ -3326,10 +3422,10 @@ function terminerMaintenance(i) {
   const b = state.bus.find(x => x.nom === m.bus);
   if (b) { b.statut = 'En service'; b.revision = null; }
   journalLog(`${m.bus} — ${m.type} terminée`, 'ok');
-  saveState(); renderMaintenance();
+  saveStateWithSync(); renderMaintenance();
   toastMsg(`${m.bus} de retour en service ✓`, 'success');
 }
-function supprimerMaintenance(i) { state.maintenance.splice(i, 1); saveState(); renderMaintenance(); }
+function supprimerMaintenance(i) { state.maintenance.splice(i, 1); saveStateWithSync(); renderMaintenance(); }
 
 // ═══════════════════════════════════════════════════════
 //  ABRIBUS
@@ -3410,10 +3506,10 @@ function importerAbribus() {
     <div style="font-size:11px;color:var(--text3);margin-top:8px">${resultats.filter(r=>parseInt(r.pct1)<40||parseInt(r.pct2)<40).length} abribus à améliorer</div>
   `;
   journalLog(`${resultats.length} abribus importés`, 'ok');
-  saveState(); renderAbribus();
+  saveStateWithSync(); renderAbribus();
   toastMsg(`${resultats.length} abribus importés ✓`, 'success');
 }
-function clearAbribus() { state.abribus = []; saveState(); renderAbribus(); }
+function clearAbribus() { state.abribus = []; saveStateWithSync(); renderAbribus(); }
 
 // ═══════════════════════════════════════════════════════
 //  PERSONNEL / FCO
@@ -3464,7 +3560,7 @@ function ajouterPersonnel() {
     statut: document.getElementById('pers-statut').value
   });
   journalLog(`Conducteur ${nom} ajouté`, 'ok');
-  saveState(); renderPersonnel();
+  saveStateWithSync(); renderPersonnel();
   document.getElementById('pers-nom').value = '';
   toastMsg(`${nom} ajouté ✓`, 'success');
 }
@@ -3473,12 +3569,12 @@ function marquerFCO(id) {
   if (!p) return;
   p.fco = today(); p.statut = 'Actif';
   journalLog(`FCO effectuée pour ${p.nom}`, 'ok');
-  saveState(); renderPersonnel(); renderDashboard();
+  saveStateWithSync(); renderPersonnel(); renderDashboard();
   toastMsg(`FCO de ${p.nom} mise à jour ✓`, 'success');
 }
 function supprimerPersonnel(id) {
   state.personnel = state.personnel.filter(x => x.id !== id);
-  saveState(); renderPersonnel();
+  saveStateWithSync(); renderPersonnel();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -3564,10 +3660,10 @@ function ajouterLigne() {
   if (!num) { toastMsg('Numéro requis', 'error'); return; }
   state.lignes.push({ id: Date.now(), num, nom: document.getElementById('ligne-nom').value, freq: parseInt(document.getElementById('ligne-freq').value)||0, recette: parseInt(document.getElementById('ligne-recette').value)||0, nbBus: parseInt(document.getElementById('ligne-bus').value)||1, typeBus: document.getElementById('ligne-type-bus').value });
   journalLog(`Ligne ${num} ajoutée`, 'ok');
-  saveState(); renderLignes();
+  saveStateWithSync(); renderLignes();
   toastMsg(`Ligne ${num} ajoutée ✓`, 'success');
 }
-function supprimerLigne(i) { state.lignes.splice(i, 1); saveState(); renderLignes(); }
+function supprimerLigne(i) { state.lignes.splice(i, 1); saveStateWithSync(); renderLignes(); }
 
 // ═══════════════════════════════════════════════════════
 //  COMPTA
@@ -3740,7 +3836,7 @@ function importerHistorique() {
     totalNew += nb;
     totalDup += ops.length - nb;
   });
-  saveState();
+  saveStateWithSync();
   const msg = `✅ ${totalNew} opérations importées · ${totalDup} doublons ignorés`;
   document.getElementById('histo-import-msg').textContent = msg;
   document.getElementById('histo-import-btn').style.display = 'none';
@@ -3866,7 +3962,7 @@ function renderCompta() {
         <td class="mono" style="color:var(--red)">${fmt(dep)}</td>
         <td class="mono" style="color:${sol>=0?'var(--green)':'var(--red)'};font-weight:700">${sol>=0?'+':''}${fmt(sol)}</td>
         <td class="mono" style="color:var(--text3)">${ops.length}</td>
-        <td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();if(confirm('Supprimer tout le mois ${m} ?')){delete state.comptaMois['${m}'];saveState();renderCompta();}">🗑</button></td>
+        <td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();if(confirm('Supprimer tout le mois ${m} ?')){delete state.comptaMois['${m}'];saveStateWithSync();renderCompta();}">🗑</button></td>
       </tr>`;
     }).join('') || '<tr><td colspan="6" style="color:var(--text3);text-align:center;padding:16px">Aucune donnée pour cette année</td></tr>';
 
@@ -4007,7 +4103,7 @@ function ajouterOperation() {
   if (!state.comptaMois[mois]) state.comptaMois[mois] = [];
   state.comptaMois[mois].push(op);
   journalLog(`${type === 'recette' ? 'Recette' : 'Dépense'} : ${fmt(montant)} (${cat})`, 'info');
-  saveState(); renderCompta();
+  saveStateWithSync(); renderCompta();
   toastMsg('Opération enregistrée ✓', 'success');
 }
 
@@ -4057,7 +4153,7 @@ function importerContratsPub() {
   }
   state.contratsPub = contrats;
   journalLog(contrats.length + ' contrats pub importés', 'ok');
-  saveState(); renderPub();
+  saveStateWithSync(); renderPub();
   document.getElementById('pub-texte-brut').value = '';
   document.getElementById('pub-import-status').textContent = '✓ ' + contrats.length + ' contrats importés';
   toastMsg(contrats.length + ' contrats pub importés ✓', 'success');
@@ -4145,10 +4241,10 @@ function renderPubTableau() {
   }).join('') || '<tr><td colspan="10" style="color:var(--text3);text-align:center;padding:20px">Aucun contrat — colle les données depuis le jeu</td></tr>';
 }
 
-function supprimerContratPub(id) { state.contratsPub = state.contratsPub.filter(c => c.id !== id); saveState(); renderPub(); }
-function supprimerTousContracts() { if (confirm('Supprimer tous les contrats ?')) { state.contratsPub = []; saveState(); renderPub(); } }
+function supprimerContratPub(id) { state.contratsPub = state.contratsPub.filter(c => c.id !== id); saveStateWithSync(); renderPub(); }
+function supprimerTousContracts() { if (confirm('Supprimer tous les contrats ?')) { state.contratsPub = []; saveStateWithSync(); renderPub(); } }
 function ajouterContratPub() {}
-function supprimerContrat(i) { state.contratsPub.splice(i,1); saveState(); renderPub(); }
+function supprimerContrat(i) { state.contratsPub.splice(i,1); saveStateWithSync(); renderPub(); }
 
 
 // ═══════════════════════════════════════════════════════
@@ -4180,7 +4276,7 @@ function ajouterAchatManuel() {
   }
 
   journalLog(`Achat ID ${idJeu} — ${fmt(prix)} — ${fmtNum(km)} km départ`, 'info');
-  saveState(); renderAchats();
+  saveStateWithSync(); renderAchats();
 
   // Reset
   ['achat-id','achat-prix','achat-km'].forEach(id => document.getElementById(id).value = '');
@@ -4215,7 +4311,7 @@ function renderAchats() {
 
 function supprimerAchat(id) {
   state.achats = state.achats.filter(a => a.id !== id);
-  saveState(); renderAchats();
+  saveStateWithSync(); renderAchats();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -4291,7 +4387,7 @@ function saisirPrixCarburant() {
   state.carburant.sort((a,b) => a.date.localeCompare(b.date));
   document.getElementById('gas-texte-brut').value = '';
   journalLog(`Prix carburant ${date} — Diesel: ${diesel||'—'}€ GNV: ${gnv||'—'}€`, 'ok');
-  saveState();
+  saveStateWithSync();
   renderGasoil();
 }
 
@@ -4318,13 +4414,13 @@ function saisirManuelCarburant() {
   document.getElementById('gas-manual-diesel').value = '';
   document.getElementById('gas-manual-gnv').value    = '';
   journalLog(`Prix manuel ${date} — Diesel: ${diesel||'—'}€ GNV: ${gnv||'—'}€`, 'ok');
-  saveState();
+  saveStateWithSync();
   renderGasoil();
 }
 
 function supprimerPrixCarburant(id) {
   state.carburant = state.carburant.filter(e => e.id !== id);
-  saveState(); renderGasoil();
+  saveStateWithSync(); renderGasoil();
 }
 
 function renderGasoil() {
@@ -4557,7 +4653,7 @@ function importerCSVDirect(type, contenu) {
     });
     state.lastImport.bus = nowStr;
     journalLog(`MAJ bus.csv : ${maj} MàJ · ${ajouts} nouveaux`, 'ok');
-    saveState(); renderParc(); renderDashboard(); updateBusSelects();
+    saveStateWithSync(); renderParc(); renderDashboard(); updateBusSelects();
     toastMsg(`🚍 ${maj} bus mis à jour · ${ajouts} ajoutés`, 'success');
 
   } else if (type === 'affects') {
@@ -4566,7 +4662,7 @@ function importerCSVDirect(type, contenu) {
     state.affectations = aff;
     state.lastImport.affects = nowStr;
     journalLog(`MAJ affects.csv : ${aff.length} lignes`, 'ok');
-    saveState(); if (document.getElementById('page-affectations').classList.contains('active')) renderAffectations();
+    saveStateWithSync(); if (document.getElementById('page-affectations').classList.contains('active')) renderAffectations();
     toastMsg(`📋 ${aff.length} affectations importées`, 'success');
 
   } else if (type === 'stats') {
@@ -4578,7 +4674,7 @@ function importerCSVDirect(type, contenu) {
     state.statsLignes = [...state.statsLignes, ...nouvelles];
     state.lastImport.stats = nowStr;
     journalLog(`MAJ statslignes.csv : ${nouvelles.length} nouvelles entrées`, 'ok');
-    saveState(); if (document.getElementById('page-lignes').classList.contains('active')) renderLignes();
+    saveStateWithSync(); if (document.getElementById('page-lignes').classList.contains('active')) renderLignes();
     toastMsg(`📊 ${nouvelles.length} nouvelles entrées stats`, 'success');
 
   } else if (type === 'salaries') {
@@ -4587,7 +4683,7 @@ function importerCSVDirect(type, contenu) {
     state.personnel = pers;
     state.lastImport.salaries = nowStr;
     journalLog(`MAJ salaries.csv : ${pers.length} personnes`, 'ok');
-    saveState(); renderDashboard();
+    saveStateWithSync(); renderDashboard();
     if (document.getElementById('page-personnel').classList.contains('active')) renderPersonnel();
     toastMsg(`👤 ${pers.length} personnels mis à jour`, 'success');
 
@@ -4616,7 +4712,7 @@ function importerCSVDirect(type, contenu) {
       toastMsg(`💰 FDM ${mois} : ${nbNouvelles} opérations ajoutées`, 'success');
     }
 
-    saveState(); renderDashboard();
+    saveStateWithSync(); renderDashboard();
     if (document.getElementById('page-compta').classList.contains('active')) renderCompta();
   }
 }
@@ -4719,7 +4815,7 @@ function appliquerEcart() {
   if (!state.config) state.config = {};
   state.config.ecartFinancier = (state.config.ecartFinancier || 0) + val;
   if (input) input.value = '';
-  saveState();
+  saveStateWithSync();
   const el = document.getElementById('cfg-ecart-actuel');
   if (el) {
     const e = state.config.ecartFinancier;
@@ -4736,7 +4832,7 @@ function appliquerEcart() {
 function resetEcart() {
   if (!state.config) state.config = {};
   state.config.ecartFinancier = 0;
-  saveState();
+  saveStateWithSync();
   const el = document.getElementById('cfg-ecart-actuel');
   if (el) { el.textContent = '0 €'; el.style.color = 'var(--accent)'; }
   renderDashboard();
@@ -4750,7 +4846,7 @@ function sauvegarderConfig() {
   const val = parseFloat(document.getElementById('cfg-argent-depart').value) || 0;
   if (!state.config) state.config = {};
   state.config.argentDepart = val;
-  saveState();
+  saveStateWithSync();
   renderDashboard();
   renderConfig();
   toastMsg(`Argent de départ : ${fmt(val)} enregistré ✓`, 'success');
@@ -4770,13 +4866,231 @@ function resetSection(section) {
   if (section === 'statsLignes') state.statsLignes = [];
   else if (section === 'compta') { state.compta = []; state.comptaMois = {}; }
   else state[section] = [];
-  saveState();
+  saveStateWithSync();
   renderDashboard();
   renderConfig();
   renderResetStats();
   const renders = { bus: renderParc, personnel: renderPersonnel, affectations: renderAffectations };
   if (renders[section]) renders[section]();
   toastMsg(`${labels[section]||section} vidé ✓`, 'info');
+}
+
+// ═══════════════════════════════════════════════════════
+//  SYNCHRONISATION GITHUB GIST
+// ═══════════════════════════════════════════════════════
+
+const SYNC_TOKEN_KEY = 'tm_gist_token';
+const SYNC_GIST_KEY  = 'tm_gist_id';
+const SYNC_TOKEN_DEFAULT = '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';
+const SYNC_GIST_DEFAULT  = '4d249fa03c57cce492b56e217201a3b1';
+let syncDebounceTimer = null;
+let syncEnabled = false;
+
+function getSyncCreds() {
+  return {
+    token:  localStorage.getItem(SYNC_TOKEN_KEY)  || SYNC_TOKEN_DEFAULT,
+    gistId: localStorage.getItem(SYNC_GIST_KEY)   || SYNC_GIST_DEFAULT
+  };
+}
+
+function syncIsConfigured() {
+  return true; // toujours configuré grâce aux valeurs par défaut
+}
+
+function setSyncStatus(status, msg) {
+  // status: 'ok' | 'pending' | 'error' | 'off'
+  const badge = document.getElementById('sync-status');
+  const navBadge = document.getElementById('sync-nav-badge');
+  if (!badge) return;
+  const configs = {
+    ok:      { text: '☁️ Synchro', color: 'var(--cfg-green)', bg: 'rgba(34,197,94,0.12)', border: 'rgba(34,197,94,0.3)' },
+    pending: { text: '⏳ Synchro…', color: 'var(--yellow)', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)' },
+    error:   { text: '❌ Synchro', color: 'var(--red)', bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.3)' },
+    off:     { text: '', color: '', bg: '', border: '' }
+  };
+  const c = configs[status] || configs.off;
+  if (status === 'off') {
+    badge.style.display = 'none';
+    if (navBadge) navBadge.style.display = 'none';
+    return;
+  }
+  badge.style.display = 'inline-block';
+  badge.textContent = c.text;
+  badge.style.color = c.color;
+  badge.style.background = c.bg;
+  badge.style.border = `1px solid ${c.border}`;
+  badge.title = msg || c.text;
+  if (navBadge) {
+    navBadge.style.display = 'inline-block';
+    navBadge.textContent = status === 'ok' ? '●' : status === 'error' ? '!' : '…';
+    navBadge.style.color = c.color;
+    navBadge.style.background = c.bg;
+  }
+}
+
+// Sauvegarde avec anti-rebond 3s
+function saveStateWithSync() {
+  saveStateWithSync(); // LocalStorage immédiat
+  if (!syncIsConfigured()) return;
+  setSyncStatus('pending', 'Sauvegarde en cours…');
+  clearTimeout(syncDebounceTimer);
+  syncDebounceTimer = setTimeout(() => syncPush(false), 3000);
+}
+
+async function syncPush(manual = false) {
+  if (!syncIsConfigured()) {
+    if (manual) toastMsg('Sync non configurée — va dans Mode Config → Synchronisation', 'error');
+    return;
+  }
+  const { token, gistId } = getSyncCreds();
+  setSyncStatus('pending', 'Envoi vers GitHub…');
+  try {
+    const dataStr = JSON.stringify(state);
+    const sizeKb  = (new Blob([dataStr]).size / 1024).toFixed(1);
+    const resp = await fetch(`https://api.github.com/gists/${gistId}`, {
+      method: 'PATCH',
+      headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ files: { 'tm_state.json': { content: dataStr } } })
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const now = new Date().toLocaleTimeString('fr-FR');
+    setSyncStatus('ok', `Dernière synchro : ${now}`);
+    localStorage.setItem('tm_last_sync', now);
+    localStorage.setItem('tm_last_sync_size', sizeKb + ' Ko');
+    if (manual) toastMsg(`☁️ Données envoyées (${sizeKb} Ko)`, 'success');
+    renderSyncPage();
+  } catch(e) {
+    setSyncStatus('error', `Erreur : ${e.message}`);
+    if (manual) toastMsg(`❌ Erreur sync : ${e.message}`, 'error');
+  }
+}
+
+async function syncPull(manual = false) {
+  if (!syncIsConfigured()) {
+    if (manual) toastMsg('Sync non configurée', 'error');
+    return;
+  }
+  if (manual && !confirm('Charger les données depuis le Gist ?\n\nCela écrasera toutes tes données locales.')) return;
+  const { token, gistId } = getSyncCreds();
+  setSyncStatus('pending', 'Chargement depuis GitHub…');
+  try {
+    const resp = await fetch(`https://api.github.com/gists/${gistId}`, {
+      headers: { 'Authorization': `token ${token}` }
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    const content = data.files?.['tm_state.json']?.content;
+    if (!content) throw new Error('Fichier tm_state.json introuvable dans le Gist');
+    const loaded = JSON.parse(content);
+    if (!loaded || typeof loaded !== 'object') throw new Error('Données invalides');
+    // Fusionner avec les defaults
+    Object.assign(state, loaded);
+    saveState();
+    const now = new Date().toLocaleTimeString('fr-FR');
+    setSyncStatus('ok', `Chargé le : ${now}`);
+    localStorage.setItem('tm_last_sync', now);
+    renderDashboard();
+    if (manual) {
+      toastMsg('☁️ Données chargées depuis le Gist ✓', 'success');
+      renderSyncPage();
+    }
+  } catch(e) {
+    setSyncStatus('error', `Erreur : ${e.message}`);
+    if (manual) toastMsg(`❌ Erreur chargement : ${e.message}`, 'error');
+  }
+}
+
+async function testerConnexionGist() {
+  const tokenEl  = document.getElementById('sync-token-input');
+  const gistIdEl = document.getElementById('sync-gist-id');
+  const resultEl = document.getElementById('sync-test-result');
+  const token  = tokenEl?.value.trim() || getSyncCreds().token;
+  const gistId = gistIdEl?.value.trim() || getSyncCreds().gistId;
+  if (!token || !gistId) { toastMsg('Remplis le token et l\'ID du Gist', 'error'); return; }
+  resultEl.style.display = 'block';
+  resultEl.style.background = 'rgba(245,158,11,0.1)';
+  resultEl.style.border = '1px solid rgba(245,158,11,0.3)';
+  resultEl.style.color = 'var(--yellow)';
+  resultEl.textContent = '⏳ Test en cours…';
+  try {
+    const resp = await fetch(`https://api.github.com/gists/${gistId}`, {
+      headers: { 'Authorization': `token ${token}` }
+    });
+    if (resp.status === 401) throw new Error('Token invalide ou expiré');
+    if (resp.status === 404) throw new Error('Gist introuvable — vérifie l\'ID');
+    if (!resp.ok) throw new Error(`Erreur HTTP ${resp.status}`);
+    const data = await resp.json();
+    const hasFile = !!data.files?.['tm_state.json'];
+    resultEl.style.background = 'rgba(34,197,94,0.1)';
+    resultEl.style.border = '1px solid rgba(34,197,94,0.3)';
+    resultEl.style.color = 'var(--cfg-green)';
+    resultEl.textContent = `✅ Connexion réussie ! Gist "${data.description || gistId.substring(0,8)+'...'}" — fichier tm_state.json : ${hasFile ? 'présent' : 'absent (sera créé à la prochaine synchro)'}`;
+  } catch(e) {
+    resultEl.style.background = 'rgba(239,68,68,0.1)';
+    resultEl.style.border = '1px solid rgba(239,68,68,0.3)';
+    resultEl.style.color = 'var(--red)';
+    resultEl.textContent = `❌ ${e.message}`;
+  }
+}
+
+function sauvegarderConfigSync() {
+  const token  = document.getElementById('sync-token-input')?.value.trim();
+  const gistId = document.getElementById('sync-gist-id')?.value.trim();
+  if (!token || !gistId) { toastMsg('Token et ID Gist requis', 'error'); return; }
+  localStorage.setItem(SYNC_TOKEN_KEY, token);
+  localStorage.setItem(SYNC_GIST_KEY, gistId);
+  syncEnabled = true;
+  toastMsg('✅ Configuration sauvegardée', 'success');
+  setSyncStatus('ok', 'Configuré');
+  renderSyncPage();
+}
+
+function supprimerConfigSync() {
+  if (!confirm('Supprimer les identifiants de synchronisation ?')) return;
+  localStorage.removeItem(SYNC_TOKEN_KEY);
+  localStorage.removeItem(SYNC_GIST_KEY);
+  localStorage.removeItem('tm_last_sync');
+  localStorage.removeItem('tm_last_sync_size');
+  syncEnabled = false;
+  setSyncStatus('off');
+  toastMsg('Identifiants supprimés', 'info');
+  renderSyncPage();
+}
+
+function toggleSyncTokenVisibility() {
+  const el = document.getElementById('sync-token-input');
+  if (el) el.type = el.type === 'password' ? 'text' : 'password';
+}
+
+function renderSyncPage() {
+  const { token, gistId } = getSyncCreds();
+  const tokenEl  = document.getElementById('sync-token-input');
+  const gistIdEl = document.getElementById('sync-gist-id');
+  if (tokenEl && token) tokenEl.value = token;
+  if (gistIdEl && gistId) gistIdEl.value = gistId;
+
+  const configured = syncIsConfigured();
+  const lastSync = localStorage.getItem('tm_last_sync') || '—';
+  const lastSize = localStorage.getItem('tm_last_sync_size') || '—';
+  const dataSize = (new Blob([JSON.stringify(state)]).size / 1024).toFixed(1) + ' Ko';
+
+  const statStatus = document.getElementById('sync-stat-status');
+  const statLast   = document.getElementById('sync-stat-last');
+  const statSize   = document.getElementById('sync-stat-size');
+  if (statStatus) {
+    statStatus.textContent = configured ? '✅ Configuré' : '⚠️ Non configuré';
+    statStatus.style.color = configured ? 'var(--cfg-green)' : 'var(--yellow)';
+    statStatus.style.fontSize = '14px';
+  }
+  if (statLast) { statLast.textContent = lastSync; statLast.style.fontSize = '13px'; }
+  if (statSize) { statSize.textContent = dataSize; statSize.style.color = 'var(--accent)'; }
+}
+
+async function initSync() {
+  if (!syncIsConfigured()) { setSyncStatus('off'); return; }
+  syncEnabled = true;
+  setSyncStatus('pending', 'Chargement initial…');
+  await syncPull(false);
 }
 
 // ── MODE CONFIGURATION ──────────────────────────────────
@@ -4830,6 +5144,7 @@ function navConfig(el) {
     'cfg-lignes':        '🛣️ Gestion des lignes',
     'cfg-frequentation': '📈 Fréquentations',
     'cfg-reset':         '🗑️ Réinitialisation',
+    'cfg-sync':          '☁️ Synchronisation',
   };
   const topTitle = document.getElementById('topbar-title');
   if (topTitle) topTitle.textContent = titles[page] || page;
@@ -4840,6 +5155,7 @@ function navConfig(el) {
   if (page === 'cfg-categories') renderCategories();
   if (page === 'cfg-reset') renderResetStats();
   if (page === 'cfg-lignes') renderCfgLignes();
+  if (page === 'cfg-sync') renderSyncPage();
 }
 
 // ── CATÉGORIES ──────────────────────────────────────────
@@ -4886,7 +5202,7 @@ function sauvegarderCategorie() {
   if (!state.categoriesColors) state.categoriesColors = {};
   if (!state.categoriesColors[type]) state.categoriesColors[type] = {};
   state.categoriesColors[type][nom] = color;
-  saveState();
+  saveStateWithSync();
   renderCategories();
   document.getElementById('new-cat-nom').value = '';
   toastMsg(`Catégorie "${nom}" ajoutée ✓`, 'success');
@@ -4895,7 +5211,7 @@ function sauvegarderCategorie() {
 function supprimerCategorie(type, idx) {
   if (!confirm('Supprimer cette catégorie ?')) return;
   state.categories[type].splice(idx, 1);
-  saveState();
+  saveStateWithSync();
   renderCategories();
   toastMsg('Catégorie supprimée', 'info');
 }
@@ -4928,7 +5244,7 @@ function renderCfgLignes() {
 function supprimerLigneCfg(i) {
   if (!confirm('Supprimer cette ligne ?')) return;
   state.cfgLignes.splice(i, 1);
-  saveState(); renderCfgLignes();
+  saveStateWithSync(); renderCfgLignes();
 }
 
 function ouvrirModeConfigPage(page) {
@@ -4976,7 +5292,8 @@ document.addEventListener('DOMContentLoaded', () => {
   updateClock();
   setInterval(updateClock, 1000);
 
-  // Compteur de version — statique, incrémenté à chaque livraison
+  // Synchronisation Gist au démarrage
+  initSync();
 
   // Polling extension — DOIT être ici, après que le DOM et les fonctions sont prêts
   demarrerPollingExtension();
@@ -5067,7 +5384,7 @@ function importerDispoPub() {
 
   state.pubDispo = buses;
   journalLog(`${buses.length} bus pub importés`, 'ok');
-  saveState(); renderPubDispo();
+  saveStateWithSync(); renderPubDispo();
   document.getElementById('pubdispo-texte').value = '';
   document.getElementById('pubdispo-status').textContent = `✓ ${buses.length} bus analysés`;
   toastMsg(`${buses.length} bus analysés ✓`, 'success');
