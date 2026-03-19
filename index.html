@@ -773,7 +773,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v24</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v25</span>
       <span id="sync-status" title="Synchronisation Gist" style="font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 8px;border-radius:4px;display:none"></span>
       <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
@@ -2157,6 +2157,20 @@
 
 <script>
 // ═══════════════════════════════════════════════════════
+//  DÉCLARATIONS GLOBALES (doivent être en premier)
+// ═══════════════════════════════════════════════════════
+let syncDebounceTimer = null;
+let modeConfig        = false;
+let currentParcTypeFilter = 'all';
+let editBusId         = null;
+let parcView          = 'compact';
+let currentCsvType    = 'bus';
+let csvRawContent     = '';
+let comptaMoisFiltre  = null;
+let gasPeriode        = 30;
+let pubDispoFiltre    = 'tous';
+
+// ═══════════════════════════════════════════════════════
 //  ÉTAT GLOBAL
 // ═══════════════════════════════════════════════════════
 let state = loadState() || {
@@ -2220,9 +2234,6 @@ function resetTotal() {
 // Utilise le bouton "MAJ via CSV" pour importer tes données réelles
 
 
-let currentParcTypeFilter = 'all';
-let editBusId = null;
-let parcView = 'compact'; // DOIT être déclaré ici, avant tout appel à renderParc
 
 // ═══════════════════════════════════════════════════════
 //  NAVIGATION
@@ -2770,8 +2781,6 @@ function quickRevision(id) {
 //  IMPORT CSV UNIVERSEL
 // ═══════════════════════════════════════════════════════
 
-let currentCsvType = 'bus';
-let csvRawContent = '';
 
 const CSV_INFO = {
   bus:       '🚍 <b>bus.csv</b> — Met à jour le parc complet : KM, statut, révision, CT, énergie, modèle. Nouveaux bus ajoutés automatiquement.',
@@ -3874,7 +3883,6 @@ function renderHistoriqueBase() {
 
 
 
-let comptaMoisFiltre = null; // null = tous, 'YYYY-MM' = un mois
 
 function setComptaMoisFiltre(mois) {
   comptaMoisFiltre = mois;
@@ -4311,7 +4319,6 @@ function supprimerAchat(id) {
 // ═══════════════════════════════════════════════════════
 //  GASOIL — SUIVI PRIX CARBURANT
 // ═══════════════════════════════════════════════════════
-let gasPeriode = 30;
 let gasChartInstance = null;
 
 function setGasPeriode(jours) {
@@ -4881,7 +4888,6 @@ const JSONBIN_HEADERS = {
   'Content-Type': 'application/json',
   'X-Master-Key': JSONBIN_KEY
 };
-let syncDebounceTimer = null;
 
 function setSyncStatus(status, msg) {
   const badge    = document.getElementById('sync-status');
@@ -5056,7 +5062,6 @@ async function initSync() {
 }
 
 // ── MODE CONFIGURATION ──────────────────────────────────
-let modeConfig = false;
 
 function toggleModeConfig() {
   modeConfig = !modeConfig;
@@ -5264,7 +5269,6 @@ document.addEventListener('DOMContentLoaded', () => {
 // ═══════════════════════════════════════════════════════
 //  OPTIMISATION BUS PUB
 // ═══════════════════════════════════════════════════════
-let pubDispoFiltre = 'tous';
 
 function setPubDispoFiltre(f) {
   pubDispoFiltre = f;
