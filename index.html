@@ -184,6 +184,7 @@
     padding: 14px 16px;
     position: relative;
     overflow: hidden;
+    text-align: center;
   }
   .stat-card::before {
     content: '';
@@ -548,14 +549,69 @@
     appearance: none;
     -webkit-appearance: none;
   }
-  .status-select:focus { outline: 1px solid var(--accent); }
-  .status-en-service  { background: rgba(16,185,129,0.15); color: #10b981; }
-  .status-en-revision { background: rgba(245,158,11,0.15); color: #f59e0b; }
-  .status-indispo     { background: rgba(239,68,68,0.15);  color: #ef4444; }
-  .status-nouveau     { background: rgba(0,212,255,0.15);  color: #00d4ff; }
-  .status-ct-urgent   { background: rgba(249,115,22,0.15); color: #f97316; }
-  .status-musee       { background: rgba(100,116,139,0.15);color: #64748b; }
-</style>
+  /* ── MODE CONFIGURATION ─────────────────────────────── */
+  :root { --cfg-green: #22c55e; --cfg-green-dim: rgba(34,197,94,0.12); --cfg-green-border: rgba(34,197,94,0.3); }
+
+  body.mode-config #sidebar {
+    background: #0a120f;
+    border-right-color: var(--cfg-green-border);
+  }
+  body.mode-config .sidebar-logo { border-bottom-color: var(--cfg-green-border); }
+  body.mode-config .sidebar-logo h1 { color: var(--cfg-green); }
+  body.mode-config .sidebar-section-title { color: rgba(34,197,94,0.5); }
+  body.mode-config .nav-item:hover { background: rgba(34,197,94,0.06); color: var(--cfg-green); }
+  body.mode-config .nav-item.active {
+    background: var(--cfg-green-dim);
+    color: var(--cfg-green);
+    border-left-color: var(--cfg-green);
+  }
+  body.mode-config #topbar {
+    background: #0a120f;
+    border-bottom-color: var(--cfg-green-border);
+  }
+  body.mode-config #topbar-title { color: var(--cfg-green); }
+
+  /* Bandeau vert en haut du sidebar config */
+  #cfg-mode-banner {
+    display: none;
+    background: var(--cfg-green-dim);
+    border-bottom: 1px solid var(--cfg-green-border);
+    padding: 7px 16px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--cfg-green);
+    font-weight: 700;
+    align-items: center;
+    gap: 6px;
+  }
+  body.mode-config #cfg-mode-banner { display: flex; }
+
+  /* Bouton bascule mode config */
+  #btn-toggle-config {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 10px 12px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--cfg-green-border);
+    background: var(--cfg-green-dim);
+    color: var(--cfg-green);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+  }
+  #btn-toggle-config:hover { background: rgba(34,197,94,0.2); }
+  body:not(.mode-config) #btn-toggle-config {
+    background: rgba(34,197,94,0.06);
+    border-color: rgba(34,197,94,0.2);
+    color: var(--text3);
+  }
+  body:not(.mode-config) #btn-toggle-config:hover { color: var(--cfg-green); border-color: var(--cfg-green-border); background: var(--cfg-green-dim); }
+
 </head>
 <body>
 
@@ -563,82 +619,137 @@
 
 <!-- SIDEBAR -->
 <div id="sidebar">
-  <div class="sidebar-logo">
+
+  <!-- Bandeau mode config -->
+  <div id="cfg-mode-banner">⚙ Mode Configuration</div>
+
+  <!-- Logo normal -->
+  <div class="sidebar-logo" id="sidebar-logo-normal">
     <h1>🚌 TM Manager</h1>
     <span>Transport Manager — Parc</span>
   </div>
 
-  <div class="sidebar-section">
-    <div class="sidebar-section-title">Vue générale</div>
-    <div class="nav-item active" data-page="dashboard" onclick="nav(this)">
-      <span class="icon">📊</span> Tableau de bord
+  <!-- Logo config -->
+  <div class="sidebar-logo" id="sidebar-logo-config" style="display:none">
+    <h1>⚙️ Configuration</h1>
+    <span>Paramètres & Outils avancés</span>
+  </div>
+
+  <!-- ══ MENU NORMAL ══ -->
+  <div id="sidebar-menu-normal" style="flex:1;overflow-y:auto;display:flex;flex-direction:column">
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Vue générale</div>
+      <div class="nav-item active" data-page="dashboard" onclick="nav(this)">
+        <span class="icon">📊</span> Tableau de bord
+      </div>
+      <div class="nav-item" data-page="alertes" onclick="nav(this)">
+        <span class="icon">🔔</span> Alertes
+        <span id="alert-badge" style="margin-left:auto;background:var(--red);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700;">0</span>
+      </div>
     </div>
-    <div class="nav-item" data-page="alertes" onclick="nav(this)">
-      <span class="icon">🔔</span> Alertes
-      <span id="alert-badge" style="margin-left:auto;background:var(--red);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700;">0</span>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Parc de bus</div>
+      <div class="nav-item" data-page="parc" onclick="nav(this)">
+        <span class="icon">🚍</span> Gestion du parc
+      </div>
+      <div class="nav-item" data-page="affectations" onclick="nav(this)">
+        <span class="icon">📋</span> Affectations
+      </div>
+      <div class="nav-item" data-page="maintenance" onclick="nav(this)">
+        <span class="icon">🔧</span> Maintenance / CT
+      </div>
+      <div class="nav-item" data-page="abribus" onclick="nav(this)">
+        <span class="icon">🏠</span> Abribus
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Ressources</div>
+      <div class="nav-item" data-page="personnel" onclick="nav(this)">
+        <span class="icon">👤</span> Personnel / FCO
+      </div>
+      <div class="nav-item" data-page="lignes" onclick="nav(this)">
+        <span class="icon">🛣️</span> Lignes & Stats
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Finance</div>
+      <div class="nav-item" data-page="compta" onclick="nav(this)">
+        <span class="icon">💰</span> Comptabilité
+      </div>
+      <div class="nav-item" data-page="achats" onclick="nav(this)">
+        <span class="icon">🛒</span> Achats de bus
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Publicité</div>
+      <div class="nav-item" data-page="pub" onclick="nav(this)">
+        <span class="icon">📢</span> Contrats pub
+      </div>
+      <div class="nav-item" data-page="pubdispo" onclick="nav(this)">
+        <span class="icon">🔀</span> Optimisation bus
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Carburant</div>
+      <div class="nav-item" data-page="gasoil" onclick="nav(this)">
+        <span class="icon">⛽</span> Conso
+      </div>
+    </div>
+
+    <div style="margin-top:auto;padding:10px 0;border-top:1px solid var(--border)">
+      <button id="btn-toggle-config" onclick="toggleModeConfig()">
+        <span>⚙️</span> Mode Configuration
+      </button>
     </div>
   </div>
 
-  <div class="sidebar-section">
-    <div class="sidebar-section-title">Parc de bus</div>
-    <div class="nav-item" data-page="parc" onclick="nav(this)">
-      <span class="icon">🚍</span> Gestion du parc
-    </div>
-    <div class="nav-item" data-page="affectations" onclick="nav(this)">
-      <span class="icon">📋</span> Affectations
-    </div>
-    <div class="nav-item" data-page="maintenance" onclick="nav(this)">
-      <span class="icon">🔧</span> Maintenance / CT
-    </div>
-    <div class="nav-item" data-page="abribus" onclick="nav(this)">
-      <span class="icon">🏠</span> Abribus
-    </div>
-  </div>
+  <!-- ══ MENU CONFIG ══ -->
+  <div id="sidebar-menu-config" style="flex:1;overflow-y:auto;display:none;flex-direction:column">
 
-  <div class="sidebar-section">
-    <div class="sidebar-section-title">Ressources</div>
-    <div class="nav-item" data-page="personnel" onclick="nav(this)">
-      <span class="icon">👤</span> Personnel / FCO
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Données</div>
+      <div class="nav-item cfg-nav" data-page="historique" onclick="navConfig(this)">
+        <span class="icon">📜</span> Import Historique
+      </div>
     </div>
-    <div class="nav-item" data-page="lignes" onclick="nav(this)">
-      <span class="icon">🛣️</span> Lignes & Stats
-    </div>
-  </div>
 
-  <div class="sidebar-section">
-    <div class="sidebar-section-title">Finance</div>
-    <div class="nav-item" data-page="compta" onclick="nav(this)">
-      <span class="icon">💰</span> Comptabilité
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Paramètres</div>
+      <div class="nav-item cfg-nav" data-page="config" onclick="navConfig(this)">
+        <span class="icon">⚙️</span> Paramètres financiers
+      </div>
+      <div class="nav-item cfg-nav" data-page="cfg-categories" onclick="navConfig(this)">
+        <span class="icon">🏷️</span> Catégories
+      </div>
     </div>
-    <div class="nav-item" data-page="achats" onclick="nav(this)">
-      <span class="icon">🛒</span> Achats de bus
-    </div>
-  </div>
 
-  <div class="sidebar-section">
-    <div class="sidebar-section-title">Publicité</div>
-    <div class="nav-item" data-page="pub" onclick="nav(this)">
-      <span class="icon">📢</span> Contrats pub
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Réseau</div>
+      <div class="nav-item cfg-nav" data-page="cfg-lignes" onclick="navConfig(this)">
+        <span class="icon">🛣️</span> Gestion des lignes
+      </div>
+      <div class="nav-item cfg-nav" data-page="cfg-frequentation" onclick="navConfig(this)">
+        <span class="icon">📈</span> Fréquentations
+      </div>
     </div>
-    <div class="nav-item" data-page="pubdispo" onclick="nav(this)">
-      <span class="icon">🔀</span> Optimisation bus
-    </div>
-  </div>
 
-  <div class="sidebar-section">
-    <div class="sidebar-section-title">Carburant</div>
-    <div class="nav-item" data-page="gasoil" onclick="nav(this)">
-      <span class="icon">⛽</span> Gasoil / Conso
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Danger</div>
+      <div class="nav-item cfg-nav" data-page="cfg-reset" onclick="navConfig(this)">
+        <span class="icon">🗑️</span> Réinitialisation
+      </div>
     </div>
-  </div>
 
-  <div class="sidebar-section">
-    <div class="sidebar-section-title">Système</div>
-    <div class="nav-item" data-page="historique" onclick="nav(this)">
-      <span class="icon">📜</span> Import Historique
-    </div>
-    <div class="nav-item" data-page="config" onclick="nav(this)">
-      <span class="icon">⚙️</span> Configuration
+    <div style="margin-top:auto;padding:10px 0;border-top:1px solid var(--cfg-green-border)">
+      <button class="btn-toggle-config-inner" onclick="toggleModeConfig()" style="display:flex;align-items:center;gap:8px;width:100%;margin:10px 12px;padding:8px 12px;border-radius:6px;border:1px solid var(--cfg-green-border);background:var(--cfg-green-dim);color:var(--cfg-green);font-size:11px;font-weight:600;cursor:pointer;letter-spacing:0.5px">
+        <span>←</span> Retour au mode normal
+      </button>
     </div>
   </div>
 
@@ -657,7 +768,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v20</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v22</span>
       <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
     </div>
@@ -1187,8 +1298,8 @@
         </div>
       </div>
 
-      <!-- Vue annuelle + filtre mois -->
-      <div class="grid-2" style="margin-top:14px">
+      <!-- Suivi par mois (gauche) + Graphique évolution (droite) -->
+      <div class="grid-2" style="margin-bottom:14px">
         <div class="card">
           <div class="card-header">
             <div class="card-title">📅 Suivi par mois</div>
@@ -1196,86 +1307,72 @@
           </div>
           <div class="card-body" style="padding:0">
             <table class="data-table" id="compta-mois-table">
-              <thead><tr><th>Mois</th><th>Recettes</th><th>Dépenses</th><th>Solde mois</th><th>Opérations</th><th></th></tr></thead>
+              <thead><tr><th>Mois</th><th>Recettes</th><th>Dépenses</th><th>Solde</th><th>Ops</th><th></th></tr></thead>
               <tbody id="compta-mois-tbody"></tbody>
             </table>
           </div>
         </div>
         <div class="card">
-          <div class="card-header"><div class="card-title">Répartition dépenses</div></div>
+          <div class="card-header"><div class="card-title" id="compta-chart-title">📈 Évolution mensuelle</div></div>
+          <div class="card-body"><canvas id="compta-chart" style="width:100%;height:260px"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Répartition recettes (gauche) + Répartition dépenses (droite) -->
+      <div class="grid-2" style="margin-bottom:14px">
+        <div class="card">
+          <div class="card-header"><div class="card-title">📈 Répartition recettes</div></div>
+          <div class="card-body" id="compta-repartition-rec"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">📉 Répartition dépenses</div></div>
           <div class="card-body" id="compta-repartition"></div>
         </div>
       </div>
 
-      <!-- Graphique évolution annuelle -->
-      <div class="card" style="margin-top:14px">
-        <div class="card-header"><div class="card-title" id="compta-chart-title">📈 Évolution mensuelle</div></div>
-        <div class="card-body"><canvas id="compta-chart" style="width:100%;height:240px"></canvas></div>
-      </div>
-
-      <!-- Détail mois sélectionné -->
-      <div class="card" style="margin-top:14px">
+      <!-- Tableau opérations avec filtre mois/année -->
+      <div class="card" style="margin-bottom:14px">
         <div class="card-header">
-          <div class="card-title">Opérations — <span id="compta-mois-label" style="color:var(--accent)">tous les mois</span></div>
-          <div style="display:flex;gap:8px;align-items:center">
-            <button class="btn btn-ghost btn-sm" onclick="setComptaMoisFiltre(null)">Tous</button>
+          <div class="card-title">Opérations</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <select id="compta-filtre-mois" onchange="renderComptaTableau()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:3px 8px;font-size:12px">
+              <option value="">Tous les mois</option>
+              <option value="01">Janvier</option><option value="02">Février</option><option value="03">Mars</option>
+              <option value="04">Avril</option><option value="05">Mai</option><option value="06">Juin</option>
+              <option value="07">Juillet</option><option value="08">Août</option><option value="09">Septembre</option>
+              <option value="10">Octobre</option><option value="11">Novembre</option><option value="12">Décembre</option>
+            </select>
+            <select id="compta-filtre-annee" onchange="renderComptaTableau()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:3px 8px;font-size:12px">
+              <option value="">Toutes années</option>
+            </select>
             <select id="compta-type-filtre" onchange="renderComptaTableau()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:3px 8px;font-size:12px">
               <option value="">Tout</option>
               <option value="recette">Recettes</option>
               <option value="depense">Dépenses</option>
             </select>
+            <button class="btn btn-ghost btn-sm" onclick="resetFiltreCompta()">✕ Réinitialiser</button>
           </div>
         </div>
         <div class="card-body" style="padding:0">
           <table class="data-table">
             <thead><tr>
               <th onclick="sortTable('compta','date')" class="sortable">Date <span class="sort-icon" data-col="date">↕</span></th>
-              <th onclick="sortTable('compta','type')" class="sortable">Type <span class="sort-icon" data-col="type">↕</span></th>
               <th onclick="sortTable('compta','cat')" class="sortable">Catégorie <span class="sort-icon" data-col="cat">↕</span></th>
               <th>Description</th>
-              <th onclick="sortTable('compta','montant')" class="sortable">Montant <span class="sort-icon" data-col="montant">↕</span></th>
+              <th onclick="sortTable('compta','montant')" class="sortable" style="color:var(--green)">Recette <span class="sort-icon" data-col="montant">↕</span></th>
+              <th style="color:var(--red)">Dépense</th>
             </tr></thead>
             <tbody id="compta-tbody"></tbody>
           </table>
         </div>
       </div>
 
-      <!-- Ajouter opération manuelle -->
-      <div class="card" style="margin-top:14px">
-        <div class="card-header"><div class="card-title">➕ Ajouter une opération manuelle</div></div>
-        <div class="card-body">
-          <div class="form-row">
-            <div class="form-group">
-              <label>Type</label>
-              <select id="op-type">
-                <option value="recette">Recette</option>
-                <option value="depense">Dépense</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Catégorie</label>
-              <select id="op-cat">
-                <option>Lignes</option><option>Contrats pub</option><option>Achat véhicule</option>
-                <option>Maintenance</option><option>Salaires</option><option>Carburant</option>
-                <option>CT</option><option>Autres</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Montant (€)</label>
-              <input type="number" id="op-montant" placeholder="0">
-            </div>
-            <div class="form-group">
-              <label>Date</label>
-              <input type="date" id="op-date">
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Description</label>
-            <input type="text" id="op-desc" placeholder="Description...">
-          </div>
-          <button class="btn btn-primary" style="margin-top:8px" onclick="ajouterOperation()">+ Enregistrer</button>
-        </div>
-      </div>
+      <!-- Champs cachés nécessaires pour ajouterOperation (conservés pour compatibilité) -->
+      <span id="op-type" style="display:none"></span>
+      <span id="op-cat" style="display:none"></span>
+      <span id="op-montant" style="display:none"></span>
+      <span id="op-date" style="display:none"></span>
+      <span id="op-desc" style="display:none"></span>
     </div>
 
     <!-- ═══════════════════════════════════════════ HISTORIQUE ═══ -->
@@ -1529,39 +1626,48 @@
     <!-- ═══════════════════════════════════════════ GASOIL ═══ -->
     <div id="page-gasoil" class="page">
 
-      <!-- Stats cards -->
-      <div class="stat-cards">
-        <div class="stat-card blue">
-          <div class="stat-label">Diesel aujourd'hui</div>
-          <div class="stat-value" id="gas-diesel-today" style="font-size:20px">—</div>
+      <!-- Stats cards : Diesel à gauche, GNV à droite -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+        <!-- Diesel -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+          <div class="stat-card yellow">
+            <div class="stat-label">Moy. Diesel (30j)</div>
+            <div class="stat-value" id="gas-diesel-moy" style="font-size:20px">—</div>
+          </div>
+          <div class="stat-card blue" style="transform:scale(1.2);transform-origin:center;z-index:1">
+            <div class="stat-label">Diesel aujourd'hui</div>
+            <div class="stat-value" id="gas-diesel-today" style="font-size:22px">—</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-label">Meilleur Diesel (30j)</div>
+            <div class="stat-value" id="gas-diesel-min" style="font-size:20px">—</div>
+          </div>
         </div>
-        <div class="stat-card green">
-          <div class="stat-label">GNV aujourd'hui</div>
-          <div class="stat-value" id="gas-gnv-today" style="font-size:20px">—</div>
-        </div>
-        <div class="stat-card yellow">
-          <div class="stat-label">Moy. Diesel (30j)</div>
-          <div class="stat-value" id="gas-diesel-moy" style="font-size:20px">—</div>
-        </div>
-        <div class="stat-card orange">
-          <div class="stat-label">Moy. GNV (30j)</div>
-          <div class="stat-value" id="gas-gnv-moy" style="font-size:20px">—</div>
-        </div>
-        <div class="stat-card green">
-          <div class="stat-label">Meilleur Diesel (30j)</div>
-          <div class="stat-value" id="gas-diesel-min" style="font-size:20px">—</div>
-        </div>
-        <div class="stat-card blue">
-          <div class="stat-label">Meilleur GNV (30j)</div>
-          <div class="stat-value" id="gas-gnv-min" style="font-size:20px">—</div>
+        <!-- GNV -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+          <div class="stat-card orange">
+            <div class="stat-label">Moy. GNV (30j)</div>
+            <div class="stat-value" id="gas-gnv-moy" style="font-size:20px">—</div>
+          </div>
+          <div class="stat-card green" style="transform:scale(1.2);transform-origin:center;z-index:1">
+            <div class="stat-label">GNV aujourd'hui</div>
+            <div class="stat-value" id="gas-gnv-today" style="font-size:22px">—</div>
+          </div>
+          <div class="stat-card blue">
+            <div class="stat-label">Meilleur GNV (30j)</div>
+            <div class="stat-value" id="gas-gnv-min" style="font-size:20px">—</div>
+          </div>
         </div>
       </div>
 
-      <div class="grid-2" style="margin-top:14px">
+      <div class="grid-2" style="margin-top:0">
 
         <!-- Saisie texte brut -->
         <div class="card">
-          <div class="card-header"><div class="card-title">⛽ Coller les prix du jeu</div></div>
+          <div class="card-header">
+            <div class="card-title">⛽ Coller les prix du jeu</div>
+            <button class="btn btn-ghost btn-sm" onclick="openModal('modal-saisie-carburant')">✏️ Saisie manuelle</button>
+          </div>
           <div class="card-body">
             <p style="font-size:11px;color:var(--text3);margin-bottom:12px">Colle directement le texte depuis le jeu :</p>
             <textarea id="gas-texte-brut" rows="6" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;padding:10px;resize:vertical;outline:none" placeholder="Diesel&#10;1.990 €&#10;GNV&#10;2.080 €"></textarea>
@@ -1573,37 +1679,6 @@
             </div>
             <button class="btn btn-primary" style="margin-top:8px" onclick="saisirPrixCarburant()">✓ Enregistrer</button>
           </div>
-        </div>
-
-        <!-- Saisie manuelle -->
-        <div class="card">
-          <div class="card-header"><div class="card-title">✏️ Saisie manuelle</div></div>
-          <div class="card-body">
-            <p style="font-size:11px;color:var(--text3);margin-bottom:12px">Pour rattraper une date oubliée :</p>
-            <div class="form-group" style="margin-bottom:10px">
-              <label>Date</label>
-              <input type="date" id="gas-manual-date">
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Prix Diesel (€/L)</label>
-                <input type="number" id="gas-manual-diesel" step="0.001" placeholder="1.990">
-              </div>
-              <div class="form-group">
-                <label>Prix GNV (€/L)</label>
-                <input type="number" id="gas-manual-gnv" step="0.001" placeholder="2.080">
-              </div>
-            </div>
-            <button class="btn btn-success" style="margin-top:8px" onclick="saisirManuelCarburant()">✓ Ajouter</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Records + graphique -->
-      <div class="grid-2" style="margin-top:14px">
-        <div class="card">
-          <div class="card-header"><div class="card-title">🏆 Records de prix</div></div>
-          <div class="card-body" id="gas-records"></div>
         </div>
 
         <!-- Graphique -->
@@ -1621,6 +1696,12 @@
             <canvas id="gas-chart" style="width:100%;height:220px"></canvas>
           </div>
         </div>
+      </div><!-- /grid-2 saisie+graphique -->
+
+      <!-- Records pleine largeur -->
+      <div class="card" style="margin-top:14px">
+        <div class="card-header"><div class="card-title">🏆 Records de prix</div></div>
+        <div class="card-body" id="gas-records"></div>
       </div>
 
       <!-- Historique -->
@@ -1658,36 +1739,201 @@
         </div>
 
         <div class="card">
-          <div class="card-header"><div class="card-title">📊 Résumé de la base</div></div>
-          <div class="card-body" id="cfg-resume"></div>
+          <div class="card-header"><div class="card-title">⚖️ Correction d'écart financier</div></div>
+          <div class="card-body">
+            <p style="font-size:11px;color:var(--text3);margin-bottom:12px">Si ton solde ici diffère du solde dans le jeu, saisis l'écart pour le corriger. Cette valeur s'ajoute directement au solde affiché, <b>sans créer de mouvement comptable</b>.</p>
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+              <input type="number" id="cfg-ecart" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 10px;font-size:14px;font-family:'JetBrains Mono',monospace" placeholder="Ex: +1000 ou -500">
+              <button class="btn btn-primary" onclick="appliquerEcart()">✓ Appliquer</button>
+            </div>
+            <div style="font-size:12px;color:var(--text2)">
+              Correction actuelle : <b id="cfg-ecart-actuel" style="font-family:'JetBrains Mono',monospace;color:var(--accent)">0 €</b>
+              <button class="btn btn-ghost btn-xs" style="margin-left:8px" onclick="resetEcart()">↺ Réinitialiser</button>
+            </div>
+            <div id="cfg-ecart-preview" style="margin-top:10px;font-size:11px;color:var(--text3);display:none"></div>
+          </div>
         </div>
 
+      </div><!-- /grid-2 -->
+
+      <div class="card" style="margin-top:14px">
+        <div class="card-header"><div class="card-title">📊 Résumé de la base</div></div>
+        <div class="card-body" id="cfg-resume"></div>
       </div>
 
-      <div class="card" style="margin-top:14px;border-color:rgba(239,68,68,0.3)">
+      <div class="card" style="margin-top:14px;border-color:rgba(239,68,68,0.2)">
+        <div class="card-header" style="border-bottom-color:rgba(239,68,68,0.1)">
+          <div class="card-title" style="color:var(--text3)">⚠️ Réinitialisation</div>
+        </div>
+        <div class="card-body" style="display:flex;align-items:center;gap:14px">
+          <span style="font-size:12px;color:var(--text3)">Les options de réinitialisation sont disponibles dans le Mode Configuration.</span>
+          <button class="btn btn-sm" style="background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green);white-space:nowrap" onclick="ouvrirModeConfigPage('cfg-reset')">⚙️ Ouvrir Mode Config</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════ CFG — CATÉGORIES ═══ -->
+    <div id="page-cfg-categories" class="page">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <div style="font-size:20px;font-weight:700;color:var(--cfg-green)">🏷️ Catégories de dépenses & recettes</div>
+      </div>
+      <div class="grid-2">
+        <div class="card" style="border-color:var(--cfg-green-border)">
+          <div class="card-header" style="border-bottom-color:var(--cfg-green-border)">
+            <div class="card-title" style="color:var(--cfg-green)">📉 Catégories de dépenses</div>
+            <button class="btn btn-sm" style="background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green)" onclick="ajouterCategorie('depense')">+ Ajouter</button>
+          </div>
+          <div class="card-body" style="padding:0">
+            <table class="data-table"><thead><tr><th>Nom</th><th>Couleur</th><th></th></tr></thead>
+            <tbody id="cfg-cat-dep-tbody"></tbody></table>
+          </div>
+        </div>
+        <div class="card" style="border-color:var(--cfg-green-border)">
+          <div class="card-header" style="border-bottom-color:var(--cfg-green-border)">
+            <div class="card-title" style="color:var(--cfg-green)">📈 Catégories de recettes</div>
+            <button class="btn btn-sm" style="background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green)" onclick="ajouterCategorie('recette')">+ Ajouter</button>
+          </div>
+          <div class="card-body" style="padding:0">
+            <table class="data-table"><thead><tr><th>Nom</th><th>Couleur</th><th></th></tr></thead>
+            <tbody id="cfg-cat-rec-tbody"></tbody>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px;border-color:var(--cfg-green-border)">
+        <div class="card-header" style="border-bottom-color:var(--cfg-green-border)"><div class="card-title" style="color:var(--cfg-green)">➕ Nouvelle catégorie</div></div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Type</label>
+              <select id="new-cat-type" style="background:var(--surface2);border:1px solid var(--cfg-green-border);color:var(--text);border-radius:6px;padding:8px">
+                <option value="depense">Dépense</option>
+                <option value="recette">Recette</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Nom de la catégorie</label>
+              <input type="text" id="new-cat-nom" placeholder="Ex: Carburant, Lignes, Pub..." style="background:var(--surface2);border:1px solid var(--cfg-green-border);color:var(--text);border-radius:6px;padding:8px;width:100%">
+            </div>
+            <div class="form-group">
+              <label>Couleur (optionnel)</label>
+              <input type="color" id="new-cat-color" value="#00d4ff" style="height:38px;width:60px;border:none;background:none;cursor:pointer">
+            </div>
+          </div>
+          <button class="btn" style="background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green);margin-top:8px" onclick="sauvegarderCategorie()">✓ Enregistrer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════ CFG — LIGNES ═══ -->
+    <div id="page-cfg-lignes" class="page">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <div style="font-size:20px;font-weight:700;color:var(--cfg-green)">🛣️ Gestion des lignes</div>
+        <div style="font-size:11px;color:var(--text3);background:var(--surface2);padding:4px 10px;border-radius:4px;border:1px solid var(--border)">À développer — à venir</div>
+      </div>
+      <div class="card" style="border-color:var(--cfg-green-border)">
+        <div class="card-header" style="border-bottom-color:var(--cfg-green-border)">
+          <div class="card-title" style="color:var(--cfg-green)">📋 Lignes configurées</div>
+          <button class="btn btn-sm" style="background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green)" onclick="ouvrirModalNovuelleLigne()">+ Nouvelle ligne</button>
+        </div>
+        <div class="card-body" style="padding:0">
+          <table class="data-table">
+            <thead><tr><th>N°</th><th>Nom</th><th>Km</th><th>Durée</th><th>Type</th><th>Statut</th><th></th></tr></thead>
+            <tbody id="cfg-lignes-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════ CFG — FRÉQUENTATIONS ═══ -->
+    <div id="page-cfg-frequentation" class="page">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <div style="font-size:20px;font-weight:700;color:var(--cfg-green)">📈 Gestion des fréquentations</div>
+        <div style="font-size:11px;color:var(--text3);background:var(--surface2);padding:4px 10px;border-radius:4px;border:1px solid var(--border)">À développer — à venir</div>
+      </div>
+      <div class="card" style="border-color:var(--cfg-green-border)">
+        <div class="card-header" style="border-bottom-color:var(--cfg-green-border)"><div class="card-title" style="color:var(--cfg-green)">📊 Données de fréquentation</div></div>
+        <div class="card-body">
+          <p style="color:var(--text3);font-size:12px">Cette section permettra de gérer manuellement les objectifs de fréquentation par ligne, les seuils d'alerte, et les historiques personnalisés.</p>
+          <div style="margin-top:20px;padding:20px;border:2px dashed var(--cfg-green-border);border-radius:8px;text-align:center;color:var(--cfg-green);opacity:0.6">
+            🚧 Fonctionnalité en cours de développement
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════ CFG — RÉINITIALISATION ═══ -->
+    <div id="page-cfg-reset" class="page">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <div style="font-size:20px;font-weight:700;color:var(--red)">🗑️ Réinitialisation des données</div>
+      </div>
+      <div class="stat-cards" style="margin-bottom:14px">
+        <div class="stat-card blue"><div class="stat-label">Bus</div><div class="stat-value" id="rst-stat-bus">0</div></div>
+        <div class="stat-card green"><div class="stat-label">Ops compta</div><div class="stat-value" id="rst-stat-compta">0</div></div>
+        <div class="stat-card yellow"><div class="stat-label">Personnel</div><div class="stat-value" id="rst-stat-pers">0</div></div>
+        <div class="stat-card orange"><div class="stat-label">Stats lignes</div><div class="stat-value" id="rst-stat-stats">0</div></div>
+      </div>
+      <div class="card" style="border-color:rgba(239,68,68,0.3)">
         <div class="card-header" style="border-bottom-color:rgba(239,68,68,0.2)">
-          <div class="card-title" style="color:var(--red)">⚠️ Zone dangereuse</div>
+          <div class="card-title" style="color:var(--red)">⚠️ Réinitialisation sélective</div>
         </div>
         <div class="card-body">
-          <p style="color:var(--text2);font-size:12px;margin-bottom:16px">Ces actions sont irréversibles. Toutes les données importées seront perdues définitivement.</p>
-          <div style="display:flex;gap:10px;flex-wrap:wrap">
-            <button class="btn" onclick="resetSection('bus')" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:var(--red)">🚍 Vider le parc</button>
-            <button class="btn" onclick="resetSection('compta')" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:var(--red)">💰 Vider la compta</button>
-            <button class="btn" onclick="resetSection('personnel')" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:var(--red)">👤 Vider le personnel</button>
-            <button class="btn" onclick="resetSection('statsLignes')" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:var(--red)">📊 Vider les stats</button>
-            <button class="btn" onclick="resetSection('affectations')" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:var(--red)">📋 Vider les affectations</button>
+          <p style="color:var(--text2);font-size:12px;margin-bottom:16px">Vide un bloc de données sans toucher aux autres. <b>Irréversible.</b></p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <button class="btn" onclick="resetSection('bus')" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:var(--red);padding:12px">🚍 Vider le parc bus</button>
+            <button class="btn" onclick="resetSection('compta')" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:var(--red);padding:12px">💰 Vider la comptabilité</button>
+            <button class="btn" onclick="resetSection('personnel')" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:var(--red);padding:12px">👤 Vider le personnel</button>
+            <button class="btn" onclick="resetSection('statsLignes')" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:var(--red);padding:12px">📊 Vider les stats lignes</button>
+            <button class="btn" onclick="resetSection('affectations')" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:var(--red);padding:12px">📋 Vider les affectations</button>
+            <button class="btn" onclick="resetSection('carburant')" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:var(--red);padding:12px">⛽ Vider le carburant</button>
           </div>
-          <div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(239,68,68,0.2)">
-            <button class="btn" onclick="resetTotal()" style="background:rgba(239,68,68,0.15);border:1px solid var(--red);color:var(--red);font-weight:700;padding:10px 20px">
-              🗑 RÉINITIALISATION COMPLÈTE — Tout effacer
-            </button>
-          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px;border-color:rgba(239,68,68,0.5)">
+        <div class="card-header" style="border-bottom-color:rgba(239,68,68,0.3)">
+          <div class="card-title" style="color:var(--red)">💥 Réinitialisation complète</div>
+        </div>
+        <div class="card-body">
+          <p style="color:var(--text2);font-size:12px;margin-bottom:16px">Efface <b>absolument toutes les données</b> — parc, compta, personnel, stats, paramètres. Le site repartira comme neuf.</p>
+          <button class="btn" onclick="resetTotal()" style="background:rgba(239,68,68,0.15);border:2px solid var(--red);color:var(--red);font-weight:700;padding:14px 28px;font-size:14px;width:100%">
+            🗑 TOUT EFFACER — Réinitialisation complète
+          </button>
         </div>
       </div>
     </div>
 
   </div><!-- /content -->
 </div><!-- /main -->
+
+<!-- Modal Saisie manuelle carburant -->
+<div class="modal-overlay" id="modal-saisie-carburant">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-title">✏️ Saisie manuelle carburant</div>
+      <div class="modal-close" onclick="closeModal('modal-saisie-carburant')">✕</div>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:11px;color:var(--text3);margin-bottom:14px">Pour rattraper une date oubliée ou corriger un prix :</p>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Date</label>
+        <input type="date" id="gas-manual-date">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Prix Diesel (€/L)</label>
+          <input type="number" id="gas-manual-diesel" step="0.001" placeholder="1.990">
+        </div>
+        <div class="form-group">
+          <label>Prix GNV (€/L)</label>
+          <input type="number" id="gas-manual-gnv" step="0.001" placeholder="2.080">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-saisie-carburant')">Annuler</button>
+      <button class="btn btn-primary" onclick="saisirManuelCarburant();closeModal('modal-saisie-carburant')">✓ Ajouter</button>
+    </div>
+  </div>
+</div>
 
 <!-- ═══════════════════════════════════════════ MODALS ═══ -->
 
@@ -1856,10 +2102,14 @@ let state = loadState() || {
   config: { argentDepart: 0 },
   prixKm: {},
   carburant: [],
-  pubDispo: []
+  pubDispo: [],
+  lastImport: {}
 };
 if (!state.config) state.config = { argentDepart: 0 };
 if (!state.statsLignes) state.statsLignes = [];
+if (!state.lastImport) state.lastImport = {};
+if (!state.categories) state.categories = {};
+if (!state.cfgLignes) state.cfgLignes = [];
 
 function loadState() {
   try { return JSON.parse(localStorage.getItem('tm_state')); } catch(e) { return null; }
@@ -1890,15 +2140,17 @@ let parcView = 'compact'; // DOIT être déclaré ici, avant tout appel à rende
 //  NAVIGATION
 // ═══════════════════════════════════════════════════════
 function nav(el) {
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  // Ne désactiver que les items du menu normal (pas .cfg-nav)
+  document.querySelectorAll('#sidebar-menu-normal .nav-item').forEach(n => n.classList.remove('active'));
   el.classList.add('active');
   const page = el.dataset.page;
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-' + page).classList.add('active');
+  const pageEl = document.getElementById('page-' + page);
+  if (pageEl) pageEl.classList.add('active');
   const titles = { dashboard:'Tableau de bord', alertes:'Alertes', parc:'Gestion du parc',
     affectations:'Affectations', maintenance:'Maintenance & CT', abribus:'Équipement Abribus',
     personnel:'Personnel & FCO', lignes:'Lignes & Statistiques', compta:'Comptabilité',
-    pub:'Contrats Publicitaires', achats:'Achats de bus', gasoil:'Gasoil & Consommation', config:'Configuration',
+    pub:'Contrats Publicitaires', achats:'Achats de bus', gasoil:'Conso', config:'Configuration',
     pubdispo:'Optimisation Bus Pub' };
   document.getElementById('topbar-title').textContent = titles[page] || page;
   renderPage(page);
@@ -1967,7 +2219,7 @@ function renderDashboard() {
   const fcoReq = state.personnel.filter(p => p.statut === 'FCO requise').length;
   const argentDepart = (state.config && state.config.argentDepart) || 0;
   const mouvements = allOps().reduce((a,o) => o.type === 'recette' ? a + o.montant : a - o.montant, 0);
-  const solde = argentDepart + mouvements;
+  const solde = argentDepart + mouvements + ((state.config && state.config.ecartFinancier) || 0);
 
   document.getElementById('stat-total').textContent = state.bus.length;
   document.getElementById('stat-service').textContent = enService;
@@ -2022,13 +2274,13 @@ function renderDashboard() {
     <td>${a.modele}</td>
     <td class="mono" style="color:var(--red)">${fmt(a.prix)}</td>
     <td class="mono">${fmtNum(a.km)} km</td>
-    <td class="mono">${a.date}</td>
+    <td class="mono">${fmtDateFR(a.date)}</td>
   </tr>`).join('') || '<tr><td colspan="4" style="color:var(--text3);text-align:center">Aucun achat</td></tr>';
 
   // Journal
   const tl = document.getElementById('journal-timeline');
   tl.innerHTML = state.journal.slice(0,8).map(j => `<div class="timeline-item ${j.type}">
-    <div class="timeline-date">${j.date}</div>
+    <div class="timeline-date">${fmtDateFR(j.date)}</div>
     <div class="timeline-text">${j.text}</div>
   </div>`).join('') || '<div style="color:var(--text3)">Aucune activité.</div>';
 
@@ -2059,7 +2311,7 @@ function renderAlertes() {
       const diff = Math.round((new Date(b.ct) - new Date()) / (1000*60*60*24));
       const label = diff < 0 ? `<b>EXPIRÉ depuis ${Math.abs(diff)} j</b>` : diff === 0 ? "<b>AUJOURD'HUI</b>" : `Dans <b>${diff} j</b> (${b.ct})`;
       html += `<div class="alert-box ${diff<=0?'danger':'warning'}" style="margin-bottom:8px;display:flex;align-items:center;gap:8px">
-        <span>🔍 <b>${b.nom}</b> — CT le ${b.ct} — ${label}</span>
+        <span>🔍 <b>${b.nom}</b> — CT le ${fmtDateFR(b.ct)} — ${label}</span>
         <button class="btn btn-ghost btn-xs" style="margin-left:auto" onclick="ouvrirCTPlanif('${b.nom}')">Planifier</button>
       </div>`;
     });
@@ -2076,7 +2328,7 @@ function renderAlertes() {
     revAlerts.forEach(b => {
       const diff = Math.round((new Date(b.revisionDate) - new Date()) / (1000*60*60*24));
       html += `<div class="alert-box warning" style="margin-bottom:8px">
-        🔧 <b>${b.nom}</b> — Révision le ${b.revisionDate} — ${diff<=0?'<b>Aujourd\'hui</b>':'Dans '+diff+' j'}
+        🔧 <b>${b.nom}</b> — Révision le ${fmtDateFR(b.revisionDate)} — ${diff<=0?'<b>Aujourd\'hui</b>':'Dans '+diff+' j'}
       </div>`;
     });
   } else html += `<div class="alert-box success" style="margin-bottom:8px">✅ Aucune révision dans les ${SEUIL_JOURS} prochains jours.</div>`;
@@ -2086,7 +2338,7 @@ function renderAlertes() {
   if (fcoAlerts.length) {
     fcoAlerts.forEach(p => {
       html += `<div class="alert-box ${p.statut==='FCO requise'?'danger':'warning'}" style="margin-bottom:8px">
-        🎓 <b>${p.nom}</b> (${p.matricule}) — ${p.statut} — FCO le : ${p.fco||'inconnue'}
+        🎓 <b>${p.nom}</b> (${p.matricule}) — ${p.statut} — FCO le : ${fmtDateFR(p.fco)||'inconnue'}
       </div>`;
     });
   } else html += '<div class="alert-box success" style="margin-bottom:8px">✅ Toutes les FCO sont à jour.</div>';
@@ -2196,7 +2448,7 @@ function renderParc() {
         <td style="font-size:10px;color:var(--text3)">${b.marque||''} ${b.modele||''}</td>
         <td class="mono" style="font-size:11px">${b.anneMES ? b.anneMES.substring(0,4) : '—'}</td>
         <td class="mono" style="font-size:11px;${b.revisionDate&&b.revisionDate<=today()?'color:var(--orange)':''}">${b.revisionDate||'—'}</td>
-        <td class="mono" style="font-size:11px;${ctStyle}">${b.ct||'—'}</td>
+        <td class="mono" style="font-size:11px;${ctStyle}">${fmtDateFR(b.ct)||'—'}</td>
         <td class="mono">${b.capa||'—'}</td>
         <td style="font-size:11px">${b.energie||'—'}</td>
         <td class="mono" style="color:var(--text2)">${b.prixAchat ? fmt(b.prixAchat) : '—'}</td>
@@ -2231,8 +2483,8 @@ function renderParc() {
         <td class="mono">${fmtNum(b.km)}</td>
         <td class="mono" style="color:var(--text3)">${b.kmDepart?fmtNum(b.kmDepart):'—'}</td>
         <td class="mono">${b.diffKm?fmtNum(b.diffKm):'—'}</td>
-        <td class="mono" style="font-size:10px">${b.ct||'—'}</td>
-        <td class="mono" style="font-size:10px">${b.revisionDate||'—'}</td>
+        <td class="mono" style="font-size:10px">${fmtDateFR(b.ct)||'—'}</td>
+        <td class="mono" style="font-size:10px">${fmtDateFR(b.revisionDate)||'—'}</td>
         <td class="mono" style="color:${(b.etatTech||0)>=80?'var(--green)':(b.etatTech||0)>=60?'var(--yellow)':'var(--red)'}">${b.etatTech||'—'}</td>
         <td class="mono" style="color:${(b.etatInt||0)>=80?'var(--green)':(b.etatInt||0)>=60?'var(--yellow)':'var(--red)'}">${b.etatInt||'—'}</td>
         <td>${yn(b.balisePrio)}</td><td>${yn(b.selfService)}</td><td>${yn(b.boutonsArret)}</td>
@@ -2281,8 +2533,8 @@ function showBusDetail(id) {
         ${row('KM actuel', fmtNum(b.km)+' km')}
         ${row('KM parcourus', fmtNum(kmParcourus)+' km')}
         ${coefUsure ? row('Coût au km', coefUsure+' €/km') : ''}
-        ${row('Mise en service', b.anneMES)} ${row('Révision prévue', b.revisionDate)}
-        ${row('Prochain CT', b.ct)} ${row('Garantie', b.garantie)}
+        ${row('Mise en service', fmtDateFR(b.anneMES))} ${row('Révision prévue', fmtDateFR(b.revisionDate))}
+        ${row('Prochain CT', fmtDateFR(b.ct))} ${row('Garantie', fmtDateFR(b.garantie))}
         ${row('Vente possible le', b.reventeDate ? b.reventeDate+(venteOk?' <b style="color:var(--green)">✅ DISPONIBLE</b>':' ⏳') : '')}
         ${row('Argus', b.argus ? fmt(b.argus) : '')}
       </div>
@@ -2446,7 +2698,9 @@ function selectCsvType(el, type) {
   currentCsvType = type;
   document.querySelectorAll('#csv-type-tabs .tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
-  document.getElementById('csv-type-info').innerHTML = CSV_INFO[type];
+  const last = state.lastImport && state.lastImport[type];
+  const lastStr = last ? `<span style="float:right;color:var(--green)">✓ Dernière MAJ : ${last}</span>` : '<span style="float:right;color:var(--text3)">Jamais importé</span>';
+  document.getElementById('csv-type-info').innerHTML = CSV_INFO[type] + '<br>' + lastStr;
   document.getElementById('csv-preview-zone').style.display = 'none';
   document.getElementById('csv-paste-text').value = '';
   csvRawContent = '';
@@ -2498,6 +2752,14 @@ function parseDateFR(d) {
   if (!d) return '';
   const p = d.split('/');
   if (p.length === 3) return `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
+  return d;
+}
+
+// Formate une date ISO (YYYY-MM-DD) en JJ/MM/AAAA
+function fmtDateFR(d) {
+  if (!d) return '—';
+  const m = d.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
   return d;
 }
 
@@ -2834,12 +3096,12 @@ function csvPreview() {
     const dates = [...new Set(stats.map(s=>s.date))];
     const gains = stats.reduce((a,s)=>a+s.gains,0);
     info = `✅ ${stats.length} entrées · ${dates.length} jours · Gains : <b style="color:var(--green)">${fmt(gains)}</b>`;
-    html = stats.slice(0,10).map(s=>`<div style="padding:2px 0;border-bottom:1px solid var(--border)">${s.date} · ${s.ligne} · ${s.creneau} · ${s.tickets} tkts · ${fmt(s.gains)}</div>`).join('');
+    html = stats.slice(0,10).map(s=>`<div style="padding:2px 0;border-bottom:1px solid var(--border)">${fmtDateFR(s.date)} · ${s.ligne} · ${s.creneau} · ${s.tickets} tkts · ${fmt(s.gains)}</div>`).join('');
   } else if (currentCsvType === 'salaries') {
     const pers = parserSalaries(rows);
     const fco = pers.filter(p=>p.statut==='FCO requise'||p.statut==='FCO bientôt').length;
     info = `✅ ${pers.length} personnes · <span style="color:var(--yellow)">${fco} FCO à renouveler</span>`;
-    html = pers.slice(0,15).map(p=>`<div style="padding:2px 0;border-bottom:1px solid var(--border)">${p.matricule} · <b>${p.nom}</b> · ${p.poste} · FCO ${p.fco||'?'} · <span style="color:${p.statut==='FCO requise'?'var(--red)':p.statut==='FCO bientôt'?'var(--yellow)':'var(--green)'}">${p.statut}</span></div>`).join('');
+    html = pers.slice(0,15).map(p=>`<div style="padding:2px 0;border-bottom:1px solid var(--border)">${p.matricule} · <b>${p.nom}</b> · ${p.poste} · FCO ${fmtDateFR(p.fco)||'?'} · <span style="color:${p.statut==='FCO requise'?'var(--red)':p.statut==='FCO bientôt'?'var(--yellow)':'var(--green)'}">${p.statut}</span></div>`).join('');
   } else if (currentCsvType === 'compta' || currentCsvType === 'lastmonth') {
     const ops = parserCompta(rows);
     const dep = ops.filter(o=>o.type==='depense').reduce((a,o)=>a+o.montant,0);
@@ -2847,7 +3109,7 @@ function csvPreview() {
     const mois = ops[0]?.date?.substring(0,7) || '?';
     const label2 = currentCsvType === 'lastmonth' ? 'Fin de mois' : 'Mois en cours';
     info = `✅ ${ops.length} opérations (${label2} — ${mois}) · Dép. <span style="color:var(--red)">${fmt(dep)}</span> · Rev. <span style="color:var(--green)">${fmt(rev)}</span>`;
-    html = ops.slice(0,10).map(o=>`<div style="padding:2px 0;border-bottom:1px solid var(--border)">${o.date} · ${o.cat} · ${o.desc.substring(0,45)} · <span style="color:${o.type==='recette'?'var(--green)':'var(--red)'}">${o.type==='recette'?'+':'−'}${fmt(o.montant)}</span></div>`).join('');
+    html = ops.slice(0,10).map(o=>`<div style="padding:2px 0;border-bottom:1px solid var(--border)">${fmtDateFR(o.date)} · ${o.cat} · ${o.desc.substring(0,45)} · <span style="color:${o.type==='recette'?'var(--green)':'var(--red)'}">${o.type==='recette'?'+':'−'}${fmt(o.montant)}</span></div>`).join('');
   }
 
   label.innerHTML = info;
@@ -2859,6 +3121,9 @@ function csvImporter() {
   const texte = document.getElementById('csv-paste-text').value || csvRawContent;
   if (!texte.trim()) { toastMsg('Aucun contenu CSV', 'error'); return; }
   const rows = parseCSV(texte);
+  const nowStr = new Date().toLocaleString('fr-FR');
+
+  if (!state.lastImport) state.lastImport = {};
 
   if (currentCsvType === 'bus') {
     const buses = parserBus(rows);
@@ -2876,6 +3141,7 @@ function csvImporter() {
         ajouts++;
       }
     });
+    state.lastImport.bus = nowStr;
     journalLog(`MAJ CSV bus : ${maj} MàJ · ${ajouts} nouveaux`, 'ok');
     saveState(); renderParc(); renderDashboard(); updateBusSelects();
     toastMsg(`✅ ${maj} mis à jour · ${ajouts} ajoutés`, 'success');
@@ -2884,6 +3150,7 @@ function csvImporter() {
     const aff = parserAffects(rows);
     if (!aff.length) { toastMsg('Aucune affectation trouvée', 'error'); return; }
     state.affectations = aff;
+    state.lastImport.affects = nowStr;
     journalLog(`MAJ CSV affectations : ${aff.length} lignes`, 'ok');
     saveState(); if (document.getElementById('page-affectations').classList.contains('active')) renderAffectations();
     toastMsg(`✅ ${aff.length} affectations importées`, 'success');
@@ -2895,6 +3162,7 @@ function csvImporter() {
     const existKeys = new Set(state.statsLignes.map(s=>`${s.date}_${s.ligne}_${s.creneau}`));
     const nouvelles = stats.filter(s=>!existKeys.has(`${s.date}_${s.ligne}_${s.creneau}`));
     state.statsLignes = [...state.statsLignes, ...nouvelles];
+    state.lastImport.stats = nowStr;
     journalLog(`MAJ CSV stats : ${nouvelles.length} nouvelles entrées`, 'ok');
     saveState(); if (document.getElementById('page-lignes').classList.contains('active')) renderLignes();
     toastMsg(`✅ ${nouvelles.length} nouvelles entrées stats`, 'success');
@@ -2903,6 +3171,7 @@ function csvImporter() {
     const pers = parserSalaries(rows);
     if (!pers.length) { toastMsg('Aucun personnel trouvé', 'error'); return; }
     state.personnel = pers;
+    state.lastImport.salaries = nowStr;
     journalLog(`MAJ CSV personnel : ${pers.length} personnes`, 'ok');
     saveState(); renderDashboard();
     if (document.getElementById('page-personnel').classList.contains('active')) renderPersonnel();
@@ -2915,13 +3184,13 @@ function csvImporter() {
     if (!mois) { toastMsg('Impossible de détecter le mois', 'error'); return; }
     const nb = importerOpsMois(mois, ops);
     if (currentCsvType === 'compta') {
-      // Lignes du 01 potentiellement pour le mois précédent
       const opsJ1 = ops.filter(o => o.date && o.date.endsWith('-01'));
       if (opsJ1.length) {
         const dp = new Date(mois + '-01'); dp.setMonth(dp.getMonth()-1);
         importerOpsMois(dp.toISOString().substring(0,7), opsJ1);
       }
     }
+    state.lastImport[currentCsvType] = nowStr;
     journalLog(`MAJ CSV compta ${mois} : ${nb} opérations`, 'ok');
     saveState(); renderDashboard();
     if (document.getElementById('page-compta').classList.contains('active')) renderCompta();
@@ -3006,7 +3275,7 @@ function renderMaintenance() {
   tbody.innerHTML = state.maintenance.map((m,i) => `<tr>
     <td>${m.bus}</td>
     <td><span class="badge badge-yellow">${m.type}</span></td>
-    <td class="mono">${m.depuis}</td>
+    <td class="mono">${fmtDateFR(m.depuis)}</td>
     <td>${m.duree} j</td>
     <td class="mono">${m.cout ? fmt(m.cout) : '—'}</td>
     <td>${getStatusBadge(m.statut)}</td>
@@ -3019,7 +3288,7 @@ function renderMaintenance() {
   const ctbody = document.getElementById('ct-tbody');
   ctbody.innerHTML = state.ct.map((c,i) => `<tr>
     <td>${c.bus}</td>
-    <td class="mono">${c.date}</td>
+    <td class="mono">${fmtDateFR(c.date)}</td>
     <td class="mono">${fmtNum(c.km)} km</td>
     <td>${c.resultat ? getStatusBadge(c.resultat) : ctStatus(c.date)}</td>
   </tr>`).join('') || '<tr><td colspan="4" style="color:var(--text3);text-align:center;padding:16px">Aucun CT enregistré</td></tr>';
@@ -3159,7 +3428,7 @@ function renderPersonnel() {
   document.getElementById('fco-list').innerHTML = fcoList.map(p => `
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:6px 8px;background:rgba(245,158,11,0.06);border-radius:4px;flex-wrap:wrap">
       <span>👤 <b>${p.nom}</b> <span style="color:var(--text3);font-size:11px">${p.matricule}</span></span>
-      <span style="font-size:11px;color:var(--text3)">FCO le : <b>${p.fco||'?'}</b></span>
+      <span style="font-size:11px;color:var(--text3)">FCO le : <b>${fmtDateFR(p.fco)||'?'}</b></span>
       <span class="badge ${p.statut==='FCO requise'?'badge-red':'badge-yellow'}" style="margin-left:4px">${p.statut}</span>
     </div>`).join('');
 
@@ -3176,7 +3445,7 @@ function renderPersonnel() {
       <td style="font-size:11px">${p.poste||p.permis||'—'}</td>
       <td class="mono">${p.salaire?fmt(p.salaire):'—'}</td>
       <td class="mono" style="color:${satColor}">${p.satisfaction?p.satisfaction+'/20':'—'}</td>
-      <td class="mono" style="color:${fcoColor}">${p.fco||'—'}</td>
+      <td class="mono" style="color:${fcoColor}">${fmtDateFR(p.fco)||'—'}</td>
       <td>${getStatusBadge(p.statut)}</td>
       <td>${p.etat||'—'}</td>
     </tr>`;
@@ -3278,7 +3547,7 @@ function renderLignes() {
   const histTbody = document.getElementById('stats-hist-tbody');
   if (histTbody) {
     histTbody.innerHTML = [...state.statsLignes].reverse().slice(0,30).map(s => `<tr>
-      <td class="mono">${s.date}</td>
+      <td class="mono">${fmtDateFR(s.date)}</td>
       <td class="mono"><b>${s.ligne}</b></td>
       <td>${s.creneau}</td>
       <td class="mono">${fmtNum(s.tickets)}</td>
@@ -3521,8 +3790,17 @@ let comptaMoisFiltre = null; // null = tous, 'YYYY-MM' = un mois
 
 function setComptaMoisFiltre(mois) {
   comptaMoisFiltre = mois;
-  const label = document.getElementById('compta-mois-label');
-  if (label) label.textContent = mois ? mois : 'tous les mois';
+  // Synchronise les selects du tableau opérations
+  const selM = document.getElementById('compta-filtre-mois');
+  const selA = document.getElementById('compta-filtre-annee');
+  if (mois && selM && selA) {
+    selM.value = mois.substring(5, 7);
+    selA.value = mois.substring(0, 4);
+    selM.dataset.initialized = '1';
+  } else if (selM && selA) {
+    selM.value = '';
+    selA.value = '';
+  }
   renderComptaTableau();
 }
 
@@ -3532,7 +3810,7 @@ function renderCompta() {
   const recettes = allOpsArr.filter(o=>o.type==='recette').reduce((s,o)=>s+o.montant,0);
   const depenses = allOpsArr.filter(o=>o.type==='depense').reduce((s,o)=>s+o.montant,0);
   const benefice = recettes - depenses;
-  const solde    = argentDepart + benefice;
+  const solde    = argentDepart + benefice + ((state.config && state.config.ecartFinancier) || 0);
 
   document.getElementById('compta-recettes').textContent = fmt(recettes);
   document.getElementById('compta-depenses').textContent = fmt(depenses);
@@ -3542,47 +3820,73 @@ function renderCompta() {
   const topbarSolde = document.getElementById('topbar-solde-val');
   if (topbarSolde) { topbarSolde.textContent = fmt(solde); topbarSolde.style.color = solde >= 0 ? 'var(--green)' : 'var(--red)'; }
 
-  // Répartition dépenses globale
-  const cats = {};
-  allOpsArr.filter(o=>o.type==='depense').forEach(o => { cats[o.cat] = (cats[o.cat]||0) + o.montant; });
+  // Répartition dépenses
+  const catsDep = {};
+  allOpsArr.filter(o=>o.type==='depense').forEach(o => { catsDep[o.cat] = (catsDep[o.cat]||0) + o.montant; });
   let rep = '';
-  Object.entries(cats).sort((a,b)=>b[1]-a[1]).forEach(([cat, val]) => {
+  Object.entries(catsDep).sort((a,b)=>b[1]-a[1]).forEach(([cat, val]) => {
     const pct = depenses > 0 ? Math.round(val/depenses*100) : 0;
     rep += `<div class="gauge-row"><div class="gauge-label" style="font-size:11px">${cat}</div><div class="gauge-bar"><div class="gauge-fill" style="width:${pct}%;background:var(--accent2)"></div></div><div class="gauge-val">${pct}%</div></div>`;
   });
-  document.getElementById('compta-repartition').innerHTML = rep || '<div style="color:var(--text3)">Aucune dépense.</div>';
+  const elRep = document.getElementById('compta-repartition');
+  if (elRep) elRep.innerHTML = rep || '<div style="color:var(--text3)">Aucune dépense.</div>';
 
-  // Selector années
+  // Répartition recettes
+  const catsRec = {};
+  allOpsArr.filter(o=>o.type==='recette').forEach(o => { catsRec[o.cat] = (catsRec[o.cat]||0) + o.montant; });
+  let repRec = '';
+  Object.entries(catsRec).sort((a,b)=>b[1]-a[1]).forEach(([cat, val]) => {
+    const pct = recettes > 0 ? Math.round(val/recettes*100) : 0;
+    repRec += `<div class="gauge-row"><div class="gauge-label" style="font-size:11px">${cat}</div><div class="gauge-bar"><div class="gauge-fill" style="width:${pct}%;background:var(--green)"></div></div><div class="gauge-val">${pct}%</div></div>`;
+  });
+  const elRepRec = document.getElementById('compta-repartition-rec');
+  if (elRepRec) elRepRec.innerHTML = repRec || '<div style="color:var(--text3)">Aucune recette.</div>';
+
+  // Selector années (graphique)
   const annees = [...new Set(Object.keys(state.comptaMois).map(m => m.substring(0,4)))].sort().reverse();
   const selAnnee = document.getElementById('compta-annee-select');
-  const anneeActuelle = selAnnee.value || (annees[0] || new Date().getFullYear().toString());
-  selAnnee.innerHTML = annees.map(a => `<option value="${a}" ${a===anneeActuelle?'selected':''}>${a}</option>`).join('');
+  if (selAnnee) {
+    const anneeActuelle = selAnnee.value || (annees[0] || new Date().getFullYear().toString());
+    selAnnee.innerHTML = annees.map(a => `<option value="${a}" ${a===anneeActuelle?'selected':''}>${a}</option>`).join('');
 
-  // Tableau par mois pour l'année sélectionnée
-  const moisDeLannee = Object.keys(state.comptaMois)
-    .filter(m => m.startsWith(anneeActuelle))
-    .sort().reverse();
+    // Tableau par mois pour l'année sélectionnée
+    const moisDeLannee = Object.keys(state.comptaMois).filter(m => m.startsWith(anneeActuelle)).sort().reverse();
+    const tbody = document.getElementById('compta-mois-tbody');
+    if (tbody) tbody.innerHTML = moisDeLannee.map(m => {
+      const ops = state.comptaMois[m];
+      const rec = ops.filter(o=>o.type==='recette').reduce((s,o)=>s+o.montant,0);
+      const dep = ops.filter(o=>o.type==='depense').reduce((s,o)=>s+o.montant,0);
+      const sol = rec - dep;
+      const label = new Date(m+'-01').toLocaleDateString('fr-FR', {month:'long', year:'numeric'});
+      const isSelected = comptaMoisFiltre === m;
+      return `<tr style="${isSelected?'background:rgba(0,212,255,0.08)':''};cursor:pointer" onclick="setComptaMoisFiltre('${m}')">
+        <td><b style="color:var(--accent)">${label}</b></td>
+        <td class="mono" style="color:var(--green)">${fmt(rec)}</td>
+        <td class="mono" style="color:var(--red)">${fmt(dep)}</td>
+        <td class="mono" style="color:${sol>=0?'var(--green)':'var(--red)'};font-weight:700">${sol>=0?'+':''}${fmt(sol)}</td>
+        <td class="mono" style="color:var(--text3)">${ops.length}</td>
+        <td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();if(confirm('Supprimer tout le mois ${m} ?')){delete state.comptaMois['${m}'];saveState();renderCompta();}">🗑</button></td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="6" style="color:var(--text3);text-align:center;padding:16px">Aucune donnée pour cette année</td></tr>';
 
-  const tbody = document.getElementById('compta-mois-tbody');
-  tbody.innerHTML = moisDeLannee.map(m => {
-    const ops = state.comptaMois[m];
-    const rec = ops.filter(o=>o.type==='recette').reduce((s,o)=>s+o.montant,0);
-    const dep = ops.filter(o=>o.type==='depense').reduce((s,o)=>s+o.montant,0);
-    const sol = rec - dep;
-    const label = new Date(m+'-01').toLocaleDateString('fr-FR', {month:'long', year:'numeric'});
-    const isSelected = comptaMoisFiltre === m;
-    return `<tr style="${isSelected?'background:rgba(0,212,255,0.08)':''}" onclick="setComptaMoisFiltre('${m}')" style="cursor:pointer">
-      <td><b style="color:var(--accent)">${label}</b></td>
-      <td class="mono" style="color:var(--green)">${fmt(rec)}</td>
-      <td class="mono" style="color:var(--red)">${fmt(dep)}</td>
-      <td class="mono" style="color:${sol>=0?'var(--green)':'var(--red)'};font-weight:700">${sol>=0?'+':''}${fmt(sol)}</td>
-      <td class="mono" style="color:var(--text3)">${ops.length}</td>
-      <td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();if(confirm('Supprimer tout le mois ${m} ?')){delete state.comptaMois['${m}'];saveState();renderCompta();}">🗑</button></td>
-    </tr>`;
-  }).join('') || '<tr><td colspan="6" style="color:var(--text3);text-align:center;padding:16px">Aucune donnée pour cette année</td></tr>';
+    renderComptaChart(anneeActuelle);
+  }
 
-  // Graphique évolution solde annuel
-  renderComptaChart(anneeActuelle);
+  // Populate le filtre année du tableau opérations
+  const selFiltreAnnee = document.getElementById('compta-filtre-annee');
+  if (selFiltreAnnee) {
+    const curAnnee = new Date().getFullYear().toString();
+    const prevVal = selFiltreAnnee.value || curAnnee;
+    selFiltreAnnee.innerHTML = '<option value="">Toutes années</option>' +
+      annees.map(a => `<option value="${a}" ${a===prevVal?'selected':''}>${a}</option>`).join('');
+    // Init mois courant par défaut si pas encore sélectionné
+    const selFiltreMois = document.getElementById('compta-filtre-mois');
+    if (selFiltreMois && !selFiltreMois.dataset.initialized) {
+      selFiltreMois.value = String(new Date().getMonth()+1).padStart(2,'0');
+      selFiltreMois.dataset.initialized = '1';
+    }
+  }
+
   renderComptaTableau();
 }
 
@@ -3658,17 +3962,36 @@ function renderComptaChart(annee) {
 
 function renderComptaTableau() {
   const typeFiltre = (document.getElementById('compta-type-filtre')||{}).value || '';
-  let ops = comptaMoisFiltre ? (state.comptaMois[comptaMoisFiltre] || []) : allOps();
+
+  // Filtre mois/année via les selects dédiés
+  const selM = document.getElementById('compta-filtre-mois');
+  const selA = document.getElementById('compta-filtre-annee');
+  const moisVal  = selM ? selM.value : '';
+  const anneeVal = selA ? selA.value : '';
+  const moisKey  = (anneeVal && moisVal) ? `${anneeVal}-${moisVal}` : null;
+
+  let ops = moisKey ? (state.comptaMois[moisKey] || []) : (comptaMoisFiltre ? (state.comptaMois[comptaMoisFiltre] || []) : allOps());
   if (typeFiltre) ops = ops.filter(o => o.type === typeFiltre);
   const sorted = sortData([...ops], 'compta', 'date').reverse();
   const tbody = document.getElementById('compta-tbody');
   tbody.innerHTML = sorted.map(o => `<tr>
-    <td class="mono">${o.date}</td>
-    <td>${o.type==='recette'?'<span class="badge badge-green">Recette</span>':'<span class="badge badge-red">Dépense</span>'}</td>
+    <td class="mono">${fmtDateFR(o.date)}</td>
     <td><span class="badge badge-gray">${o.cat}</span></td>
     <td style="font-size:11px">${o.desc}</td>
-    <td class="mono" style="color:${o.type==='recette'?'var(--green)':'var(--red)'}">${o.type==='recette'?'+':'−'}${fmt(o.montant)}</td>
+    <td class="mono" style="color:var(--green)">${o.type==='recette' ? '+'+fmt(o.montant) : '—'}</td>
+    <td class="mono" style="color:var(--red)">${o.type==='depense' ? '−'+fmt(o.montant) : '—'}</td>
   </tr>`).join('') || '<tr><td colspan="5" style="color:var(--text3);text-align:center;padding:16px">Aucune opération</td></tr>';
+}
+
+function resetFiltreCompta() {
+  const selM = document.getElementById('compta-filtre-mois');
+  const selA = document.getElementById('compta-filtre-annee');
+  const selT = document.getElementById('compta-type-filtre');
+  if (selM) { selM.value = ''; delete selM.dataset.initialized; }
+  if (selA) selA.value = '';
+  if (selT) selT.value = '';
+  comptaMoisFiltre = null;
+  renderComptaTableau();
 }
 
 function ajouterOperation() {
@@ -3811,8 +4134,8 @@ function renderPubTableau() {
       '<td><b>' + c.annonceur + '</b></td>' +
       '<td style="font-size:11px">' + (c.support||'—') + '</td>' +
       '<td class="mono">' + (c.nb||'—') + '</td>' +
-      '<td class="mono" style="font-size:11px">' + (c.debut||'—') + '</td>' +
-      '<td class="mono" style="font-size:11px;' + finColor + '">' + (c.fin||'—') + (diff>=0&&diff<=7?' <span style="font-size:9px">(J-'+diff+')</span>':'') + '</td>' +
+      '<td class="mono" style="font-size:11px">' + fmtDateFR(c.debut||'') + '</td>' +
+      '<td class="mono" style="font-size:11px;' + finColor + '">' + fmtDateFR(c.fin||'') + (diff>=0&&diff<=7?' <span style="font-size:9px">(J-'+diff+')</span>':'') + '</td>' +
       '<td class="mono" style="color:var(--green);font-weight:600">' + fmt(c.gains) + '</td>' +
       '<td class="mono" style="font-size:11px">' + (c.taux ? c.taux.toFixed(1)+'%' : '—') + '</td>' +
       '<td style="font-size:10px;color:var(--text3)">' + moisFin + '</td>' +
@@ -3871,7 +4194,7 @@ function renderAchats() {
     <td class="mono"><b>${a.idJeu||'—'}</b></td>
     <td class="mono" style="color:var(--red)">${a.prix ? fmt(a.prix) : '—'}</td>
     <td class="mono">${a.km ? fmtNum(a.km)+' km' : '—'}</td>
-    <td class="mono" style="color:var(--text3)">${a.date||'—'}</td>
+    <td class="mono" style="color:var(--text3)">${fmtDateFR(a.date)||'—'}</td>
     <td><button class="btn btn-danger btn-xs" onclick="supprimerAchat(${a.id})">✕</button></td>
   </tr>`).join('') || '<tr><td colspan="5" style="color:var(--text3);text-align:center;padding:16px">Aucun achat enregistré</td></tr>';
 
@@ -4076,7 +4399,7 @@ function renderGasoil() {
     const dcolor = e.diesel ? (e.diesel === recordDieselMin ? 'color:var(--green);font-weight:700' : e.diesel === recordDieselMax ? 'color:var(--red)' : '') : '';
     const gcolor = e.gnv    ? (e.gnv === recordGnvMin    ? 'color:var(--green);font-weight:700' : e.gnv === recordGnvMax    ? 'color:var(--red)' : '') : '';
     return `<tr>
-      <td class="mono">${e.date}</td>
+      <td class="mono">${fmtDateFR(e.date)}</td>
       <td class="mono" style="${dcolor}">${e.diesel ? e.diesel.toFixed(3)+' €' : '—'}</td>
       <td class="mono" style="${gcolor}">${e.gnv    ? e.gnv.toFixed(3)+' €'    : '—'}</td>
       <td><button class="btn btn-danger btn-xs" onclick="supprimerPrixCarburant(${e.id})">✕</button></td>
@@ -4212,6 +4535,9 @@ setInterval(detectExtension, 2000);
 function importerCSVDirect(type, contenu) {
   if (!contenu || !contenu.trim()) return;
   const rows = parseCSV(contenu);
+  if (!state.lastImport) state.lastImport = {};
+  const nowStr = new Date().toLocaleString('fr-FR');
+
   if (type === 'bus') {
     const buses = parserBus(rows);
     if (!buses.length) { toastMsg('bus.csv : aucun bus trouvé', 'error'); return; }
@@ -4219,7 +4545,6 @@ function importerCSVDirect(type, contenu) {
     buses.forEach(b => {
       const exist = state.bus.find(x => x.nom === b.nom || (b.idJeu && x.idJeu === b.idJeu));
       if (exist) {
-        // Mise à jour de tous les champs CSV, en préservant dateAchat si déjà renseignée
         const dateAchatSaved = exist.dateAchat;
         Object.assign(exist, b);
         if (dateAchatSaved && !exist.dateAchat) exist.dateAchat = dateAchatSaved;
@@ -4229,6 +4554,7 @@ function importerCSVDirect(type, contenu) {
         ajouts++;
       }
     });
+    state.lastImport.bus = nowStr;
     journalLog(`MAJ bus.csv : ${maj} MàJ · ${ajouts} nouveaux`, 'ok');
     saveState(); renderParc(); renderDashboard(); updateBusSelects();
     toastMsg(`🚍 ${maj} bus mis à jour · ${ajouts} ajoutés`, 'success');
@@ -4237,6 +4563,7 @@ function importerCSVDirect(type, contenu) {
     const aff = parserAffects(rows);
     if (!aff.length) { toastMsg('affects.csv : aucune affectation', 'error'); return; }
     state.affectations = aff;
+    state.lastImport.affects = nowStr;
     journalLog(`MAJ affects.csv : ${aff.length} lignes`, 'ok');
     saveState(); if (document.getElementById('page-affectations').classList.contains('active')) renderAffectations();
     toastMsg(`📋 ${aff.length} affectations importées`, 'success');
@@ -4248,6 +4575,7 @@ function importerCSVDirect(type, contenu) {
     const existKeys = new Set(state.statsLignes.map(s=>`${s.date}_${s.ligne}_${s.creneau}`));
     const nouvelles = stats.filter(s => !existKeys.has(`${s.date}_${s.ligne}_${s.creneau}`));
     state.statsLignes = [...state.statsLignes, ...nouvelles];
+    state.lastImport.stats = nowStr;
     journalLog(`MAJ statslignes.csv : ${nouvelles.length} nouvelles entrées`, 'ok');
     saveState(); if (document.getElementById('page-lignes').classList.contains('active')) renderLignes();
     toastMsg(`📊 ${nouvelles.length} nouvelles entrées stats`, 'success');
@@ -4256,6 +4584,7 @@ function importerCSVDirect(type, contenu) {
     const pers = parserSalaries(rows);
     if (!pers.length) { toastMsg('salaries.csv : aucun personnel', 'error'); return; }
     state.personnel = pers;
+    state.lastImport.salaries = nowStr;
     journalLog(`MAJ salaries.csv : ${pers.length} personnes`, 'ok');
     saveState(); renderDashboard();
     if (document.getElementById('page-personnel').classList.contains('active')) renderPersonnel();
@@ -4264,28 +4593,24 @@ function importerCSVDirect(type, contenu) {
   } else if (type === 'compta' || type === 'lastmonth') {
     const ops = parserCompta(rows);
     if (!ops.length) { toastMsg('compta.csv : aucune opération', 'error'); return; }
-
-    // Détecter le mois des données (depuis la première op)
     const mois = ops[0].date ? ops[0].date.substring(0, 7) : null;
     if (!mois) { toastMsg('Impossible de détecter le mois', 'error'); return; }
 
     let nbNouvelles;
     if (type === 'compta') {
-      // Mois en cours : fusionner sans doublon (certaines lignes du 01 comptent pour le mois précédent)
       nbNouvelles = importerOpsMois(mois, ops);
-      // Vérifier aussi si certaines ops du 01 appartiennent au mois précédent
       const opsJ1 = ops.filter(o => o.date && o.date.endsWith('-01'));
       if (opsJ1.length) {
         const moisPrec = new Date(mois + '-01');
         moisPrec.setMonth(moisPrec.getMonth() - 1);
-        const moisPrecStr = moisPrec.toISOString().substring(0, 7);
-        importerOpsMois(moisPrecStr, opsJ1); // ajout silencieux au mois précédent
+        importerOpsMois(moisPrec.toISOString().substring(0, 7), opsJ1);
       }
+      state.lastImport.compta = nowStr;
       journalLog(`MAJ compta ${mois} : ${nbNouvelles} nouvelles opérations`, 'ok');
       toastMsg(`💰 ${nbNouvelles} opérations importées (${mois})`, 'success');
     } else {
-      // Mois précédent (lastmonth) : ajout sans écraser
       nbNouvelles = importerOpsMois(mois, ops);
+      state.lastImport.lastmonth = nowStr;
       journalLog(`MAJ compta fin de mois ${mois} : ${nbNouvelles} opérations ajoutées`, 'ok');
       toastMsg(`💰 FDM ${mois} : ${nbNouvelles} opérations ajoutées`, 'success');
     }
@@ -4354,12 +4679,21 @@ function fetchViaExtension() {
 // ═══════════════════════════════════════════════════════
 function renderConfig() {
   const cfg = state.config || { argentDepart: 0 };
-  document.getElementById('cfg-argent-depart').value = cfg.argentDepart || 0;
-  document.getElementById('cfg-argent-actuel').textContent = fmt(cfg.argentDepart || 0);
+  const inpDepart = document.getElementById('cfg-argent-depart');
+  if (inpDepart) inpDepart.value = cfg.argentDepart || 0;
+  const elActuel = document.getElementById('cfg-argent-actuel');
+  if (elActuel) elActuel.textContent = fmt(cfg.argentDepart || 0);
+
+  const ecart = cfg.ecartFinancier || 0;
+  const elEcart = document.getElementById('cfg-ecart-actuel');
+  if (elEcart) {
+    elEcart.textContent = (ecart >= 0 ? '+' : '') + fmt(ecart);
+    elEcart.style.color = ecart > 0 ? 'var(--green)' : ecart < 0 ? 'var(--red)' : 'var(--accent)';
+  }
 
   const argentDepart = cfg.argentDepart || 0;
   const mouvements   = allOps().reduce((a,o) => o.type === 'recette' ? a + o.montant : a - o.montant, 0);
-  const solde        = argentDepart + mouvements;
+  const solde        = argentDepart + mouvements + ecart;
 
   document.getElementById('cfg-resume').innerHTML = `
     <div class="gauge-row"><div class="gauge-label">🚍 Bus dans le parc</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--accent)"></div></div><div class="gauge-val">${state.bus.length}</div></div>
@@ -4372,10 +4706,44 @@ function renderConfig() {
       <div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:${solde>=0?'var(--green)':'var(--red)'}">
         ${fmt(solde)}
       </div>
-      <div style="font-size:10px;color:var(--text3);margin-top:4px">${fmt(argentDepart)} départ + ${fmt(mouvements)} mouvements</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px">${fmt(argentDepart)} départ + ${fmt(mouvements)} mouvements${ecart!==0?' + <span style="color:'+(ecart>0?'var(--green)':'var(--red)')+'">'+fmt(ecart)+' correction</span>':''}</div>
     </div>
   `;
 }
+
+function appliquerEcart() {
+  const input = document.getElementById('cfg-ecart');
+  const val = parseFloat(input ? input.value : 0);
+  if (isNaN(val) || val === 0) { toastMsg('Saisis un nombre non nul', 'error'); return; }
+  if (!state.config) state.config = {};
+  state.config.ecartFinancier = (state.config.ecartFinancier || 0) + val;
+  if (input) input.value = '';
+  saveState();
+  const el = document.getElementById('cfg-ecart-actuel');
+  if (el) {
+    const e = state.config.ecartFinancier;
+    el.textContent = (e >= 0 ? '+' : '') + fmt(e);
+    el.style.color = e > 0 ? 'var(--green)' : e < 0 ? 'var(--red)' : 'var(--accent)';
+  }
+  renderDashboard();
+  if (document.getElementById('page-compta') && document.getElementById('page-compta').classList.contains('active')) renderCompta();
+  const signe = val >= 0 ? '+' : '';
+  toastMsg(`Correction appliquée : ${signe}${fmt(val)} → écart total ${fmt(state.config.ecartFinancier)}`, 'success');
+  journalLog(`Correction écart financier : ${signe}${fmt(val)}`, 'info');
+}
+
+function resetEcart() {
+  if (!state.config) state.config = {};
+  state.config.ecartFinancier = 0;
+  saveState();
+  const el = document.getElementById('cfg-ecart-actuel');
+  if (el) { el.textContent = '0 €'; el.style.color = 'var(--accent)'; }
+  renderDashboard();
+  if (document.getElementById('page-compta') && document.getElementById('page-compta').classList.contains('active')) renderCompta();
+  toastMsg('Correction d\'écart réinitialisée à 0 €', 'success');
+}
+
+
 
 function sauvegarderConfig() {
   const val = parseFloat(document.getElementById('cfg-argent-depart').value) || 0;
@@ -4394,18 +4762,184 @@ function resetSection(section) {
     compta:       'toutes les opérations comptables',
     personnel:    'tout le personnel',
     statsLignes:  'toutes les statistiques de lignes',
-    affectations: 'toutes les affectations'
+    affectations: 'toutes les affectations',
+    carburant:    'tout l\'historique carburant'
   };
   if (!confirm(`Vider ${labels[section]||section} ?\nCette action est irréversible.`)) return;
   if (section === 'statsLignes') state.statsLignes = [];
+  else if (section === 'compta') { state.compta = []; state.comptaMois = {}; }
   else state[section] = [];
   saveState();
   renderDashboard();
   renderConfig();
-  const renders = { bus: renderParc, compta: renderCompta, personnel: renderPersonnel, affectations: renderAffectations };
+  renderResetStats();
+  const renders = { bus: renderParc, personnel: renderPersonnel, affectations: renderAffectations };
   if (renders[section]) renders[section]();
   toastMsg(`${labels[section]||section} vidé ✓`, 'info');
 }
+
+// ── MODE CONFIGURATION ──────────────────────────────────
+let modeConfig = false;
+
+function toggleModeConfig() {
+  modeConfig = !modeConfig;
+  document.body.classList.toggle('mode-config', modeConfig);
+
+  const menuNormal = document.getElementById('sidebar-menu-normal');
+  const menuConfig = document.getElementById('sidebar-menu-config');
+  const logoNormal = document.getElementById('sidebar-logo-normal');
+  const logoConfig = document.getElementById('sidebar-logo-config');
+
+  menuNormal.style.display = modeConfig ? 'none' : 'flex';
+  menuConfig.style.display = modeConfig ? 'flex' : 'none';
+  logoNormal.style.display = modeConfig ? 'none' : 'block';
+  logoConfig.style.display = modeConfig ? 'block' : 'none';
+
+  if (modeConfig) {
+    // Aller sur la première page config
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.cfg-nav').forEach(n => n.classList.remove('active'));
+    const first = document.querySelector('.cfg-nav');
+    if (first) navConfig(first);
+    document.getElementById('topbar-title').textContent = '⚙️ Mode Configuration';
+  } else {
+    // Retour dashboard
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    const dash = document.querySelector('[data-page="dashboard"]');
+    if (dash) { dash.classList.add('active'); }
+    document.getElementById('page-dashboard').classList.add('active');
+    document.getElementById('topbar-title').textContent = 'Tableau de bord';
+    renderDashboard();
+  }
+}
+
+function navConfig(el) {
+  document.querySelectorAll('.cfg-nav').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  const page = el.dataset.page;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const pageEl = document.getElementById('page-' + page);
+  if (pageEl) pageEl.classList.add('active');
+
+  const titles = {
+    'historique':        '📜 Import Historique',
+    'config':            '⚙️ Paramètres financiers',
+    'cfg-categories':    '🏷️ Catégories',
+    'cfg-lignes':        '🛣️ Gestion des lignes',
+    'cfg-frequentation': '📈 Fréquentations',
+    'cfg-reset':         '🗑️ Réinitialisation',
+  };
+  const topTitle = document.getElementById('topbar-title');
+  if (topTitle) topTitle.textContent = titles[page] || page;
+
+  // Render selon la page
+  if (page === 'historique') renderHistoriqueBase();
+  if (page === 'config') renderConfig();
+  if (page === 'cfg-categories') renderCategories();
+  if (page === 'cfg-reset') renderResetStats();
+  if (page === 'cfg-lignes') renderCfgLignes();
+}
+
+// ── CATÉGORIES ──────────────────────────────────────────
+const CAT_DEP_DEFAULT = ['Carburant','Maintenance','Salaires','Achat véhicule','CT','Lignes','Publicité','Infrastructure','FCO','Autre'];
+const CAT_REC_DEFAULT = ['Lignes','Abonnements','Contrats pub','Subventions','Ventes','JAC','Autre'];
+
+function getCategories(type) {
+  if (!state.categories) state.categories = {};
+  if (!state.categories[type]) state.categories[type] = type === 'depense' ? [...CAT_DEP_DEFAULT] : [...CAT_REC_DEFAULT];
+  return state.categories[type];
+}
+
+function renderCategories() {
+  const depTbody = document.getElementById('cfg-cat-dep-tbody');
+  const recTbody = document.getElementById('cfg-cat-rec-tbody');
+  if (!depTbody || !recTbody) return;
+
+  const renderCatList = (tbody, type) => {
+    const cats = getCategories(type);
+    tbody.innerHTML = cats.map((c, i) => `<tr>
+      <td style="font-weight:500">${c}</td>
+      <td><span style="display:inline-block;width:16px;height:16px;border-radius:3px;background:${state.categoriesColors?.[type]?.[c]||'var(--accent)'}"></span></td>
+      <td><button class="btn btn-danger btn-xs" onclick="supprimerCategorie('${type}',${i})">✕</button></td>
+    </tr>`).join('') || '<tr><td colspan="3" style="color:var(--text3);text-align:center;padding:12px">Aucune catégorie</td></tr>';
+  };
+  renderCatList(depTbody, 'depense');
+  renderCatList(recTbody, 'recette');
+}
+
+function ajouterCategorie(type) {
+  document.getElementById('new-cat-type').value = type;
+  document.getElementById('new-cat-nom').focus();
+}
+
+function sauvegarderCategorie() {
+  const type = document.getElementById('new-cat-type').value;
+  const nom  = document.getElementById('new-cat-nom').value.trim();
+  const color = document.getElementById('new-cat-color').value;
+  if (!nom) { toastMsg('Nom requis', 'error'); return; }
+  if (!state.categories) state.categories = {};
+  if (!state.categories[type]) state.categories[type] = type === 'depense' ? [...CAT_DEP_DEFAULT] : [...CAT_REC_DEFAULT];
+  if (state.categories[type].includes(nom)) { toastMsg('Catégorie déjà existante', 'error'); return; }
+  state.categories[type].push(nom);
+  if (!state.categoriesColors) state.categoriesColors = {};
+  if (!state.categoriesColors[type]) state.categoriesColors[type] = {};
+  state.categoriesColors[type][nom] = color;
+  saveState();
+  renderCategories();
+  document.getElementById('new-cat-nom').value = '';
+  toastMsg(`Catégorie "${nom}" ajoutée ✓`, 'success');
+}
+
+function supprimerCategorie(type, idx) {
+  if (!confirm('Supprimer cette catégorie ?')) return;
+  state.categories[type].splice(idx, 1);
+  saveState();
+  renderCategories();
+  toastMsg('Catégorie supprimée', 'info');
+}
+
+// ── RESET STATS ─────────────────────────────────────────
+function renderResetStats() {
+  const setBadge = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  setBadge('rst-stat-bus', state.bus.length);
+  setBadge('rst-stat-compta', allOps().length);
+  setBadge('rst-stat-pers', state.personnel.length);
+  setBadge('rst-stat-stats', (state.statsLignes||[]).length);
+}
+
+// ── CFG LIGNES (placeholder) ─────────────────────────────
+function renderCfgLignes() {
+  const tbody = document.getElementById('cfg-lignes-tbody');
+  if (!tbody) return;
+  const lignes = state.cfgLignes || [];
+  tbody.innerHTML = lignes.map((l, i) => `<tr>
+    <td class="mono"><b>${l.num}</b></td>
+    <td>${l.nom||'—'}</td>
+    <td class="mono">${l.km ? l.km+' km' : '—'}</td>
+    <td class="mono">${l.duree ? l.duree+' min' : '—'}</td>
+    <td>${l.type||'—'}</td>
+    <td><span class="badge badge-green">${l.statut||'Active'}</span></td>
+    <td><button class="btn btn-danger btn-xs" onclick="supprimerLigneCfg(${i})">✕</button></td>
+  </tr>`).join('') || '<tr><td colspan="7" style="color:var(--text3);text-align:center;padding:16px">Aucune ligne configurée</td></tr>';
+}
+
+function supprimerLigneCfg(i) {
+  if (!confirm('Supprimer cette ligne ?')) return;
+  state.cfgLignes.splice(i, 1);
+  saveState(); renderCfgLignes();
+}
+
+function ouvrirModeConfigPage(page) {
+  if (!modeConfig) toggleModeConfig();
+  const el = document.querySelector(`.cfg-nav[data-page="${page}"]`);
+  if (el) navConfig(el);
+}
+
+  toastMsg('Création de ligne — à venir', 'info');
+}
+
+
 
 function updateBusSelects() {
   const opts = '<option value="">Choisir...</option>' + state.bus.map(b=>`<option>${b.nom}</option>`).join('');
@@ -4433,7 +4967,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('input[type=date]').forEach(el => { if (!el.value) el.value = today(); });
   updateBusSelects();
   renderDashboard();
-  document.getElementById('csv-type-info').innerHTML = CSV_INFO['bus'];
+  document.getElementById('csv-type-info').innerHTML = CSV_INFO['bus'] + '<br><span style="float:right;color:' + (state.lastImport && state.lastImport.bus ? 'var(--green)">✓ Dernière MAJ : ' + state.lastImport.bus : 'var(--text3)">Jamais importé') + '</span>';
   detectExtension();
 
   // Horloge
