@@ -612,6 +612,7 @@
   }
   body:not(.mode-config) #btn-toggle-config:hover { color: var(--cfg-green); border-color: var(--cfg-green-border); background: var(--cfg-green-dim); }
 
+</style>
 </head>
 <body>
 
@@ -1795,7 +1796,7 @@
           </div>
           <div class="card-body" style="padding:0">
             <table class="data-table"><thead><tr><th>Nom</th><th>Couleur</th><th></th></tr></thead>
-            <tbody id="cfg-cat-rec-tbody"></tbody>
+            <tbody id="cfg-cat-rec-tbody"></tbody></table>
           </div>
         </div>
       </div>
@@ -4936,6 +4937,7 @@ function ouvrirModeConfigPage(page) {
   if (el) navConfig(el);
 }
 
+function ouvrirModalNovuelleLigne() {
   toastMsg('Création de ligne — à venir', 'info');
 }
 
