@@ -612,6 +612,48 @@
   }
   body:not(.mode-config) #btn-toggle-config:hover { color: var(--cfg-green); border-color: var(--cfg-green-border); background: var(--cfg-green-dim); }
 
+  /* ── TABLEAU FINANCIER BILAN ─────────────────────────── */
+  .bilan-table { width:100%; border-collapse:collapse; font-size:11px; }
+  .bilan-table th, .bilan-table td { padding:5px 8px; white-space:nowrap; border-bottom:1px solid var(--border); }
+  .bilan-table thead th { background:#1a2535; color:var(--accent); text-align:center; font-weight:700; position:sticky; top:0; z-index:2; font-size:12px; }
+  .bilan-table thead th:first-child { text-align:left; position:sticky; left:0; z-index:3; min-width:200px; }
+  .bilan-table thead th.th-annee { background:var(--accent); color:#000; font-size:13px; text-align:center; }
+  .bilan-table td:first-child { position:sticky; left:0; background:var(--surface); z-index:1; }
+
+  /* Lignes thème recette — fond vert très sombre */
+  .bilan-table .bilan-theme-recette td { font-weight:700; font-size:12px; background:rgba(16,185,129,0.12); color:#10b981; border-top:2px solid rgba(16,185,129,0.3); }
+  .bilan-table .bilan-theme-recette td:first-child { padding-left:8px; border-left:3px solid #10b981; }
+  /* Lignes thème dépense — fond rouge très sombre */
+  .bilan-table .bilan-theme-depense td { font-weight:700; font-size:12px; background:rgba(239,68,68,0.1); color:#ef4444; border-top:2px solid rgba(239,68,68,0.3); }
+  .bilan-table .bilan-theme-depense td:first-child { padding-left:8px; border-left:3px solid #ef4444; }
+  /* Fallback ancienne classe */
+  .bilan-table .bilan-theme-row td { font-weight:700; font-size:12px; background:var(--surface2); color:var(--text); border-top:2px solid var(--border); }
+  .bilan-table .bilan-theme-row td:first-child { padding-left:8px; }
+
+  /* Catégories */
+  .bilan-table .bilan-cat-row td { background:var(--surface); }
+  .bilan-table .bilan-cat-row td:first-child { padding-left:28px; color:var(--text2); font-size:11px; }
+  .bilan-table .bilan-cat-row:hover td { background:rgba(0,212,255,0.03); }
+
+  /* Totaux */
+  .bilan-table .bilan-total-row td { font-weight:700; font-size:12px; background:var(--surface2); border-top:2px solid var(--border); padding:7px 8px; }
+  .bilan-table .bilan-total-recettes td { background:rgba(16,185,129,0.18); color:#10b981; }
+  .bilan-table .bilan-total-depenses td { background:rgba(239,68,68,0.15); color:#ef4444; }
+  .bilan-table .bilan-solde-row td { font-weight:700; font-size:13px; background:rgba(0,212,255,0.1); border-top:3px solid var(--accent); padding:8px; }
+
+  /* Cellules numériques */
+  .bilan-table td.num { text-align:right; font-family:'JetBrains Mono',monospace; }
+  .bilan-table th { text-align:right; }
+  .bilan-table th:first-child { text-align:left; }
+  .bilan-table td.zero { color:var(--text3); text-align:right; font-family:'JetBrains Mono',monospace; }
+  .bilan-table .col-total { background:rgba(239,68,68,0.12) !important; font-weight:700; color:var(--red); }
+  .bilan-table .col-total.num { color:var(--red); }
+  .bilan-table .col-moy { background:rgba(124,58,237,0.06) !important; color:var(--accent3); }
+  .bilan-table .col-moy.num { color:var(--accent3); }
+
+  /* Séparateur entre recettes et dépenses */
+  .bilan-separator td { background:var(--bg) !important; height:8px; border:none; }
+
 </style>
 </head>
 <body>
@@ -680,6 +722,9 @@
       <div class="sidebar-section-title">Finance</div>
       <div class="nav-item" data-page="compta" onclick="nav(this)">
         <span class="icon">💰</span> Comptabilité
+      </div>
+      <div class="nav-item" data-page="bilan" onclick="nav(this)">
+        <span class="icon">📊</span> Tableau financier
       </div>
       <div class="nav-item" data-page="achats" onclick="nav(this)">
         <span class="icon">🛒</span> Achats de bus
@@ -773,7 +818,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v26</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v35</span>
       <span id="sync-status" title="Synchronisation Gist" style="font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 8px;border-radius:4px;display:none"></span>
       <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
@@ -836,17 +881,24 @@
         </div>
       </div>
 
-      <div class="grid-2">
-        <!-- Derniers achats -->
+      <!-- Tableau RH + Journal : 2/3 + 1/3 -->
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px">
+        <!-- Tableau RH résumé -->
         <div class="card">
           <div class="card-header">
-            <div class="card-title">Derniers achats de bus</div>
-            <button class="btn btn-ghost btn-sm" onclick="nav(document.querySelector('[data-page=achats]'))">Voir tout</button>
+            <div class="card-title">👥 Ressources Humaines</div>
+            <button class="btn btn-ghost btn-sm" onclick="nav(document.querySelector('[data-page=personnel]'))">Voir tout</button>
           </div>
-          <div class="card-body" style="padding:0">
-            <table class="data-table" id="last-achats-table">
-              <thead><tr><th>Modèle</th><th>Prix</th><th>KM</th><th>Date</th></tr></thead>
-              <tbody id="last-achats-body"></tbody>
+          <div class="card-body" style="padding:0;overflow-x:auto">
+            <table class="data-table" id="dash-rh-table">
+              <thead><tr style="background:rgba(0,212,255,0.06)">
+                <th></th><th>Nb</th><th>Salaire</th><th>Moy.</th>
+                <th style="color:var(--red)">🤒</th>
+                <th style="color:var(--yellow)">🌴</th>
+                <th>✊</th><th>📅</th>
+                <th style="color:var(--green)">Dispo</th>
+              </tr></thead>
+              <tbody id="dash-rh-tbody"></tbody>
             </table>
           </div>
         </div>
@@ -1136,59 +1188,21 @@
 
     <!-- ═══════════════════════════════════════════ PERSONNEL ═══ -->
     <div id="page-personnel" class="page">
-      <div class="grid-2">
-        <div class="card">
-          <div class="card-header"><div class="card-title">Ajouter un conducteur</div></div>
-          <div class="card-body">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Nom</label>
-                <input type="text" id="pers-nom" placeholder="Nom du conducteur">
-              </div>
-              <div class="form-group">
-                <label>Matricule</label>
-                <input type="text" id="pers-mat" placeholder="EX: P001">
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Date dernière FCO</label>
-                <input type="date" id="pers-fco">
-              </div>
-              <div class="form-group">
-                <label>Type permis</label>
-                <select id="pers-permis">
-                  <option>D (Bus)</option>
-                  <option>D+E (Articulé)</option>
-                  <option>B (Minibus)</option>
-                  <option>Tous</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Statut</label>
-                <select id="pers-statut">
-                  <option value="Actif">Actif</option>
-                  <option value="FCO requise">FCO requise</option>
-                  <option value="Arrêt maladie">Arrêt maladie</option>
-                  <option value="Congés">Congés</option>
-                  <option value="Formation">En formation</option>
-                </select>
-              </div>
-            </div>
-            <button class="btn btn-primary" onclick="ajouterPersonnel()">+ Ajouter conducteur</button>
-          </div>
+
+      <!-- Stats RH -->
+      <div id="rh-stats-grid" style="margin-bottom:14px"></div>
+
+      <!-- FCO mois courant -->
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-header">
+          <div class="card-title">🎓 FCO — Suivi obligatoire <span style="font-size:10px;color:var(--text3)" id="fco-mois-label">(ce mois)</span></div>
+          <div id="fco-alerte" style="font-size:11px"></div>
         </div>
-        <div class="card">
-          <div class="card-header"><div class="card-title">FCO — Suivi obligatoire</div></div>
-          <div class="card-body">
-            <div class="alert-box warning" id="fco-alerte">Chargement...</div>
-            <div id="fco-list"></div>
-          </div>
-        </div>
+        <div class="card-body" style="padding:6px 14px 10px" id="fco-list"></div>
       </div>
-      <div class="card" style="margin-top:14px">
+
+      <!-- Liste personnel -->
+      <div class="card">
         <div class="card-header">
           <div class="card-title">Liste du personnel</div>
           <input class="search-input" type="text" id="search-pers" placeholder="🔍 Rechercher..." oninput="filterPersonnel()" style="width:180px">
@@ -1277,6 +1291,27 @@
             <thead><tr><th>Date</th><th>Ligne</th><th>Créneau</th><th>Tickets</th><th>Abonnés</th><th>Gains</th></tr></thead>
             <tbody id="stats-hist-tbody"></tbody>
           </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ BILAN ═══ -->
+    <div id="page-bilan" class="page">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+        <div style="font-size:20px;font-weight:700;color:var(--text)">📊 Tableau financier</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <select id="bilan-annee" onchange="renderBilan()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 10px;font-size:12px"></select>
+          <button class="btn btn-ghost btn-sm" onclick="exportBilanCSV()">⬇️ Export CSV</button>
+        </div>
+      </div>
+
+      <!-- Stat cards résumé -->
+      <div class="stat-cards" style="margin-bottom:14px" id="bilan-stat-cards"></div>
+
+      <!-- Tableau -->
+      <div class="card">
+        <div class="card-body" style="padding:0;overflow-x:auto">
+          <div id="bilan-table-container"></div>
         </div>
       </div>
     </div>
@@ -1780,54 +1815,24 @@
 
     <!-- ═══════════════════════ CFG — CATÉGORIES ═══ -->
     <div id="page-cfg-categories" class="page">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-        <div style="font-size:20px;font-weight:700;color:var(--cfg-green)">🏷️ Catégories de dépenses & recettes</div>
-      </div>
-      <div class="grid-2">
-        <div class="card" style="border-color:var(--cfg-green-border)">
-          <div class="card-header" style="border-bottom-color:var(--cfg-green-border)">
-            <div class="card-title" style="color:var(--cfg-green)">📉 Catégories de dépenses</div>
-            <button class="btn btn-sm" style="background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green)" onclick="ajouterCategorie('depense')">+ Ajouter</button>
-          </div>
-          <div class="card-body" style="padding:0">
-            <table class="data-table"><thead><tr><th>Nom</th><th>Couleur</th><th></th></tr></thead>
-            <tbody id="cfg-cat-dep-tbody"></tbody></table>
-          </div>
-        </div>
-        <div class="card" style="border-color:var(--cfg-green-border)">
-          <div class="card-header" style="border-bottom-color:var(--cfg-green-border)">
-            <div class="card-title" style="color:var(--cfg-green)">📈 Catégories de recettes</div>
-            <button class="btn btn-sm" style="background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green)" onclick="ajouterCategorie('recette')">+ Ajouter</button>
-          </div>
-          <div class="card-body" style="padding:0">
-            <table class="data-table"><thead><tr><th>Nom</th><th>Couleur</th><th></th></tr></thead>
-            <tbody id="cfg-cat-rec-tbody"></tbody></table>
-          </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+        <div style="font-size:20px;font-weight:700;color:var(--cfg-green)">🏷️ Thèmes & Catégories</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-sm" style="background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green)" onclick="ouvrirModalNouveauTheme()">+ Nouveau thème</button>
+          <button class="btn btn-sm" style="background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.3);color:var(--accent3)" onclick="majToutesOps()">🔄 MAJ toutes les opérations</button>
         </div>
       </div>
-      <div class="card" style="margin-top:14px;border-color:var(--cfg-green-border)">
-        <div class="card-header" style="border-bottom-color:var(--cfg-green-border)"><div class="card-title" style="color:var(--cfg-green)">➕ Nouvelle catégorie</div></div>
-        <div class="card-body">
-          <div class="form-row">
-            <div class="form-group">
-              <label>Type</label>
-              <select id="new-cat-type" style="background:var(--surface2);border:1px solid var(--cfg-green-border);color:var(--text);border-radius:6px;padding:8px">
-                <option value="depense">Dépense</option>
-                <option value="recette">Recette</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Nom de la catégorie</label>
-              <input type="text" id="new-cat-nom" placeholder="Ex: Carburant, Lignes, Pub..." style="background:var(--surface2);border:1px solid var(--cfg-green-border);color:var(--text);border-radius:6px;padding:8px;width:100%">
-            </div>
-            <div class="form-group">
-              <label>Couleur (optionnel)</label>
-              <input type="color" id="new-cat-color" value="#00d4ff" style="height:38px;width:60px;border:none;background:none;cursor:pointer">
-            </div>
-          </div>
-          <button class="btn" style="background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green);margin-top:8px" onclick="sauvegarderCategorie()">✓ Enregistrer</button>
-        </div>
-      </div>
+
+      <p style="font-size:11px;color:var(--text3);margin-bottom:14px">
+        Chaque <b style="color:var(--accent)">thème</b> regroupe des <b style="color:var(--cfg-green)">catégories</b>. Chaque catégorie a des <b style="color:var(--yellow)">règles de matching</b> sur le libellé des opérations.
+        Utilisez <code style="background:var(--surface2);padding:1px 4px;border-radius:3px">*</code> comme wildcard (ex: <code style="background:var(--surface2);padding:1px 4px;border-radius:3px">*pub*</code> matche tout ce qui contient "pub").
+      </p>
+
+      <!-- Liste des thèmes -->
+      <div id="themes-list"></div>
+
+      <!-- MAJ info -->
+      <div id="maj-ops-result" style="display:none;margin-top:14px;padding:10px 14px;border-radius:6px;font-size:12px"></div>
     </div>
 
     <!-- ═══════════════════════ CFG — LIGNES ═══ -->
@@ -1870,7 +1875,7 @@
     <!-- ═══════════════════════ CFG — SYNCHRONISATION ═══ -->
     <div id="page-cfg-sync" class="page">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-        <div style="font-size:20px;font-weight:700;color:var(--cfg-green)">☁️ Synchronisation JSONBin</div>
+        <div style="font-size:20px;font-weight:700;color:var(--cfg-green)">☁️ Synchronisation Supabase</div>
       </div>
 
       <!-- Statut -->
@@ -1893,10 +1898,10 @@
       <div class="grid-2" style="margin-bottom:14px">
         <div class="card" style="border-color:var(--cfg-green-border)">
           <div class="card-header" style="border-bottom-color:var(--cfg-green-border)">
-            <div class="card-title" style="color:var(--cfg-green)">📤 Pousser vers JSONBin</div>
+            <div class="card-title" style="color:var(--cfg-green)">📤 Pousser vers Supabase</div>
           </div>
           <div class="card-body">
-            <p style="font-size:11px;color:var(--text3);margin-bottom:12px">Envoie l'état actuel vers JSONBin. Écrase les données distantes.</p>
+            <p style="font-size:11px;color:var(--text3);margin-bottom:12px">Envoie l'état actuel vers Supabase. Écrase les données distantes.</p>
             <button class="btn" style="background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green);width:100%" onclick="syncPush(true)">
               ☁️ Envoyer maintenant
             </button>
@@ -1904,12 +1909,12 @@
         </div>
         <div class="card" style="border-color:var(--cfg-green-border)">
           <div class="card-header" style="border-bottom-color:var(--cfg-green-border)">
-            <div class="card-title" style="color:var(--cfg-green)">📥 Tirer depuis JSONBin</div>
+            <div class="card-title" style="color:var(--cfg-green)">📥 Tirer depuis Supabase</div>
           </div>
           <div class="card-body">
-            <p style="font-size:11px;color:var(--text3);margin-bottom:12px">Charge les données depuis JSONBin. Écrase les données locales.</p>
+            <p style="font-size:11px;color:var(--text3);margin-bottom:12px">Charge les données depuis Supabase. Écrase les données locales.</p>
             <button class="btn" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:var(--red);width:100%" onclick="syncPull(true)">
-              📥 Charger depuis JSONBin
+              📥 Charger depuis Supabase
             </button>
           </div>
         </div>
@@ -1929,9 +1934,9 @@
       <div class="card" style="border-color:var(--border)">
         <div class="card-header"><div class="card-title">ℹ️ Comment ça fonctionne</div></div>
         <div class="card-body" style="font-size:12px;color:var(--text2);line-height:1.8">
-          <b style="color:var(--cfg-green)">Aucune configuration</b> — le bin JSONBin est intégré directement dans le code, disponible sur tous tes appareils sans rien faire.<br>
+          <b style="color:var(--cfg-green)">Aucune configuration</b> — Supabase est intégré directement dans le code, disponible sur tous tes appareils sans rien faire.<br>
           <b style="color:var(--cfg-green)">Sauvegarde automatique</b> — chaque modification est envoyée après 3 secondes d'inactivité.<br>
-          <b style="color:var(--cfg-green)">Chargement au démarrage</b> — les données sont récupérées depuis JSONBin à chaque ouverture.<br>
+          <b style="color:var(--cfg-green)">Chargement au démarrage</b> — les données sont récupérées depuis Supabase à chaque ouverture.<br>
           <b style="color:var(--accent)">Badge topbar</b> — ☁️ Synchro / ⏳ En cours / ❌ Erreur.
         </div>
       </div>
@@ -1975,6 +1980,7 @@
           </button>
         </div>
       </div>
+
     </div>
 
   </div><!-- /content -->
@@ -2007,6 +2013,78 @@
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-saisie-carburant')">Annuler</button>
       <button class="btn btn-primary" onclick="saisirManuelCarburant();closeModal('modal-saisie-carburant')">✓ Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Nouveau Thème -->
+<div class="modal-overlay" id="modal-nouveau-theme">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-theme-title">➕ Nouveau thème</div>
+      <div class="modal-close" onclick="closeModal('modal-nouveau-theme')">✕</div>
+    </div>
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Nom du thème</label>
+        <input type="text" id="theme-nom" placeholder="Ex: Recettes spéciales, Travaux..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 10px">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Type</label>
+          <select id="theme-type" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px;width:100%">
+            <option value="recette">📈 Recette</option>
+            <option value="depense">📉 Dépense</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Couleur</label>
+          <input type="color" id="theme-couleur" value="#00d4ff" style="height:38px;width:60px;border:none;background:none;cursor:pointer">
+        </div>
+      </div>
+      <input type="hidden" id="theme-edit-id">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-nouveau-theme')">Annuler</button>
+      <button class="btn btn-primary" onclick="sauvegarderTheme()">✓ Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Nouvelle Catégorie -->
+<div class="modal-overlay" id="modal-nouvelle-categorie">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-cat-title">➕ Nouvelle catégorie</div>
+      <div class="modal-close" onclick="closeModal('modal-nouvelle-categorie')">✕</div>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="cat-theme-id">
+      <input type="hidden" id="cat-edit-id">
+      <div class="form-row" style="margin-bottom:12px">
+        <div class="form-group">
+          <label>Nom de la catégorie</label>
+          <input type="text" id="cat-nom" placeholder="Ex: Contrats publicitaires" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 10px;width:100%">
+        </div>
+        <div class="form-group" style="max-width:80px">
+          <label>Couleur</label>
+          <input type="color" id="cat-couleur" value="#22c55e" style="height:38px;width:60px;border:none;background:none;cursor:pointer">
+        </div>
+      </div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;justify-content:space-between">
+          <span>Règles de matching <span style="color:var(--text3);font-size:10px">(une par ligne — <code>*</code> = wildcard)</span></span>
+          <button class="btn btn-ghost btn-xs" onclick="ajouterRegle()">+ Ajouter règle</button>
+        </label>
+        <div id="regles-container" style="margin-top:8px;display:flex;flex-direction:column;gap:6px"></div>
+      </div>
+      <div style="margin-top:10px;padding:8px 10px;background:var(--surface2);border-radius:6px;font-size:11px;color:var(--text3)">
+        Exemples : <code>*pub*</code> → contient "pub" · <code>contrat*</code> → commence par "contrat" · <code>*assurance</code> → finit par "assurance" · <code>Création *</code> → commence par "Création "
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-nouvelle-categorie')">Annuler</button>
+      <button class="btn btn-primary" onclick="sauvegarderCategorieFull()">✓ Enregistrer</button>
     </div>
   </div>
 </div>
@@ -2200,6 +2278,64 @@ if (!state.statsLignes) state.statsLignes = [];
 if (!state.lastImport) state.lastImport = {};
 if (!state.categories) state.categories = {};
 if (!state.cfgLignes) state.cfgLignes = [];
+if (!state.themes) state.themes = [];
+if (state.themes.length === 0) state.themes = [
+  {id:'th_rec_gen',nom:'Recettes générales',type:'recette',couleur:'#10b981',categories:[
+    {id:'c_gains_bonus',nom:'Gains bonus quotidien',couleur:'#6ee7b7',regles:[]},
+    {id:'c_contrats_pub',nom:'Contrats publicitaires',couleur:'#34d399',regles:[]},
+    {id:'c_amendes',nom:'Paiement des amendes',couleur:'#a7f3d0',regles:[]},
+    {id:'c_revenus_tour',nom:'Revenus Touristiques',couleur:'#6ee7b7',regles:[]},
+    {id:'c_services_spec',nom:'Services spéciaux',couleur:'#34d399',regles:[]},
+    {id:'c_subvention_ao',nom:'Subvention AO',couleur:'#a7f3d0',regles:[]},
+    {id:'c_vente_abo',nom:"Vente d'abonnement",couleur:'#6ee7b7',regles:[]},
+    {id:'c_vente_veh',nom:'Vente de véhicules',couleur:'#34d399',regles:[]},
+    {id:'c_ventes_titres',nom:'Ventes de titres',couleur:'#a7f3d0',regles:[]},
+    {id:'c_alliances_rec',nom:'Alliances',couleur:'#6ee7b7',regles:[]},
+    {id:'c_emprunts',nom:'Emprunts',couleur:'#34d399',regles:[]},
+    {id:'c_remb_assurance',nom:'Remboursement Assurance',couleur:'#a7f3d0',regles:[]},
+    {id:'c_remb_garantie',nom:'Remboursement garantie',couleur:'#6ee7b7',regles:[]},
+  ]},
+  {id:'th_frais_cour',nom:'Frais Courants',type:'depense',couleur:'#3b82f6',categories:[
+    {id:'c_revision',nom:'Révision',couleur:'#93c5fd',regles:[]},
+    {id:'c_reparation',nom:'Réparation',couleur:'#60a5fa',regles:[]},
+    {id:'c_ct',nom:'Contrôles Techniques',couleur:'#93c5fd',regles:[]},
+    {id:'c_gasoil',nom:'Commande gasoil',couleur:'#60a5fa',regles:[]},
+    {id:'c_assurances',nom:'Assurances',couleur:'#93c5fd',regles:[]},
+    {id:'c_ouv_ligne',nom:'Ouverture ligne',couleur:'#60a5fa',regles:[]},
+  ]},
+  {id:'th_travaux',nom:'Travaux',type:'depense',couleur:'#22c55e',categories:[
+    {id:'c_constructions',nom:"Constructions d'infrastructures",couleur:'#86efac',regles:[]},
+    {id:'c_agrand_citerne',nom:'Agrandissement citerne',couleur:'#4ade80',regles:[]},
+    {id:'c_tramway',nom:'Tramway',couleur:'#86efac',regles:[]},
+    {id:'c_entretien_arr',nom:'Entretien arrêts et abribus',couleur:'#4ade80',regles:[]},
+  ]},
+  {id:'th_achats',nom:'Achats / Location',type:'depense',couleur:'#f59e0b',categories:[
+    {id:'c_achat_occ',nom:'Achat de véhicule occasion',couleur:'#fcd34d',regles:[]},
+    {id:'c_achat_neuf',nom:'Achat de véhicule neuf',couleur:'#fbbf24',regles:[]},
+    {id:'c_loc_bus',nom:'Location Bus',couleur:'#fcd34d',regles:[]},
+    {id:'c_achat_mat',nom:'Achat de matériel',couleur:'#fbbf24',regles:[]},
+    {id:'c_modif_veh',nom:'Modification de véhicule',couleur:'#fcd34d',regles:[]},
+    {id:'c_cotis_fid',nom:'Cotisation programme fidélité',couleur:'#fbbf24',regles:[]},
+  ]},
+  {id:'th_frais_fix',nom:'Frais fixes',type:'depense',couleur:'#a78bfa',categories:[
+    {id:'c_wifi',nom:'Forfait pour Wifi',couleur:'#c4b5fd',regles:[]},
+    {id:'c_fdm_prec',nom:'Fin de mois précédent',couleur:'#a78bfa',regles:[]},
+    {id:'c_alliance',nom:'Alliance',couleur:'#c4b5fd',regles:[]},
+    {id:'c_remb_empr',nom:"Remboursement d'emprunt",couleur:'#a78bfa',regles:[]},
+  ]},
+  {id:'th_rh',nom:'Ressources humaines',type:'depense',couleur:'#f97316',categories:[
+    {id:'c_embauche',nom:'Embauche, Formations…',couleur:'#fdba74',regles:[]},
+    {id:'c_salaires',nom:'Salaires et cotisations sociales',couleur:'#fb923c',regles:[]},
+    {id:'c_primes',nom:'Primes',couleur:'#fdba74',regles:[]},
+  ]},
+  {id:'th_autre',nom:'Autre',type:'depense',couleur:'#f87171',categories:[
+    {id:'c_serv_tour',nom:'Services Touristiques',couleur:'#fca5a5',regles:[]},
+    {id:'c_agios',nom:'Agios',couleur:'#f87171',regles:[]},
+    {id:'c_rd',nom:'R&D',couleur:'#fca5a5',regles:[]},
+    {id:'c_factures',nom:'Factures',couleur:'#f87171',regles:[]},
+    {id:'c_cmd_docs',nom:'Commande Documents',couleur:'#fca5a5',regles:[]},
+  ]},
+];
 
 function loadState() {
   try { return JSON.parse(localStorage.getItem('tm_state')); } catch(e) { return null; }
@@ -2217,7 +2353,7 @@ function resetTotal() {
   state.gasoil = []; state.journal = []; state.carburant = []; state.pubDispo = [];
   state.conso = { niveau: 5000, moy: 0 };
   state.config = { argentDepart: 0 };
-  state.prixKm = {}; state.categories = {}; state.cfgLignes = []; state.lastImport = {};
+  state.prixKm = {}; state.categories = {}; state.cfgLignes = []; state.lastImport = {}; state.themes = [];
   saveState();
   // Supprimer les clés extension
   ['tm_ext_present','tm_ext_request'].forEach(k => localStorage.removeItem(k));
@@ -2249,6 +2385,7 @@ function nav(el) {
   const titles = { dashboard:'Tableau de bord', alertes:'Alertes', parc:'Gestion du parc',
     affectations:'Affectations', maintenance:'Maintenance & CT', abribus:'Équipement Abribus',
     personnel:'Personnel & FCO', lignes:'Lignes & Statistiques', compta:'Comptabilité',
+    bilan:'Tableau financier',
     pub:'Contrats Publicitaires', achats:'Achats de bus', gasoil:'Conso', config:'Configuration',
     pubdispo:'Optimisation Bus Pub' };
   document.getElementById('topbar-title').textContent = titles[page] || page;
@@ -2258,7 +2395,7 @@ function nav(el) {
 function renderPage(page) {
   const r = { dashboard: renderDashboard, alertes: renderAlertes, parc: renderParc,
     affectations: renderAffectations, maintenance: renderMaintenance, abribus: renderAbribus,
-    personnel: renderPersonnel, lignes: renderLignes, compta: renderCompta,
+    personnel: renderPersonnel, lignes: renderLignes, compta: renderCompta, bilan: renderBilan,
     pub: renderPub, achats: renderAchats, gasoil: renderGasoil, config: renderConfig, pubdispo: renderPubDispo, historique: renderHistoriqueBase };
   if (r[page]) r[page]();
 }
@@ -2269,6 +2406,22 @@ function renderPage(page) {
 function fmt(n) { return Number(n).toLocaleString('fr-FR') + ' €'; }
 function fmtNum(n) { return Number(n).toLocaleString('fr-FR'); }
 function today() { return new Date().toISOString().slice(0,10); }
+
+// Calcule le 1er lundi précédent ou égal à une date ISO
+function lundiPrecedentOuEgal(dateISO) {
+  if (!dateISO) return null;
+  const d = new Date(dateISO);
+  if (isNaN(d)) return null;
+  const jour = d.getDay(); // 0=dim,1=lun,...,6=sam
+  const decalage = jour === 0 ? 6 : jour - 1; // nb de jours à reculer pour atteindre lundi
+  d.setDate(d.getDate() - decalage);
+  return d.toISOString().slice(0, 10);
+}
+
+// Retourne le mois ISO YYYY-MM d'une date ISO
+function moisISO(dateISO) {
+  return dateISO ? dateISO.substring(0, 7) : null;
+}
 function toastMsg(msg, type='info') {
   const t = document.getElementById('toast-container');
   const d = document.createElement('div');
@@ -2367,14 +2520,36 @@ function renderDashboard() {
   if (!alerts) alerts = '<div class="alert-box success">✅ Aucune alerte pour aujourd\'hui</div>';
   document.getElementById('alertes-recap').innerHTML = alerts;
 
-  // Last achats
-  const tbody = document.getElementById('last-achats-body');
-  tbody.innerHTML = state.achats.slice(-5).reverse().map(a => `<tr>
-    <td>${a.modele}</td>
-    <td class="mono" style="color:var(--red)">${fmt(a.prix)}</td>
-    <td class="mono">${fmtNum(a.km)} km</td>
-    <td class="mono">${fmtDateFR(a.date)}</td>
-  </tr>`).join('') || '<tr><td colspan="4" style="color:var(--text3);text-align:center">Aucun achat</td></tr>';
+  // Tableau RH dashboard
+  const dashRhTbody = document.getElementById('dash-rh-tbody');
+  if (dashRhTbody) {
+    const pers = state.personnel;
+    const postes = ['Conducteur Temps Complet','Conducteur Temps Partiel','Mécanicien','Commercial','Vendeur','Contrôleur','Agent Entretien','Intérimaires'];
+    const mkRow = (label, subset, bold) => {
+      if (!subset.length && label !== 'Total') return '';
+      const sal = subset.reduce((s,p)=>s+(p.salaire||0),0);
+      const moy = subset.length ? Math.round(sal/subset.length) : 0;
+      const mal = subset.filter(p=>(p.etat||p.statut||'').toLowerCase().includes('maladie')).length;
+      const vac = subset.filter(p=>(p.etat||p.statut||'').toLowerCase().includes('cong')||(p.etat||'').toLowerCase().includes('vacances')).length;
+      const grv = subset.filter(p=>(p.etat||p.statut||'').toLowerCase().includes('grève')||(p.etat||'').toLowerCase().includes('greve')).length;
+      const cng = subset.filter(p=>(p.etat||'').toLowerCase().includes('cong')).length;
+      const dsp = subset.filter(p=>{const s=(p.statut||'').toLowerCase(),e=(p.etat||'').toLowerCase();return s==='actif'||s==='disponible'||e==='disponible'||e==='';}).length;
+      const b = bold ? 'font-weight:700' : '';
+      const bg = bold ? 'background:rgba(0,212,255,0.06)' : '';
+      return `<tr style="${bg}"><td style="${b};font-size:11px">${label}</td>
+        <td class="mono" style="${b}">${subset.length}</td>
+        <td class="mono" style="font-size:10px">${sal?fmt(sal):'—'}</td>
+        <td class="mono" style="font-size:10px">${moy?fmt(moy):'—'}</td>
+        <td class="mono" style="color:${mal?'var(--red)':'var(--text3)'}">${mal}</td>
+        <td class="mono" style="color:${vac?'var(--yellow)':'var(--text3)'}">${vac}</td>
+        <td class="mono">${grv}</td><td class="mono">${cng}</td>
+        <td class="mono" style="color:${dsp?'var(--green)':'var(--text3)'};font-weight:600">${dsp}</td></tr>`;
+    };
+    dashRhTbody.innerHTML = mkRow('Total', pers, true) + postes.map(po => {
+      const sub = pers.filter(p => (p.poste||p.permis||'').toLowerCase() === po.toLowerCase());
+      return mkRow(po, sub, false);
+    }).join('');
+  }
 
   // Journal
   const tl = document.getElementById('journal-timeline');
@@ -3132,30 +3307,20 @@ function parserSalaries(rows) {
   });
 }
 
-function categoriserLibelle(lib) {
-  if (!lib) return 'Autre';
-  const l = lib.toLowerCase();
-  if (l.includes('achat véhicule') || l.includes('achat bus')) return 'Achat véhicule';
-  if (l.includes('révision') || l.includes('revision') || l.includes('maintenance')) return 'Maintenance';
-  if (l.includes('gasoil') || l.includes('carburant') || l.includes('fuel')) return 'Carburant';
-  if (l.includes('gain') || l.includes('jac') || l.includes('quotidien')) return 'Exploitation';
-  if (l.includes('pub') || l.includes('publicité')) return 'Publicité';
-  if (l.includes('salaire') || l.includes('personnel')) return 'Personnel';
-  if (l.includes('ct') || l.includes('contrôle')) return 'CT';
-  return 'Autre';
-}
-
 function parserCompta(rows) {
   return rows.slice(1).filter(c => c[0]).map((c, i) => {
     const dep = parseFloat((c[2]||'').replace(/\s/g,'').replace(',','.'))||0;
     const rev = parseFloat((c[3]||'').replace(/\s/g,'').replace(',','.'))||0;
     const rawDate = (c[0]||'').replace(/"/g,'').split(' ')[0];
+    const desc = (c[1]||'').replace(/"/g,'').replace(/\\n/g,'');
+    const match = matcherLibelle(desc);
     return {
       id: Date.now() + i,
       date: parseDateFR(rawDate),
       type: dep > 0 ? 'depense' : 'recette',
-      cat: categoriserLibelle(c[1]),
-      desc: (c[1]||'').replace(/"/g,'').replace(/\\n/g,''),
+      cat:   match.cat,
+      theme: match.theme,
+      desc,
       montant: dep > 0 ? dep : rev
     };
   });
@@ -3515,22 +3680,127 @@ function clearAbribus() { state.abribus = []; saveStateWithSync(); renderAbribus
 //  PERSONNEL / FCO
 // ═══════════════════════════════════════════════════════
 function renderPersonnel() {
-  const fcoList = state.personnel.filter(p => p.statut === 'FCO requise' || p.statut === 'FCO bientôt');
-  const fcoUrgents = state.personnel.filter(p => p.statut === 'FCO requise');
-  document.getElementById('fco-alerte').className = 'alert-box ' + (fcoUrgents.length > 0 ? 'warning' : 'success');
-  document.getElementById('fco-alerte').innerHTML = fcoUrgents.length > 0
-    ? `⚠️ ${fcoUrgents.length} conducteur(s) FCO expirée — ${fcoList.length - fcoUrgents.length} bientôt à renouveler`
-    : '✅ Toutes les FCO sont à jour';
+  const pers = state.personnel;
 
-  document.getElementById('fco-list').innerHTML = fcoList.map(p => `
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:6px 8px;background:rgba(245,158,11,0.06);border-radius:4px;flex-wrap:wrap">
-      <span>👤 <b>${p.nom}</b> <span style="color:var(--text3);font-size:11px">${p.matricule}</span></span>
-      <span style="font-size:11px;color:var(--text3)">FCO le : <b>${fmtDateFR(p.fco)||'?'}</b></span>
-      <span class="badge ${p.statut==='FCO requise'?'badge-red':'badge-yellow'}" style="margin-left:4px">${p.statut}</span>
-    </div>`).join('');
+  // ── Stats RH par poste ────────────────────────────────
+  const postes = ['Conducteur Temps Complet','Conducteur Temps Partiel','Mécanicien','Commercial','Vendeur','Contrôleur','Agent Entretien','Intérimaires'];
 
-  const search = (document.getElementById('search-pers').value||'').toLowerCase();
-  let filtered = state.personnel.filter(p => !search || p.nom.toLowerCase().includes(search) || String(p.matricule).toLowerCase().includes(search) || (p.poste||'').toLowerCase().includes(search));
+  const mkRow = (label, subset, bold) => {
+    if (!subset.length && label !== 'Total') return '';
+    const sal = subset.reduce((s,p)=>s+(p.salaire||0),0);
+    const moy = subset.length ? Math.round(sal/subset.length) : 0;
+    const mal = subset.filter(p=>(p.etat||p.statut||'').toLowerCase().includes('maladie')).length;
+    const vac = subset.filter(p=>(p.etat||p.statut||'').toLowerCase().includes('cong')||(p.etat||'').toLowerCase().includes('vacances')).length;
+    const grv = subset.filter(p=>(p.etat||p.statut||'').toLowerCase().includes('grève')||(p.etat||'').toLowerCase().includes('greve')).length;
+    const cng = subset.filter(p=>(p.etat||'').toLowerCase().includes('cong')).length;
+    const dsp = subset.filter(p=>{const s=(p.statut||'').toLowerCase(),e=(p.etat||'').toLowerCase();return s==='actif'||s==='disponible'||e==='disponible'||e==='';}).length;
+    const b  = bold ? 'font-weight:700' : '';
+    const bg = bold ? 'background:rgba(0,212,255,0.06)' : '';
+    return `<tr style="${bg}">
+      <td style="${b}">${label}</td>
+      <td class="mono" style="${b}">${subset.length}</td>
+      <td class="mono">${sal?fmt(sal):'—'}</td>
+      <td class="mono">${moy?fmt(moy):'—'}</td>
+      <td class="mono" style="color:${mal?'var(--red)':'var(--text3)'}">${mal}</td>
+      <td class="mono" style="color:${vac?'var(--yellow)':'var(--text3)'}">${vac}</td>
+      <td class="mono">${grv}</td>
+      <td class="mono">${cng}</td>
+      <td class="mono" style="color:${dsp?'var(--green)':'var(--text3)'};font-weight:700">${dsp}</td>
+    </tr>`;
+  };
+
+  const getSubset = po => pers.filter(p => (p.poste||p.permis||'') === po || (p.poste||p.permis||'').toLowerCase() === po.toLowerCase());
+
+  const statsGrid = document.getElementById('rh-stats-grid');
+  if (statsGrid) statsGrid.innerHTML = `
+    <div class="card">
+      <div class="card-header" style="background:rgba(0,212,255,0.06)">
+        <div class="card-title" style="color:var(--accent)">👥 Ressources Humaines</div>
+        <div style="font-size:11px;color:var(--text3)">${pers.length} agents · ${fmt(pers.reduce((s,p)=>s+(p.salaire||0),0))} masse salariale</div>
+      </div>
+      <div class="card-body" style="padding:0">
+        <table class="data-table">
+          <thead><tr style="background:rgba(0,212,255,0.1)">
+            <th></th><th>Nombre</th><th>Salaire</th><th>Moyenne</th>
+            <th style="color:var(--red)">Arrêt maladie</th>
+            <th style="color:var(--yellow)">Vacances</th>
+            <th>Grève</th><th>Avec congé</th>
+            <th style="color:var(--green)">Dispo</th>
+          </tr></thead>
+          <tbody>
+            ${mkRow('Total', pers, true)}
+            ${mkRow('Conducteur Temps Complet', getSubset('Conducteur Temps Complet'), false)}
+            ${mkRow('Conducteur Temps Partiel', getSubset('Conducteur Temps Partiel'), false)}
+            ${postes.filter(po=>po!=='Conducteur Temps Complet'&&po!=='Conducteur Temps Partiel').map(po=>mkRow(po,getSubset(po),false)).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+
+  // ── FCO du mois courant avec date prévisionnelle lundi ─
+  const moisCourant = today().substring(0,7);
+  // Mettre à jour le label mois
+  const moisLabel = document.getElementById('fco-mois-label');
+  if (moisLabel) {
+    const d = new Date(moisCourant + '-01');
+    moisLabel.textContent = '(' + d.toLocaleDateString('fr-FR', { month:'long', year:'numeric' }) + ')';
+  }
+  const fcoMois = pers.filter(p => p.fco && moisISO(p.fco) === moisCourant)
+    .map(p => {
+      const lundi = lundiPrecedentOuEgal(p.fco);
+      const diff  = lundi ? Math.round((new Date(lundi) - new Date()) / (1000*60*60*24)) : null;
+      return { ...p, fcoPrevue: lundi, diff };
+    })
+    .sort((a,b) => (a.fcoPrevue||'').localeCompare(b.fcoPrevue||''));
+
+  const fcoAlerte = document.getElementById('fco-alerte');
+  const fcoListEl = document.getElementById('fco-list');
+
+  if (fcoAlerte) {
+    fcoAlerte.innerHTML = fcoMois.length === 0
+      ? '<span style="color:var(--text3)">Aucune FCO ce mois</span>'
+      : `<span style="color:var(--accent)">${fcoMois.length} FCO ce mois</span>`;
+  }
+
+  if (fcoListEl) {
+    if (!fcoMois.length) {
+      fcoListEl.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:4px 0">Aucune FCO prévue ce mois.</div>';
+    } else {
+      fcoListEl.innerHTML = `
+        <table class="data-table" style="margin-top:4px">
+          <thead><tr>
+            <th>Date FCO prévue <span style="font-size:9px;color:var(--text3)">(lundi)</span></th>
+            <th>Nom</th>
+            <th style="text-align:center">Demande Remb.</th>
+            <th style="text-align:center">Faite ?</th>
+            <th>Date Demande</th>
+          </tr></thead>
+          <tbody>
+            ${fcoMois.map(p => {
+              const color = p.diff !== null ? (p.diff < 0 ? 'var(--red)' : p.diff <= 7 ? 'var(--yellow)' : 'var(--text)') : 'var(--text3)';
+              const remb  = p.fcoRemb || {};
+              const faite = remb.faite || false;
+              const dateD = remb.dateD || '';
+              const realIdx = pers.findIndex(x => x.id === p.id || x.matricule === p.matricule);
+              return `<tr>
+                <td class="mono" style="color:${color};font-weight:600">${fmtDateFR(p.fcoPrevue)||'—'}</td>
+                <td><b>${p.nom}</b> <span style="color:var(--text3);font-size:10px">${p.matricule}</span></td>
+                <td style="text-align:center">
+                  <input type="checkbox" id="fco-remb-${realIdx}" ${faite?'checked':''} style="width:16px;height:16px;cursor:pointer">
+                </td>
+                <td style="text-align:center;font-size:18px;color:${faite?'var(--green)':'var(--red)'}">${faite?'✓':'✗'}</td>
+                <td class="mono" style="font-size:11px;color:var(--text3)">${dateD ? fmtDateFR(dateD) : '—'}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+        <button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="validerRembFCO()">✓ Valider les demandes</button>`;
+    }
+  }
+
+  // ── Tableau liste ────────────────────────────────────
+  const search = (document.getElementById('search-pers')?.value||'').toLowerCase();
+  let filtered = pers.filter(p => !search || p.nom.toLowerCase().includes(search) || String(p.matricule).toLowerCase().includes(search) || (p.poste||'').toLowerCase().includes(search));
   filtered = sortData(filtered, 'personnel', 'nom');
   const tbody = document.getElementById('personnel-tbody');
   tbody.innerHTML = filtered.map(p => {
@@ -3548,22 +3818,28 @@ function renderPersonnel() {
     </tr>`;
   }).join('') || '<tr><td colspan="8" style="color:var(--text3);text-align:center;padding:16px">Aucun personnel — Importe ton salaries.csv</td></tr>';
 }
+
+function validerRembFCO() {
+  const pers = state.personnel;
+  const moisCourant = today().substring(0,7);
+  let changed = 0;
+  pers.forEach((p, realIdx) => {
+    if (!p.fco || moisISO(p.fco) !== moisCourant) return;
+    const cb = document.getElementById(`fco-remb-${realIdx}`);
+    if (!cb) return;
+    const wasChecked = (p.fcoRemb||{}).faite || false;
+    if (cb.checked !== wasChecked) {
+      p.fcoRemb = cb.checked ? { faite: true, dateD: today() } : { faite: false, dateD: '' };
+      changed++;
+    }
+  });
+  if (changed) { saveStateWithSync(); renderPersonnel(); toastMsg(`✓ ${changed} demande(s) mise(s) à jour`, 'success'); }
+  else toastMsg('Aucun changement', 'info');
+}
+
+
 function filterPersonnel() { renderPersonnel(); }
 
-function ajouterPersonnel() {
-  const nom = document.getElementById('pers-nom').value.trim();
-  if (!nom) { toastMsg('Nom requis', 'error'); return; }
-  state.personnel.push({
-    id: Date.now(), nom, matricule: document.getElementById('pers-mat').value.trim(),
-    permis: document.getElementById('pers-permis').value,
-    fco: document.getElementById('pers-fco').value,
-    statut: document.getElementById('pers-statut').value
-  });
-  journalLog(`Conducteur ${nom} ajouté`, 'ok');
-  saveStateWithSync(); renderPersonnel();
-  document.getElementById('pers-nom').value = '';
-  toastMsg(`${nom} ajouté ✓`, 'success');
-}
 function marquerFCO(id) {
   const p = state.personnel.find(x => x.id === id);
   if (!p) return;
@@ -3752,13 +4028,14 @@ function analyserHistorique() {
       const rev = parseFloat(revRaw.replace(/[€\s\u00a0]/g,'').replace(/\./g,'').replace(',','.')) || 0;
       const montant = dep > 0 ? dep : rev;
       if (montant === 0 && libelle === '') continue;
-
+      const _match = matcherLibelle(libelle);
       if (!opsByMois[mois]) opsByMois[mois] = [];
       opsByMois[mois].push({
         id: `histo_${mois}_${totalOps}`,
         date: dateStr,
         type: dep > 0 ? 'depense' : 'recette',
-        cat: categoriserLibelle(libelle),
+        cat:   _match.cat,
+        theme: _match.theme,
         desc: libelle.replace(/&#039;/g, "'"),
         montant
       });
@@ -3898,6 +4175,172 @@ function setComptaMoisFiltre(mois) {
     selA.value = '';
   }
   renderComptaTableau();
+}
+
+// ═══════════════════════════════════════════════════════
+//  TABLEAU FINANCIER (BILAN)
+// ═══════════════════════════════════════════════════════
+
+function renderBilan() {
+  const ops = allOps();
+
+  // ── Sélecteur d'année ────────────────────────────────
+  const anneesSel = document.getElementById('bilan-annee');
+  if (anneesSel) {
+    const annees = [...new Set(ops.map(o => o.date ? o.date.substring(0,4) : null).filter(Boolean))].sort().reverse();
+    if (!annees.length) annees.push(new Date().getFullYear().toString());
+    const curVal = anneesSel.value || annees[0];
+    anneesSel.innerHTML = annees.map(a => `<option value="${a}" ${a===curVal?'selected':''}>${a}</option>`).join('');
+  }
+
+  const annee = anneesSel ? anneesSel.value : new Date().getFullYear().toString();
+  const moisLabels = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const moisKeys   = Array.from({length:12}, (_,i) => `${annee}-${String(i+1).padStart(2,'0')}`);
+  const opsAnnee   = ops.filter(o => o.date && o.date.startsWith(annee));
+
+  const sumParMoisCat = (type, themeName, catName) =>
+    moisKeys.map(mk =>
+      opsAnnee.filter(o =>
+        o.date.substring(0,7) === mk &&
+        o.type === type &&
+        (themeName === null || o.theme === themeName) &&
+        (catName   === null || o.cat   === catName)
+      ).reduce((s,o) => s + o.montant, 0)
+    );
+
+  const sumArr = arr => arr.reduce((s,v) => s+v, 0);
+  const moyArr = arr => { const nz = arr.filter(v=>v>0); return nz.length ? Math.round(sumArr(nz)/nz.length) : 0; };
+
+  const fmtCell = (v, cls='') => {
+    if (!v) return `<td class="zero${cls?' '+cls:''}">${cls?'0 €':''}</td>`;
+    return `<td class="num ${cls}">${fmt(v)}</td>`;
+  };
+
+  const themes      = state.themes || [];
+  const recThemes   = themes.filter(t => t.type === 'recette');
+  const depThemes   = themes.filter(t => t.type === 'depense');
+  const totalRecMois = moisKeys.map(mk => opsAnnee.filter(o=>o.date.substring(0,7)===mk&&o.type==='recette').reduce((s,o)=>s+o.montant,0));
+  const totalDepMois = moisKeys.map(mk => opsAnnee.filter(o=>o.date.substring(0,7)===mk&&o.type==='depense').reduce((s,o)=>s+o.montant,0));
+  const soldeMois    = moisKeys.map((_,i) => totalRecMois[i] - totalDepMois[i]);
+
+  const buildBlock = (themeList, type, labelTotal) => {
+    let html = '';
+    themeList.forEach(theme => {
+      const cats = theme.categories || [];
+      const themeVals = moisKeys.map((_,i) =>
+        cats.length ? cats.reduce((s,cat) => s + sumParMoisCat(type, theme.nom, cat.nom)[i], 0)
+                    : sumParMoisCat(type, theme.nom, null)[i]
+      );
+      if (sumArr(themeVals) === 0) return;
+      const themeClass = type === 'recette' ? 'bilan-theme-recette' : 'bilan-theme-depense';
+      html += `<tr class="${themeClass}">
+        <td>${theme.nom}</td>
+        ${themeVals.map(v=>fmtCell(v)).join('')}
+        ${fmtCell(sumArr(themeVals),'col-total')}
+        ${fmtCell(moyArr(themeVals),'col-moy')}
+      </tr>`;
+      cats.forEach(cat => {
+        const catVals = sumParMoisCat(type, theme.nom, cat.nom);
+        if (sumArr(catVals) === 0) return;
+        html += `<tr class="bilan-cat-row">
+          <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${cat.couleur||'var(--accent)'};margin-right:5px"></span>${cat.nom}</td>
+          ${catVals.map(v=>fmtCell(v)).join('')}
+          ${fmtCell(sumArr(catVals),'col-total')}
+          ${fmtCell(moyArr(catVals),'col-moy')}
+        </tr>`;
+      });
+    });
+    // Non catégorisé
+    const ncOps  = opsAnnee.filter(o => o.type===type && (!o.theme||o.theme==='Autre') && (!o.cat||o.cat==='Autre'));
+    const ncVals = moisKeys.map(mk => ncOps.filter(o=>o.date.substring(0,7)===mk).reduce((s,o)=>s+o.montant,0));
+    if (sumArr(ncVals) > 0) {
+      html += `<tr class="${type==='recette'?'bilan-theme-recette':'bilan-theme-depense'}" style="opacity:0.6">
+        <td style="font-style:italic">Non catégorisé</td>
+        ${ncVals.map(v=>fmtCell(v)).join('')}
+        ${fmtCell(sumArr(ncVals),'col-total')}
+        ${fmtCell(moyArr(ncVals),'col-moy')}
+      </tr>`;
+    }
+    const totVals = type === 'recette' ? totalRecMois : totalDepMois;
+    html += `<tr class="bilan-total-row bilan-total-${type==='recette'?'recettes':'depenses'}">
+      <td>${labelTotal}</td>
+      ${totVals.map(v=>fmtCell(v)).join('')}
+      ${fmtCell(sumArr(totVals),'col-total')}
+      ${fmtCell(moyArr(totVals),'col-moy')}
+    </tr>`;
+    return html;
+  };
+
+  // Stat cards
+  const totalRec = sumArr(totalRecMois), totalDep = sumArr(totalDepMois), soldeNet = totalRec - totalDep;
+  const sc = document.getElementById('bilan-stat-cards');
+  if (sc) sc.innerHTML = `
+    <div class="stat-card green"><div class="stat-label">Total recettes ${annee}</div><div class="stat-value" style="font-size:18px;color:var(--green)">${fmt(totalRec)}</div></div>
+    <div class="stat-card red"><div class="stat-label">Total dépenses ${annee}</div><div class="stat-value" style="font-size:18px;color:var(--red)">${fmt(totalDep)}</div></div>
+    <div class="stat-card ${soldeNet>=0?'blue':'orange'}"><div class="stat-label">Solde net ${annee}</div><div class="stat-value" style="font-size:18px;color:${soldeNet>=0?'var(--green)':'var(--red)'}">${fmt(soldeNet)}</div></div>
+    <div class="stat-card purple"><div class="stat-label">Mois avec données</div><div class="stat-value">${moisKeys.filter(mk=>opsAnnee.some(o=>o.date.substring(0,7)===mk)).length}/12</div></div>`;
+
+  const container = document.getElementById('bilan-table-container');
+  if (!container) return;
+
+  if (!themes.length) {
+    container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text3)">
+      <div style="font-size:32px;margin-bottom:8px">🏷️</div>
+      <div>Aucun thème configuré.</div>
+      <div style="margin-top:6px;font-size:12px">Va dans <b>Mode Configuration → Thèmes & Catégories</b></div>
+      <button class="btn btn-sm" style="margin-top:12px;background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green)" onclick="ouvrirModeConfigPage('cfg-categories')">⚙️ Configurer les thèmes</button>
+    </div>`;
+    return;
+  }
+
+  const recRows = buildBlock(recThemes, 'recette', '📈 TOTAL RECETTES');
+  const depRows = buildBlock(depThemes, 'depense', '📉 TOTAL DÉPENSES');
+
+  container.innerHTML = `<table class="bilan-table">
+    <thead>
+      <tr>
+        <th class="th-annee" colspan="${14}">${annee}</th>
+      </tr>
+      <tr>
+        <th></th>
+        ${moisLabels.map((m,i) => {
+          const has = opsAnnee.some(o=>o.date.substring(0,7)===moisKeys[i]);
+          return `<th style="${has?'':'opacity:0.4'}">${m}</th>`;
+        }).join('')}
+        <th class="col-total">Total</th>
+        <th class="col-moy">Moy./mois</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${recRows}
+      <tr class="bilan-separator"><td colspan="15"></td></tr>
+      ${depRows}
+      <tr class="bilan-solde-row">
+        <td>💰 SOLDE NET</td>
+        ${soldeMois.map(v=>`<td class="num" style="color:${v>=0?'var(--green)':'var(--red)'}">${fmt(v)}</td>`).join('')}
+        <td class="num col-total" style="color:${soldeNet>=0?'var(--green)':'var(--red)'}">${fmt(soldeNet)}</td>
+        <td class="num col-moy">—</td>
+      </tr>
+    </tbody>
+  </table>`;
+}
+
+function exportBilanCSV() {
+  const anneesSel = document.getElementById('bilan-annee');
+  const annee = anneesSel ? anneesSel.value : new Date().getFullYear().toString();
+  const ops = allOps().filter(o => o.date && o.date.startsWith(annee));
+  const moisKeys = Array.from({length:12}, (_,i) => `${annee}-${String(i+1).padStart(2,'0')}`);
+  const moisH = ['Jan','Fev','Mar','Avr','Mai','Jun','Jul','Aou','Sep','Oct','Nov','Dec'];
+  let csv = `Thème;Catégorie;${moisH.join(';')};Total\n`;
+  (state.themes||[]).forEach(t => {
+    (t.categories||[]).forEach(cat => {
+      const vals = moisKeys.map(mk => ops.filter(o=>o.date.substring(0,7)===mk&&o.cat===cat.nom).reduce((s,o)=>s+o.montant,0));
+      csv += `${t.nom};${cat.nom};${vals.join(';')};${vals.reduce((s,v)=>s+v,0)}\n`;
+    });
+  });
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `bilan_${annee}.csv`; a.click();
+  toastMsg('Export CSV téléchargé ✓', 'success');
 }
 
 function renderCompta() {
@@ -5088,62 +5531,286 @@ function navConfig(el) {
 }
 
 // ── CATÉGORIES ──────────────────────────────────────────
-const CAT_DEP_DEFAULT = ['Carburant','Maintenance','Salaires','Achat véhicule','CT','Lignes','Publicité','Infrastructure','FCO','Autre'];
-const CAT_REC_DEFAULT = ['Lignes','Abonnements','Contrats pub','Subventions','Ventes','JAC','Autre'];
+// ═══════════════════════════════════════════════════════
+//  SYSTÈME THÈMES & CATÉGORIES
+// ═══════════════════════════════════════════════════════
 
-function getCategories(type) {
-  if (!state.categories) state.categories = {};
-  if (!state.categories[type]) state.categories[type] = type === 'depense' ? [...CAT_DEP_DEFAULT] : [...CAT_REC_DEFAULT];
-  return state.categories[type];
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+// ── Matching wildcard ────────────────────────────────────
+function matchRegle(libelle, regle) {
+  const l = libelle.toLowerCase().trim();
+  const r = regle.toLowerCase().trim();
+  if (!r) return false;
+  // Convertit la règle en regex : * → .*
+  const escaped = r.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
+  const re = new RegExp('^' + escaped + '$');
+  return re.test(l);
 }
 
+function matcherLibelle(libelle) {
+  if (!libelle) return { theme: 'Autre', cat: 'Autre', type: null };
+  const themes = state.themes || [];
+  for (const theme of themes) {
+    for (const cat of (theme.categories || [])) {
+      for (const regle of (cat.regles || [])) {
+        if (regle.trim() && matchRegle(libelle, regle)) {
+          return { theme: theme.nom, cat: cat.nom, type: theme.type, themeId: theme.id, catId: cat.id };
+        }
+      }
+    }
+  }
+  return { theme: 'Autre', cat: 'Autre', type: null };
+}
+
+// Mise à jour de categoriserLibelle pour utiliser le nouveau système
+function categoriserLibelle(lib) {
+  const result = matcherLibelle(lib);
+  return result.cat;
+}
+
+// ── MAJ toutes les opérations ────────────────────────────
+function majToutesOps() {
+  let total = 0, modif = 0;
+  Object.keys(state.comptaMois || {}).forEach(mois => {
+    (state.comptaMois[mois] || []).forEach(op => {
+      total++;
+      const result = matcherLibelle(op.desc);
+      const newCat  = result.cat;
+      const newTheme = result.theme;
+      if (op.cat !== newCat || op.theme !== newTheme) {
+        op.cat   = newCat;
+        op.theme = newTheme;
+        modif++;
+      }
+    });
+  });
+  saveStateWithSync();
+  const el = document.getElementById('maj-ops-result');
+  if (el) {
+    el.style.display = 'block';
+    el.style.background = 'rgba(34,197,94,0.1)';
+    el.style.border = '1px solid rgba(34,197,94,0.3)';
+    el.style.color = 'var(--cfg-green)';
+    el.innerHTML = `✅ ${total} opérations analysées — <b>${modif} re-catégorisées</b>`;
+  }
+  toastMsg(`✅ ${modif} opérations re-catégorisées sur ${total}`, 'success');
+  if (document.getElementById('page-compta')?.classList.contains('active')) renderCompta();
+}
+
+// ── Render page thèmes ───────────────────────────────────
 function renderCategories() {
-  const depTbody = document.getElementById('cfg-cat-dep-tbody');
-  const recTbody = document.getElementById('cfg-cat-rec-tbody');
-  if (!depTbody || !recTbody) return;
-
-  const renderCatList = (tbody, type) => {
-    const cats = getCategories(type);
-    tbody.innerHTML = cats.map((c, i) => `<tr>
-      <td style="font-weight:500">${c}</td>
-      <td><span style="display:inline-block;width:16px;height:16px;border-radius:3px;background:${state.categoriesColors?.[type]?.[c]||'var(--accent)'}"></span></td>
-      <td><button class="btn btn-danger btn-xs" onclick="supprimerCategorie('${type}',${i})">✕</button></td>
-    </tr>`).join('') || '<tr><td colspan="3" style="color:var(--text3);text-align:center;padding:12px">Aucune catégorie</td></tr>';
-  };
-  renderCatList(depTbody, 'depense');
-  renderCatList(recTbody, 'recette');
+  const list = document.getElementById('themes-list');
+  if (!list) return;
+  const themes = state.themes || [];
+  if (!themes.length) {
+    list.innerHTML = `<div style="text-align:center;padding:32px;color:var(--text3)">
+      <div style="font-size:32px;margin-bottom:8px">🏷️</div>
+      Aucun thème créé. Clique sur <b>+ Nouveau thème</b> pour commencer.
+    </div>`;
+    return;
+  }
+  list.innerHTML = themes.map(theme => {
+    const typeColor = theme.type === 'recette' ? 'var(--green)' : 'var(--red)';
+    const typeBadge = theme.type === 'recette' ? '📈 Recette' : '📉 Dépense';
+    const cats = theme.categories || [];
+    return `<div class="card" style="margin-bottom:12px;border-left:3px solid ${theme.couleur||'var(--accent)'}">
+      <div class="card-header" style="background:${theme.couleur||'var(--accent)'}18">
+        <div style="display:flex;align-items:center;gap:10px;flex:1">
+          <span style="width:12px;height:12px;border-radius:50%;background:${theme.couleur||'var(--accent)'};display:inline-block"></span>
+          <b style="font-size:14px">${theme.nom}</b>
+          <span style="font-size:11px;color:${typeColor};background:${typeColor}18;padding:2px 8px;border-radius:10px">${typeBadge}</span>
+          <span style="font-size:11px;color:var(--text3)">${cats.length} catégorie(s)</span>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost btn-xs" onclick="ouvrirModalNouvelleCategorie('${theme.id}')">+ Catégorie</button>
+          <button class="btn btn-ghost btn-xs" onclick="editerTheme('${theme.id}')">✏️</button>
+          <button class="btn btn-danger btn-xs" onclick="supprimerTheme('${theme.id}')">✕</button>
+        </div>
+      </div>
+      ${cats.length ? `<div class="card-body" style="padding:0">
+        <table class="data-table">
+          <thead><tr><th>Catégorie</th><th>Règles de matching</th><th>Ops matchées</th><th></th></tr></thead>
+          <tbody>${cats.map(cat => {
+            const matched = compterOpsMatchees(cat);
+            return `<tr>
+              <td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${cat.couleur||'var(--accent)'};margin-right:6px"></span><b>${cat.nom}</b></td>
+              <td style="font-size:11px">${(cat.regles||[]).filter(r=>r.trim()).map(r =>
+                `<code style="background:var(--surface2);padding:1px 5px;border-radius:3px;margin-right:4px">${r}</code>`
+              ).join('')}</td>
+              <td class="mono" style="color:var(--accent)">${matched}</td>
+              <td style="display:flex;gap:4px">
+                <button class="btn btn-ghost btn-xs" onclick="editerCategorie('${theme.id}','${cat.id}')">✏️</button>
+                <button class="btn btn-danger btn-xs" onclick="supprimerCategorieFull('${theme.id}','${cat.id}')">✕</button>
+              </td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>
+      </div>` : `<div class="card-body" style="color:var(--text3);font-size:12px;font-style:italic">Aucune catégorie — clique sur + Catégorie</div>`}
+    </div>`;
+  }).join('');
 }
 
-function ajouterCategorie(type) {
-  document.getElementById('new-cat-type').value = type;
-  document.getElementById('new-cat-nom').focus();
+function compterOpsMatchees(cat) {
+  let n = 0;
+  Object.values(state.comptaMois || {}).forEach(ops => {
+    (ops||[]).forEach(op => { if (op.cat === cat.nom) n++; });
+  });
+  return n;
 }
 
-function sauvegarderCategorie() {
-  const type = document.getElementById('new-cat-type').value;
-  const nom  = document.getElementById('new-cat-nom').value.trim();
-  const color = document.getElementById('new-cat-color').value;
+// ── CRUD Thèmes ──────────────────────────────────────────
+function ouvrirModalNouveauTheme() {
+  document.getElementById('theme-nom').value = '';
+  document.getElementById('theme-type').value = 'recette';
+  document.getElementById('theme-couleur').value = '#00d4ff';
+  document.getElementById('theme-edit-id').value = '';
+  document.getElementById('modal-theme-title').textContent = '➕ Nouveau thème';
+  openModal('modal-nouveau-theme');
+}
+
+function editerTheme(id) {
+  const theme = (state.themes||[]).find(t => t.id === id);
+  if (!theme) return;
+  document.getElementById('theme-nom').value = theme.nom;
+  document.getElementById('theme-type').value = theme.type;
+  document.getElementById('theme-couleur').value = theme.couleur||'#00d4ff';
+  document.getElementById('theme-edit-id').value = id;
+  document.getElementById('modal-theme-title').textContent = '✏️ Modifier le thème';
+  openModal('modal-nouveau-theme');
+}
+
+function sauvegarderTheme() {
+  const nom = document.getElementById('theme-nom').value.trim();
   if (!nom) { toastMsg('Nom requis', 'error'); return; }
-  if (!state.categories) state.categories = {};
-  if (!state.categories[type]) state.categories[type] = type === 'depense' ? [...CAT_DEP_DEFAULT] : [...CAT_REC_DEFAULT];
-  if (state.categories[type].includes(nom)) { toastMsg('Catégorie déjà existante', 'error'); return; }
-  state.categories[type].push(nom);
-  if (!state.categoriesColors) state.categoriesColors = {};
-  if (!state.categoriesColors[type]) state.categoriesColors[type] = {};
-  state.categoriesColors[type][nom] = color;
+  const type    = document.getElementById('theme-type').value;
+  const couleur = document.getElementById('theme-couleur').value;
+  const editId  = document.getElementById('theme-edit-id').value;
+  if (!state.themes) state.themes = [];
+  if (editId) {
+    const t = state.themes.find(x => x.id === editId);
+    if (t) { t.nom = nom; t.type = type; t.couleur = couleur; }
+  } else {
+    state.themes.push({ id: genId(), nom, type, couleur, categories: [] });
+  }
+  saveStateWithSync();
+  closeModal('modal-nouveau-theme');
+  renderCategories();
+  toastMsg(`Thème "${nom}" ${editId?'modifié':'créé'} ✓`, 'success');
+}
+
+function supprimerTheme(id) {
+  const theme = (state.themes||[]).find(t => t.id === id);
+  if (!theme) return;
+  if (!confirm(`Supprimer le thème "${theme.nom}" et toutes ses catégories ?`)) return;
+  state.themes = state.themes.filter(t => t.id !== id);
   saveStateWithSync();
   renderCategories();
-  document.getElementById('new-cat-nom').value = '';
-  toastMsg(`Catégorie "${nom}" ajoutée ✓`, 'success');
+  toastMsg('Thème supprimé', 'info');
 }
 
-function supprimerCategorie(type, idx) {
-  if (!confirm('Supprimer cette catégorie ?')) return;
-  state.categories[type].splice(idx, 1);
+// ── CRUD Catégories ──────────────────────────────────────
+function ouvrirModalNouvelleCategorie(themeId) {
+  document.getElementById('cat-theme-id').value = themeId;
+  document.getElementById('cat-edit-id').value = '';
+  document.getElementById('cat-nom').value = '';
+  document.getElementById('cat-couleur').value = '#22c55e';
+  document.getElementById('modal-cat-title').textContent = '➕ Nouvelle catégorie';
+  renderReglesContainer([]);
+  openModal('modal-nouvelle-categorie');
+}
+
+function editerCategorie(themeId, catId) {
+  const theme = (state.themes||[]).find(t => t.id === themeId);
+  if (!theme) return;
+  const cat = (theme.categories||[]).find(c => c.id === catId);
+  if (!cat) return;
+  document.getElementById('cat-theme-id').value = themeId;
+  document.getElementById('cat-edit-id').value = catId;
+  document.getElementById('cat-nom').value = cat.nom;
+  document.getElementById('cat-couleur').value = cat.couleur||'#22c55e';
+  document.getElementById('modal-cat-title').textContent = '✏️ Modifier la catégorie';
+  renderReglesContainer(cat.regles||[]);
+  openModal('modal-nouvelle-categorie');
+}
+
+function renderReglesContainer(regles) {
+  const container = document.getElementById('regles-container');
+  if (!container) return;
+  const rows = regles.length ? regles : [''];
+  container.innerHTML = rows.map((r, i) => `
+    <div style="display:flex;gap:6px;align-items:center" id="regle-row-${i}">
+      <input type="text" value="${r}" placeholder="Ex: *pub* ou Contrat *" id="regle-${i}"
+        style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:12px">
+      <button class="btn btn-danger btn-xs" onclick="supprimerRegleUI(${i})">✕</button>
+    </div>`).join('');
+}
+
+function ajouterRegle() {
+  const container = document.getElementById('regles-container');
+  const idx = container.children.length;
+  const div = document.createElement('div');
+  div.style.cssText = 'display:flex;gap:6px;align-items:center';
+  div.id = `regle-row-${idx}`;
+  div.innerHTML = `<input type="text" value="" placeholder="Ex: *pub* ou Contrat *" id="regle-${idx}"
+    style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:12px">
+    <button class="btn btn-danger btn-xs" onclick="supprimerRegleUI(${idx})">✕</button>`;
+  container.appendChild(div);
+  document.getElementById(`regle-${idx}`).focus();
+}
+
+function supprimerRegleUI(idx) {
+  const row = document.getElementById(`regle-row-${idx}`);
+  if (row) row.remove();
+}
+
+function getReglesFromUI() {
+  const container = document.getElementById('regles-container');
+  if (!container) return [];
+  return Array.from(container.querySelectorAll('input[type=text]'))
+    .map(el => el.value.trim())
+    .filter(r => r.length > 0);
+}
+
+function sauvegarderCategorieFull() {
+  const nom     = document.getElementById('cat-nom').value.trim();
+  if (!nom) { toastMsg('Nom requis', 'error'); return; }
+  const couleur = document.getElementById('cat-couleur').value;
+  const themeId = document.getElementById('cat-theme-id').value;
+  const editId  = document.getElementById('cat-edit-id').value;
+  const regles  = getReglesFromUI();
+  const theme   = (state.themes||[]).find(t => t.id === themeId);
+  if (!theme) { toastMsg('Thème introuvable', 'error'); return; }
+  if (!theme.categories) theme.categories = [];
+  if (editId) {
+    const cat = theme.categories.find(c => c.id === editId);
+    if (cat) { cat.nom = nom; cat.couleur = couleur; cat.regles = regles; }
+  } else {
+    theme.categories.push({ id: genId(), nom, couleur, regles });
+  }
+  saveStateWithSync();
+  closeModal('modal-nouvelle-categorie');
+  renderCategories();
+  toastMsg(`Catégorie "${nom}" ${editId?'modifiée':'créée'} ✓`, 'success');
+}
+
+function supprimerCategorieFull(themeId, catId) {
+  const theme = (state.themes||[]).find(t => t.id === themeId);
+  if (!theme) return;
+  const cat = (theme.categories||[]).find(c => c.id === catId);
+  if (!cat || !confirm(`Supprimer la catégorie "${cat.nom}" ?`)) return;
+  theme.categories = theme.categories.filter(c => c.id !== catId);
   saveStateWithSync();
   renderCategories();
   toastMsg('Catégorie supprimée', 'info');
 }
+
+// Compatibilité — anciennes fonctions appelées ailleurs
+function ajouterCategorie(type) {}
+function sauvegarderCategorie() {}
+function supprimerCategorie() {}
+function getCategories() { return []; }
+
 
 // ── RESET STATS ─────────────────────────────────────────
 function renderResetStats() {
