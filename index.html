@@ -4863,7 +4863,12 @@ function resetSection(section) {
 // ═══════════════════════════════════════════════════════
 
 const JSONBIN_ID  = '69bbbec1c3097a1dd53be7fe';
+const JSONBIN_KEY = '$2a$10$GPEfVJh8DdtmrGG0Hj6boO5sWcufW2pMcmd8I5MH0kbM6J.ySQn8i';
 const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_ID}`;
+const JSONBIN_HEADERS = {
+  'Content-Type': 'application/json',
+  'X-Master-Key': JSONBIN_KEY
+};
 let syncDebounceTimer = null;
 
 function setSyncStatus(status, msg) {
@@ -4911,7 +4916,7 @@ async function syncPush(manual = false) {
     const sizeKb  = (new Blob([dataStr]).size / 1024).toFixed(1);
     const resp = await fetch(JSONBIN_URL, {
       method:  'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: JSONBIN_HEADERS,
       body:    dataStr
     });
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
@@ -4932,7 +4937,7 @@ async function syncPull(manual = false) {
   setSyncStatus('pending', 'Chargement depuis JSONBin…');
   try {
     const resp = await fetch(JSONBIN_URL + '/latest', {
-      headers: { 'Content-Type': 'application/json' }
+      headers: JSONBIN_HEADERS
     });
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const data    = await resp.json();
@@ -4963,7 +4968,7 @@ async function testerConnexionGist() {
   resultEl.style.color = 'var(--yellow)';
   resultEl.textContent = '⏳ Test en cours…';
   try {
-    const resp = await fetch(JSONBIN_URL + '/latest', { headers: { 'Content-Type': 'application/json' } });
+    const resp = await fetch(JSONBIN_URL + '/latest', { headers: JSONBIN_HEADERS });
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     resultEl.style.background = 'rgba(34,197,94,0.1)';
     resultEl.style.border = '1px solid rgba(34,197,94,0.3)';
