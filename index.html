@@ -613,7 +613,28 @@
   body:not(.mode-config) #btn-toggle-config:hover { color: var(--cfg-green); border-color: var(--cfg-green-border); background: var(--cfg-green-dim); }
 
   /* ── TABLEAU FINANCIER BILAN ─────────────────────────── */
-  .bilan-table { width:100%; border-collapse:collapse; font-size:11px; }
+  .freq-tab {
+    padding: 5px 12px; border-radius: 6px; border: 1px solid var(--cfg-green-border);
+    background: var(--surface2); color: var(--text2); font-size: 11px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .freq-tab.active { background: var(--cfg-green-dim); color: var(--cfg-green); border-color: var(--cfg-green); }
+  .freq-tab:hover { color: var(--cfg-green); }
+  #freq-table thead th { position: sticky; top: 0; z-index: 4; background: var(--surface2); }
+  #freq-table td.freq-cell { cursor: pointer; text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+  #freq-table td.freq-cell:hover { background: rgba(34,197,94,0.08); }
+  #freq-table td.freq-cell.editing { background: rgba(34,197,94,0.15); padding: 0; }
+  #freq-table td.freq-cell input { width: 60px; background: transparent; border: none; color: var(--cfg-green); font-family: 'JetBrains Mono', monospace; font-size: 11px; text-align: right; padding: 4px 8px; outline: none; }
+  #freq-table td.freq-ligne { font-weight: 700; position: sticky; left: 0; background: var(--surface); z-index: 1; }
+
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    background: var(--surface2);
+    box-shadow: 0 1px 0 var(--border);
+  }
+  #planning-ct-table { border-collapse: separate; border-spacing: 0; }
+
   .bilan-table th, .bilan-table td { padding:5px 8px; white-space:nowrap; border-bottom:1px solid var(--border); }
   .bilan-table thead th { background:#1a2535; color:var(--accent); text-align:center; font-weight:700; position:sticky; top:0; z-index:2; font-size:12px; }
   .bilan-table thead th:first-child { text-align:left; position:sticky; left:0; z-index:3; min-width:200px; }
@@ -701,7 +722,7 @@
         <span class="icon">📋</span> Affectations
       </div>
       <div class="nav-item" data-page="maintenance" onclick="nav(this)">
-        <span class="icon">🔧</span> Maintenance / CT
+        <span class="icon">🔧</span> Révision / CT
       </div>
       <div class="nav-item" data-page="abribus" onclick="nav(this)">
         <span class="icon">🏠</span> Abribus
@@ -818,7 +839,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v35</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v42</span>
       <span id="sync-status" title="Synchronisation Gist" style="font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 8px;border-radius:4px;display:none"></span>
       <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
@@ -1070,86 +1091,59 @@
 
     <!-- ═══════════════════════════════════════════ MAINTENANCE ═══ -->
     <div id="page-maintenance" class="page">
-      <div class="grid-2">
-        <div class="card">
-          <div class="card-header"><div class="card-title">🔧 Envoyer en révision</div></div>
-          <div class="card-body">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Bus</label>
-                <select id="rev-bus"></select>
-              </div>
-              <div class="form-group">
-                <label>Type</label>
-                <select id="rev-type">
-                  <option value="Révision">Révision standard</option>
-                  <option value="Rénovation">Rénovation</option>
-                  <option value="Réparation">Réparation urgente</option>
-                  <option value="Rev avant CT">Révision avant CT</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Durée estimée (jours)</label>
-                <input type="number" id="rev-duree" value="3" min="1">
-              </div>
-              <div class="form-group">
-                <label>Coût estimé (€)</label>
-                <input type="number" id="rev-cout" placeholder="0">
-              </div>
-            </div>
-            <button class="btn btn-warning" onclick="envoyerRevision()">🔧 Envoyer en révision</button>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header"><div class="card-title">🔍 Planifier un CT</div></div>
-          <div class="card-body">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Bus</label>
-                <select id="ct-bus"></select>
-              </div>
-              <div class="form-group">
-                <label>Date CT prévue</label>
-                <input type="date" id="ct-date">
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>KM actuels</label>
-                <input type="number" id="ct-km" placeholder="0">
-              </div>
-              <div class="form-group">
-                <label>Résultat</label>
-                <select id="ct-resultat">
-                  <option value="">À venir</option>
-                  <option value="Favorable">✓ Favorable</option>
-                  <option value="Contre-visite">⚠ Contre-visite</option>
-                  <option value="Refus">✗ Refus</option>
-                </select>
-              </div>
-            </div>
-            <button class="btn btn-primary" onclick="planifierCT()">📅 Enregistrer CT</button>
-          </div>
-        </div>
-      </div>
-      <div class="card" style="margin-top:14px">
+
+      <!-- ── VOLET 1 : Planning CT sur 2 mois ─────────── -->
+      <div class="card" style="margin-bottom:14px">
         <div class="card-header">
-          <div class="card-title">Bus en maintenance</div>
+          <div class="card-title">🔍 Planning CT — 2 prochains mois
+            <span style="font-size:10px;color:var(--text3);font-weight:400;margin-left:8px">CT fermé le dimanche et jours fériés</span>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <span id="ct-prochain-badge" style="font-size:11px;color:var(--accent);background:rgba(0,212,255,0.1);padding:3px 10px;border-radius:10px"></span>
+            <button class="btn btn-primary btn-sm" onclick="validerPlanningCT()">✓ Valider le planning</button>
+          </div>
         </div>
-        <div class="card-body" style="padding:0">
-          <table class="data-table">
-            <thead><tr><th>Bus</th><th>Type maintenance</th><th>Depuis</th><th>Durée</th><th>Coût</th><th>Statut</th><th>Actions</th></tr></thead>
-            <tbody id="maintenance-tbody"></tbody>
+        <div class="card-body" style="padding:0;overflow-x:auto;overflow-y:auto;max-height:520px">
+          <table class="data-table" id="planning-ct-table">
+            <thead><tr>
+              <th>ID</th>
+              <th>Numéro Parc</th>
+              <th>Date limite CT</th>
+              <th>Révision prévue</th>
+              <th>CT prévu</th>
+              <th>Remplacement</th>
+            </tr></thead>
+            <tbody id="planning-ct-tbody"></tbody>
           </table>
         </div>
       </div>
-      <div class="card" style="margin-top:14px">
-        <div class="card-header"><div class="card-title">Historique CT</div></div>
+
+      <!-- ── VOLET 2 : Demande de remboursement alliance ── -->
+      <div class="card" style="margin-bottom:14px;border-color:rgba(245,158,11,0.3)">
+        <div class="card-header" style="border-bottom-color:rgba(245,158,11,0.2)">
+          <div class="card-title" style="color:var(--yellow)">🤝 Alliance — Demande de remboursement</div>
+          <button class="btn btn-sm" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:var(--yellow)" onclick="genererDemandeAlliance()">📋 Générer</button>
+        </div>
+        <div class="card-body">
+          <p style="font-size:11px;color:var(--text3);margin-bottom:10px">
+            Bus passés en révision et/ou CT dans les <b>15 derniers jours</b>. Une demande peut être faite tous les 15 jours.
+          </p>
+          <div id="alliance-result"></div>
+          <div id="alliance-texte-container" style="display:none;margin-top:10px">
+            <textarea id="alliance-texte" rows="5" readonly style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px;font-family:'JetBrains Mono',monospace;font-size:11px;box-sizing:border-box"></textarea>
+            <button class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="copierAllianceTexte()">📋 Copier</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── VOLET 3 : Historique CT ──────────────────── -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📋 Historique CT</div>
+        </div>
         <div class="card-body" style="padding:0">
           <table class="data-table">
-            <thead><tr><th>Bus</th><th>Date</th><th>KM</th><th>Résultat</th></tr></thead>
+            <thead><tr><th>Bus</th><th>Date CT</th><th>KM</th><th>Résultat</th><th style="text-align:center">Demande Alliance</th><th></th></tr></thead>
             <tbody id="ct-tbody"></tbody>
           </table>
         </div>
@@ -1493,17 +1487,23 @@
         </div>
       </div>
 
-      <!-- Outil évaluation contrats — à construire -->
+      <!-- Outil évaluation contrats -->
       <div class="card" style="margin-top:14px;border-color:rgba(124,58,237,0.3)">
         <div class="card-header" style="border-bottom-color:rgba(124,58,237,0.2)">
           <div class="card-title" style="color:var(--accent3)">🧮 Évaluation des propositions de contrat</div>
-          <span class="badge" style="background:rgba(124,58,237,0.2);color:var(--accent3)">À venir</span>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-ghost btn-sm" onclick="evaluerContrats()">▶ Évaluer</button>
+            <button class="btn btn-ghost btn-sm" onclick="viderEvaluation()">🗑 Vider</button>
+          </div>
         </div>
         <div class="card-body">
-          <div class="alert-box info" style="font-size:12px">
-            Cet outil calculera automatiquement un score pour chaque proposition de contrat pub reçue.<br>
-            Il sera construit dès que les critères de notation seront définis.
-          </div>
+          <p style="font-size:11px;color:var(--text3);margin-bottom:8px">
+            Colle les propositions de contrat (copiées depuis le jeu). Format attendu par ligne :<br>
+            <code style="background:var(--surface2);padding:2px 6px;border-radius:3px;font-size:10px">Annonceur &nbsp; NbDemandé &nbsp; NbDispo &nbsp; TypeSupport &nbsp; Durée(j) &nbsp; DateLimite &nbsp; Prix€ &nbsp; Consulter</code>
+          </p>
+          <textarea id="eval-textarea" rows="6" placeholder="Coldgate&#9;8&#9;39&#9;Panneau de pub Latéral&#9;25 j&#9;25/03/2026&#9;22 400€&#9;Consulter&#10;Senex&#9;20&#9;39&#9;Panneau de pub Latéral&#9;29 j&#9;26/03/2026&#9;64 960€&#9;Consulter"
+            style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px;font-size:11px;font-family:'JetBrains Mono',monospace;resize:vertical;box-sizing:border-box"></textarea>
+          <div id="eval-result" style="margin-top:12px"></div>
         </div>
       </div>
 
@@ -1857,17 +1857,54 @@
 
     <!-- ═══════════════════════ CFG — FRÉQUENTATIONS ═══ -->
     <div id="page-cfg-frequentation" class="page">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-        <div style="font-size:20px;font-weight:700;color:var(--cfg-green)">📈 Gestion des fréquentations</div>
-        <div style="font-size:11px;color:var(--text3);background:var(--surface2);padding:4px 10px;border-radius:4px;border:1px solid var(--border)">À développer — à venir</div>
-      </div>
-      <div class="card" style="border-color:var(--cfg-green-border)">
-        <div class="card-header" style="border-bottom-color:var(--cfg-green-border)"><div class="card-title" style="color:var(--cfg-green)">📊 Données de fréquentation</div></div>
-        <div class="card-body">
-          <p style="color:var(--text3);font-size:12px">Cette section permettra de gérer manuellement les objectifs de fréquentation par ligne, les seuils d'alerte, et les historiques personnalisés.</p>
-          <div style="margin-top:20px;padding:20px;border:2px dashed var(--cfg-green-border);border-radius:8px;text-align:center;color:var(--cfg-green);opacity:0.6">
-            🚧 Fonctionnalité en cours de développement
+      <!-- Barre de contrôle -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px">
+        <div style="font-size:20px;font-weight:700;color:var(--cfg-green)">📈 Fréquentations cibles</div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+
+          <!-- Niveau -->
+          <div style="display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--cfg-green-border);border-radius:8px;padding:6px 12px">
+            <span style="font-size:11px;color:var(--text3)">Niveau</span>
+            <button onclick="changerNiveau(-1)" style="background:none;border:none;color:var(--cfg-green);font-size:16px;cursor:pointer;padding:0 4px">◀</button>
+            <span id="freq-niveau-badge" style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:var(--cfg-green);min-width:20px;text-align:center">4</span>
+            <button onclick="changerNiveau(+1)" style="background:none;border:none;color:var(--cfg-green);font-size:16px;cursor:pointer;padding:0 4px">▶</button>
           </div>
+
+          <!-- Période -->
+          <div style="display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--cfg-green-border);border-radius:8px;padding:6px 12px">
+            <span style="font-size:11px;color:var(--text3)">Période :</span>
+            <button id="btn-mode-normal" onclick="setPeriode(false)"
+              style="padding:4px 10px;border-radius:6px;border:none;cursor:pointer;font-size:11px;font-weight:600">Normale</button>
+            <button id="btn-mode-vacances" onclick="setPeriode(true)"
+              style="padding:4px 10px;border-radius:6px;border:none;cursor:pointer;font-size:11px;font-weight:600">Vacances scolaires</button>
+          </div>
+
+          <!-- Type réseau -->
+          <div id="freq-tabs" style="display:flex;gap:4px">
+            <button class="freq-tab active" data-reseau="normal" onclick="setReseauFreq(this)">🚌 Réseau normal</button>
+            <button class="freq-tab" data-reseau="nocturne" onclick="setReseauFreq(this)">🌙 Nocturne</button>
+            <button class="freq-tab" data-reseau="scolaire" onclick="setReseauFreq(this)">🎒 Scolaire</button>
+          </div>
+
+          <button class="btn btn-sm" style="background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green)" onclick="chargerDonneesNiveau4()">📥 Charger N4 par défaut</button>
+        </div>
+      </div>
+
+      <div id="freq-scolaire-warning" style="display:none;margin-bottom:10px;padding:8px 12px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:6px;font-size:11px;color:var(--yellow)">
+        ⚠️ Pas de lignes scolaires pendant les vacances scolaires.
+      </div>
+
+      <!-- Tableau fréquentations -->
+      <div class="card" style="border-color:var(--cfg-green-border)">
+        <div class="card-header" style="border-bottom-color:var(--cfg-green-border)">
+          <div class="card-title" style="color:var(--cfg-green)" id="freq-table-title">Réseau normal — Période normale — Niveau 4</div>
+          <div style="font-size:11px;color:var(--text3)">Cliquer sur une cellule pour modifier</div>
+        </div>
+        <div class="card-body" style="padding:0;overflow-x:auto;max-height:600px;overflow-y:auto">
+          <table class="data-table" id="freq-table">
+            <thead id="freq-thead"></thead>
+            <tbody id="freq-tbody"></tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -2279,6 +2316,10 @@ if (!state.lastImport) state.lastImport = {};
 if (!state.categories) state.categories = {};
 if (!state.cfgLignes) state.cfgLignes = [];
 if (!state.themes) state.themes = [];
+if (!state.planningCT) state.planningCT = {};
+if (state.niveauJeu === undefined) state.niveauJeu = 4;
+if (state.modeVacances === undefined) state.modeVacances = false;
+if (!state.freqCibles) state.freqCibles = {};
 if (state.themes.length === 0) state.themes = [
   {id:'th_rec_gen',nom:'Recettes générales',type:'recette',couleur:'#10b981',categories:[
     {id:'c_gains_bonus',nom:'Gains bonus quotidien',couleur:'#6ee7b7',regles:[]},
@@ -2353,7 +2394,7 @@ function resetTotal() {
   state.gasoil = []; state.journal = []; state.carburant = []; state.pubDispo = [];
   state.conso = { niveau: 5000, moy: 0 };
   state.config = { argentDepart: 0 };
-  state.prixKm = {}; state.categories = {}; state.cfgLignes = []; state.lastImport = {}; state.themes = [];
+  state.prixKm = {}; state.categories = {}; state.cfgLignes = []; state.lastImport = {}; state.themes = []; state.planningCT = {}; state.freqCibles = {}; state.niveauJeu = 4; state.modeVacances = false;
   saveState();
   // Supprimer les clés extension
   ['tm_ext_present','tm_ext_request'].forEach(k => localStorage.removeItem(k));
@@ -2383,7 +2424,7 @@ function nav(el) {
   const pageEl = document.getElementById('page-' + page);
   if (pageEl) pageEl.classList.add('active');
   const titles = { dashboard:'Tableau de bord', alertes:'Alertes', parc:'Gestion du parc',
-    affectations:'Affectations', maintenance:'Maintenance & CT', abribus:'Équipement Abribus',
+    affectations:'Affectations', maintenance:'Révision / CT', abribus:'Équipement Abribus',
     personnel:'Personnel & FCO', lignes:'Lignes & Statistiques', compta:'Comptabilité',
     bilan:'Tableau financier',
     pub:'Contrats Publicitaires', achats:'Achats de bus', gasoil:'Conso', config:'Configuration',
@@ -2721,7 +2762,7 @@ function renderParc() {
         <td><b>${b.nom}</b></td>
         <td style="font-size:10px;color:var(--text3)">${b.marque||''} ${b.modele||''}</td>
         <td class="mono" style="font-size:11px">${b.anneMES ? b.anneMES.substring(0,4) : '—'}</td>
-        <td class="mono" style="font-size:11px;${b.revisionDate&&b.revisionDate<=today()?'color:var(--orange)':''}">${b.revisionDate||'—'}</td>
+        <td class="mono" style="font-size:11px;${b.revisionDate&&b.revisionDate<=today()?'color:var(--orange)':''}">${fmtDateFR(b.revisionDate)||'—'}</td>
         <td class="mono" style="font-size:11px;${ctStyle}">${fmtDateFR(b.ct)||'—'}</td>
         <td class="mono">${b.capa||'—'}</td>
         <td style="font-size:11px">${b.energie||'—'}</td>
@@ -2769,7 +2810,7 @@ function renderParc() {
         <td>${yn(b.bandeau)}</td><td>${yn(b.ecranTFT)}</td><td>${yn(b.hautParleurs)}</td>
         <td>${yn(b.telephone)}</td><td>${yn(b.pupitre)}</td>
         <td style="font-size:10px">${b.billetique||'—'}</td>
-        <td style="font-size:10px;color:${venteOk?'var(--green)':'var(--text3)'}">${b.reventeDate||'—'}${venteOk?' ✓':''}</td>
+        <td style="font-size:10px;color:${venteOk?'var(--green)':'var(--text3)'}">${fmtDateFR(b.reventeDate)||'—'}${venteOk?' ✓':''}</td>
         <td><select class="status-select ${cls}" style="font-size:10px" onchange="changerStatutBus(${b.id},this.value,this)">${opts}</select></td>
       </tr>`;
     }).join('') || '<tr><td colspan="34" style="color:var(--text3);text-align:center;padding:20px">Aucun bus</td></tr>';
@@ -2809,7 +2850,7 @@ function showBusDetail(id) {
         ${coefUsure ? row('Coût au km', coefUsure+' €/km') : ''}
         ${row('Mise en service', fmtDateFR(b.anneMES))} ${row('Révision prévue', fmtDateFR(b.revisionDate))}
         ${row('Prochain CT', fmtDateFR(b.ct))} ${row('Garantie', fmtDateFR(b.garantie))}
-        ${row('Vente possible le', b.reventeDate ? b.reventeDate+(venteOk?' <b style="color:var(--green)">✅ DISPONIBLE</b>':' ⏳') : '')}
+        ${row('Vente possible le', b.reventeDate ? fmtDateFR(b.reventeDate)+(venteOk?' <b style="color:var(--green)">✅ DISPONIBLE</b>':' ⏳') : '')}
         ${row('Argus', b.argus ? fmt(b.argus) : '')}
       </div>
       <div>
@@ -3394,6 +3435,17 @@ function csvImporter() {
     buses.forEach(b => {
       const exist = state.bus.find(x => x.nom === b.nom || (b.idJeu && x.idJeu === b.idJeu));
       if (exist) {
+        // Détecter si le CT a avancé d'au moins 1 mois → CT effectué
+        if (exist.ct && b.ct && b.ct > exist.ct) {
+          const diffJours = Math.round((new Date(b.ct) - new Date(exist.ct)) / (1000*60*60*24));
+          if (diffJours >= 30) {
+            if (!state.ct) state.ct = [];
+            // Éviter doublon
+            if (!state.ct.find(c => c.bus === exist.nom && c.date === exist.ct)) {
+              state.ct.push({ id: Date.now() + Math.random()*1000|0, bus: exist.nom, date: exist.ct, km: exist.km || 0, resultat: 'Favorable' });
+            }
+          }
+        }
         Object.assign(exist, { km:b.km, statut:b.statut, ct:b.ct, revisionDate:b.revisionDate,
           energie:b.energie, marque:b.marque, modele:b.modele, depot:b.depot });
         if (b.idJeu) exist.idJeu = b.idJeu;
@@ -3529,66 +3581,279 @@ function clearAffectations() { if (confirm('Réinitialiser toutes les affectatio
 // ═══════════════════════════════════════════════════════
 //  MAINTENANCE
 // ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+//  RÉVISION / CT
+// ═══════════════════════════════════════════════════════
+
+const JOURS_FERIES = new Set([
+  '2025-01-01','2025-04-21','2025-05-01','2025-05-08','2025-05-29','2025-06-09',
+  '2025-07-14','2025-08-15','2025-11-01','2025-11-11','2025-12-25',
+  '2026-01-01','2026-04-06','2026-05-01','2026-05-08','2026-05-14','2026-05-25',
+  '2026-07-14','2026-08-15','2026-11-01','2026-11-11','2026-12-25',
+  '2027-01-01','2027-03-29','2027-05-01','2027-05-08','2027-05-06','2027-05-17',
+  '2027-07-14','2027-08-15','2027-11-01','2027-11-11','2027-12-25',
+]);
+
+function estFerme(dateISO) {
+  const d = new Date(dateISO);
+  const jour = d.getDay(); // 0=dim
+  return jour === 0 || JOURS_FERIES.has(dateISO);
+}
+
+// Calcule date CT prévue (= date limite, ou j-1 si fermé ce jour)
+function ctPrevu(dateLimiteISO) {
+  if (!dateLimiteISO) return '';
+  if (!estFerme(dateLimiteISO)) return dateLimiteISO;
+  // Dimanche ou férié → j-2
+  const d = new Date(dateLimiteISO);
+  d.setDate(d.getDate() - 2);
+  return d.toISOString().slice(0, 10);
+}
+
+// Calcule date révision = j-1 du CT prévu (ou j-2 si j-1 est fermé)
+function revisionPrevue(ctISO) {
+  if (!ctISO) return '';
+  const d = new Date(ctISO);
+  d.setDate(d.getDate() - 1);
+  const candidat = d.toISOString().slice(0, 10);
+  if (!estFerme(candidat)) return candidat;
+  d.setDate(d.getDate() - 1);
+  return d.toISOString().slice(0, 10);
+}
+
+function addDays(dateISO, n) {
+  const d = new Date(dateISO);
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
 function renderMaintenance() {
-  ['rev-bus','ct-bus'].forEach(id => {
-    document.getElementById(id).innerHTML = '<option value="">Choisir...</option>' + state.bus.map(b => `<option>${b.nom}</option>`).join('');
-  });
-  const tbody = document.getElementById('maintenance-tbody');
-  tbody.innerHTML = state.maintenance.map((m,i) => `<tr>
-    <td>${m.bus}</td>
-    <td><span class="badge badge-yellow">${m.type}</span></td>
-    <td class="mono">${fmtDateFR(m.depuis)}</td>
-    <td>${m.duree} j</td>
-    <td class="mono">${m.cout ? fmt(m.cout) : '—'}</td>
-    <td>${getStatusBadge(m.statut)}</td>
-    <td>
-      ${m.statut==='En cours'?`<button class="btn btn-success btn-xs" onclick="terminerMaintenance(${i})">✓ Terminé</button>`:''}
-      <button class="btn btn-danger btn-xs" onclick="supprimerMaintenance(${i})">✕</button>
-    </td>
-  </tr>`).join('') || '<tr><td colspan="7" style="color:var(--text3);text-align:center;padding:16px">Aucune maintenance</td></tr>';
+  const now = new Date();
+  const todayISO = today();
 
+  // Mois courant et suivant (pas glissant)
+  const moisCourant = todayISO.substring(0, 7);           // ex: 2026-03
+  const d2 = new Date(now.getFullYear(), now.getMonth() + 2, 0); // dernier jour du mois suivant
+  const limISO = d2.toISOString().slice(0, 10);
+  const debutISO = `${moisCourant}-01`;
+
+  // Bus avec CT dans le mois courant ou le suivant
+  const busACT = state.bus.filter(b => {
+    if (!b.ct) return false;
+    return b.ct >= debutISO && b.ct <= limISO;
+  }).sort((a, b) => a.ct.localeCompare(b.ct));
+
+  // Badge
+  const badge = document.getElementById('ct-prochain-badge');
+  if (badge) badge.textContent = busACT.length + ' CT programmé(s)';
+
+  if (!state.planningCT) state.planningCT = {};
+
+  const tbody = document.getElementById('planning-ct-tbody');
+  if (!tbody) return;
+
+  // Bus disponibles triés alphabétiquement pour les menus
+  const busDispos = [...state.bus]
+    .filter(x => x.statut !== 'Indispo')
+    .sort((a, b) => a.nom.localeCompare(b.nom));
+
+  tbody.innerHTML = busACT.map(b => {
+    const plan   = state.planningCT[b.nom] || {};
+    const ctDef  = ctPrevu(b.ct);
+    const revDef = revisionPrevue(ctDef);
+    const ctVal  = plan.ctDate  || ctDef;
+    const revVal = plan.revDate || revDef;
+    const ferme  = estFerme(b.ct);
+
+    // Couleurs : rouge si ≤ 2j, orange si ≤ 7j
+    const diffLim = Math.round((new Date(b.ct) - now) / (1000*60*60*24));
+    const limColor = diffLim <= 2 ? 'color:var(--red);font-weight:700'
+                   : diffLim <= 7 ? 'color:var(--yellow);font-weight:600' : '';
+
+    // Couleur des dates CT/révision prévues
+    const diffCT  = ctVal  ? Math.round((new Date(ctVal)  - now) / (1000*60*60*24)) : 99;
+    const diffRev = revVal ? Math.round((new Date(revVal) - now) / (1000*60*60*24)) : 99;
+    const ctColor  = diffCT  <= 2 ? 'border-color:var(--red)'  : diffCT  <= 7 ? 'border-color:var(--yellow)' : '';
+    const revColor = diffRev <= 2 ? 'border-color:var(--red)'  : diffRev <= 7 ? 'border-color:var(--yellow)' : '';
+
+    const dmdRemb   = plan.dmdRemb   || false;
+    const dateD     = plan.dateD     || '';
+    const rembEffec = plan.rembEffec || false;
+
+    const key = b.nom.replace(/[^a-zA-Z0-9]/g,'_');
+
+    const selectRemp = `<select id="remp-${key}" onchange="setRemplacement('${b.nom}',this.value)"
+      style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:3px 6px;font-size:11px;max-width:130px">
+      <option value="">—</option>
+      ${busDispos.filter(x=>x.nom!==b.nom).map(x=>`<option value="${x.nom}" ${plan.remplacement===x.nom?'selected':''}>${x.nom}</option>`).join('')}
+    </select>`;
+
+    return `<tr style="${ferme?'background:rgba(239,68,68,0.04)':''}">
+      <td class="mono" style="color:var(--text3)">${b.idJeu||'—'}</td>
+      <td class="mono"><b>${b.nom}</b></td>
+      <td class="mono" style="${limColor}">${fmtDateFR(b.ct)}${ferme?' 🚫':''}</td>
+      <td><input type="date" value="${revVal}" id="rev-date-${key}"
+        style="background:var(--surface2);border:1px solid var(--border);${revColor};border-radius:4px;color:var(--text);padding:3px 6px;font-size:11px"
+        onchange="setPlanDate('${b.nom}','rev',this.value)"></td>
+      <td><input type="date" value="${ctVal}" id="ct-date-${key}"
+        style="background:var(--surface2);border:1px solid var(--border);${ctColor};border-radius:4px;color:var(--text);padding:3px 6px;font-size:11px"
+        onchange="setPlanDate('${b.nom}','ct',this.value)"></td>
+      <td>${selectRemp}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" style="color:var(--text3);text-align:center;padding:20px">Aucun CT ce mois-ci ou le suivant</td></tr>';
+
+  // Historique CT
   const ctbody = document.getElementById('ct-tbody');
-  ctbody.innerHTML = state.ct.map((c,i) => `<tr>
-    <td>${c.bus}</td>
-    <td class="mono">${fmtDateFR(c.date)}</td>
-    <td class="mono">${fmtNum(c.km)} km</td>
-    <td>${c.resultat ? getStatusBadge(c.resultat) : ctStatus(c.date)}</td>
-  </tr>`).join('') || '<tr><td colspan="4" style="color:var(--text3);text-align:center;padding:16px">Aucun CT enregistré</td></tr>';
+  if (ctbody) ctbody.innerHTML = [...(state.ct||[])].reverse().map((c,i) => {
+    const realIdx = state.ct.length - 1 - i;
+    const demandeOk = c.demandeAlliance || false;
+    return `<tr style="${demandeOk?'opacity:0.5':''}">
+      <td>${c.bus}</td>
+      <td class="mono">${fmtDateFR(c.date)}</td>
+      <td class="mono">${fmtNum(c.km)} km</td>
+      <td>${c.resultat ? getStatusBadge(c.resultat) : ctStatus(c.date)}</td>
+      <td style="text-align:center">
+        <input type="checkbox" ${demandeOk?'checked':''} onchange="setDemandeAlliance(${realIdx},this.checked)"
+          style="width:15px;height:15px;cursor:pointer" title="${demandeOk?'Demande faite le '+fmtDateFR(c.dateDemande||''):'Marquer comme demandé'}">
+        ${demandeOk?`<span style="font-size:10px;color:var(--green);display:block">${fmtDateFR(c.dateDemande||'')}</span>`:''}
+      </td>
+      <td><button class="btn btn-danger btn-xs" onclick="supprimerCTHistorique(${realIdx})">✕</button></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" style="color:var(--text3);text-align:center;padding:16px">Aucun CT enregistré — alimenté automatiquement via import bus.csv</td></tr>';
 }
 
-function envoyerRevision() {
-  const bus = document.getElementById('rev-bus').value;
-  const type = document.getElementById('rev-type').value;
-  if (!bus) { toastMsg('Choisir un bus', 'error'); return; }
-  const b = state.bus.find(x => x.nom === bus);
-  if (b) { b.statut = 'En révision'; b.revision = type; }
-  state.maintenance.push({ id: Date.now(), bus, type, depuis: today(), duree: parseInt(document.getElementById('rev-duree').value)||3, cout: parseFloat(document.getElementById('rev-cout').value)||0, statut: 'En cours' });
-  journalLog(`${bus} envoyé en ${type}`, 'warn');
-  saveStateWithSync(); renderMaintenance();
-  toastMsg(`${bus} envoyé en ${type} ✓`, 'info');
+function setPlanDate(busNom, type, val) {
+  if (!state.planningCT) state.planningCT = {};
+  if (!state.planningCT[busNom]) state.planningCT[busNom] = {};
+  if (type === 'ct') {
+    state.planningCT[busNom].ctDate = val;
+    // Recalculer révision automatiquement
+    const newRev = revisionPrevue(val);
+    state.planningCT[busNom].revDate = newRev;
+    const id = 'rev-date-' + busNom.replace(/\s/g,'_');
+    const el = document.getElementById(id);
+    if (el) el.value = newRev;
+  } else {
+    state.planningCT[busNom].revDate = val;
+  }
+  saveStateWithSync();
 }
 
-function planifierCT() {
-  const bus = document.getElementById('ct-bus').value;
-  const date = document.getElementById('ct-date').value;
-  if (!bus || !date) { toastMsg('Bus et date requis', 'error'); return; }
-  const b = state.bus.find(x => x.nom === bus);
-  if (b) b.ct = date;
-  const res = document.getElementById('ct-resultat').value;
-  state.ct.push({ id: Date.now(), bus, date, km: parseInt(document.getElementById('ct-km').value)||0, resultat: res });
-  journalLog(`CT planifié pour ${bus} le ${date}`, 'info');
-  saveStateWithSync(); renderMaintenance();
-  toastMsg(`CT enregistré pour ${bus} ✓`, 'success');
+function setRemplacement(busNom, remplacant) {
+  if (!state.planningCT) state.planningCT = {};
+  if (!state.planningCT[busNom]) state.planningCT[busNom] = {};
+  const old = state.planningCT[busNom].remplacement;
+  // Remettre l'ancien remplaçant en service
+  if (old) {
+    const bOld = state.bus.find(b => b.nom === old);
+    if (bOld && bOld.statut === 'En révision') bOld.statut = 'En service';
+  }
+  state.planningCT[busNom].remplacement = remplacant;
+  // Mettre le bus en révision, le remplaçant en service
+  if (remplacant) {
+    const bPrinc = state.bus.find(b => b.nom === busNom);
+    if (bPrinc) bPrinc.statut = 'En révision';
+  }
+  saveStateWithSync();
+  renderMaintenance();
+  renderParc();
 }
 
+function validerPlanningCT() {
+  if (!state.planningCT) state.planningCT = {};
+  const todayISO = today();
+  const debutISO = todayISO.substring(0, 7) + '-01';
+  const d2 = new Date(new Date().getFullYear(), new Date().getMonth() + 2, 0);
+  const limISO = d2.toISOString().slice(0, 10);
+  const busACT = state.bus.filter(b => b.ct && b.ct >= debutISO && b.ct <= limISO);
+
+  busACT.forEach(b => {
+    if (!state.planningCT[b.nom]) state.planningCT[b.nom] = {};
+  });
+
+  saveStateWithSync();
+  renderMaintenance();
+  toastMsg(`✅ Planning enregistré`, 'success');
+}
+
+function setDemandeAlliance(idx, checked) {
+  if (!state.ct[idx]) return;
+  state.ct[idx].demandeAlliance = checked;
+  if (checked) state.ct[idx].dateDemande = today();
+  else state.ct[idx].dateDemande = '';
+  saveStateWithSync();
+  renderMaintenance();
+  toastMsg(checked ? '✅ Demande enregistrée' : 'Demande annulée', checked ? 'success' : 'info');
+}
+
+function supprimerCTHistorique(idx) {
+  if (!confirm('Supprimer cette entrée de l\'historique ?')) return;
+  state.ct.splice(idx, 1);
+  saveStateWithSync();
+  renderMaintenance();
+}
+
+function genererDemandeAlliance() {
+  const j15ago = addDays(today(), -15);
+  if (!state.ct) state.ct = [];
+
+  // CT dans les 15 derniers jours, PAS encore demandés
+  const ctEligibles = state.ct.filter(c =>
+    c.date && c.date >= j15ago && c.date <= today() && !c.demandeAlliance
+  );
+
+  // Révisions planifiées dans les 15 derniers jours (bus non déjà dans ctEligibles)
+  const ctBusNoms = new Set(ctEligibles.map(c => c.bus));
+  const revEligibles = state.bus.filter(b => {
+    if (ctBusNoms.has(b.nom)) return false; // déjà inclus via CT
+    const plan = (state.planningCT || {})[b.nom] || {};
+    const revDate = plan.revDate || '';
+    return revDate && revDate >= j15ago && revDate <= today();
+  });
+
+  const result    = document.getElementById('alliance-result');
+  const container = document.getElementById('alliance-texte-container');
+  const textarea  = document.getElementById('alliance-texte');
+
+  const total = ctEligibles.length + revEligibles.length;
+
+  if (!total) {
+    result.innerHTML = '<div class="alert-box info">Aucun bus éligible (tous déjà demandés ou aucun CT/révision dans les 15 derniers jours).</div>';
+    if (container) container.style.display = 'none';
+    return;
+  }
+
+  result.innerHTML = `<div style="font-size:12px;color:var(--accent);margin-bottom:6px">
+    <b>${total}</b> bus éligible(s) · ${ctEligibles.length} CT · ${revEligibles.length} révision(s) uniquement
+  </div>`;
+  if (container) container.style.display = 'block';
+
+  const lignesCT  = ctEligibles.map(c => {
+    const b = state.bus.find(x => x.nom === c.bus);
+    return `${c.bus} (ID= ${b?.idJeu||'?'})`;
+  });
+  const lignesRev = revEligibles.map(b => `${b.nom} (ID= ${b.idJeu||'?'})`);
+
+  if (textarea) textarea.value = [...lignesCT, ...lignesRev].join('\n');
+}
+
+function copierAllianceTexte() {
+  const ta = document.getElementById('alliance-texte');
+  if (!ta) return;
+  navigator.clipboard.writeText(ta.value).then(() => toastMsg('📋 Copié !', 'success'));
+}
+
+// Fonctions héritées conservées (appelées depuis alertes)
+function envoyerRevision() {}
+function planifierCT() {}
 function terminerMaintenance(i) {
   const m = state.maintenance[i];
+  if (!m) return;
   m.statut = 'Terminé';
   const b = state.bus.find(x => x.nom === m.bus);
   if (b) { b.statut = 'En service'; b.revision = null; }
   journalLog(`${m.bus} — ${m.type} terminée`, 'ok');
   saveStateWithSync(); renderMaintenance();
-  toastMsg(`${m.bus} de retour en service ✓`, 'success');
 }
 function supprimerMaintenance(i) { state.maintenance.splice(i, 1); saveStateWithSync(); renderMaintenance(); }
 
@@ -4365,7 +4630,7 @@ function renderCompta() {
   let rep = '';
   Object.entries(catsDep).sort((a,b)=>b[1]-a[1]).forEach(([cat, val]) => {
     const pct = depenses > 0 ? Math.round(val/depenses*100) : 0;
-    rep += `<div class="gauge-row"><div class="gauge-label" style="font-size:11px">${cat}</div><div class="gauge-bar"><div class="gauge-fill" style="width:${pct}%;background:var(--accent2)"></div></div><div class="gauge-val">${pct}%</div></div>`;
+    rep += `<div class="gauge-row"><div class="gauge-label" style="font-size:11px">${cat}</div><div class="gauge-bar"><div class="gauge-fill" style="width:${pct}%;background:var(--accent2)"></div></div><div class="gauge-val" style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><span>${pct}%</span><span style="font-size:10px;color:var(--text3)">${fmt(val)}</span></div></div>`;
   });
   const elRep = document.getElementById('compta-repartition');
   if (elRep) elRep.innerHTML = rep || '<div style="color:var(--text3)">Aucune dépense.</div>';
@@ -4376,7 +4641,7 @@ function renderCompta() {
   let repRec = '';
   Object.entries(catsRec).sort((a,b)=>b[1]-a[1]).forEach(([cat, val]) => {
     const pct = recettes > 0 ? Math.round(val/recettes*100) : 0;
-    repRec += `<div class="gauge-row"><div class="gauge-label" style="font-size:11px">${cat}</div><div class="gauge-bar"><div class="gauge-fill" style="width:${pct}%;background:var(--green)"></div></div><div class="gauge-val">${pct}%</div></div>`;
+    repRec += `<div class="gauge-row"><div class="gauge-label" style="font-size:11px">${cat}</div><div class="gauge-bar"><div class="gauge-fill" style="width:${pct}%;background:var(--green)"></div></div><div class="gauge-val" style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><span>${pct}%</span><span style="font-size:10px;color:var(--text3)">${fmt(val)}</span></div></div>`;
   });
   const elRepRec = document.getElementById('compta-repartition-rec');
   if (elRepRec) elRepRec.innerHTML = repRec || '<div style="color:var(--text3)">Aucune recette.</div>';
@@ -4599,6 +4864,150 @@ function importerContratsPub() {
   document.getElementById('pub-texte-brut').value = '';
   document.getElementById('pub-import-status').textContent = '✓ ' + contrats.length + ' contrats importés';
   toastMsg(contrats.length + ' contrats pub importés ✓', 'success');
+}
+
+// ═══════════════════════════════════════════════════════
+//  ÉVALUATION CONTRATS PUB
+// ═══════════════════════════════════════════════════════
+
+const EVAL_SEUILS = {
+  'panneau de pub arrière':  200,
+  'livrée arrière':          200,
+  'livrée latérale':         500,
+  'panneau de pub latéral':  500,
+  'panneau de pub avant':    100,
+  'abribus':                 350,
+  'ecran tft bus':           1100,
+  'écran tft bus':           1100,
+};
+
+function evaluerNote(prix, jours, nbDemande, typeSupport) {
+  if (!prix || !jours || !nbDemande) return 0;
+  const q = prix / jours / nbDemande; // revenu par jour par support
+  const type = typeSupport.toLowerCase().trim();
+  const seuil = EVAL_SEUILS[type] || null;
+  if (seuil === null) return null; // type inconnu
+  if (q <= 0) return 0;
+  if (q >= seuil) return 10;
+  return Math.round((q / seuil) * 10 * 10) / 10;
+}
+
+function noteColor(note) {
+  if (note === null) return 'var(--text3)';
+  if (note >= 8) return 'var(--green)';
+  if (note >= 5) return 'var(--yellow)';
+  return 'var(--red)';
+}
+
+function noteBar(note) {
+  if (note === null) return '<span style="color:var(--text3);font-size:11px">Type inconnu</span>';
+  const pct = Math.min(100, note * 10);
+  const color = noteColor(note);
+  return `<div style="display:flex;align-items:center;gap:8px">
+    <div style="flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden">
+      <div style="width:${pct}%;height:100%;background:${color};border-radius:4px;transition:width 0.3s"></div>
+    </div>
+    <span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:${color};min-width:36px;text-align:right">${note}/10</span>
+  </div>`;
+}
+
+function parseEvalLigne(ligne) {
+  // Séparateur : tabulation ou plusieurs espaces
+  const cols = ligne.split(/\t+/).map(c => c.trim()).filter(c => c);
+  if (cols.length < 7) return null;
+
+  const annonceur  = cols[0];
+  const nbDemande  = parseInt(cols[1]) || 0;
+  const nbDispo    = parseInt(cols[2]) || 0;
+  // Colonne 3 = type support
+  const typeSupport = cols[3];
+  // Colonne 4 = durée "25 j"
+  const dureeMatch = cols[4].match(/(\d+)/);
+  const jours = dureeMatch ? parseInt(dureeMatch[1]) : 0;
+  // Colonne 5 = date limite
+  const dateLimite = cols[5];
+  // Colonne 6 = prix "22 400€" ou "22400€"
+  const prixStr = cols[6].replace(/[\s\u00a0]/g, '').replace('€','').replace(',','.');
+  const prix = parseFloat(prixStr) || 0;
+
+  return { annonceur, nbDemande, nbDispo, typeSupport, jours, dateLimite, prix };
+}
+
+function evaluerContrats() {
+  const texte = document.getElementById('eval-textarea').value.trim();
+  if (!texte) { toastMsg('Colle des propositions à évaluer', 'error'); return; }
+
+  const lignes = texte.split('\n').filter(l => l.trim());
+  const contrats = lignes.map(parseEvalLigne).filter(Boolean);
+
+  if (!contrats.length) {
+    document.getElementById('eval-result').innerHTML =
+      '<div class="alert-box danger">Aucune ligne reconnue — vérifie le format (colonnes séparées par des tabulations)</div>';
+    return;
+  }
+
+  // Trier par note décroissante
+  const evaluated = contrats.map(c => {
+    const note = evaluerNote(c.prix, c.jours, c.nbDemande, c.typeSupport);
+    const q = c.prix && c.jours && c.nbDemande ? Math.round(c.prix / c.jours / c.nbDemande) : 0;
+    return { ...c, note, q };
+  }).sort((a, b) => (b.note||0) - (a.note||0));
+
+  const fmtPrix = v => Number(v).toLocaleString('fr-FR') + ' €';
+  const fmtDate = d => d; // déjà en JJ/MM/AAAA
+
+  // Recommandation globale
+  const top = evaluated.filter(c => c.note !== null && c.note >= 7);
+  const moy = evaluated.filter(c => c.note !== null && c.note >= 4 && c.note < 7);
+  const bad = evaluated.filter(c => c.note !== null && c.note < 4);
+
+  let recommande = '';
+  if (top.length) recommande += `<span style="color:var(--green)">✅ ${top.length} à accepter</span>`;
+  if (moy.length) recommande += `${top.length?'  ·  ':''}<span style="color:var(--yellow)">⚠️ ${moy.length} moyens</span>`;
+  if (bad.length) recommande += `${(top.length||moy.length)?'  ·  ':''}<span style="color:var(--red)">❌ ${bad.length} à refuser</span>`;
+
+  document.getElementById('eval-result').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+      <div style="font-size:12px;font-weight:600">${evaluated.length} proposition(s) analysée(s) · ${recommande}</div>
+    </div>
+    <div style="overflow-x:auto">
+    <table class="data-table">
+      <thead><tr>
+        <th>Annonceur</th>
+        <th>Support</th>
+        <th style="text-align:center">Demandé</th>
+        <th style="text-align:center">Dispo</th>
+        <th style="text-align:center">Durée</th>
+        <th>Date limite</th>
+        <th style="text-align:right">Prix total</th>
+        <th style="text-align:right">€/j/support</th>
+        <th style="min-width:180px">Note</th>
+      </tr></thead>
+      <tbody>
+        ${evaluated.map(c => {
+          const ok = c.nbDispo >= c.nbDemande;
+          const dispoColor = ok ? 'var(--green)' : 'var(--red)';
+          const dispoTip = ok ? '' : `title="Seulement ${c.nbDispo} dispos pour ${c.nbDemande} demandés"`;
+          return `<tr style="${c.note !== null && c.note >= 8 ? 'background:rgba(16,185,129,0.04)' : c.note !== null && c.note < 4 ? 'background:rgba(239,68,68,0.04)' : ''}">
+            <td><b>${c.annonceur}</b></td>
+            <td style="font-size:11px">${c.typeSupport}</td>
+            <td class="mono" style="text-align:center">${c.nbDemande}</td>
+            <td class="mono" style="text-align:center;color:${dispoColor};font-weight:600" ${dispoTip}>${c.nbDispo}${!ok?' ⚠️':''}</td>
+            <td class="mono" style="text-align:center">${c.jours} j</td>
+            <td class="mono">${fmtDate(c.dateLimite)}</td>
+            <td class="mono" style="text-align:right">${fmtPrix(c.prix)}</td>
+            <td class="mono" style="text-align:right;color:var(--accent)">${c.q} €</td>
+            <td>${noteBar(c.note)}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+    </div>`;
+}
+
+function viderEvaluation() {
+  document.getElementById('eval-textarea').value = '';
+  document.getElementById('eval-result').innerHTML = '';
 }
 
 function renderPub() {
@@ -5084,6 +5493,16 @@ function importerCSVDirect(type, contenu) {
       const exist = state.bus.find(x => x.nom === b.nom || (b.idJeu && x.idJeu === b.idJeu));
       if (exist) {
         const dateAchatSaved = exist.dateAchat;
+        // Détecter CT effectué (date CT avancée d'au moins 30j)
+        if (exist.ct && b.ct && b.ct > exist.ct) {
+          const diffJours = Math.round((new Date(b.ct) - new Date(exist.ct)) / (1000*60*60*24));
+          if (diffJours >= 30) {
+            if (!state.ct) state.ct = [];
+            if (!state.ct.find(c => c.bus === exist.nom && c.date === exist.ct)) {
+              state.ct.push({ id: Date.now() + Math.random()*1000|0, bus: exist.nom, date: exist.ct, km: exist.km || 0, resultat: 'Favorable' });
+            }
+          }
+        }
         Object.assign(exist, b);
         if (dateAchatSaved && !exist.dateAchat) exist.dateAchat = dateAchatSaved;
         maj++;
@@ -5525,7 +5944,7 @@ function navConfig(el) {
   if (page === 'historique') renderHistoriqueBase();
   if (page === 'config') renderConfig();
   if (page === 'cfg-categories') renderCategories();
-  if (page === 'cfg-reset') renderResetStats();
+  if (page === 'cfg-frequentation') renderFrequentations();
   if (page === 'cfg-lignes') renderCfgLignes();
   if (page === 'cfg-sync') renderSyncPage();
 }
@@ -5822,6 +6241,268 @@ function renderResetStats() {
 }
 
 // ── CFG LIGNES (placeholder) ─────────────────────────────
+// ═══════════════════════════════════════════════════════
+//  FRÉQUENTATIONS CIBLES
+// ═══════════════════════════════════════════════════════
+
+// ── Structure clé : freqCibles[niveau][periode][reseau][ligne][creneau]
+// periode : 'normal' | 'vacances'
+// reseau  : 'normal' | 'nocturne' | 'scolaire'
+// creneau : voir CRENEAUX_*
+
+const CRENEAUX_NORMAL = ['LU-VE Creuses','LU-VE Pointes','LU-VE Soir','SA Creuses','SA Pointes','SA Soir','DI&JF Creuses','DI&JF Pointes'];
+const CRENEAUX_NOCTURNE  = ['JE-VE Nuit','Samedi Nuit','Dimanche & JF Nuit'];
+const CRENEAUX_SCOLAIRE  = ['Pointe 1','Pointe 2','Pointe 3'];
+
+// Données par défaut niveau 4
+const FREQ_N4_NORMAL_NORMAL = {
+  '1':    [900,1500,500,830,1200,540,400,700],
+  '2':    [2000,2800,860,1650,2300,1200,1000,1300],
+  '3':    [900,1500,470,650,900,560,340,590],
+  '4':    [350,650,170,220,350,170,160,230],
+  '5':    [1000,1650,300,780,1150,470,360,480],
+  '6':    [370,570,60,280,390,50,null,150],
+  '7':    [480,700,200,230,400,200,100,250],
+  '8':    [550,850,220,360,480,300,null,200],
+  '9':    [370,570,130,280,380,130,180,220],
+  '10':   [680,1150,300,420,600,300,200,330],
+  '11':   [320,520,120,220,350,190,150,230],
+  '12':   [300,480,130,200,400,160,240,400],
+  '13':   [240,380,null,190,290,110,null,190],
+  '60':   [65,100,null,null,60,null,null,null],
+  '61':   [160,300,null,null,180,null,null,null],
+  '62':   [200,350,100,160,250,200,null,200],
+  '63':   [150,310,null,150,240,80,null,240],
+  '64':   [140,230,null,null,150,65,null,75],
+  '101':  [230,330,85,220,320,125,120,300],
+  '102':  [180,250,70,80,160,140,null,130],
+  '103':  [240,380,50,80,160,null,null,null],
+  '104':  [190,280,null,100,200,null,null,80],
+  '201':  [90,155,null,45,100,30,null,70],
+  '202':  [45,105,null,null,40,null,null,null],
+  '203':  [50,135,null,40,110,null,50,100],
+  '901':  [null,'Active',null,null,'Active',null,null,'Active'],
+  '902':  ['Active','Active','Active',null,'Active','Active',null,null],
+};
+const FREQ_N4_NORMAL_NOCTURNE = {
+  'PLEINE LUNE 1': [510,590,290],
+  'PLEINE LUNE 2': [270,295,145],
+};
+const FREQ_N4_NORMAL_SCOLAIRE = {
+  '601': [89,null,null],
+  '602': [153,null,null],
+  '651': [88,null,null],
+  '652': [43,null,null],
+};
+const FREQ_N4_VACANCES_NORMAL = {
+  '1':   [800,1000,400,650,950,440,300,500],
+  '2':   [1700,2100,850,1700,2000,1150,850,1200],
+  '3':   [820,1200,440,540,780,560,340,590],
+  '4':   [330,510,170,220,300,170,160,230],
+  '5':   [850,1300,230,650,950,470,360,480],
+  '6':   [380,410,0,280,390,50,null,150],
+  '7':   [360,580,200,230,400,200,100,250],
+  '8':   [450,750,220,360,480,300,null,200],
+  '9':   [280,410,130,280,380,130,180,220],
+  '10':  [630,900,300,400,550,300,200,330],
+  '11':  [320,450,130,220,340,190,150,230],
+  '12':  [300,480,130,200,480,160,240,480],
+  '13':  [290,380,null,190,290,110,null,190],
+  '60':  [65,100,null,null,60,null,null,null],
+  '61':  [160,300,null,null,180,null,null,null],
+  '62':  [250,400,200,250,350,200,150,300],
+  '63':  [230,310,null,150,270,80,null,270],
+  '64':  [140,230,null,null,150,65,null,75],
+  '101': [230,350,90,220,320,125,120,300],
+  '102': [180,250,70,80,170,140,null,130],
+  '103': [190,250,0,80,160,null,null,null],
+  '104': [170,280,null,100,200,null,null,80],
+  '201': [90,155,40,90,145,40,60,100],
+  '202': [45,100,null,null,0,null,null,null],
+  '203': [50,140,null,70,130,null,50,130],
+  '901': [null,'Active',null,null,'Active',null,null,'Active'],
+  '902': ['Active','Active','Active',null,'Active','Active',null,null],
+};
+const FREQ_N4_VACANCES_NOCTURNE = {
+  'PLEINE LUNE 1': [500,560,280],
+  'PLEINE LUNE 2': [260,300,140],
+};
+
+function chargerDonneesNiveau4() {
+  if (!confirm('Charger les données par défaut du niveau 4 ? Cela écrasera les données niveau 4 existantes.')) return;
+  if (!state.freqCibles) state.freqCibles = {};
+  if (!state.freqCibles[4]) state.freqCibles[4] = {};
+  state.freqCibles[4].normal   = { normal: FREQ_N4_NORMAL_NORMAL, nocturne: FREQ_N4_NORMAL_NOCTURNE, scolaire: FREQ_N4_NORMAL_SCOLAIRE };
+  state.freqCibles[4].vacances = { normal: FREQ_N4_VACANCES_NORMAL, nocturne: FREQ_N4_VACANCES_NOCTURNE, scolaire: {} };
+  saveStateWithSync();
+  renderFrequentations();
+  toastMsg('✅ Données N4 chargées', 'success');
+}
+
+let freqReseauActif = 'normal';
+
+function changerNiveau(delta) {
+  const n = Math.max(1, Math.min(5, (state.niveauJeu || 4) + delta));
+  state.niveauJeu = n;
+  saveStateWithSync();
+  renderFrequentations();
+}
+
+function setPeriode(vacances) {
+  state.modeVacances = vacances;
+  saveStateWithSync();
+  renderFrequentations();
+}
+
+function setReseauFreq(el) {
+  document.querySelectorAll('.freq-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  freqReseauActif = el.dataset.reseau;
+  renderFreqTableau();
+}
+
+function renderFrequentations() {
+  const n = state.niveauJeu || 4;
+  const badge = document.getElementById('freq-niveau-badge');
+  if (badge) badge.textContent = n;
+
+  // Boutons période
+  const btnNormal   = document.getElementById('btn-mode-normal');
+  const btnVacances = document.getElementById('btn-mode-vacances');
+  const vac = state.modeVacances || false;
+  if (btnNormal)   { btnNormal.style.background   = !vac ? 'var(--cfg-green)' : 'var(--surface2)'; btnNormal.style.color   = !vac ? '#000' : 'var(--text2)'; }
+  if (btnVacances) { btnVacances.style.background = vac  ? 'var(--yellow)'    : 'var(--surface2)'; btnVacances.style.color = vac  ? '#000' : 'var(--text2)'; }
+
+  // Warning scolaire en vacances
+  const warn = document.getElementById('freq-scolaire-warning');
+  if (warn) warn.style.display = (vac && freqReseauActif === 'scolaire') ? 'block' : 'none';
+
+  renderFreqTableau();
+}
+
+function getFreqData(niveau, vacances, reseau) {
+  return (state.freqCibles?.[niveau]?.[vacances?'vacances':'normal']?.[reseau]) || {};
+}
+
+function renderFreqTableau() {
+  const n       = state.niveauJeu || 4;
+  const vac     = state.modeVacances || false;
+  const reseau  = freqReseauActif;
+
+  // Titre
+  const title = document.getElementById('freq-table-title');
+  const periodeLabel = vac ? 'Vacances scolaires' : 'Période normale';
+  const reseauLabel  = reseau === 'normal' ? 'Réseau normal' : reseau === 'nocturne' ? 'Réseau nocturne' : 'Lignes scolaires';
+  if (title) title.textContent = `${reseauLabel} — ${periodeLabel} — Niveau ${n}`;
+
+  // Warning vacances scolaires
+  const warn = document.getElementById('freq-scolaire-warning');
+  if (warn) warn.style.display = (vac && reseau === 'scolaire') ? 'block' : 'none';
+
+  if (vac && reseau === 'scolaire') {
+    document.getElementById('freq-tbody').innerHTML = '';
+    document.getElementById('freq-thead').innerHTML = '';
+    return;
+  }
+
+  const creneaux = reseau === 'nocturne' ? CRENEAUX_NOCTURNE : reseau === 'scolaire' ? CRENEAUX_SCOLAIRE : CRENEAUX_NORMAL;
+  const data     = getFreqData(n, vac, reseau);
+  const lignes   = Object.keys(data).length ? Object.keys(data) : [];
+
+  // Thead
+  const thead = document.getElementById('freq-thead');
+  if (thead) thead.innerHTML = `<tr>
+    <th style="text-align:left;position:sticky;left:0;z-index:5;background:var(--surface2)">Ligne</th>
+    ${creneaux.map(c => `<th style="text-align:right;font-size:10px">${c}</th>`).join('')}
+  </tr>`;
+
+  // Tbody
+  const tbody = document.getElementById('freq-tbody');
+  if (!tbody) return;
+
+  if (!lignes.length) {
+    tbody.innerHTML = `<tr><td colspan="${creneaux.length+1}" style="text-align:center;padding:24px;color:var(--text3)">
+      Aucune donnée pour N${n} — ${periodeLabel}.<br>
+      <button class="btn btn-sm" style="margin-top:8px;background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green)" onclick="ajouterLigneFreq()">+ Ajouter une ligne</button>
+      ${n===4?`<button class="btn btn-sm" style="margin-top:8px;margin-left:8px" onclick="chargerDonneesNiveau4()">📥 Charger N4 par défaut</button>`:''}
+    </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = lignes.map(ligne => {
+    const vals = data[ligne] || [];
+    return `<tr>
+      <td class="freq-ligne">${ligne}</td>
+      ${creneaux.map((c, i) => {
+        const v = vals[i];
+        const display = v === null || v === undefined ? '—' : v === 'Active' ? '<span style="color:var(--green);font-weight:700">●</span>' : v;
+        return `<td class="freq-cell" onclick="editFreqCell(this,'${ligne}',${i})" data-ligne="${ligne}" data-idx="${i}">${display}</td>`;
+      }).join('')}
+    </tr>`;
+  }).join('');
+
+  // Bouton ajouter ligne en bas
+  tbody.innerHTML += `<tr><td colspan="${creneaux.length+1}" style="padding:6px 8px">
+    <button class="btn btn-sm btn-ghost" onclick="ajouterLigneFreq()" style="font-size:11px">+ Ajouter une ligne</button>
+  </td></tr>`;
+}
+
+function editFreqCell(td, ligne, idx) {
+  if (td.classList.contains('editing')) return;
+  const current = td.textContent.trim();
+  const val = current === '—' ? '' : current === '●' ? 'Active' : current;
+  td.classList.add('editing');
+  td.innerHTML = `<input type="text" value="${val}" placeholder="—" onblur="saveFreqCell(this,'${ligne}',${idx})" onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape'){this.value='CANCEL';this.blur();}">`;
+  td.querySelector('input').focus();
+  td.querySelector('input').select();
+}
+
+function saveFreqCell(input, ligne, idx) {
+  const td = input.parentElement;
+  td.classList.remove('editing');
+  if (input.value === 'CANCEL') { renderFreqTableau(); return; }
+
+  const n      = state.niveauJeu || 4;
+  const vac    = state.modeVacances || false;
+  const reseau = freqReseauActif;
+  const periKey = vac ? 'vacances' : 'normal';
+
+  if (!state.freqCibles) state.freqCibles = {};
+  if (!state.freqCibles[n]) state.freqCibles[n] = {};
+  if (!state.freqCibles[n][periKey]) state.freqCibles[n][periKey] = {};
+  if (!state.freqCibles[n][periKey][reseau]) state.freqCibles[n][periKey][reseau] = {};
+  if (!state.freqCibles[n][periKey][reseau][ligne]) state.freqCibles[n][periKey][reseau][ligne] = [];
+
+  const raw = input.value.trim();
+  const creneaux = reseau === 'nocturne' ? CRENEAUX_NOCTURNE : reseau === 'scolaire' ? CRENEAUX_SCOLAIRE : CRENEAUX_NORMAL;
+  while (state.freqCibles[n][periKey][reseau][ligne].length < creneaux.length) state.freqCibles[n][periKey][reseau][ligne].push(null);
+
+  if (raw === '' || raw === '-' || raw === '—') state.freqCibles[n][periKey][reseau][ligne][idx] = null;
+  else if (raw.toLowerCase() === 'active') state.freqCibles[n][periKey][reseau][ligne][idx] = 'Active';
+  else { const num = parseInt(raw); state.freqCibles[n][periKey][reseau][ligne][idx] = isNaN(num) ? null : num; }
+
+  saveStateWithSync();
+  renderFreqTableau();
+}
+
+function ajouterLigneFreq() {
+  const num = prompt('Numéro ou nom de la ligne (ex: 14, PLEINE LUNE 3) :');
+  if (!num || !num.trim()) return;
+  const n = state.niveauJeu || 4;
+  const vac = state.modeVacances || false;
+  const reseau = freqReseauActif;
+  const periKey = vac ? 'vacances' : 'normal';
+  const creneaux = reseau === 'nocturne' ? CRENEAUX_NOCTURNE : reseau === 'scolaire' ? CRENEAUX_SCOLAIRE : CRENEAUX_NORMAL;
+  if (!state.freqCibles) state.freqCibles = {};
+  if (!state.freqCibles[n]) state.freqCibles[n] = {};
+  if (!state.freqCibles[n][periKey]) state.freqCibles[n][periKey] = {};
+  if (!state.freqCibles[n][periKey][reseau]) state.freqCibles[n][periKey][reseau] = {};
+  state.freqCibles[n][periKey][reseau][num.trim()] = Array(creneaux.length).fill(null);
+  saveStateWithSync();
+  renderFreqTableau();
+}
+
+
 function renderCfgLignes() {
   const tbody = document.getElementById('cfg-lignes-tbody');
   if (!tbody) return;
@@ -5893,6 +6574,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Polling extension — DOIT être ici, après que le DOM et les fonctions sont prêts
   demarrerPollingExtension();
+
+  // Charger données N4 automatiquement si pas encore fait
+  if (!state.freqCibles?.[4]) {
+    if (!state.freqCibles) state.freqCibles = {};
+    state.freqCibles[4] = {
+      normal:   { normal: FREQ_N4_NORMAL_NORMAL, nocturne: FREQ_N4_NORMAL_NOCTURNE, scolaire: FREQ_N4_NORMAL_SCOLAIRE },
+      vacances: { normal: FREQ_N4_VACANCES_NORMAL, nocturne: FREQ_N4_VACANCES_NOCTURNE, scolaire: {} }
+    };
+    saveState(); // pas de sync pour l'init silencieuse
+  }
 });
 
 // ═══════════════════════════════════════════════════════
