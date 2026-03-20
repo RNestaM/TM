@@ -836,7 +836,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v67</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v69</span>
       <span id="sync-status" title="Synchronisation Gist" style="font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 8px;border-radius:4px;display:none"></span>
       <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
@@ -7094,33 +7094,56 @@ function getCreneauxForReseau(reseau) {
 }
 
 // Mapping creneau affectation → index dans le tableau fréquentation
-const CRENEAU_TO_FREQ_IDX = {
-  sem_creuse:0, sem_pointe:1, sem_soir:2, sem_nuit:3,
-  sam_creuse:4, sam_pointe:5, sam_soir:6, sam_nuit:7,
-  dim_creuse:8, dim_pointe:9, dim_nuit:10
+// Mapping creneau affectation → index dans freqCibles selon le réseau
+// Réseau NORMAL : 8 créneaux (LU-VE Cr, LU-VE Po, LU-VE Soir, SA Cr, SA Po, SA Soir, DI Cr, DI Po)
+const CRENEAU_TO_FREQ_NORMAL = {
+  sem_creuse:0, sem_pointe:1, sem_soir:2,
+  sam_creuse:3, sam_pointe:4, sam_soir:5,
+  dim_creuse:6, dim_pointe:7,
+  // nocturnes → réseau nocturne, pas inclus ici
+};
+// Réseau NOCTURNE : 3 créneaux (JE-VE Nuit, Sam Nuit, Dim Nuit)
+const CRENEAU_TO_FREQ_NOCTURNE = {
+  sem_nuit:0, sam_nuit:1, dim_nuit:2,
+};
+// Réseau SCOLAIRE : 3 créneaux = Pointe1 (sem), Pointe2 (sam), Pointe3 (dim)
+const CRENEAU_TO_FREQ_SCOLAIRE = {
+  sem_pointe:0, sam_pointe:1, dim_pointe:2,
 };
 
-// Mapping creneau affectation → label court
-const CRENEAU_LABELS = {
-  sem_creuse:'HC', sem_pointe:'HP', sem_soir:'Soir', sem_nuit:'Noc.',
-  sam_creuse:'HC', sam_pointe:'HP', sam_soir:'Soir', sam_nuit:'Noc.',
-  dim_creuse:'HC', dim_pointe:'HP', dim_nuit:'Noc.'
-};
-
-const CRENEAU_GROUPES_FREQ = [
-  { label:'Semaine',  ids:['sem_creuse','sem_pointe','sem_soir','sem_nuit'] },
-  { label:'Samedi',   ids:['sam_creuse','sam_pointe','sam_soir','sam_nuit'] },
-  { label:'Dimanche', ids:['dim_creuse','dim_pointe','dim_nuit'] },
+const CRENEAU_GROUPES_FREQ_NORMAL = [
+  { label:'Semaine',  ids:['sem_creuse','sem_pointe','sem_soir'] },
+  { label:'Samedi',   ids:['sam_creuse','sam_pointe','sam_soir'] },
+  { label:'Dimanche', ids:['dim_creuse','dim_pointe'] },
 ];
 
+const CRENEAU_GROUPES_FREQ_NOCTURNE = [
+  { label:'Nuit', ids:['sem_nuit','sam_nuit','dim_nuit'] },
+];
+
+const CRENEAU_LABELS_FREQ = {
+  sem_creuse:'HC', sem_pointe:'HP', sem_soir:'Soir',
+  sam_creuse:'HC', sam_pointe:'HP', sam_soir:'Soir',
+  dim_creuse:'HC', dim_pointe:'HP',
+  sem_nuit:'JE-VE', sam_nuit:'SAM', dim_nuit:'DIM',
+  // Pour scolaire, les pointes sont renommées
+};
+
 // Pour un créneau et une ligne : nb bus + places totales affectées
+function normaliseLigneNum(num) {
+  const s = String(num).trim();
+  // Normaliser "PLEINE LUNE 1" → "PL1", "PLEINE LUNE 2" → "PL2", etc.
+  const m = s.match(/^(?:PLEINE\s+LUNE|PL)\s*(\d+)$/i);
+  if (m) return 'PL' + m[1];
+  return s;
+}
+
 function getBusAffectesLigne(ligneNum, creneauId) {
+  const cible = normaliseLigneNum(ligneNum);
   const buses = [];
   state.bus.forEach(b => {
-    const val = state.affCreneaux?.[b.nom]?.[creneauId] || '';
-    if (String(val).trim() === String(ligneNum).trim()) {
-      buses.push(b);
-    }
+    const val = normaliseLigneNum(state.affCreneaux?.[b.nom]?.[creneauId] || '');
+    if (val === cible) buses.push(b);
   });
   return buses;
 }
@@ -7149,12 +7172,18 @@ function renderFrequentation() {
   });
   const freqData  = state.freqCibles?.[n]?.[periKey]?.[reseau] || {};
 
-  // Créneaux à afficher selon réseau
-  const groupes   = reseau === 'nocturne'
-    ? [{ label:'Nuit', ids:['sem_nuit','sam_nuit','dim_nuit'] }]
+  // Créneaux à afficher + mapping index selon réseau
+  const groupes = reseau === 'nocturne'
+    ? CRENEAU_GROUPES_FREQ_NOCTURNE
     : reseau === 'scolaire'
-    ? [{ label:'Scolaire', ids:['sem_creuse','sem_pointe','sem_soir'] }]
-    : CRENEAU_GROUPES_FREQ;
+    ? [{ label:'Scolaire', ids:['sem_pointe','sam_pointe','dim_pointe'] }]
+    : CRENEAU_GROUPES_FREQ_NORMAL;
+
+  const freqIdxMap = reseau === 'nocturne'
+    ? CRENEAU_TO_FREQ_NOCTURNE
+    : reseau === 'scolaire'
+    ? CRENEAU_TO_FREQ_SCOLAIRE
+    : CRENEAU_TO_FREQ_NORMAL;
 
   const allCreneaux = groupes.flatMap(g => g.ids);
 
@@ -7165,19 +7194,26 @@ function renderFrequentation() {
   const thead = document.getElementById('freq-main-thead');
   if (thead) {
     const BG2 = 'var(--surface2)';
+    const GCOLORS = { 'Semaine':'#1a3a6b', 'Samedi':'#3b1a6b', 'Dimanche':'#1a4a3b', 'Nuit':'#1a2a4b', 'Scolaire':'#2a4b1a' };
+    const GTCOLS  = { 'Semaine':'#60a5fa', 'Samedi':'#c084fc', 'Dimanche':'#34d399', 'Nuit':'#818cf8', 'Scolaire':'#86efac' };
     const row1 = `<tr>
       <th rowspan="2" style="position:sticky;left:0;z-index:6;background:${BG2};min-width:60px;border-right:2px solid var(--border);text-align:center">Ligne</th>
-      <th rowspan="2" style="position:sticky;left:60px;z-index:6;background:${BG2};min-width:40px;max-width:40px;border-right:3px solid var(--border);font-size:15px;text-align:center">Dur.<br>Véh.</th>
+      <th rowspan="2" style="position:sticky;left:60px;z-index:6;background:${BG2};min-width:40px;max-width:40px;border-right:3px solid var(--border);font-size:13px;text-align:center">Dur.<br>Véh.</th>
       <th rowspan="2" style="position:sticky;left:100px;z-index:6;background:${BG2};min-width:90px;border-right:2px solid var(--border);text-align:right;font-size:13px;color:var(--text3)"></th>
-      ${groupes.map(g => `<th colspan="${g.ids.length}" style="text-align:center;background:${g.label==='Semaine'?'#1a3a6b':g.label==='Samedi'?'#3b1a6b':'#1a4a3b'};color:${g.label==='Semaine'?'#60a5fa':g.label==='Samedi'?'#c084fc':'#34d399'};font-weight:700;font-size:14px;border-left:3px solid currentColor">${g.label}</th>`).join('')}
+      ${groupes.map(g => {
+        const bg = GCOLORS[g.label]||'#1a2a3b'; const tc = GTCOLS[g.label]||'#60a5fa';
+        return `<th colspan="${g.ids.length}" style="text-align:center;background:${bg};color:${tc};font-weight:700;font-size:14px;border-left:3px solid ${tc}">${g.label}</th>`;
+      }).join('')}
     </tr>
     <tr>
-      ${allCreneaux.map((c, i) => {
+      ${allCreneaux.map((c) => {
         const g = groupes.find(gr => gr.ids.includes(c));
         const isFirst = g && g.ids[0] === c;
-        const bg = g?.label==='Semaine'?'#1a3a6bcc':g?.label==='Samedi'?'#3b1a6bcc':'#1a4a3bcc';
-        const col = g?.label==='Semaine'?'#60a5fa':g?.label==='Samedi'?'#c084fc':'#34d399';
-        return `<th style="text-align:center;font-size:13px;background:${bg};color:${col};padding:3px 6px;${isFirst?`border-left:3px solid ${col}55`:''};min-width:52px">${CRENEAU_LABELS[c]||c}</th>`;
+        const bg = (GCOLORS[g?.label]||'#1a2a3b')+'cc';
+        const col = GTCOLS[g?.label]||'#60a5fa';
+        return `<th style="text-align:center;font-size:13px;background:${bg};color:${col};padding:3px 6px;${isFirst?`border-left:3px solid ${col}55`:''};min-width:52px">${
+          reseau === 'scolaire' ? ['Pointe 1','Pointe 2','Pointe 3'][['sem_pointe','sam_pointe','dim_pointe'].indexOf(c)] || c : (CRENEAU_LABELS_FREQ[c]||c)
+        }</th>`;
       }).join('')}
     </tr>`;
     thead.innerHTML = row1;
@@ -7195,26 +7231,31 @@ function renderFrequentation() {
     return;
   }
 
-  // Calcul global
   let totalManquants = 0, totalTransportes = 0, totalFreq = 0;
 
   const rows = lignes.map(ligne => {
-    const freqVals  = freqData[ligne.num] || [];
+    // Normalise le numéro de ligne pour chercher dans freqData
+    // Les lignes nocturnes peuvent être stockées comme "PL1" ou "PLEINE LUNE 1"
+    const freqKey = freqData[ligne.num] !== undefined ? ligne.num
+      : freqData['PLEINE LUNE ' + ligne.num.replace('PL','')] !== undefined ? 'PLEINE LUNE ' + ligne.num.replace('PL','')
+      : ligne.num;
+    const freqVals  = freqData[freqKey] || [];
     const couleur   = ligne.couleur || '#888';
     const dureeAR   = ligne.duree || 0;
     const vehicules = ligne.vehicules || '—';
     const bornes    = ligne.bornes ? '⚡' : '';
 
-    // Par créneau : calculer tout
-    const colonnes = allCreneaux.map((cid, ci) => {
-      const freqIdx  = CRENEAU_TO_FREQ_IDX[cid];
-      const cible    = typeof freqVals[freqIdx] === 'number' ? freqVals[freqIdx] : (freqVals[freqIdx] === 'Active' ? -1 : 0);
-      const buses    = getBusAffectesLigne(ligne.num, cid);
-      const nbBus    = buses.length;
-      const places   = buses.reduce((s, b) => s + (parseInt(b.capa) || 0), 0);
-      const manque   = cible > 0 ? places - cible : null;
-      const freq     = nbBus > 0 && dureeAR > 0 ? Math.round(dureeAR / nbBus) : null;
-      const pct      = cible > 0 ? Math.round(places / cible * 100) : null;
+    const colonnes = allCreneaux.map((cid) => {
+      const freqIdx = freqIdxMap[cid];
+      const cible   = freqIdx !== undefined
+        ? (typeof freqVals[freqIdx] === 'number' ? freqVals[freqIdx] : (freqVals[freqIdx] === 'Active' ? -1 : 0))
+        : 0;
+      const buses  = getBusAffectesLigne(ligne.num, cid);
+      const nbBus  = buses.length;
+      const places = buses.reduce((s, b) => s + (parseInt(b.capa) || 0), 0);
+      const manque = cible > 0 ? places - cible : null;
+      const freq   = nbBus > 0 && dureeAR > 0 ? Math.round(dureeAR / nbBus) : null;
+      const pct    = cible > 0 ? Math.round(places / cible * 100) : null;
       if (cible > 0) { totalFreq += cible; totalTransportes += places; totalManquants += (manque || 0); }
       return { cible, buses, nbBus, places, manque, freq, pct, isActive: cible === -1 };
     });
