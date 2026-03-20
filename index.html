@@ -219,8 +219,8 @@
 
   /* GRID 2-COL */
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-  @media (max-width: 1200px) { .grid-3 { grid-template-columns: 1fr 1fr; } }
+  
+  @media (max-width: 1200px) {  }
 
   /* CARD */
   .card {
@@ -283,8 +283,7 @@
   .badge-yellow { background: rgba(245,158,11,0.15); color: var(--yellow); border: 1px solid rgba(245,158,11,0.3); }
   .badge-red { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
   .badge-blue { background: rgba(0,212,255,0.1); color: var(--accent); border: 1px solid rgba(0,212,255,0.3); }
-  .badge-orange { background: rgba(249,115,22,0.15); color: var(--orange); border: 1px solid rgba(249,115,22,0.3); }
-  .badge-purple { background: rgba(124,58,237,0.15); color: var(--accent3); border: 1px solid rgba(124,58,237,0.3); }
+  
   .badge-gray { background: rgba(100,116,139,0.15); color: var(--text3); border: 1px solid rgba(100,116,139,0.3); }
 
   /* BUTTONS */
@@ -420,13 +419,13 @@
   .tab.active { background: var(--accent); color: #000; font-weight: 600; }
 
   /* BUS TYPE colors */
-  .type-mini { color: #06b6d4; }
-  .type-midi { color: #8b5cf6; }
-  .type-std { color: var(--green); }
-  .type-art { color: var(--yellow); }
-  .type-car { color: var(--orange); }
-  .type-tram { color: var(--red); }
-  .type-remp { color: var(--text3); }
+  
+  
+  
+  
+  
+  
+  
 
   /* ALERT BOX */
   .alert-box {
@@ -472,27 +471,14 @@
   ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
 
   /* DIVIDER */
-  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+  
 
   /* TAG */
-  .tag { display: inline-block; padding: 1px 6px; border-radius: 2px; font-size: 10px; font-family: 'JetBrains Mono', monospace; }
+  
 
   /* TOAST */
   #toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
-  .toast {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 10px 16px;
-    font-size: 12px;
-    color: var(--text);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    animation: slideIn 0.2s ease;
-    max-width: 280px;
-  }
+  
   .toast.success { border-left: 3px solid var(--green); }
   .toast.error { border-left: 3px solid var(--red); }
   .toast.info { border-left: 3px solid var(--accent); }
@@ -502,7 +488,7 @@
   @media (max-width: 900px) {
     #sidebar { transform: translateX(-220px); }
     #main { margin-left: 0; }
-    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .grid-2, 
   }
 
   /* SECTION TITLE */
@@ -521,14 +507,14 @@
   .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
   /* PULSE ANIMATION */
-  .pulse { animation: pulse 2s infinite; }
+  
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
   /* GLOW TEXT */
   .glow { text-shadow: 0 0 10px currentColor; }
 
   /* INLINE ICON */
-  .ico { display: inline-block; width: 1.2em; text-align: center; }
+  
 
   /* SORTABLE COLUMNS */
   th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
@@ -850,7 +836,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v57</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v66</span>
       <span id="sync-status" title="Synchronisation Gist" style="font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 8px;border-radius:4px;display:none"></span>
       <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
@@ -1197,10 +1183,32 @@
 
     <!-- ═══════════════════════════════════════════ FRÉQUENTATION ═══ -->
     <div id="page-frequentation" class="page">
-      <div style="text-align:center;padding:60px 20px;color:var(--text3)">
-        <div style="font-size:48px;margin-bottom:16px">👥</div>
-        <div style="font-size:20px;font-weight:700;color:var(--text2);margin-bottom:8px">Fréquentation</div>
-        <div style="font-size:13px">Cet onglet sera développé prochainement.<br>Il mettra en relation les fréquentations cibles avec les bus affectés sur chaque ligne.</div>
+      <!-- Barre de contrôle -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+        <button id="freq-btn-normal" onclick="setFreqPeriode(false)"
+          style="padding:6px 14px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600">Période normale</button>
+        <button id="freq-btn-vacances" onclick="setFreqPeriode(true)"
+          style="padding:6px 14px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600">Vacances scolaires</button>
+        <div id="freq-reseau-tabs" style="display:flex;gap:4px">
+          <button class="freq-tab active" data-reseau="normal"   onclick="setFreqReseau(this)">🚌 Normal</button>
+          <button class="freq-tab"        data-reseau="nocturne" onclick="setFreqReseau(this)">🌙 Nocturne</button>
+          <button class="freq-tab"        data-reseau="scolaire" onclick="setFreqReseau(this)">🎒 Scolaire</button>
+        </div>
+        <span id="freq-niveau-actif-badge" style="font-size:11px;padding:4px 10px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);border-radius:6px;color:var(--accent)"></span>
+      </div>
+
+      <!-- Tableau fréquentation -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title" id="freq-page-title">👥 Fréquentation</div>
+          <span id="freq-global-stats" style="font-size:11px;color:var(--text3)"></span>
+        </div>
+        <div class="card-body" style="padding:0;overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 200px)">
+          <table class="data-table" id="freq-main-table" style="border-collapse:separate;border-spacing:0;min-width:1400px">
+            <thead id="freq-main-thead" style="position:sticky;top:0;z-index:5"></thead>
+            <tbody id="freq-main-tbody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -1706,6 +1714,37 @@
 
     <!-- ═══════════════════════════════════════════ CONFIG ═══ -->
     <div id="page-config" class="page">
+
+      <!-- ── Niveau du jeu ── -->
+      <div class="card" style="margin-bottom:14px;border-color:rgba(0,212,255,0.3)">
+        <div class="card-header" style="border-bottom-color:rgba(0,212,255,0.2)">
+          <div class="card-title" style="color:var(--accent)">🎮 Niveau du jeu</div>
+          <span id="cfg-niveau-badge" style="font-size:13px;font-weight:700;color:var(--accent);font-family:'JetBrains Mono',monospace"></span>
+        </div>
+        <div class="card-body">
+          <p style="font-size:11px;color:var(--text3);margin-bottom:14px">
+            Le niveau actif détermine quelles fréquentations cibles et quelles configurations de lignes sont utilisées sur tout le site (Fréquentation, Stats de lignes, Affectations).
+          </p>
+          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid rgba(0,212,255,0.3);border-radius:10px;padding:8px 16px">
+              <button onclick="setCfgNiveau(state.niveauJeu-1)"
+                style="background:none;border:none;color:var(--accent);font-size:22px;cursor:pointer;padding:0 8px;line-height:1">◀</button>
+              <span id="cfg-niveau-display" style="font-family:'JetBrains Mono',monospace;font-size:32px;font-weight:700;color:var(--accent);min-width:40px;text-align:center">4</span>
+              <button onclick="setCfgNiveau(state.niveauJeu+1)"
+                style="background:none;border:none;color:var(--accent);font-size:22px;cursor:pointer;padding:0 8px;line-height:1">▶</button>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap" id="cfg-niveau-btns">
+              <button onclick="setCfgNiveau(1)" id="cfg-niveau-btn-1" style="width:42px;height:42px;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;transition:.15s;border:2px solid var(--border);background:var(--surface2);color:var(--text2)">1</button>
+              <button onclick="setCfgNiveau(2)" id="cfg-niveau-btn-2" style="width:42px;height:42px;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;transition:.15s;border:2px solid var(--border);background:var(--surface2);color:var(--text2)">2</button>
+              <button onclick="setCfgNiveau(3)" id="cfg-niveau-btn-3" style="width:42px;height:42px;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;transition:.15s;border:2px solid var(--border);background:var(--surface2);color:var(--text2)">3</button>
+              <button onclick="setCfgNiveau(4)" id="cfg-niveau-btn-4" style="width:42px;height:42px;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;transition:.15s;border:2px solid var(--border);background:var(--surface2);color:var(--text2)">4</button>
+              <button onclick="setCfgNiveau(5)" id="cfg-niveau-btn-5" style="width:42px;height:42px;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;transition:.15s;border:2px solid var(--border);background:var(--surface2);color:var(--text2)">5</button>
+            </div>
+            <div id="cfg-niveau-info" style="font-size:12px;color:var(--text3)"></div>
+          </div>
+        </div>
+      </div>
+
       <div class="grid-2">
 
         <div class="card">
@@ -2393,8 +2432,6 @@ let state = loadState() || {
 if (!state.config) state.config = { argentDepart: 0 };
 if (!state.statsLignes) state.statsLignes = [];
 if (!state.lastImport) state.lastImport = {};
-if (!state.categories) state.categories = {};
-if (!state.cfgLignes) state.cfgLignes = [];
 if (!state.cfgLignesParNiveau) state.cfgLignesParNiveau = {};
 if (!state.themes) state.themes = [];
 if (!state.planningCT) state.planningCT = {};
@@ -2476,7 +2513,7 @@ function resetTotal() {
   state.gasoil = []; state.journal = []; state.carburant = []; state.pubDispo = [];
   state.conso = { niveau: 5000, moy: 0 };
   state.config = { argentDepart: 0 };
-  state.prixKm = {}; state.categories = {}; state.cfgLignes = []; state.cfgLignesParNiveau = {}; state.affCreneaux = {}; state.lastImport = {}; state.themes = []; state.planningCT = {}; state.freqCibles = {}; state.niveauJeu = 4; state.modeVacances = false;
+  state.prixKm = {}; state.cfgLignesParNiveau = {}; state.affCreneaux = {}; state.lastImport = {}; state.themes = []; state.planningCT = {}; state.freqCibles = {}; state.niveauJeu = 4; state.modeVacances = false;
   saveState();
   // Supprimer les clés extension
   ['tm_ext_present','tm_ext_request'].forEach(k => localStorage.removeItem(k));
@@ -2491,7 +2528,6 @@ function resetTotal() {
 
 // Pas de données de démo — état vide par défaut
 // Utilise le bouton "MAJ via CSV" pour importer tes données réelles
-
 
 
 // ═══════════════════════════════════════════════════════
@@ -2784,7 +2820,6 @@ function sortData(arr, tableId, defaultCol) {
 // ═══════════════════════════════════════════════════════
 //  PARC
 // ═══════════════════════════════════════════════════════
-const STATUS_OPTIONS = ['En service','En révision','Indispo','Nouveau','CT urgent','Musée','Réserve'];
 const STATUS_CLASS = {
   'En service':  'status-en-service',
   'En révision': 'status-en-revision',
@@ -2796,16 +2831,8 @@ const STATUS_CLASS = {
 };
 
 function ouvrirCTPlanif(nomBus) {
-  // Naviguer vers maintenance et pré-remplir le bus CT
+  // Naviguer vers maintenance
   nav(document.querySelector('[data-page=maintenance]'));
-  setTimeout(() => {
-    const sel = document.getElementById('ct-bus');
-    if (sel) {
-      for (let i = 0; i < sel.options.length; i++) {
-        if (sel.options[i].value === nomBus) { sel.selectedIndex = i; break; }
-      }
-    }
-  }, 100);
 }
 
 function setParcView(el, view) {
@@ -3392,20 +3419,37 @@ function parserBus(rows) {
 }
 
 function parserAffects(rows) {
-  const creneaux = [
-    {col:3,label:'Sem. Creuse'},{col:4,label:'Sem. Pointe'},{col:5,label:'Sem. Soir'},{col:6,label:'Sem. Nocturne'},
-    {col:7,label:'Sam. Creuse'},{col:8,label:'Sam. Pointe'},{col:9,label:'Sam. Soir'},{col:10,label:'Sam. Nocturne'},
-    {col:11,label:'Dim. Creuse'},{col:12,label:'Dim. Pointe'},{col:13,label:'Dim. Nocturne'}
+  // Mapping colonnes CSV → id créneau affCreneaux
+  const COL_MAP = [
+    {col:3,  id:'sem_creuse'},
+    {col:4,  id:'sem_pointe'},
+    {col:5,  id:'sem_soir'},
+    {col:6,  id:'sem_nuit'},
+    {col:7,  id:'sam_creuse'},
+    {col:8,  id:'sam_pointe'},
+    {col:9,  id:'sam_soir'},
+    {col:10, id:'sam_nuit'},
+    {col:11, id:'dim_creuse'},
+    {col:12, id:'dim_pointe'},
+    {col:13, id:'dim_nuit'},
   ];
-  const results = [];
+  const results = []; // garde pour compatibilité state.affectations
+  const affCreneaux = {};
+
   rows.slice(1).filter(c => c[0]).forEach(c => {
-    creneaux.forEach(cr => {
-      const ligne = c[cr.col];
-      if (ligne && ligne !== '' && ligne !== '0') {
-        results.push({ bus: c[0], ligne: 'L' + ligne, service: cr.label });
+    const busNom = c[0];
+    affCreneaux[busNom] = {};
+    COL_MAP.forEach(({ col, id }) => {
+      const val = (c[col] || '').toString().trim();
+      if (val && val !== '0' && val !== '') {
+        affCreneaux[busNom][id] = val;
+        results.push({ bus: busNom, ligne: val, service: id });
       }
     });
   });
+
+  // Attacher à state pour que l'importeur puisse y accéder
+  parserAffects._lastAffCreneaux = affCreneaux;
   return results;
 }
 
@@ -3552,10 +3596,17 @@ function csvImporter() {
     const aff = parserAffects(rows);
     if (!aff.length) { toastMsg('Aucune affectation trouvée', 'error'); return; }
     state.affectations = aff;
+    // Peupler le nouveau système affCreneaux
+    if (parserAffects._lastAffCreneaux) {
+      state.affCreneaux = parserAffects._lastAffCreneaux;
+    }
     state.lastImport.affects = nowStr;
-    journalLog(`MAJ CSV affectations : ${aff.length} lignes`, 'ok');
-    saveStateWithSync(); if (document.getElementById('page-affectations').classList.contains('active')) renderAffectations();
-    toastMsg(`✅ ${aff.length} affectations importées`, 'success');
+    const nbBus = Object.keys(state.affCreneaux || {}).length;
+    journalLog(`MAJ CSV affectations : ${nbBus} bus · ${aff.length} créneaux`, 'ok');
+    saveStateWithSync();
+    if (document.getElementById('page-affectations').classList.contains('active')) renderAffectations();
+    if (document.getElementById('page-frequentation')?.classList.contains('active')) renderFrequentation();
+    toastMsg(`✅ ${nbBus} bus · ${aff.length} créneaux importés`, 'success');
 
   } else if (currentCsvType === 'stats') {
     if (!state.statsLignes) state.statsLignes = [];
@@ -3853,29 +3904,21 @@ function saveAffCell(input, busNom, creneauId) {
   td.innerHTML   = val || '';
   td.style.color = val ? 'var(--text)' : 'var(--text3)';
 
-  // Recalc total
   const creneaux = getAffCreneaux(busNom);
   const totalC   = AFF_CRENEAUX.filter(c => creneaux[c.id] && creneaux[c.id] !== '').length;
+  const row      = td.closest('tr'); // déclaré ici pour être accessible partout
 
-  // Auto-statut uniquement si pas forcé
   const b = state.bus.find(x => x.nom === busNom);
   const statutsForces = ['En révision','CT','Révision puis CT','CT puis Révision','Indispo','ATELIER'];
   if (b && !statutsForces.includes(b.statut || '')) {
-    // Stocker exactement comme getAffStatut le lira
     b.statut = totalC === 0 ? 'Réserve' : 'En service';
     saveStateWithSync();
-
-    const affStatut = getAffStatut(b); // 'Réserve' ou 'Service'
+    const affStatut = getAffStatut(b);
     const sStyle    = AFF_STATUT_STYLES[affStatut] || AFF_STATUT_STYLES['Service'];
     const newBg     = sStyle.bg || '';
-
-    const row = td.closest('tr');
     if (row) {
-      // Mettre à jour le select statut
       const sel = row.querySelector('select');
       if (sel) sel.value = affStatut;
-
-      // Appliquer le fond sur toutes les td de la ligne
       row.style.background = newBg;
       Array.from(row.querySelectorAll('td')).forEach(cell => {
         if (cell.style.position === 'sticky' || getComputedStyle(cell).position === 'sticky') {
@@ -3885,17 +3928,18 @@ function saveAffCell(input, busNom, creneauId) {
     }
   }
 
-  // Mettre à jour la cellule Total
-  const row = td.closest('tr');
+  // Total
   if (row) {
-    const allTds = Array.from(row.querySelectorAll('td'));
-    // Total = avant-dernière td
+    const allTds  = Array.from(row.querySelectorAll('td'));
     const totalTd = allTds[allTds.length - 2];
     if (totalTd) {
       totalTd.textContent = totalC;
       totalTd.style.color = totalC >= 8 ? 'var(--red)' : totalC >= 6 ? 'var(--yellow)' : 'var(--text2)';
     }
   }
+
+  // Fréquentation dynamique
+  if (document.getElementById('page-frequentation')?.classList.contains('active')) renderFrequentation();
 }
 
 function setAffStatut(busNom, newStatut) {
@@ -3914,8 +3958,8 @@ function setAffStatut(busNom, newStatut) {
   b.statut = mapStatut[newStatut] || newStatut;
   saveStateWithSync();
   renderAffectations();
-  // Mettre à jour aussi la page révision si ouverte
   if (document.getElementById('page-maintenance')?.classList.contains('active')) renderMaintenance();
+  if (document.getElementById('page-frequentation')?.classList.contains('active')) renderFrequentation();
 }
 
 function setAffRemplacement(busNom, remplacant) {
@@ -3935,10 +3979,16 @@ function setAffRemplacement(busNom, remplacant) {
   renderAffectations();
 }
 
-function ajouterAffectation() {}
-function supprimerAffectation(i) {}
-function supprimerAffectationBus(bus) {}
-function clearAffectations() { if (confirm('Réinitialiser les créneaux ?')) { state.affCreneaux = {}; saveStateWithSync(); renderAffectations(); } }
+
+function clearAffectations() {
+  if (confirm('Réinitialiser tous les créneaux d\'affectation ?')) {
+    state.affCreneaux = {};
+    // Remettre tous les bus en Réserve
+    state.bus.forEach(b => { if (!['En révision','CT','Révision puis CT','CT puis Révision','Indispo'].includes(b.statut)) b.statut = 'Réserve'; });
+    saveStateWithSync(); renderAffectations();
+    toastMsg('Créneaux réinitialisés', 'info');
+  }
+}
 
 // ═══════════════════════════════════════════════════════
 //  MAINTENANCE
@@ -4204,9 +4254,7 @@ function copierAllianceTexte() {
   navigator.clipboard.writeText(ta.value).then(() => toastMsg('📋 Copié !', 'success'));
 }
 
-// Fonctions héritées conservées (appelées depuis alertes)
-function envoyerRevision() {}
-function planifierCT() {}
+// Maintenance héritée (alertes)
 function terminerMaintenance(i) {
   const m = state.maintenance[i];
   if (!m) return;
@@ -4290,12 +4338,7 @@ function importerAbribus() {
   // Résumé
   const moy1 = Math.round(resultats.reduce((s,r)=>s+parseInt(r.pct1),0)/resultats.length);
   const moy2 = Math.round(resultats.reduce((s,r)=>s+parseInt(r.pct2),0)/resultats.length);
-  document.getElementById('abribus-resume').innerHTML = `
-    <div class="alert-box success">${resultats.length} abribus importés avec succès ✓</div>
-    <div class="gauge-row"><div class="gauge-label">Équip. moyen 1</div><div class="gauge-bar"><div class="gauge-fill" style="width:${moy1}%;background:var(--accent)"></div></div><div class="gauge-val">${moy1}%</div></div>
-    <div class="gauge-row"><div class="gauge-label">Équip. moyen 2</div><div class="gauge-bar"><div class="gauge-fill" style="width:${moy2}%;background:var(--accent2)"></div></div><div class="gauge-val">${moy2}%</div></div>
-    <div style="font-size:11px;color:var(--text3);margin-top:8px">${resultats.filter(r=>parseInt(r.pct1)<40||parseInt(r.pct2)<40).length} abribus à améliorer</div>
-  `;
+  // Affichage résumé dans le rendu abribus (via renderAbribus)
   journalLog(`${resultats.length} abribus importés`, 'ok');
   saveStateWithSync(); renderAbribus();
   toastMsg(`${resultats.length} abribus importés ✓`, 'success');
@@ -4557,14 +4600,6 @@ function renderLignes() {
 }
 
 
-function ajouterLigne() {
-  const num = document.getElementById('ligne-num').value.trim();
-  if (!num) { toastMsg('Numéro requis', 'error'); return; }
-  state.lignes.push({ id: Date.now(), num, nom: document.getElementById('ligne-nom').value, freq: parseInt(document.getElementById('ligne-freq').value)||0, recette: parseInt(document.getElementById('ligne-recette').value)||0, nbBus: parseInt(document.getElementById('ligne-bus').value)||1, typeBus: document.getElementById('ligne-type-bus').value });
-  journalLog(`Ligne ${num} ajoutée`, 'ok');
-  saveStateWithSync(); renderLignes();
-  toastMsg(`Ligne ${num} ajoutée ✓`, 'success');
-}
 function supprimerLigne(i) { state.lignes.splice(i, 1); saveStateWithSync(); renderLignes(); }
 
 // ═══════════════════════════════════════════════════════
@@ -4783,8 +4818,6 @@ function renderHistoriqueBase() {
     </div>`;
   }).join('');
 }
-
-
 
 
 function setComptaMoisFiltre(mois) {
@@ -5455,7 +5488,7 @@ function renderPubTableau() {
 
 function supprimerContratPub(id) { state.contratsPub = state.contratsPub.filter(c => c.id !== id); saveStateWithSync(); renderPub(); }
 function supprimerTousContracts() { if (confirm('Supprimer tous les contrats ?')) { state.contratsPub = []; saveStateWithSync(); renderPub(); } }
-function ajouterContratPub() {}
+
 function supprimerContrat(i) { state.contratsPub.splice(i,1); saveStateWithSync(); renderPub(); }
 
 
@@ -5817,9 +5850,6 @@ function renderGasoilGraphique() {
   ctx.fillStyle = '#7c3aed'; ctx.fillRect(pad.left+70, 4, 14, 10); ctx.fillStyle='#e2e8f0'; ctx.fillText('GNV', pad.left+88, 13);
 }
 
-function enregistrerPlein() {}
-function enregistrerConso() {}
-
 
 // ═══════════════════════════════════════════════════════
 //  EXTENSION FIREFOX — COMMUNICATION
@@ -5881,10 +5911,16 @@ function importerCSVDirect(type, contenu) {
     const aff = parserAffects(rows);
     if (!aff.length) { toastMsg('affects.csv : aucune affectation', 'error'); return; }
     state.affectations = aff;
+    if (parserAffects._lastAffCreneaux) {
+      state.affCreneaux = parserAffects._lastAffCreneaux;
+    }
     state.lastImport.affects = nowStr;
-    journalLog(`MAJ affects.csv : ${aff.length} lignes`, 'ok');
-    saveStateWithSync(); if (document.getElementById('page-affectations').classList.contains('active')) renderAffectations();
-    toastMsg(`📋 ${aff.length} affectations importées`, 'success');
+    const nbBus2 = Object.keys(state.affCreneaux || {}).length;
+    journalLog(`MAJ affects.csv : ${nbBus2} bus · ${aff.length} créneaux`, 'ok');
+    saveStateWithSync();
+    if (document.getElementById('page-affectations').classList.contains('active')) renderAffectations();
+    if (document.getElementById('page-frequentation')?.classList.contains('active')) renderFrequentation();
+    toastMsg(`📋 ${nbBus2} bus · ${aff.length} créneaux importés`, 'success');
 
   } else if (type === 'stats') {
     if (!state.statsLignes) state.statsLignes = [];
@@ -5991,10 +6027,55 @@ function fetchViaExtension() {
 }
 
 
-
 // ═══════════════════════════════════════════════════════
 //  CONFIGURATION
 // ═══════════════════════════════════════════════════════
+function setCfgNiveau(n) {
+  n = Math.max(1, Math.min(5, parseInt(n) || 1));
+  state.niveauJeu = n;
+  saveStateWithSync();
+  updateNiveauUI();
+  // Propager aux pages ouvertes
+  if (document.getElementById('page-cfg-frequentation')?.classList.contains('active')) renderFrequentations();
+  if (document.getElementById('page-cfg-lignes')?.classList.contains('active')) renderCfgLignes();
+  toastMsg(`✅ Niveau ${n} actif — fréquentations et lignes mises à jour`, 'success');
+}
+
+function updateNiveauUI() {
+  const n = state.niveauJeu || 4;
+  // page-config
+  const disp = document.getElementById('cfg-niveau-display');
+  if (disp) disp.textContent = n;
+  const badge = document.getElementById('cfg-niveau-badge');
+  if (badge) badge.textContent = `Niveau ${n} actif`;
+  // Boutons 1-5
+  for (let i = 1; i <= 5; i++) {
+    const btn = document.getElementById(`cfg-niveau-btn-${i}`);
+    if (btn) {
+      btn.style.background  = i === n ? 'var(--accent)'   : 'var(--surface2)';
+      btn.style.color       = i === n ? '#000'            : 'var(--text2)';
+      btn.style.borderColor = i === n ? 'var(--accent)'   : 'var(--border)';
+    }
+  }
+  // Info lignes/fréq dispos pour ce niveau
+  const infoEl = document.getElementById('cfg-niveau-info');
+  if (infoEl) {
+    const nbLignes = (state.cfgLignesParNiveau?.[n] || []).length;
+    const nbFreqNorm = Object.keys(state.freqCibles?.[n]?.normal?.normal || {}).length;
+    const nbFreqVac  = Object.keys(state.freqCibles?.[n]?.vacances?.normal || {}).length;
+    infoEl.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <span>🛣️ ${nbLignes} ligne(s) configurée(s)</span>
+        <span>📈 ${nbFreqNorm} lignes fréquentation normale · ${nbFreqVac} en vacances</span>
+      </div>`;
+  }
+  // Badge freq et lignes dans leurs pages
+  const freqBadge = document.getElementById('freq-niveau-badge');
+  if (freqBadge) freqBadge.textContent = n;
+  const lignesBadge = document.getElementById('lignes-niveau-badge');
+  if (lignesBadge) lignesBadge.textContent = n;
+}
+
 function renderConfig() {
   const cfg = state.config || { argentDepart: 0 };
   const inpDepart = document.getElementById('cfg-argent-depart');
@@ -6009,6 +6090,9 @@ function renderConfig() {
     elEcart.style.color = ecart > 0 ? 'var(--green)' : ecart < 0 ? 'var(--red)' : 'var(--accent)';
   }
 
+  // Niveau du jeu
+  updateNiveauUI();
+
   const argentDepart = cfg.argentDepart || 0;
   const mouvements   = allOps().reduce((a,o) => o.type === 'recette' ? a + o.montant : a - o.montant, 0);
   const solde        = argentDepart + mouvements + ecart;
@@ -6018,7 +6102,7 @@ function renderConfig() {
     <div class="gauge-row"><div class="gauge-label">👤 Personnel</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--accent3)"></div></div><div class="gauge-val">${state.personnel.length}</div></div>
     <div class="gauge-row"><div class="gauge-label">💰 Opérations compta</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--green)"></div></div><div class="gauge-val">${allOps().length}</div></div>
     <div class="gauge-row"><div class="gauge-label">📊 Entrées stats</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--yellow)"></div></div><div class="gauge-val">${(state.statsLignes||[]).length}</div></div>
-    <div class="gauge-row"><div class="gauge-label">📋 Affectations</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--orange)"></div></div><div class="gauge-val">${state.affectations.length}</div></div>
+    <div class="gauge-row"><div class="gauge-label">📋 Affectations</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--orange)"></div></div><div class="gauge-val">${Object.keys(state.affCreneaux||{}).length}</div></div>
     <div style="margin-top:14px;padding:10px;background:rgba(0,212,255,0.05);border:1px solid var(--border);border-radius:6px">
       <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Solde calculé</div>
       <div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:${solde>=0?'var(--green)':'var(--red)'}">
@@ -6060,7 +6144,6 @@ function resetEcart() {
   if (document.getElementById('page-compta') && document.getElementById('page-compta').classList.contains('active')) renderCompta();
   toastMsg('Correction d\'écart réinitialisée à 0 €', 'success');
 }
-
 
 
 function sauvegarderConfig() {
@@ -6230,7 +6313,7 @@ async function testerConnexionGist() {
 
 function sauvegarderConfigSync() { toastMsg('Supabase est configuré automatiquement', 'success'); }
 function supprimerConfigSync()   { toastMsg('La configuration est intégrée dans le code', 'info'); }
-function toggleSyncTokenVisibility() {}
+
 
 function renderSyncPage() {
   const lastSync = localStorage.getItem('tm_last_sync') || '—';
@@ -6586,12 +6669,6 @@ function supprimerCategorieFull(themeId, catId) {
 }
 
 // Compatibilité — anciennes fonctions appelées ailleurs
-function ajouterCategorie(type) {}
-function sauvegarderCategorie() {}
-function supprimerCategorie() {}
-function getCategories() { return []; }
-
-
 // ── RESET STATS ─────────────────────────────────────────
 function renderResetStats() {
   const setBadge = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
@@ -6955,8 +7032,239 @@ function ajouterLigneFreq() {
 }
 
 
+// ═══════════════════════════════════════════════════════
+//  FRÉQUENTATION (onglet principal)
+// ═══════════════════════════════════════════════════════
+
+let freqPageReseau   = 'normal';
+let freqPageVacances = false;
+
+function setFreqPeriode(vac) {
+  freqPageVacances = vac;
+  renderFrequentation();
+}
+
+function setFreqReseau(el) {
+  document.querySelectorAll('#freq-reseau-tabs .freq-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  freqPageReseau = el.dataset.reseau;
+  renderFrequentation();
+}
+
+// Creneaux par réseau (mêmes que cfg fréquentations)
+function getCreneauxForReseau(reseau) {
+  if (reseau === 'nocturne')  return ['sem_nuit','sam_nuit','dim_nuit'];
+  if (reseau === 'scolaire')  return ['sem_creuse','sem_pointe','sem_soir']; // Pointe 1/2/3
+  return ['sem_creuse','sem_pointe','sem_soir','sem_nuit','sam_creuse','sam_pointe','sam_soir','sam_nuit','dim_creuse','dim_pointe','dim_nuit'];
+}
+
+// Mapping creneau affectation → index dans le tableau fréquentation
+const CRENEAU_TO_FREQ_IDX = {
+  sem_creuse:0, sem_pointe:1, sem_soir:2, sem_nuit:3,
+  sam_creuse:4, sam_pointe:5, sam_soir:6, sam_nuit:7,
+  dim_creuse:8, dim_pointe:9, dim_nuit:10
+};
+
+// Mapping creneau affectation → label court
+const CRENEAU_LABELS = {
+  sem_creuse:'HC', sem_pointe:'HP', sem_soir:'Soir', sem_nuit:'Noc.',
+  sam_creuse:'HC', sam_pointe:'HP', sam_soir:'Soir', sam_nuit:'Noc.',
+  dim_creuse:'HC', dim_pointe:'HP', dim_nuit:'Noc.'
+};
+
+const CRENEAU_GROUPES_FREQ = [
+  { label:'Semaine',  ids:['sem_creuse','sem_pointe','sem_soir','sem_nuit'] },
+  { label:'Samedi',   ids:['sam_creuse','sam_pointe','sam_soir','sam_nuit'] },
+  { label:'Dimanche', ids:['dim_creuse','dim_pointe','dim_nuit'] },
+];
+
+// Pour un créneau et une ligne : nb bus + places totales affectées
+function getBusAffectesLigne(ligneNum, creneauId) {
+  const buses = [];
+  state.bus.forEach(b => {
+    const val = state.affCreneaux?.[b.nom]?.[creneauId] || '';
+    if (String(val).trim() === String(ligneNum).trim()) {
+      buses.push(b);
+    }
+  });
+  return buses;
+}
+
 function renderFrequentation() {
-  // À développer — onglet Fréquentation
+  const n       = state.niveauJeu || 4;
+  const vac     = freqPageVacances;
+  const reseau  = freqPageReseau;
+  const periKey = vac ? 'vacances' : 'normal';
+
+  // Mettre à jour les boutons période
+  const btnN = document.getElementById('freq-btn-normal');
+  const btnV = document.getElementById('freq-btn-vacances');
+  if (btnN) { btnN.style.background = !vac ? 'var(--green)' : 'var(--surface2)'; btnN.style.color = !vac ? '#000' : 'var(--text2)'; btnN.style.border = '1px solid var(--border)'; }
+  if (btnV) { btnV.style.background = vac  ? 'var(--yellow)': 'var(--surface2)'; btnV.style.color = vac  ? '#000' : 'var(--text2)'; btnV.style.border = '1px solid var(--border)'; }
+
+  // Badge niveau actif
+  const badge = document.getElementById('freq-niveau-actif-badge');
+  if (badge) badge.textContent = `Niveau ${n} actif`;
+
+  // Récupérer config lignes + fréquentation pour ce niveau/période/réseau
+  const lignes    = (state.cfgLignesParNiveau?.[n] || []).filter(l => {
+    if (reseau === 'nocturne') return l.num.startsWith('PL') || l.num.startsWith('PLEINE');
+    if (reseau === 'scolaire') return /^(6\d\d|60[1-9]|65\d)$/.test(l.num);
+    return !l.num.startsWith('PL') && !l.num.startsWith('PLEINE');
+  });
+  const freqData  = state.freqCibles?.[n]?.[periKey]?.[reseau] || {};
+
+  // Créneaux à afficher selon réseau
+  const groupes   = reseau === 'nocturne'
+    ? [{ label:'Nuit', ids:['sem_nuit','sam_nuit','dim_nuit'] }]
+    : reseau === 'scolaire'
+    ? [{ label:'Scolaire', ids:['sem_creuse','sem_pointe','sem_soir'] }]
+    : CRENEAU_GROUPES_FREQ;
+
+  const allCreneaux = groupes.flatMap(g => g.ids);
+
+  const title = document.getElementById('freq-page-title');
+  if (title) title.textContent = `👥 Fréquentation — ${vac ? 'Vacances' : 'Normale'} — Niveau ${n}`;
+
+  // Thead
+  const thead = document.getElementById('freq-main-thead');
+  if (thead) {
+    const BG2 = 'var(--surface2)';
+    const row1 = `<tr>
+      <th rowspan="2" style="position:sticky;left:0;z-index:6;background:${BG2};min-width:60px;border-right:2px solid var(--border);text-align:center">Ligne</th>
+      <th rowspan="2" style="position:sticky;left:60px;z-index:6;background:${BG2};min-width:40px;max-width:40px;border-right:3px solid var(--border);font-size:15px;text-align:center">Dur.<br>Véh.</th>
+      <th rowspan="2" style="position:sticky;left:100px;z-index:6;background:${BG2};min-width:90px;border-right:2px solid var(--border);text-align:right;font-size:13px;color:var(--text3)"></th>
+      ${groupes.map(g => `<th colspan="${g.ids.length}" style="text-align:center;background:${g.label==='Semaine'?'#1a3a6b':g.label==='Samedi'?'#3b1a6b':'#1a4a3b'};color:${g.label==='Semaine'?'#60a5fa':g.label==='Samedi'?'#c084fc':'#34d399'};font-weight:700;font-size:14px;border-left:3px solid currentColor">${g.label}</th>`).join('')}
+    </tr>
+    <tr>
+      ${allCreneaux.map((c, i) => {
+        const g = groupes.find(gr => gr.ids.includes(c));
+        const isFirst = g && g.ids[0] === c;
+        const bg = g?.label==='Semaine'?'#1a3a6bcc':g?.label==='Samedi'?'#3b1a6bcc':'#1a4a3bcc';
+        const col = g?.label==='Semaine'?'#60a5fa':g?.label==='Samedi'?'#c084fc':'#34d399';
+        return `<th style="text-align:center;font-size:13px;background:${bg};color:${col};padding:3px 6px;${isFirst?`border-left:3px solid ${col}55`:''};min-width:52px">${CRENEAU_LABELS[c]||c}</th>`;
+      }).join('')}
+    </tr>`;
+    thead.innerHTML = row1;
+  }
+
+  // Tbody
+  const tbody = document.getElementById('freq-main-tbody');
+  if (!tbody) return;
+
+  if (!lignes.length) {
+    tbody.innerHTML = `<tr><td colspan="${allCreneaux.length+3}" style="text-align:center;padding:30px;color:var(--text3)">
+      Aucune ligne configurée pour le niveau ${n}.<br>
+      <button class="btn btn-sm btn-ghost" style="margin-top:8px" onclick="ouvrirModeConfigPage('cfg-lignes')">⚙️ Configurer les lignes</button>
+    </td></tr>`;
+    return;
+  }
+
+  // Calcul global
+  let totalManquants = 0, totalTransportes = 0, totalFreq = 0;
+
+  const rows = lignes.map(ligne => {
+    const freqVals  = freqData[ligne.num] || [];
+    const couleur   = ligne.couleur || '#888';
+    const dureeAR   = ligne.duree || 0;
+    const vehicules = ligne.vehicules || '—';
+    const bornes    = ligne.bornes ? '⚡' : '';
+
+    // Par créneau : calculer tout
+    const colonnes = allCreneaux.map((cid, ci) => {
+      const freqIdx  = CRENEAU_TO_FREQ_IDX[cid];
+      const cible    = typeof freqVals[freqIdx] === 'number' ? freqVals[freqIdx] : (freqVals[freqIdx] === 'Active' ? -1 : 0);
+      const buses    = getBusAffectesLigne(ligne.num, cid);
+      const nbBus    = buses.length;
+      const places   = buses.reduce((s, b) => s + (parseInt(b.capa) || 0), 0);
+      const manque   = cible > 0 ? places - cible : null;
+      const freq     = nbBus > 0 && dureeAR > 0 ? Math.round(dureeAR / nbBus) : null;
+      const pct      = cible > 0 ? Math.round(places / cible * 100) : null;
+      if (cible > 0) { totalFreq += cible; totalTransportes += places; totalManquants += (manque || 0); }
+      return { cible, buses, nbBus, places, manque, freq, pct, isActive: cible === -1 };
+    });
+
+    const colSpan = (ci) => {
+      const g = groupes.find(gr => gr.ids.includes(allCreneaux[ci]));
+      return g?.ids[0] === allCreneaux[ci]
+        ? `border-left:3px solid ${g?.label==='Semaine'?'#60a5fa44':g?.label==='Samedi'?'#c084fc44':'#34d39944'}`
+        : 'border-left:1px solid var(--border)';
+    };
+
+    const LBL = 'position:sticky;left:100px;z-index:2;font-size:13px;color:var(--text2);white-space:nowrap;padding:2px 8px;border-right:2px solid var(--border);text-align:right;min-width:90px;background:';
+
+    const TD_TOP    = `border-top:5px solid ${couleur}`;
+    const TD_BOT    = `border-bottom:5px solid ${couleur}`;
+    const TD_NORMAL = 'border-top:1px solid var(--border)';
+    const BG_ROW    = 'background:var(--surface)';
+
+    return `
+      <tr>
+        <td rowspan="6" style="position:sticky;left:0;z-index:3;background:${couleur};padding:4px 6px;border-right:2px solid var(--border);border-top:5px solid ${couleur};vertical-align:middle;text-align:center;min-width:60px">
+          <div style="color:#fff;font-weight:700;font-size:14px">${ligne.num}</div>
+          ${bornes ? `<div style="color:#ffe;font-size:13px">⚡</div>` : ''}
+        </td>
+        <td rowspan="6" style="position:sticky;left:60px;z-index:3;background:${couleur}44;border-right:3px solid var(--border);border-top:5px solid ${couleur};text-align:center;vertical-align:middle;font-size:15px;color:#fff;padding:2px 3px;max-width:40px;min-width:40px;word-break:break-word;line-height:1.3">
+          ${dureeAR > 0 ? dureeAR+'m' : '—'}<br><span style="font-size:14px;opacity:.8;display:block">${vehicules.replace(/ - /g,'<br>')}</span>
+        </td>
+        <td style="${LBL}var(--surface);${TD_TOP}">Fréquentation</td>
+        ${allCreneaux.map((cid, ci) => {
+          const { cible, isActive } = colonnes[ci];
+          const border = colSpan(ci);
+          if (isActive) return `<td style="text-align:center;font-size:15px;font-weight:700;color:var(--green);${border};${TD_TOP}">●</td>`;
+          return `<td style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--text);${border};${TD_TOP}">${cible > 0 ? cible : '—'}</td>`;
+        }).join('')}
+      </tr>
+      <tr>
+        <td style="${LBL}var(--surface);${TD_NORMAL}">Transportés</td>
+        ${allCreneaux.map((cid, ci) => {
+          const { places, cible, isActive } = colonnes[ci];
+          if (isActive || cible <= 0) return `<td style="text-align:center;${colSpan(ci)};${TD_NORMAL}">—</td>`;
+          return `<td style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--text);${colSpan(ci)};${TD_NORMAL}">${places}</td>`;
+        }).join('')}
+      </tr>
+      <tr>
+        <td style="${LBL}var(--surface);${TD_NORMAL}">Nb bus</td>
+        ${allCreneaux.map((cid, ci) => {
+          const { nbBus, cible } = colonnes[ci];
+          return `<td style="text-align:center;font-size:14px;color:var(--text);${colSpan(ci)};${TD_NORMAL}">${cible > 0 || nbBus > 0 ? nbBus : '—'}</td>`;
+        }).join('')}
+      </tr>
+      <tr>
+        <td style="${LBL}var(--surface);${TD_NORMAL}">Manquants</td>
+        ${allCreneaux.map((cid, ci) => {
+          const { manque, cible, isActive } = colonnes[ci];
+          if (isActive || cible <= 0) return `<td style="text-align:center;${colSpan(ci)};${TD_NORMAL}">—</td>`;
+          const good = manque >= 0;
+          return `<td style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;background:${good?'rgba(16,185,129,0.12)':'rgba(239,68,68,0.12)'};${colSpan(ci)};${TD_NORMAL};color:${good?'var(--green)':'var(--red)'}">${manque >= 0 ? '+'+manque : manque}</td>`;
+        }).join('')}
+      </tr>
+      <tr>
+        <td style="${LBL}var(--surface);${TD_NORMAL}">Fréquence</td>
+        ${allCreneaux.map((cid, ci) => {
+          const { freq, cible } = colonnes[ci];
+          return `<td style="text-align:center;font-size:13px;color:var(--text);${colSpan(ci)};${TD_NORMAL}">${freq !== null && cible > 0 ? freq+' min' : '—'}</td>`;
+        }).join('')}
+      </tr>
+      <tr>
+        <td style="${LBL}var(--surface);${TD_NORMAL};${TD_BOT}">% Exploit.</td>
+        ${allCreneaux.map((cid, ci) => {
+          const { pct, cible, isActive } = colonnes[ci];
+          if (isActive || cible <= 0) return `<td style="text-align:center;${colSpan(ci)};${TD_NORMAL};${TD_BOT}">—</td>`;
+          const good = pct >= 100;
+          return `<td style="text-align:center;font-size:14px;font-weight:700;${colSpan(ci)};background:${good?'rgba(16,185,129,0.15)':'rgba(239,68,68,0.15)'};color:${good?'var(--green)':'var(--red)'};${TD_NORMAL};${TD_BOT}">${pct}%</td>`;
+        }).join('')}
+      </tr>`;
+  }).join('');
+
+  tbody.innerHTML = rows;
+
+  // Stats globales
+  const statsEl = document.getElementById('freq-global-stats');
+  if (statsEl && totalFreq > 0) {
+    const pctGlobal = Math.round(totalTransportes / totalFreq * 100);
+    statsEl.innerHTML = `Global : ${fmtNum(totalTransportes)} / ${fmtNum(totalFreq)} · <span style="color:${pctGlobal>=100?'var(--green)':'var(--red)'};font-weight:700">${pctGlobal}%</span> · ${totalManquants >= 0 ? '<span style="color:var(--green)">+'+fmtNum(totalManquants)+'</span>' : '<span style="color:var(--red)">'+fmtNum(totalManquants)+'</span>'} places`;
+  }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -7154,10 +7462,9 @@ function ouvrirModeConfigPage(page) {
 function ouvrirModalNovuelleLigne() { ouvrirImportLignes(); }
 
 
-
 function updateBusSelects() {
   const opts = '<option value="">Choisir...</option>' + state.bus.map(b=>`<option>${b.nom}</option>`).join('');
-  ['rev-bus','ct-bus','pub-bus'].forEach(id => {
+  ['pub-bus'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = opts;
   });
@@ -7200,6 +7507,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Polling extension — DOIT être ici, après que le DOM et les fonctions sont prêts
   demarrerPollingExtension();
+  updateNiveauUI();
 
   // Charger lignes N4 automatiquement si pas encore fait
   if (!state.cfgLignesParNiveau?.[5]) {
