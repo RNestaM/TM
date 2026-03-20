@@ -172,12 +172,16 @@
 
   /* STAT CARDS ROW */
   .stat-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: 12px;
     margin-bottom: 20px;
   }
   .stat-card {
+    flex: 0 1 180px;
+    min-width: 150px;
+    max-width: 220px;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 8px;
@@ -185,6 +189,10 @@
     position: relative;
     overflow: hidden;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
   }
   .stat-card::before {
     content: '';
@@ -721,6 +729,9 @@
       <div class="nav-item" data-page="affectations" onclick="nav(this)">
         <span class="icon">📋</span> Affectations
       </div>
+      <div class="nav-item" data-page="frequentation" onclick="nav(this)">
+        <span class="icon">👥</span> Fréquentation
+      </div>
       <div class="nav-item" data-page="maintenance" onclick="nav(this)">
         <span class="icon">🔧</span> Révision / CT
       </div>
@@ -730,17 +741,17 @@
     </div>
 
     <div class="sidebar-section">
-      <div class="sidebar-section-title">Ressources</div>
+      <div class="sidebar-section-title">Ressources humaines</div>
       <div class="nav-item" data-page="personnel" onclick="nav(this)">
         <span class="icon">👤</span> Personnel / FCO
-      </div>
-      <div class="nav-item" data-page="lignes" onclick="nav(this)">
-        <span class="icon">🛣️</span> Lignes & Stats
       </div>
     </div>
 
     <div class="sidebar-section">
       <div class="sidebar-section-title">Finance</div>
+      <div class="nav-item" data-page="lignes" onclick="nav(this)">
+        <span class="icon">📊</span> Stats de lignes
+      </div>
       <div class="nav-item" data-page="compta" onclick="nav(this)">
         <span class="icon">💰</span> Comptabilité
       </div>
@@ -839,7 +850,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v43</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v51</span>
       <span id="sync-status" title="Synchronisation Gist" style="font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 8px;border-radius:4px;display:none"></span>
       <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
@@ -1219,70 +1230,38 @@
       </div>
     </div>
 
+    <!-- ═══════════════════════════════════════════ FRÉQUENTATION ═══ -->
+    <div id="page-frequentation" class="page">
+      <div style="text-align:center;padding:60px 20px;color:var(--text3)">
+        <div style="font-size:48px;margin-bottom:16px">👥</div>
+        <div style="font-size:20px;font-weight:700;color:var(--text2);margin-bottom:8px">Fréquentation</div>
+        <div style="font-size:13px">Cet onglet sera développé prochainement.<br>Il mettra en relation les fréquentations cibles avec les bus affectés sur chaque ligne.</div>
+      </div>
+    </div>
+
     <!-- ═══════════════════════════════════════════ LIGNES ═══ -->
     <div id="page-lignes" class="page">
-      <div class="grid-2">
-        <div class="card">
-          <div class="card-header"><div class="card-title">Ajouter une ligne</div></div>
-          <div class="card-body">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Numéro ligne</label>
-                <input type="text" id="ligne-num" placeholder="Ex: L42">
-              </div>
-              <div class="form-group">
-                <label>Nom</label>
-                <input type="text" id="ligne-nom" placeholder="Ex: Centre — Nord">
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Fréquentation (passagers/j)</label>
-                <input type="number" id="ligne-freq" value="0">
-              </div>
-              <div class="form-group">
-                <label>Recette journalière (€)</label>
-                <input type="number" id="ligne-recette" value="0">
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Bus requis</label>
-                <input type="number" id="ligne-bus" value="1">
-              </div>
-              <div class="form-group">
-                <label>Type bus</label>
-                <select id="ligne-type-bus">
-                  <option>MIN</option><option>MID</option><option selected>STD</option>
-                  <option>ART</option><option>CAR</option><option>TRAM</option>
-                </select>
-              </div>
-            </div>
-            <button class="btn btn-primary" onclick="ajouterLigne()">+ Ajouter ligne</button>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header"><div class="card-title">Statistiques globales</div></div>
-          <div class="card-body" id="stats-lignes-recap"></div>
-        </div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-header"><div class="card-title">📊 Statistiques globales</div></div>
+        <div class="card-body" id="stats-lignes-recap"></div>
       </div>
       <div class="card" style="margin-top:14px">
         <div class="card-header">
           <div class="card-title">Stats par ligne (depuis CSV)</div>
           <button class="btn btn-ghost btn-sm" onclick="if(confirm('Effacer tout l\'historique stats ?')){state.statsLignes=[];saveStateWithSync();renderLignes();}">🗑 Réinitialiser</button>
         </div>
-        <div class="card-body" style="padding:0">
-          <table class="data-table">
-            <thead><tr><th>Ligne</th><th>Tickets total</th><th>Abonnés</th><th>Gains total</th><th>Jours</th><th>Part des gains</th></tr></thead>
+        <div class="card-body" style="padding:0;overflow-y:auto;max-height:360px">
+          <table class="data-table" style="border-collapse:separate;border-spacing:0">
+            <thead style="position:sticky;top:0;z-index:2"><tr><th>Ligne</th><th>Tickets total</th><th>Abonnés</th><th>Gains total</th><th>Jours</th><th>Part des gains</th></tr></thead>
             <tbody id="lignes-tbody"></tbody>
           </table>
         </div>
       </div>
       <div class="card" style="margin-top:14px">
         <div class="card-header"><div class="card-title">Historique détaillé (30 dernières entrées)</div></div>
-        <div class="card-body" style="padding:0">
-          <table class="data-table">
-            <thead><tr><th>Date</th><th>Ligne</th><th>Créneau</th><th>Tickets</th><th>Abonnés</th><th>Gains</th></tr></thead>
+        <div class="card-body" style="padding:0;overflow-y:auto;max-height:360px">
+          <table class="data-table" style="border-collapse:separate;border-spacing:0">
+            <thead style="position:sticky;top:0;z-index:2"><tr><th>Date</th><th>Ligne</th><th>Créneau</th><th>Tickets</th><th>Abonnés</th><th>Gains</th></tr></thead>
             <tbody id="stats-hist-tbody"></tbody>
           </table>
         </div>
@@ -1837,18 +1816,38 @@
 
     <!-- ═══════════════════════ CFG — LIGNES ═══ -->
     <div id="page-cfg-lignes" class="page">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px">
         <div style="font-size:20px;font-weight:700;color:var(--cfg-green)">🛣️ Gestion des lignes</div>
-        <div style="font-size:11px;color:var(--text3);background:var(--surface2);padding:4px 10px;border-radius:4px;border:1px solid var(--border)">À développer — à venir</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <!-- Niveau -->
+          <div style="display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--cfg-green-border);border-radius:8px;padding:6px 12px">
+            <span style="font-size:11px;color:var(--text3)">Niveau</span>
+            <button onclick="changerNiveauLignes(-1)" style="background:none;border:none;color:var(--cfg-green);font-size:16px;cursor:pointer;padding:0 4px">◀</button>
+            <span id="lignes-niveau-badge" style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:var(--cfg-green);min-width:20px;text-align:center">4</span>
+            <button onclick="changerNiveauLignes(+1)" style="background:none;border:none;color:var(--cfg-green);font-size:16px;cursor:pointer;padding:0 4px">▶</button>
+          </div>
+          <button class="btn btn-sm" style="background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.3);color:var(--accent3)" onclick="ouvrirImportLignes()">📋 Coller un tableau</button>
+          <button class="btn btn-sm" style="background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green)" onclick="chargerLignesN5()">📥 Charger N5 par défaut</button>
+        </div>
       </div>
+
+      <!-- Tableau des lignes -->
       <div class="card" style="border-color:var(--cfg-green-border)">
         <div class="card-header" style="border-bottom-color:var(--cfg-green-border)">
-          <div class="card-title" style="color:var(--cfg-green)">📋 Lignes configurées</div>
-          <button class="btn btn-sm" style="background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green)" onclick="ouvrirModalNovuelleLigne()">+ Nouvelle ligne</button>
+          <div class="card-title" style="color:var(--cfg-green)" id="lignes-table-title">Lignes — Niveau 4</div>
+          <span id="lignes-count-badge" style="font-size:11px;color:var(--text3)"></span>
         </div>
-        <div class="card-body" style="padding:0">
-          <table class="data-table">
-            <thead><tr><th>N°</th><th>Nom</th><th>Km</th><th>Durée</th><th>Type</th><th>Statut</th><th></th></tr></thead>
+        <div class="card-body" style="padding:0;overflow-x:auto;overflow-y:auto;max-height:600px">
+          <table class="data-table" id="cfg-lignes-table" style="border-collapse:separate;border-spacing:0">
+            <thead style="position:sticky;top:0;z-index:3;background:var(--surface2)"><tr>
+              <th>N°</th>
+              <th>Couleur</th>
+              <th>KM (AR)</th>
+              <th>Durée (AR)</th>
+              <th>Arrêts</th>
+              <th>Bornes</th>
+              <th>Véhicules autorisés</th>
+            </tr></thead>
             <tbody id="cfg-lignes-tbody"></tbody>
           </table>
         </div>
@@ -1886,7 +1885,7 @@
             <button class="freq-tab" data-reseau="scolaire" onclick="setReseauFreq(this)">🎒 Scolaire</button>
           </div>
 
-          <button class="btn btn-sm" style="background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green)" onclick="chargerDonneesNiveau4()">📥 Charger N4 par défaut</button>
+          <button class="btn btn-sm" style="background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green)" onclick="chargerDonneesNiveau4()">📥 Charger N5 par défaut</button>
           <button class="btn btn-sm" style="background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.3);color:var(--accent3)" onclick="ouvrirImportFreq()">📋 Coller un tableau</button>
         </div>
       </div>
@@ -2127,6 +2126,37 @@
   </div>
 </div>
 
+<!-- Modal Import Lignes -->
+<div class="modal-overlay" id="modal-import-lignes">
+  <div class="modal" style="max-width:620px">
+    <div class="modal-header">
+      <div class="modal-title">📋 Importer les lignes</div>
+      <div class="modal-close" onclick="closeModal('modal-import-lignes')">✕</div>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px">
+        <label style="font-size:11px;color:var(--text3)">Niveau :</label>
+        <select id="import-lignes-niveau" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 10px">
+          <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+          <option value="4" selected>4</option><option value="5">5</option>
+        </select>
+      </div>
+      <p style="font-size:11px;color:var(--text3);margin-bottom:8px">
+        Colle le tableau tel quel. Colonnes attendues (séparées par tabulations) :<br>
+        <code style="background:var(--surface2);padding:2px 6px;border-radius:3px;font-size:10px">Ligne | Code couleur | Longueur | Temps | Nb arrêts | Bornes | Véhicules</code>
+      </p>
+      <textarea id="import-lignes-textarea" rows="14"
+        placeholder="[1] Aéroport <> Clinique...&#9;#dc241f&#9;14,6 km&#9;46 min&#9;44&#9;-&#9;Tramways"
+        style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px;font-size:11px;font-family:'JetBrains Mono',monospace;resize:vertical;box-sizing:border-box"></textarea>
+      <div id="import-lignes-preview" style="margin-top:8px;font-size:11px;color:var(--text3)"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-import-lignes')">Annuler</button>
+      <button class="btn" style="background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green)" onclick="importerTableauLignes()">✓ Importer</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Import Fréquentations -->
 <div class="modal-overlay" id="modal-import-freq">
   <div class="modal" style="max-width:620px">
@@ -2251,24 +2281,36 @@
 
 <!-- ═══════════════════════ MODAL MAJ CSV ═══════════════════════ -->
 <div class="modal-overlay" id="modal-maj-csv">
-  <div class="modal" style="max-width:700px">
+  <div class="modal" style="max-width:820px;width:96vw">
     <div class="modal-header">
       <div class="modal-title">📥 Mise à jour via CSV</div>
       <div class="modal-close" onclick="closeModal('modal-maj-csv')">✕</div>
     </div>
     <div class="modal-body">
-      <!-- Onglets type CSV -->
-      <div class="tabs" style="margin-bottom:16px" id="csv-type-tabs">
-        <div class="tab active" onclick="selectCsvType(this,'bus')">🚍 Parc Bus</div>
-        <div class="tab" onclick="selectCsvType(this,'affects')">📋 Affectations</div>
-        <div class="tab" onclick="selectCsvType(this,'stats')">📊 Stats Lignes</div>
-        <div class="tab" onclick="selectCsvType(this,'salaries')">👤 Personnels</div>
-        <div class="tab" onclick="selectCsvType(this,'compta')">💰 Compta mois</div>
-        <div class="tab" onclick="selectCsvType(this,'lastmonth')">📅 Fin de mois</div>
+      <!-- Onglets type CSV — cards avec icône + label -->
+      <div id="csv-type-tabs" style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:14px">
+        <div class="csv-tab active" onclick="selectCsvType(this,'bus')" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:12px 4px;border-radius:8px;border:2px solid var(--accent);background:rgba(0,212,255,0.08);cursor:pointer;transition:.15s;min-height:72px">
+          <span style="font-size:24px">🚍</span><span style="font-size:11px;font-weight:600;text-align:center;white-space:nowrap">Parc Bus</span>
+        </div>
+        <div class="csv-tab" onclick="selectCsvType(this,'affects')" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:12px 4px;border-radius:8px;border:2px solid var(--border);background:var(--surface2);cursor:pointer;transition:.15s;min-height:72px">
+          <span style="font-size:24px">📋</span><span style="font-size:11px;font-weight:600;text-align:center;white-space:nowrap">Affectations</span>
+        </div>
+        <div class="csv-tab" onclick="selectCsvType(this,'stats')" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:12px 4px;border-radius:8px;border:2px solid var(--border);background:var(--surface2);cursor:pointer;transition:.15s;min-height:72px">
+          <span style="font-size:24px">📊</span><span style="font-size:11px;font-weight:600;text-align:center;white-space:nowrap">Stats Lignes</span>
+        </div>
+        <div class="csv-tab" onclick="selectCsvType(this,'salaries')" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:12px 4px;border-radius:8px;border:2px solid var(--border);background:var(--surface2);cursor:pointer;transition:.15s;min-height:72px">
+          <span style="font-size:24px">👤</span><span style="font-size:11px;font-weight:600;text-align:center;white-space:nowrap">Personnels</span>
+        </div>
+        <div class="csv-tab" onclick="selectCsvType(this,'compta')" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:12px 4px;border-radius:8px;border:2px solid var(--border);background:var(--surface2);cursor:pointer;transition:.15s;min-height:72px">
+          <span style="font-size:24px">💰</span><span style="font-size:11px;font-weight:600;text-align:center;white-space:nowrap">Compta mois</span>
+        </div>
+        <div class="csv-tab" onclick="selectCsvType(this,'lastmonth')" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:12px 4px;border-radius:8px;border:2px solid var(--border);background:var(--surface2);cursor:pointer;transition:.15s;min-height:72px">
+          <span style="font-size:24px">📅</span><span style="font-size:11px;font-weight:600;text-align:center;white-space:nowrap">Fin de mois</span>
+        </div>
       </div>
 
-      <!-- Info selon type -->
-      <div id="csv-type-info" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px;margin-bottom:12px;font-size:11px;color:var(--text3)"></div>
+      <!-- Info selon type + dernière MAJ -->
+      <div id="csv-type-info" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:var(--text3);line-height:1.6"></div>
 
       <!-- Zone de drop / upload -->
       <div id="csv-dropzone" onclick="document.getElementById('csv-file-input').click()"
@@ -2276,7 +2318,7 @@
         ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
         ondragleave="this.style.borderColor='var(--border)'"
         ondrop="handleCsvDrop(event)">
-        <div style="font-size:28px;margin-bottom:8px">📂</div>
+        <div style="font-size:32px;margin-bottom:8px">📂</div>
         <div style="color:var(--text2);font-size:13px">Glisse ton fichier CSV ici</div>
         <div style="color:var(--text3);font-size:11px;margin-top:4px">ou clique pour choisir le fichier</div>
         <input type="file" id="csv-file-input" accept=".csv,.txt" style="display:none" onchange="handleCsvFile(this)">
@@ -2285,7 +2327,7 @@
       <!-- Ou coller texte -->
       <details style="margin-bottom:12px">
         <summary style="cursor:pointer;color:var(--text2);font-size:11px;margin-bottom:6px">▶ Ou coller le contenu manuellement</summary>
-        <textarea id="csv-paste-text" style="width:100%;height:120px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:8px;resize:vertical;outline:none;margin-top:8px" placeholder="Colle ici le contenu du CSV..."></textarea>
+        <textarea id="csv-paste-text" style="width:100%;height:120px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:8px;resize:vertical;outline:none;margin-top:8px;box-sizing:border-box" placeholder="Colle ici le contenu du CSV..."></textarea>
       </details>
 
       <!-- Résultat preview -->
@@ -2363,6 +2405,7 @@ if (!state.statsLignes) state.statsLignes = [];
 if (!state.lastImport) state.lastImport = {};
 if (!state.categories) state.categories = {};
 if (!state.cfgLignes) state.cfgLignes = [];
+if (!state.cfgLignesParNiveau) state.cfgLignesParNiveau = {};
 if (!state.themes) state.themes = [];
 if (!state.planningCT) state.planningCT = {};
 if (state.niveauJeu === undefined) state.niveauJeu = 4;
@@ -2442,7 +2485,7 @@ function resetTotal() {
   state.gasoil = []; state.journal = []; state.carburant = []; state.pubDispo = [];
   state.conso = { niveau: 5000, moy: 0 };
   state.config = { argentDepart: 0 };
-  state.prixKm = {}; state.categories = {}; state.cfgLignes = []; state.lastImport = {}; state.themes = []; state.planningCT = {}; state.freqCibles = {}; state.niveauJeu = 4; state.modeVacances = false;
+  state.prixKm = {}; state.categories = {}; state.cfgLignes = []; state.cfgLignesParNiveau = {}; state.lastImport = {}; state.themes = []; state.planningCT = {}; state.freqCibles = {}; state.niveauJeu = 4; state.modeVacances = false;
   saveState();
   // Supprimer les clés extension
   ['tm_ext_present','tm_ext_request'].forEach(k => localStorage.removeItem(k));
@@ -2472,8 +2515,8 @@ function nav(el) {
   const pageEl = document.getElementById('page-' + page);
   if (pageEl) pageEl.classList.add('active');
   const titles = { dashboard:'Tableau de bord', alertes:'Alertes', parc:'Gestion du parc',
-    affectations:'Affectations', maintenance:'Révision / CT', abribus:'Équipement Abribus',
-    personnel:'Personnel & FCO', lignes:'Lignes & Statistiques', compta:'Comptabilité',
+    affectations:'Affectations', frequentation:'Fréquentation', maintenance:'Révision / CT', abribus:'Équipement Abribus',
+    personnel:'Personnel & FCO', lignes:'Stats de lignes', compta:'Comptabilité',
     bilan:'Tableau financier',
     pub:'Contrats Publicitaires', achats:'Achats de bus', gasoil:'Conso', config:'Configuration',
     pubdispo:'Optimisation Bus Pub' };
@@ -2483,7 +2526,7 @@ function nav(el) {
 
 function renderPage(page) {
   const r = { dashboard: renderDashboard, alertes: renderAlertes, parc: renderParc,
-    affectations: renderAffectations, maintenance: renderMaintenance, abribus: renderAbribus,
+    affectations: renderAffectations, frequentation: renderFrequentation, maintenance: renderMaintenance, abribus: renderAbribus,
     personnel: renderPersonnel, lignes: renderLignes, compta: renderCompta, bilan: renderBilan,
     pub: renderPub, achats: renderAchats, gasoil: renderGasoil, config: renderConfig, pubdispo: renderPubDispo, historique: renderHistoriqueBase };
   if (r[page]) r[page]();
@@ -3057,11 +3100,17 @@ const CSV_INFO = {
 
 function selectCsvType(el, type) {
   currentCsvType = type;
-  document.querySelectorAll('#csv-type-tabs .tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
+  document.querySelectorAll('#csv-type-tabs .csv-tab').forEach(t => {
+    t.style.borderColor = 'var(--border)';
+    t.style.background  = 'var(--surface2)';
+  });
+  el.style.borderColor = 'var(--accent)';
+  el.style.background  = 'rgba(0,212,255,0.08)';
   const last = state.lastImport && state.lastImport[type];
-  const lastStr = last ? `<span style="float:right;color:var(--green)">✓ Dernière MAJ : ${last}</span>` : '<span style="float:right;color:var(--text3)">Jamais importé</span>';
-  document.getElementById('csv-type-info').innerHTML = CSV_INFO[type] + '<br>' + lastStr;
+  const lastBadge = last
+    ? `<div style="margin-top:8px;padding:5px 10px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:6px;font-size:11px;color:var(--green);display:inline-flex;align-items:center;gap:6px"><span>✓</span><span>Dernière MAJ : ${last}</span></div>`
+    : `<div style="margin-top:8px;padding:5px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text3);display:inline-flex;align-items:center;gap:6px"><span>⏳</span><span>Jamais importé</span></div>`;
+  document.getElementById('csv-type-info').innerHTML = `<div style="color:var(--text2)">${CSV_INFO[type]}</div><div style="text-align:center">${lastBadge}</div>`;
   document.getElementById('csv-preview-zone').style.display = 'none';
   document.getElementById('csv-paste-text').value = '';
   csvRawContent = '';
@@ -3715,14 +3764,14 @@ function renderMaintenance() {
 
     // Couleurs : rouge si ≤ 2j, orange si ≤ 7j
     const diffLim = Math.round((new Date(b.ct) - now) / (1000*60*60*24));
-    const limColor = diffLim <= 2 ? 'color:var(--red);font-weight:700'
-                   : diffLim <= 7 ? 'color:var(--yellow);font-weight:600' : '';
+    const limColor = diffLim <= 0 ? 'color:var(--red);font-weight:700'
+                   : diffLim <= 4 ? 'color:var(--yellow);font-weight:600' : '';
 
-    // Couleur des dates CT/révision prévues
+    // Couleur des dates CT/révision prévues : rouge si aujourd'hui, orange si ≤ 4j
     const diffCT  = ctVal  ? Math.round((new Date(ctVal)  - now) / (1000*60*60*24)) : 99;
     const diffRev = revVal ? Math.round((new Date(revVal) - now) / (1000*60*60*24)) : 99;
-    const ctColor  = diffCT  <= 2 ? 'border-color:var(--red)'  : diffCT  <= 7 ? 'border-color:var(--yellow)' : '';
-    const revColor = diffRev <= 2 ? 'border-color:var(--red)'  : diffRev <= 7 ? 'border-color:var(--yellow)' : '';
+    const ctColor  = diffCT  <= 0 ? 'border-color:var(--red);border-width:2px'  : diffCT  <= 4 ? 'border-color:var(--yellow)' : '';
+    const revColor = diffRev <= 0 ? 'border-color:var(--red);border-width:2px'  : diffRev <= 4 ? 'border-color:var(--yellow)' : '';
 
     const dmdRemb   = plan.dmdRemb   || false;
     const dateD     = plan.dateD     || '';
@@ -6472,7 +6521,7 @@ function renderFreqTableau() {
     tbody.innerHTML = `<tr><td colspan="${creneaux.length+1}" style="text-align:center;padding:24px;color:var(--text3)">
       Aucune donnée pour N${n} — ${periodeLabel}.<br>
       <button class="btn btn-sm" style="margin-top:8px;background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green)" onclick="ajouterLigneFreq()">+ Ajouter une ligne</button>
-      ${n===4?`<button class="btn btn-sm" style="margin-top:8px;margin-left:8px" onclick="chargerDonneesNiveau4()">📥 Charger N4 par défaut</button>`:''}
+      ${n===4?`<button class="btn btn-sm" style="margin-top:8px;margin-left:8px" onclick="chargerDonneesNiveau4()">📥 Charger N5 par défaut</button>`:''}
     </td></tr>`;
     return;
   }
@@ -6642,25 +6691,171 @@ function ajouterLigneFreq() {
 }
 
 
-function renderCfgLignes() {
-  const tbody = document.getElementById('cfg-lignes-tbody');
-  if (!tbody) return;
-  const lignes = state.cfgLignes || [];
-  tbody.innerHTML = lignes.map((l, i) => `<tr>
-    <td class="mono"><b>${l.num}</b></td>
-    <td>${l.nom||'—'}</td>
-    <td class="mono">${l.km ? l.km+' km' : '—'}</td>
-    <td class="mono">${l.duree ? l.duree+' min' : '—'}</td>
-    <td>${l.type||'—'}</td>
-    <td><span class="badge badge-green">${l.statut||'Active'}</span></td>
-    <td><button class="btn btn-danger btn-xs" onclick="supprimerLigneCfg(${i})">✕</button></td>
-  </tr>`).join('') || '<tr><td colspan="7" style="color:var(--text3);text-align:center;padding:16px">Aucune ligne configurée</td></tr>';
+function renderFrequentation() {
+  // À développer — onglet Fréquentation
 }
 
-function supprimerLigneCfg(i) {
-  if (!confirm('Supprimer cette ligne ?')) return;
-  state.cfgLignes.splice(i, 1);
-  saveStateWithSync(); renderCfgLignes();
+// ═══════════════════════════════════════════════════════
+//  GESTION DES LIGNES (cfg)
+// ═══════════════════════════════════════════════════════
+
+// Données N4 par défaut
+const LIGNES_N5_DEFAULT = [
+  {num:'1',   couleur:'#dc241f', km:29.2,  duree:92,  arrets:44, bornes:false, vehicules:'Tramways'},
+  {num:'2',   couleur:'#9364cc', km:12.2,  duree:48,  arrets:20, bornes:true,  vehicules:'Standard - Articulé'},
+  {num:'3',   couleur:'#f1ab00', km:15.4,  duree:64,  arrets:27, bornes:true,  vehicules:'Standard'},
+  {num:'4',   couleur:'#00afad', km:24.8,  duree:94,  arrets:37, bornes:false, vehicules:'Standard - Articulé'},
+  {num:'5',   couleur:'#e86a10', km:18.6,  duree:74,  arrets:34, bornes:false, vehicules:'Standard - Articulé'},
+  {num:'6',   couleur:'#894e24', km:10.0,  duree:40,  arrets:17, bornes:false, vehicules:'Midi - Standard'},
+  {num:'7',   couleur:'#007229', km:20.4,  duree:72,  arrets:30, bornes:true,  vehicules:'Midi - Standard - Articulé'},
+  {num:'8',   couleur:'#d799af', km:15.6,  duree:64,  arrets:27, bornes:false, vehicules:'Midi - Standard'},
+  {num:'9',   couleur:'#0019a8', km:12.4,  duree:36,  arrets:12, bornes:false, vehicules:'Midi - Standard'},
+  {num:'10',  couleur:'#ffce00', km:22.2,  duree:66,  arrets:24, bornes:true,  vehicules:'Midi - Standard - Articulé'},
+  {num:'11',  couleur:'#751056', km:13.0,  duree:42,  arrets:14, bornes:false, vehicules:'Midi - Standard'},
+  {num:'12',  couleur:'#007229', km:14.4,  duree:54,  arrets:21, bornes:true,  vehicules:'Midi - Standard - Articulé'},
+  {num:'13',  couleur:'#76d0bd', km:13.0,  duree:36,  arrets:15, bornes:false, vehicules:'Midi - Standard'},
+  {num:'14',  couleur:'#dc241f', km:14.4,  duree:48,  arrets:18, bornes:true,  vehicules:'Midi - Standard'},
+  {num:'15',  couleur:'#751056', km:22.6,  duree:96,  arrets:36, bornes:false, vehicules:'Standard - Articulé'},
+  {num:'16',  couleur:'#ffce00', km:12.8,  duree:44,  arrets:20, bornes:true,  vehicules:'Midi - Standard'},
+  {num:'17',  couleur:'#00afad', km:18.6,  duree:66,  arrets:28, bornes:true,  vehicules:'Standard - Articulé'},
+  {num:'18',  couleur:'#868f98', km:21.8,  duree:80,  arrets:33, bornes:false, vehicules:'Midi - Standard'},
+  {num:'60',  couleur:'#76d0bd', km:10.4,  duree:40,  arrets:17, bornes:false, vehicules:'Mini'},
+  {num:'61',  couleur:'#0019a8', km:17.0,  duree:64,  arrets:27, bornes:true,  vehicules:'Midi - Standard'},
+  {num:'62',  couleur:'#b727bf', km:21.0,  duree:80,  arrets:30, bornes:true,  vehicules:'Midi - Standard'},
+  {num:'63',  couleur:'#e86a10', km:15.6,  duree:58,  arrets:26, bornes:false, vehicules:'Midi - Standard'},
+  {num:'64',  couleur:'#ffce00', km:7.8,   duree:28,  arrets:13, bornes:false, vehicules:'Midi - Standard'},
+  {num:'65',  couleur:'#9364CC', km:12.8,  duree:50,  arrets:27, bornes:false, vehicules:'Mini - Midi'},
+  {num:'901', couleur:'#b727bf', km:8.2,   duree:24,  arrets:10, bornes:false, vehicules:'Mini - Midi'},
+  {num:'902', couleur:'#868f98', km:11.2,  duree:40,  arrets:17, bornes:false, vehicules:'Mini - Midi'},
+  {num:'903', couleur:'#f1ab00', km:9.8,   duree:34,  arrets:12, bornes:false, vehicules:'Mini - Midi'},
+  {num:'PL1', couleur:'#203EC0', km:78.8,  duree:188, arrets:15, bornes:false, vehicules:'Articulé'},
+  {num:'PL2', couleur:'#20B3C0', km:31.2,  duree:82,  arrets:8,  bornes:false, vehicules:'Articulé'},
+  {num:'PL3', couleur:'#5120C0', km:17.8,  duree:60,  arrets:7,  bornes:false, vehicules:'Tramway'},
+];
+
+function getLignesNiveau(n) {
+  if (!state.cfgLignesParNiveau) state.cfgLignesParNiveau = {};
+  return state.cfgLignesParNiveau[n] || [];
+}
+
+function changerNiveauLignes(delta) {
+  const n = Math.max(1, Math.min(5, (state.niveauJeu || 4) + delta));
+  state.niveauJeu = n;
+  saveStateWithSync();
+  renderCfgLignes();
+}
+
+function chargerLignesN5() {
+  if (!confirm('Charger les lignes N4 par défaut ? Cela écrasera les données N5 existantes.')) return;
+  if (!state.cfgLignesParNiveau) state.cfgLignesParNiveau = {};
+  state.cfgLignesParNiveau[5] = LIGNES_N5_DEFAULT.map(l => ({...l}));
+  saveStateWithSync();
+  renderCfgLignes();
+  toastMsg('✅ Lignes N5 chargées (' + LIGNES_N5_DEFAULT.length + ' lignes)', 'success');
+}
+
+function renderCfgLignes() {
+  const n     = state.niveauJeu || 4;
+  const badge = document.getElementById('lignes-niveau-badge');
+  if (badge) badge.textContent = n;
+  const title = document.getElementById('lignes-table-title');
+  if (title) title.textContent = `Lignes — Niveau ${n}`;
+
+  const tbody = document.getElementById('cfg-lignes-tbody');
+  if (!tbody) return;
+
+  const lignes = getLignesNiveau(n);
+  const countBadge = document.getElementById('lignes-count-badge');
+  if (countBadge) countBadge.textContent = lignes.length ? `${lignes.length} ligne(s)` : '';
+
+  if (!lignes.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text3)">
+      Aucune ligne pour N${n}.<br>
+      <button class="btn btn-sm" style="margin-top:8px;background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green)" onclick="ouvrirImportLignes()">📋 Coller un tableau</button>
+      ${n===5?`<button class="btn btn-sm" style="margin-top:8px;margin-left:6px" onclick="chargerLignesN5()">📥 Charger N5 par défaut</button>`:''}
+    </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = lignes.map((l, i) => `<tr>
+    <td class="mono" style="font-weight:700">
+      <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${l.couleur||'#888'};margin-right:6px;vertical-align:middle"></span>${l.num}
+    </td>
+    <td><span style="font-family:'JetBrains Mono',monospace;font-size:11px;background:${l.couleur||'#888'}22;color:${l.couleur||'#888'};padding:2px 7px;border-radius:4px;border:1px solid ${l.couleur||'#888'}44">${l.couleur||'—'}</span></td>
+    <td class="mono">${l.km ? l.km+' km' : '—'}</td>
+    <td class="mono">${l.duree ? l.duree+' min' : '—'}</td>
+    <td class="mono">${l.arrets||'—'}</td>
+    <td style="text-align:center">${l.bornes ? '<span style="color:var(--green)">✓</span>' : '<span style="color:var(--text3)">—</span>'}</td>
+    <td style="font-size:11px">${l.vehicules||'—'}</td>
+  </tr>`).join('');
+}
+
+function ouvrirImportLignes() {
+  const selN = document.getElementById('import-lignes-niveau');
+  if (selN) selN.value = state.niveauJeu || 4;
+  document.getElementById('import-lignes-textarea').value = '';
+  document.getElementById('import-lignes-preview').textContent = '';
+  openModal('modal-import-lignes');
+}
+
+function parseLigneFromRow(cols) {
+  // cols[0] = "[1] Aéroport <> Clinique..." → extraire le numéro entre []
+  const numMatch = cols[0].match(/^\[([^\]]+)\]/);
+  if (!numMatch) return null;
+  const num = numMatch[1].trim();
+
+  const couleur = (cols[1]||'').trim() || '#888888';
+
+  // km : "14,6 km" → 14.6 * 2
+  const kmRaw = (cols[2]||'').replace(',','.').match(/([\d.]+)/);
+  const km = kmRaw ? Math.round(parseFloat(kmRaw[1]) * 2 * 10) / 10 : null;
+
+  // duree : "46 min" ou "41min" → 46 * 2
+  const dureeRaw = (cols[3]||'').match(/(\d+)/);
+  const duree = dureeRaw ? parseInt(dureeRaw[1]) * 2 : null;
+
+  const arrets = parseInt(cols[4]) || null;
+
+  // bornes : "-" ou vide → false, sinon true
+  const bornesStr = (cols[5]||'').trim().toLowerCase();
+  const bornes = bornesStr !== '' && bornesStr !== '-';
+
+  const vehicules = (cols[6]||'').trim();
+
+  return { num, couleur, km, duree, arrets, bornes, vehicules };
+}
+
+function importerTableauLignes() {
+  const texte   = document.getElementById('import-lignes-textarea').value.trim();
+  const niveau  = parseInt(document.getElementById('import-lignes-niveau').value);
+  const preview = document.getElementById('import-lignes-preview');
+  if (!texte) { toastMsg('Colle un tableau à importer', 'error'); return; }
+
+  const lignes = [];
+  for (const ligne of texte.split('\n')) {
+    const l = ligne.trim();
+    if (!l || l.toLowerCase().startsWith('ligne') || l.toLowerCase().startsWith('caractéristiques')) continue;
+    const cols = l.split('\t').map(c => c.trim());
+    if (cols.length < 4) continue;
+    const parsed = parseLigneFromRow(cols);
+    if (parsed) lignes.push(parsed);
+  }
+
+  if (!lignes.length) {
+    preview.style.color = 'var(--red)';
+    preview.textContent = '❌ Aucune ligne reconnue — vérifie que chaque ligne commence par [numéro]';
+    return;
+  }
+
+  if (!confirm(`Importer ${lignes.length} lignes vers le niveau ${niveau} ?\n\nLes KM et durées sont doublés (aller-retour).`)) return;
+
+  if (!state.cfgLignesParNiveau) state.cfgLignesParNiveau = {};
+  state.cfgLignesParNiveau[niveau] = lignes;
+  state.niveauJeu = niveau;
+  saveStateWithSync();
+  closeModal('modal-import-lignes');
+  renderCfgLignes();
+  toastMsg(`✅ ${lignes.length} lignes importées (N${niveau})`, 'success');
 }
 
 function ouvrirModeConfigPage(page) {
@@ -6669,9 +6864,7 @@ function ouvrirModeConfigPage(page) {
   if (el) navConfig(el);
 }
 
-function ouvrirModalNovuelleLigne() {
-  toastMsg('Création de ligne — à venir', 'info');
-}
+function ouvrirModalNovuelleLigne() { ouvrirImportLignes(); }
 
 
 
@@ -6701,7 +6894,14 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('input[type=date]').forEach(el => { if (!el.value) el.value = today(); });
   updateBusSelects();
   renderDashboard();
-  document.getElementById('csv-type-info').innerHTML = CSV_INFO['bus'] + '<br><span style="float:right;color:' + (state.lastImport && state.lastImport.bus ? 'var(--green)">✓ Dernière MAJ : ' + state.lastImport.bus : 'var(--text3)">Jamais importé') + '</span>';
+  // Init modal CSV — highlight premier onglet
+  const firstCsvTab = document.querySelector('#csv-type-tabs .csv-tab');
+  if (firstCsvTab) { firstCsvTab.style.borderColor = 'var(--accent)'; firstCsvTab.style.background = 'rgba(0,212,255,0.08)'; }
+  const _busLast = state.lastImport && state.lastImport.bus;
+  const _busLastBadge = _busLast
+    ? `<div style="margin-top:8px;padding:5px 10px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:6px;font-size:11px;color:var(--green);display:inline-flex;align-items:center;gap:6px"><span>✓</span><span>Dernière MAJ : ${_busLast}</span></div>`
+    : `<div style="margin-top:8px;padding:5px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text3);display:inline-flex;align-items:center;gap:6px"><span>⏳</span><span>Jamais importé</span></div>`;
+  document.getElementById('csv-type-info').innerHTML = `<div style="color:var(--text2)">${CSV_INFO['bus']}</div><div style="text-align:center">${_busLastBadge}</div>`;
   detectExtension();
 
   // Horloge
@@ -6714,7 +6914,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // Polling extension — DOIT être ici, après que le DOM et les fonctions sont prêts
   demarrerPollingExtension();
 
-  // Charger données N4 automatiquement si pas encore fait
+  // Charger lignes N4 automatiquement si pas encore fait
+  if (!state.cfgLignesParNiveau?.[5]) {
+    if (!state.cfgLignesParNiveau) state.cfgLignesParNiveau = {};
+    state.cfgLignesParNiveau[5] = LIGNES_N5_DEFAULT.map(l => ({...l}));
+    saveState();
+  }
   if (!state.freqCibles?.[4]) {
     if (!state.freqCibles) state.freqCibles = {};
     state.freqCibles[4] = {
