@@ -836,7 +836,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v66</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v67</span>
       <span id="sync-status" title="Synchronisation Gist" style="font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 8px;border-radius:4px;display:none"></span>
       <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
@@ -3419,7 +3419,6 @@ function parserBus(rows) {
 }
 
 function parserAffects(rows) {
-  // Mapping colonnes CSV → id créneau affCreneaux
   const COL_MAP = [
     {col:3,  id:'sem_creuse'},
     {col:4,  id:'sem_pointe'},
@@ -3433,23 +3432,53 @@ function parserAffects(rows) {
     {col:12, id:'dim_pointe'},
     {col:13, id:'dim_nuit'},
   ];
-  const results = []; // garde pour compatibilité state.affectations
+
+  const STATUT_SPECIAL = {
+    '- atelier -': 'Indispo',
+    '- ct -':      'CT',
+  };
+
+  const results = [];
   const affCreneaux = {};
+  const statutsCSV  = {}; // busNom → statut détecté
 
   rows.slice(1).filter(c => c[0]).forEach(c => {
-    const busNom = c[0];
+    const busNom = c[0].trim();
     affCreneaux[busNom] = {};
+    let statutDetecte = null;
+    let nbCreneaux = 0;
+
     COL_MAP.forEach(({ col, id }) => {
-      const val = (c[col] || '').toString().trim();
-      if (val && val !== '0' && val !== '') {
-        affCreneaux[busNom][id] = val;
-        results.push({ bus: busNom, ligne: val, service: id });
+      const raw = (c[col] || '').toString().trim();
+      const lower = raw.toLowerCase().trim();
+
+      // Détecter statut spécial
+      if (STATUT_SPECIAL[lower]) {
+        statutDetecte = STATUT_SPECIAL[lower];
+        affCreneaux[busNom][id] = raw; // conserver la valeur brute
+        return;
+      }
+
+      // Valeur normale (numéro de ligne)
+      if (raw && raw !== '0') {
+        affCreneaux[busNom][id] = raw;
+        nbCreneaux++;
+        results.push({ bus: busNom, ligne: raw, service: id });
       }
     });
+
+    // Déterminer statut final
+    if (statutDetecte) {
+      statutsCSV[busNom] = statutDetecte;
+    } else if (nbCreneaux === 0) {
+      statutsCSV[busNom] = 'Réserve';
+    } else {
+      statutsCSV[busNom] = 'En service';
+    }
   });
 
-  // Attacher à state pour que l'importeur puisse y accéder
   parserAffects._lastAffCreneaux = affCreneaux;
+  parserAffects._lastStatuts     = statutsCSV;
   return results;
 }
 
@@ -3594,12 +3623,15 @@ function csvImporter() {
 
   } else if (currentCsvType === 'affects') {
     const aff = parserAffects(rows);
-    if (!aff.length) { toastMsg('Aucune affectation trouvée', 'error'); return; }
+    if (!aff.length && !Object.keys(parserAffects._lastAffCreneaux||{}).length) { toastMsg('Aucune affectation trouvée', 'error'); return; }
     state.affectations = aff;
-    // Peupler le nouveau système affCreneaux
-    if (parserAffects._lastAffCreneaux) {
-      state.affCreneaux = parserAffects._lastAffCreneaux;
-    }
+    if (parserAffects._lastAffCreneaux) state.affCreneaux = parserAffects._lastAffCreneaux;
+    // Appliquer les statuts sur les bus
+    const statutsCSV = parserAffects._lastStatuts || {};
+    Object.entries(statutsCSV).forEach(([nom, statut]) => {
+      const b = state.bus.find(x => x.nom === nom);
+      if (b) b.statut = statut;
+    });
     state.lastImport.affects = nowStr;
     const nbBus = Object.keys(state.affCreneaux || {}).length;
     journalLog(`MAJ CSV affectations : ${nbBus} bus · ${aff.length} créneaux`, 'ok');
@@ -5909,11 +5941,14 @@ function importerCSVDirect(type, contenu) {
 
   } else if (type === 'affects') {
     const aff = parserAffects(rows);
-    if (!aff.length) { toastMsg('affects.csv : aucune affectation', 'error'); return; }
+    if (!aff.length && !Object.keys(parserAffects._lastAffCreneaux||{}).length) { toastMsg('affects.csv : aucune affectation', 'error'); return; }
     state.affectations = aff;
-    if (parserAffects._lastAffCreneaux) {
-      state.affCreneaux = parserAffects._lastAffCreneaux;
-    }
+    if (parserAffects._lastAffCreneaux) state.affCreneaux = parserAffects._lastAffCreneaux;
+    const statutsCSV2 = parserAffects._lastStatuts || {};
+    Object.entries(statutsCSV2).forEach(([nom, statut]) => {
+      const b = state.bus.find(x => x.nom === nom);
+      if (b) b.statut = statut;
+    });
     state.lastImport.affects = nowStr;
     const nbBus2 = Object.keys(state.affCreneaux || {}).length;
     journalLog(`MAJ affects.csv : ${nbBus2} bus · ${aff.length} créneaux`, 'ok');
