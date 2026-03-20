@@ -836,7 +836,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v69</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v70</span>
       <span id="sync-status" title="Synchronisation Gist" style="font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 8px;border-radius:4px;display:none"></span>
       <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
@@ -7167,8 +7167,9 @@ function renderFrequentation() {
   // Récupérer config lignes + fréquentation pour ce niveau/période/réseau
   const lignes    = (state.cfgLignesParNiveau?.[n] || []).filter(l => {
     if (reseau === 'nocturne') return l.num.startsWith('PL') || l.num.startsWith('PLEINE');
-    if (reseau === 'scolaire') return /^(6\d\d|60[1-9]|65\d)$/.test(l.num);
-    return !l.num.startsWith('PL') && !l.num.startsWith('PLEINE');
+    if (reseau === 'scolaire') return /^(6\d\d)$/.test(l.num);
+    // Réseau normal : exclure nocturne ET scolaire
+    return !l.num.startsWith('PL') && !l.num.startsWith('PLEINE') && !/^(6\d\d)$/.test(l.num);
   });
   const freqData  = state.freqCibles?.[n]?.[periKey]?.[reseau] || {};
 
