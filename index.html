@@ -836,8 +836,8 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v70</span>
-      <span id="sync-status" title="Synchronisation Gist" style="font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 8px;border-radius:4px;display:none"></span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v73</span>
+      <button id="sync-status" onclick="syncPush(true)" title="Cliquer pour synchroniser maintenant" style="font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 8px;border-radius:4px;display:none;cursor:pointer;border:none"></button>
       <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
     </div>
@@ -1935,7 +1935,35 @@
         </div>
       </div>
 
-      <!-- Actions manuelles -->
+      <!-- Sauvegarde locale -->
+      <div class="grid-2" style="margin-bottom:14px">
+        <div class="card" style="border-color:rgba(0,212,255,0.3)">
+          <div class="card-header" style="border-bottom-color:rgba(0,212,255,0.2)">
+            <div class="card-title" style="color:var(--accent)">💾 Télécharger une sauvegarde</div>
+          </div>
+          <div class="card-body">
+            <p style="font-size:11px;color:var(--text3);margin-bottom:12px">Exporte toutes tes données en fichier <code style="background:var(--surface2);padding:1px 5px;border-radius:3px">.json</code>. Conserve-le comme sauvegarde ou pour transférer sur un autre appareil.</p>
+            <button class="btn" style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);color:var(--accent);width:100%" onclick="exporterSauvegarde()">
+              💾 Télécharger le fichier JSON
+            </button>
+          </div>
+        </div>
+        <div class="card" style="border-color:rgba(245,158,11,0.3)">
+          <div class="card-header" style="border-bottom-color:rgba(245,158,11,0.2)">
+            <div class="card-title" style="color:var(--yellow)">📂 Charger une sauvegarde</div>
+          </div>
+          <div class="card-body">
+            <p style="font-size:11px;color:var(--text3);margin-bottom:12px">Importe un fichier <code style="background:var(--surface2);padding:1px 5px;border-radius:3px">.json</code> exporté précédemment. <b style="color:var(--red)">Écrase toutes les données actuelles.</b></p>
+            <input type="file" id="import-json-input" accept=".json" style="display:none" onchange="importerSauvegarde(this)">
+            <button class="btn" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:var(--yellow);width:100%" onclick="document.getElementById('import-json-input').click()">
+              📂 Choisir un fichier JSON
+            </button>
+            <div id="import-json-result" style="margin-top:8px;font-size:11px;display:none;padding:6px 10px;border-radius:6px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Supabase -->
       <div class="grid-2" style="margin-bottom:14px">
         <div class="card" style="border-color:var(--cfg-green-border)">
           <div class="card-header" style="border-bottom-color:var(--cfg-green-border)">
@@ -6265,6 +6293,70 @@ function saveStateWithSync() {
   setSyncStatus('pending', 'Sauvegarde en cours…');
   clearTimeout(syncDebounceTimer);
   syncDebounceTimer = setTimeout(() => syncPush(false), 3000);
+}
+
+function exporterSauvegarde() {
+  const data = JSON.stringify(state, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const now  = new Date();
+  const jj   = String(now.getDate()).padStart(2,'0');
+  const mm   = String(now.getMonth()+1).padStart(2,'0');
+  const aa   = String(now.getFullYear()).slice(2);
+  const time = now.toTimeString().slice(0,8).replace(/:/g,'');
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `tm-sauvegarde-${jj}${mm}${aa}-${time}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toastMsg('💾 Sauvegarde téléchargée', 'success');
+  journalLog('Sauvegarde locale exportée', 'ok');
+}
+
+function importerSauvegarde(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const result = document.getElementById('import-json-result');
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      // Vérification minimale
+      if (!data.bus && !data.comptaMois && !data.personnel) {
+        throw new Error('Fichier invalide — ce n\'est pas une sauvegarde TM Manager.');
+      }
+      if (!confirm(`⚠️ Charger la sauvegarde "${file.name}" ?\n\nToutes tes données actuelles seront remplacées. Cette action est irréversible.`)) {
+        input.value = '';
+        return;
+      }
+      // Remplacer le state
+      Object.keys(state).forEach(k => delete state[k]);
+      Object.assign(state, data);
+      saveStateWithSync();
+      // Rafraîchir l'UI
+      renderDashboard();
+      if (result) {
+        result.style.display = 'block';
+        result.style.background = 'rgba(16,185,129,0.1)';
+        result.style.color = 'var(--green)';
+        result.style.border = '1px solid rgba(16,185,129,0.3)';
+        result.textContent = `✅ Sauvegarde chargée — ${(file.size/1024).toFixed(1)} Ko`;
+      }
+      toastMsg('✅ Sauvegarde chargée avec succès', 'success');
+      journalLog(`Sauvegarde locale importée (${file.name})`, 'ok');
+    } catch (err) {
+      if (result) {
+        result.style.display = 'block';
+        result.style.background = 'rgba(239,68,68,0.1)';
+        result.style.color = 'var(--red)';
+        result.style.border = '1px solid rgba(239,68,68,0.3)';
+        result.textContent = `❌ Erreur : ${err.message}`;
+      }
+      toastMsg('❌ Fichier invalide', 'error');
+    }
+    input.value = '';
+  };
+  reader.readAsText(file);
 }
 
 async function syncPush(manual = false) {
