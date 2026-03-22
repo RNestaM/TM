@@ -840,7 +840,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v102</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v105</span>
       <button id="sync-status" onclick="syncPush(true)" title="Cliquer pour synchroniser maintenant" style="font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 8px;border-radius:4px;display:none;cursor:pointer;border:none"></button>
       <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
@@ -874,50 +874,46 @@
         <!-- Échéances -->
         <div class="card dash-l1-card" style="overflow:hidden;height:100%;box-sizing:border-box">
           <div class="card-header" style="padding:6px 12px"><div class="card-title" style="font-size:12px">📅 Prochaines échéances</div></div>
-          <div class="card-body" style="padding:0">
-            <table style="width:100%;border-collapse:collapse;font-size:11px">
-              <tr style="background:rgba(239,68,68,0.12)">
-                <td style="padding:4px 8px;color:var(--text2)">Prochain CT</td>
-                <td style="padding:3px 8px;text-align:right;font-weight:600" id="dash-ech-ct">—</td>
-              </tr>
-              <tr style="background:rgba(245,158,11,0.10)">
-                <td style="padding:3px 8px;color:var(--text2)">Prochaine Révision</td>
-                <td style="padding:3px 8px;text-align:right;font-weight:600" id="dash-ech-rev">—</td>
-              </tr>
-              <tr style="background:rgba(124,58,237,0.10)">
-                <td style="padding:3px 8px;color:var(--text2)">FCO</td>
-                <td style="padding:3px 8px;text-align:right;font-weight:600" id="dash-ech-fco">—</td>
-              </tr>
-              <tr style="background:rgba(0,212,255,0.08)">
-                <td style="padding:3px 8px;color:var(--text2)">Fin de location</td>
-                <td style="padding:3px 8px;text-align:right;font-weight:600" id="dash-ech-loc">—</td>
-              </tr>
-            </table>
+          <div class="card-body" style="padding:0;display:flex;flex-direction:column;height:calc(100% - 36px)">
+            <div style="flex:1;display:flex;align-items:center;background:rgba(239,68,68,0.12);padding:0 8px;justify-content:space-between;min-height:0">
+              <span style="color:var(--text2);font-size:11px">Prochain CT</span>
+              <span style="font-weight:600;font-size:11px" id="dash-ech-ct">—</span>
+            </div>
+            <div style="flex:1;display:flex;align-items:center;background:rgba(245,158,11,0.10);padding:0 8px;justify-content:space-between;min-height:0">
+              <span style="color:var(--text2);font-size:11px">Prochaine Révision</span>
+              <span style="font-weight:600;font-size:11px" id="dash-ech-rev">—</span>
+            </div>
+            <div style="flex:1;display:flex;align-items:center;background:rgba(124,58,237,0.10);padding:0 8px;justify-content:space-between;min-height:0">
+              <span style="color:var(--text2);font-size:11px">FCO</span>
+              <span style="font-weight:600;font-size:11px" id="dash-ech-fco">—</span>
+            </div>
+            <div style="flex:1;display:flex;align-items:center;background:rgba(0,212,255,0.08);padding:0 8px;justify-content:space-between;min-height:0">
+              <span style="color:var(--text2);font-size:11px">Fin de location</span>
+              <span style="font-weight:600;font-size:11px" id="dash-ech-loc">—</span>
+            </div>
           </div>
         </div>
 
         <!-- Récap parc -->
         <div class="card dash-l1-card" style="overflow:hidden;height:100%;box-sizing:border-box">
           <div class="card-header" style="padding:6px 12px"><div class="card-title" style="font-size:12px">🚍 État du parc</div></div>
-          <div class="card-body" style="padding:0">
-            <table style="width:100%;border-collapse:collapse;font-size:12px">
-              <tr style="background:rgba(16,185,129,0.12)">
-                <td style="padding:3px 8px;color:var(--text2)">En service</td>
-                <td style="padding:3px 8px;text-align:right;font-weight:700;color:var(--green)" id="dash-parc-service">—</td>
-              </tr>
-              <tr style="background:rgba(245,158,11,0.10)">
-                <td style="padding:3px 8px;color:var(--text2)">Réserve</td>
-                <td style="padding:3px 8px;text-align:right;font-weight:700;color:var(--yellow)" id="dash-parc-reserve">—</td>
-              </tr>
-              <tr style="background:rgba(239,68,68,0.08)">
-                <td style="padding:3px 8px;color:var(--text2)">Indispo / Atelier</td>
-                <td style="padding:3px 8px;text-align:right;font-weight:700;color:var(--red)" id="dash-parc-indispo">—</td>
-              </tr>
-              <tr style="background:rgba(0,212,255,0.06);border-top:1px solid var(--border)">
-                <td style="padding:3px 8px;font-weight:700">Total</td>
-                <td style="padding:3px 8px;text-align:right;font-weight:700" id="dash-parc-total">—</td>
-              </tr>
-            </table>
+          <div class="card-body" style="padding:0;display:flex;flex-direction:column;height:calc(100% - 36px)">
+            <div style="flex:1;display:flex;align-items:center;background:rgba(16,185,129,0.12);padding:0 8px;justify-content:space-between">
+              <span style="color:var(--text2);font-size:11px">En service</span>
+              <span style="font-weight:700;color:var(--green);font-size:11px" id="dash-parc-service">—</span>
+            </div>
+            <div style="flex:1;display:flex;align-items:center;background:rgba(245,158,11,0.10);padding:0 8px;justify-content:space-between">
+              <span style="color:var(--text2);font-size:11px">Réserve</span>
+              <span style="font-weight:700;color:var(--yellow);font-size:11px" id="dash-parc-reserve">—</span>
+            </div>
+            <div style="flex:1;display:flex;align-items:center;background:rgba(239,68,68,0.08);padding:0 8px;justify-content:space-between">
+              <span style="color:var(--text2);font-size:11px">Indispo / Atelier</span>
+              <span style="font-weight:700;color:var(--red);font-size:11px" id="dash-parc-indispo">—</span>
+            </div>
+            <div style="flex:1;display:flex;align-items:center;background:rgba(0,212,255,0.06);border-top:1px solid var(--border);padding:0 8px;justify-content:space-between">
+              <span style="font-weight:700;font-size:11px">Total</span>
+              <span style="font-weight:700;font-size:11px" id="dash-parc-total">—</span>
+            </div>
           </div>
         </div>
 
@@ -973,15 +969,15 @@
       </div>
 
       <!-- Ligne 3 : RH + Journal -->
-      <div id="dash-line3" style="display:grid;grid-template-columns:2fr 1fr;gap:8px;width:100%">
-        <div class="card">
+      <div id="dash-line3" style="display:grid;grid-template-columns:2fr 1fr;gap:8px;width:100%;align-items:stretch">
+        <div class="card" style="height:100%;overflow:hidden;box-sizing:border-box">
           <div class="card-header" style="padding:6px 12px">
             <div class="card-title" style="font-size:12px">👥 Ressources Humaines</div>
             <button class="btn btn-ghost btn-xs" onclick="nav(document.querySelector('[data-page=personnel]'))">Voir tout</button>
           </div>
-          <div id="dash-rh-body" class="card-body" style="padding:0;overflow-x:auto;max-height:180px;overflow-y:auto">
-            <table class="data-table" id="dash-rh-table">
-              <thead><tr style="background:rgba(0,212,255,0.06)">
+          <div id="dash-rh-body" class="card-body" style="padding:0;overflow-x:auto;overflow-y:auto;height:calc(100% - 36px)">
+            <table class="data-table" id="dash-rh-table" style="height:100%">
+              <thead style="position:sticky;top:0;z-index:2;background:var(--surface2)"><tr style="background:rgba(0,212,255,0.06)">
                 <th></th><th>Nb</th><th>Salaire</th><th>Moy.</th>
                 <th style="color:var(--red)">🤒</th><th style="color:var(--yellow)">🌴</th>
                 <th>✊</th><th>📅</th><th style="color:var(--green)">Dispo</th>
@@ -990,9 +986,9 @@
             </table>
           </div>
         </div>
-        <div class="card">
+        <div class="card" style="height:100%;overflow:hidden;box-sizing:border-box">
           <div class="card-header" style="padding:6px 12px"><div class="card-title" style="font-size:12px">Journal d'activité</div></div>
-          <div id="dash-journal-body" class="card-body" style="max-height:180px;overflow-y:auto"><div class="timeline" id="journal-timeline"></div></div>
+          <div id="dash-journal-body" class="card-body" style="height:calc(100% - 36px);overflow-y:auto"><div class="timeline" id="journal-timeline"></div></div>
         </div>
       </div>
 
@@ -2678,7 +2674,7 @@ function saveState() {
 function normaliserState() {
   if (!state.todo) state.todo = [];
   if (!Array.isArray(state.todo)) state.todo = Object.values(state.todo);
-  while (state.todo.length < 5) state.todo.push('');
+  while (state.todo.length < 10) state.todo.push('');
   const arrayFields = ['bus','affectations','maintenance','ct','personnel','lignes',
     'statsLignes','achats','tourisme','abribus','contratsPub','compta','gasoil',
     'carburant','pubDispo','journal','themes'];
@@ -2842,12 +2838,11 @@ function applyDashLayoutCSS(lay) {
   if (dashPage) dashPage.style.maxWidth = l.maxWidth >= 100 ? 'none' : l.maxWidth+'%';
   if (l1) { l1.style.gap=gapPx; l1.style.marginBottom=gapPx; l1.style.gridTemplateColumns=`${l.l1col1}fr ${l.l1col2}fr ${l.l1col3}fr ${l.l1col4}fr`; }
   if (l2) { l2.style.gap=gapPx; l2.style.marginBottom=gapPx; l2.style.gridTemplateColumns=`${l.l2col1}fr ${l.l2col2}fr ${l.l2col3}fr`; }
-  if (l3) { l3.style.gap=gapPx; l3.style.gridTemplateColumns=`${l.l3col1}fr ${l.l3col2}fr`; }
+  if (l3) { l3.style.gap=gapPx; l3.style.marginBottom=gapPx; l3.style.gridTemplateColumns=`${l.l3col1}fr ${l.l3col2}fr`; l3.style.gridAutoRows=l.rhMaxH+'px'; }
   // Set explicit height on cards (not gridAutoRows which conflicts with height:100%)
   document.querySelectorAll('.dash-l1-card').forEach(c => { c.style.height=l.l1height+'px'; c.style.overflow='hidden'; c.style.boxSizing='border-box'; });
   document.querySelectorAll('.dash-l2-card').forEach(c => { c.style.height=l.l2height+'px'; c.style.overflow='hidden'; c.style.boxSizing='border-box'; });
-  const rh=document.getElementById('dash-rh-body'); if(rh) rh.style.maxHeight=l.rhMaxH+'px';
-  const jl=document.getElementById('dash-journal-body'); if(jl) jl.style.maxHeight=l.rhMaxH+'px';
+  // RH height controlled by gridAutoRows on dash-line3
   const td=document.getElementById('dash-todo-body'); if(td) td.style.maxHeight=l.todoMaxH+'px';
   const ar=document.getElementById('alertes-recap'); if(ar) ar.style.maxHeight=l.todoMaxH+'px';
 }
@@ -3046,8 +3041,8 @@ function renderDashboard() {
   const elTodo = document.getElementById('dash-todo-body');
   if (elTodo) {
     if (!state.todo) state.todo = [];
-    while (state.todo.length < 5) state.todo.push('');
-    elTodo.innerHTML = state.todo.slice(0,5).map((t,i) => {
+    while (state.todo.length < 10) state.todo.push('');
+    elTodo.innerHTML = state.todo.slice(0,10).map((t,i) => {
       const text = String(t && typeof t === 'object' ? (t.text||'') : (t||'')).replace(/"/g,'&quot;');
       const done = t && typeof t === 'object' ? !!t.done : false;
       return `
@@ -3091,22 +3086,22 @@ function renderDashboard() {
     const msgs = [];
     const nbCT = ctDiffs.filter(d=>d!==null&&d<=0).length;
     const nbCTSoon = ctDiffs.filter(d=>d!==null&&d>0&&d<=7).length;
-    if (nbCT > 0) msgs.push(`<div style="color:var(--red);font-size:11px;padding:2px 0">🔍 ${nbCT} CT expiré(s)</div>`);
-    if (nbCTSoon > 0) msgs.push(`<div style="color:var(--yellow);font-size:11px;padding:2px 0">🔍 ${nbCTSoon} CT dans 7j</div>`);
+    if (nbCT > 0) msgs.push(`<div style="color:var(--red);font-size:16px;padding:3px 0">🔍 ${nbCT} CT expiré(s)</div>`);
+    if (nbCTSoon > 0) msgs.push(`<div style="color:var(--yellow);font-size:16px;padding:3px 0">🔍 ${nbCTSoon} CT dans 7j</div>`);
     const nbRevSoon = revDiffs.filter(d=>d!==null&&d>=0&&d<=7).length;
-    if (nbRevSoon > 0) msgs.push(`<div style="color:var(--yellow);font-size:11px;padding:2px 0">🔧 ${nbRevSoon} révision(s) à venir</div>`);
+    if (nbRevSoon > 0) msgs.push(`<div style="color:var(--yellow);font-size:16px;padding:3px 0">🔧 ${nbRevSoon} révision(s) à venir</div>`);
     const nbFCO = (state.personnel||[]).filter(p=>p.fco&&p.fco<=todayISO).length;
-    if (nbFCO > 0) msgs.push(`<div style="color:var(--accent3);font-size:11px;padding:2px 0">🎓 ${nbFCO} FCO expirée(s)</div>`);
+    if (nbFCO > 0) msgs.push(`<div style="color:var(--accent3);font-size:16px;padding:3px 0">🎓 ${nbFCO} FCO expirée(s)</div>`);
     const nbContrat = (state.tourisme||[]).filter(t => {
       if (!t.dateTransport) return false;
       const iso = t.dateTransport.replace(/(\d{2})\/(\d{2})\/(\d{4})/,'$3-$2-$1');
       const d3 = new Date(todayISO); d3.setDate(d3.getDate()+3);
       return iso >= todayISO && iso <= d3.toISOString().slice(0,10);
     }).length;
-    if (nbContrat > 0) msgs.push(`<div style="color:var(--orange);font-size:11px;padding:2px 0">🚌 ${nbContrat} contrat(s) tourisme imminent(s)</div>`);
+    if (nbContrat > 0) msgs.push(`<div style="color:var(--orange);font-size:16px;padding:3px 0">🚌 ${nbContrat} contrat(s) tourisme imminent(s)</div>`);
     elRecap.innerHTML = msgs.length
       ? msgs.join('')
-      : `<div style="color:var(--green);font-size:11px">✅ Aucune alerte active</div>`;
+      : `<div style="color:var(--green);font-size:16px">✅ Aucune alerte active</div>`;
   }
 
   // ── RH ────────────────────────────────────────────────────
