@@ -840,7 +840,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v92</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v94</span>
       <button id="sync-status" onclick="syncPush(true)" title="Cliquer pour synchroniser maintenant" style="font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 8px;border-radius:4px;display:none;cursor:pointer;border:none"></button>
       <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
@@ -1230,7 +1230,7 @@
         </div>
         <div class="card-body" style="padding:0;overflow-y:auto;max-height:360px">
           <table class="data-table" style="border-collapse:separate;border-spacing:0">
-            <thead style="position:sticky;top:0;z-index:2"><tr><th>Ligne</th><th>Tickets total</th><th>Abonnés</th><th>Gains total</th><th>Jours</th><th>Part des gains</th></tr></thead>
+            <thead style="position:sticky;top:0;z-index:2;background:var(--surface2)"><tr><th>Ligne</th><th>Tickets total</th><th>Abonnés</th><th>Gains total</th><th>Jours</th><th>Part des gains</th></tr></thead>
             <tbody id="lignes-tbody"></tbody>
           </table>
         </div>
@@ -1239,7 +1239,7 @@
         <div class="card-header"><div class="card-title">Historique détaillé (30 dernières entrées)</div></div>
         <div class="card-body" style="padding:0;overflow-y:auto;max-height:360px">
           <table class="data-table" style="border-collapse:separate;border-spacing:0">
-            <thead style="position:sticky;top:0;z-index:2"><tr><th>Date</th><th>Ligne</th><th>Créneau</th><th>Tickets</th><th>Abonnés</th><th>Gains</th></tr></thead>
+            <thead style="position:sticky;top:0;z-index:2;background:var(--surface2)"><tr><th>Date</th><th>Ligne</th><th>Créneau</th><th>Tickets</th><th>Abonnés</th><th>Gains</th></tr></thead>
             <tbody id="stats-hist-tbody"></tbody>
           </table>
         </div>
@@ -2393,6 +2393,15 @@
     </div>
     <div class="modal-body">
       <!-- Onglets type CSV — cards avec icône + label -->
+      <!-- MAJ Quotidienne -->
+      <div style="margin-bottom:12px;padding:10px 12px;background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.25);border-radius:8px;display:flex;align-items:center;gap:12px">
+        <span style="font-size:22px">⚡</span>
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:700;color:var(--accent)">MAJ Quotidienne</div>
+          <div style="font-size:10px;color:var(--text3)">Importe Stats Lignes puis Parc Bus en séquence</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="majQuotidienne()" style="background:var(--accent);color:#000;white-space:nowrap">▶ Lancer</button>
+      </div>
       <div id="csv-type-tabs" style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:14px">
         <div class="csv-tab active" onclick="selectCsvType(this,'bus')" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:12px 4px;border-radius:8px;border:2px solid var(--accent);background:rgba(0,212,255,0.08);cursor:pointer;transition:.15s;min-height:72px">
           <span style="font-size:24px">🚍</span><span style="font-size:11px;font-weight:600;text-align:center;white-space:nowrap">Parc Bus</span>
@@ -3787,6 +3796,50 @@ function csvPreview() {
   list.innerHTML = html || '<span style="color:var(--text3)">Aucune donnée</span>';
 }
 
+function majQuotidienne() {
+  closeModal('modal-maj-csv');
+
+  const extPresent = !!localStorage.getItem('tm_ext_present');
+  if (!extPresent) {
+    toastMsg('❌ Extension non détectée — vérifie que tu es connecté sur transport-manager.net', 'error');
+    return;
+  }
+
+  if (!state.lastImport) state.lastImport = {};
+
+  // Lance un fetch via extension pour un type donné, retourne une Promise
+  const fetchType = (type) => new Promise((resolve, reject) => {
+    localStorage.setItem('tm_ext_request', JSON.stringify({ type, timestamp: Date.now() }));
+    toastMsg(`⏳ Téléchargement ${type} via extension…`, 'info');
+    let waited = 0, keySeen = false;
+    const check = setInterval(() => {
+      waited += 500;
+      const keyPresent = !!localStorage.getItem('tm_ext_csv_' + type);
+      if (keyPresent) keySeen = true;
+      if (keySeen && !keyPresent) { clearInterval(check); resolve(); return; }
+      if (waited >= 15000) {
+        clearInterval(check);
+        if (!keySeen) reject(new Error(`Pas de réponse de l'extension pour "${type}"`));
+        else resolve();
+      }
+    }, 500);
+  });
+
+  // Séquence : stats → bus
+  toastMsg('⚡ MAJ Quotidienne — Stats Lignes…', 'info');
+  fetchType('stats')
+    .then(() => {
+      toastMsg('⚡ MAJ Quotidienne — Parc Bus…', 'info');
+      return fetchType('bus');
+    })
+    .then(() => {
+      toastMsg('✅ MAJ Quotidienne terminée', 'success');
+      journalLog('MAJ Quotidienne (Stats + Bus) via extension', 'ok');
+      setTimeout(() => { renderDashboard(); renderParc(); updateBusSelects(); }, 100);
+    })
+    .catch(err => toastMsg('❌ MAJ Quotidienne : ' + err.message, 'error'));
+}
+
 function csvImporter() {
   const texte = document.getElementById('csv-paste-text').value || csvRawContent;
   if (!texte.trim()) { toastMsg('Aucun contenu CSV', 'error'); return; }
@@ -3824,8 +3877,9 @@ function csvImporter() {
     });
     state.lastImport.bus = nowStr;
     journalLog(`MAJ CSV bus : ${maj} MàJ · ${ajouts} nouveaux`, 'ok');
-    saveStateWithSync(); renderParc(); renderDashboard(); updateBusSelects();
+    saveStateWithSync();
     toastMsg(`✅ ${maj} mis à jour · ${ajouts} ajoutés`, 'success');
+    setTimeout(() => { renderParc(); renderDashboard(); updateBusSelects(); closeModal('modal-maj-csv'); }, 50);
 
   } else if (currentCsvType === 'affects') {
     const aff = parserAffects(rows);
@@ -3855,7 +3909,8 @@ function csvImporter() {
     state.statsLignes = [...state.statsLignes, ...nouvelles];
     state.lastImport.stats = nowStr;
     journalLog(`MAJ CSV stats : ${nouvelles.length} nouvelles entrées`, 'ok');
-    saveStateWithSync(); if (document.getElementById('page-lignes').classList.contains('active')) renderLignes();
+    saveStateWithSync();
+    setTimeout(() => { if (document.getElementById('page-lignes').classList.contains('active')) renderLignes(); closeModal('modal-maj-csv'); }, 50);
     toastMsg(`✅ ${nouvelles.length} nouvelles entrées stats`, 'success');
 
   } else if (currentCsvType === 'salaries') {
@@ -6453,7 +6508,8 @@ function importerCSVDirect(type, contenu) {
     state.statsLignes = [...state.statsLignes, ...nouvelles];
     state.lastImport.stats = nowStr;
     journalLog(`MAJ statslignes.csv : ${nouvelles.length} nouvelles entrées`, 'ok');
-    saveStateWithSync(); if (document.getElementById('page-lignes').classList.contains('active')) renderLignes();
+    saveStateWithSync();
+    setTimeout(() => { if (document.getElementById('page-lignes').classList.contains('active')) renderLignes(); closeModal('modal-maj-csv'); }, 50);
     toastMsg(`📊 ${nouvelles.length} nouvelles entrées stats`, 'success');
 
   } else if (type === 'salaries') {
