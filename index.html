@@ -840,7 +840,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v105</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v108</span>
       <button id="sync-status" onclick="syncPush(true)" title="Cliquer pour synchroniser maintenant" style="font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 8px;border-radius:4px;display:none;cursor:pointer;border:none"></button>
       <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
@@ -998,7 +998,7 @@
       <span id="stat-revision" style="display:none"></span>
       <span id="stat-ct" style="display:none"></span>
       <span id="stat-fco" style="display:none"></span>
-      <span id="repartition-parc" style="display:none"></span>
+      <span id="repartition-parc-hidden" style="display:none"></span>
     </div>
 
     <!-- ═══════════════════════════════════════════ ALERTES ═══ -->
@@ -1010,7 +1010,7 @@
     <div id="page-parc" class="page">
       <div class="card" style="margin-bottom:12px">
         <div class="card-header"><div class="card-title">Répartition du parc</div></div>
-        <div class="card-body" id="repartition-parc"></div>
+        <div class="card-body" id="repartition-parc-parc"></div>
       </div>
       <div class="search-bar">
         <input class="search-input" type="text" id="search-parc" placeholder="🔍 Rechercher un bus..." oninput="filterParc()">
@@ -1270,6 +1270,11 @@
         <span id="freq-niveau-actif-badge" style="font-size:11px;padding:4px 10px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);border-radius:6px;color:var(--accent)"></span>
       </div>
 
+      <!-- Bannière lignes sous 100% -->
+      <div id="freq-warning-banner" style="display:none;margin-bottom:10px;padding:8px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;font-size:12px;color:var(--red)">
+        ⚠️ Lignes sous 100% : <span id="freq-warning-list"></span>
+      </div>
+
       <!-- Tableau fréquentation -->
       <div class="card">
         <div class="card-header">
@@ -1294,7 +1299,10 @@
       <div class="card" style="margin-top:14px">
         <div class="card-header">
           <div class="card-title">Stats par ligne (depuis CSV)</div>
-          <button class="btn btn-ghost btn-sm" onclick="if(confirm('Effacer tout l\'historique stats ?')){state.statsLignes=[];saveStateWithSync();renderLignes();}">🗑 Réinitialiser</button>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-sm" style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.4);color:var(--yellow)" onclick="supprimerStatsJour()">🗑 Supprimer hier</button>
+            <button class="btn btn-ghost btn-sm" onclick="if(confirm('Effacer tout l\'historique stats ?')){state.statsLignes=[];saveStateWithSync();renderLignes();}">🗑 Tout effacer</button>
+          </div>
         </div>
         <div class="card-body" style="padding:0;overflow-y:auto;max-height:360px">
           <table class="data-table" style="border-collapse:separate;border-spacing:0">
@@ -1339,7 +1347,7 @@
     <div id="page-compta" class="page">
 
       <!-- Suivi par mois (gauche) + Graphique évolution (droite) -->
-      <div class="grid-2" style="margin-bottom:14px">
+      <div class="grid-2" style="margin-bottom:14px;align-items:start">
         <div class="card">
           <div class="card-header">
             <div class="card-title">📅 Suivi par mois</div>
@@ -1354,12 +1362,12 @@
         </div>
         <div class="card">
           <div class="card-header"><div class="card-title" id="compta-chart-title">📈 Évolution mensuelle</div></div>
-          <div class="card-body"><canvas id="compta-chart" style="width:100%;height:260px"></canvas></div>
+          <div class="card-body" style="min-height:80px"><canvas id="compta-chart" style="width:100%;height:260px"></canvas></div>
         </div>
       </div>
 
       <!-- Répartition recettes (gauche) + Répartition dépenses (droite) -->
-      <div class="grid-2" style="margin-bottom:14px">
+      <div class="grid-2" style="margin-bottom:14px;align-items:start">
         <div class="card">
           <div class="card-header"><div class="card-title">📈 Répartition recettes</div></div>
           <div class="card-body" id="compta-repartition-rec"></div>
@@ -1467,29 +1475,27 @@
     <!-- ═══════════════════════════════════════════ PUB ═══ -->
     <div id="page-pub" class="page">
 
-      <!-- Stat cards gains par mois -->
-      <div id="pub-stat-cards" class="stat-cards"></div>
+      <!-- Gains anticipés pleine largeur -->
+      <div class="card" style="margin-bottom:10px">
+        <div class="card-header" style="padding:4px 12px"><div class="card-title" style="font-size:12px">💰 Gains anticipés par mois</div></div>
+        <div class="card-body" id="pub-gains-mois" style="padding:4px 12px;min-height:40px"></div>
+      </div>
+      <div id="pub-stat-cards" style="display:none"></div>
 
       <div class="grid-2" style="margin-top:14px">
         <!-- Import texte brut -->
         <div class="card">
-          <div class="card-header"><div class="card-title">📋 Importer les contrats</div></div>
+          <div class="card-header" style="padding:6px 12px"><div class="card-title" style="font-size:12px">📋 Importer les contrats</div><button class="btn btn-primary btn-sm" onclick="importerContratsPub()">✓ Importer</button></div>
           <div class="card-body">
             <p style="font-size:11px;color:var(--text3);margin-bottom:10px">Colle le tableau copié depuis le jeu (onglet pub) :</p>
-            <textarea id="pub-texte-brut" rows="10" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:8px;resize:vertical;outline:none" placeholder="1618551  Super R  53  Abribus  05/03/2026  19/03/2026  222 600 € (100.0%)  Voir&#10;1623401  BelOs  4  Panneau de pub Avant  10/03/2026  20/03/2026  3 360 € (87.5%)  Voir&#10;..."></textarea>
-            <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
-              <button class="btn btn-primary" onclick="importerContratsPub()">✓ Importer</button>
+            <textarea id="pub-texte-brut" rows="5" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:8px;resize:vertical;outline:none" placeholder="1618551  Super R  53  Abribus  05/03/2026  19/03/2026  222 600 € (100.0%)  Voir&#10;1623401  BelOs  4  Panneau de pub Avant  10/03/2026  20/03/2026  3 360 € (87.5%)  Voir&#10;..."></textarea>
+            <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
               <button class="btn btn-ghost btn-sm" onclick="if(confirm('Remplacer tous les contrats ?')){state.contratsPub=[];saveStateWithSync();renderPub();}">🗑 Vider</button>
               <span id="pub-import-status" style="font-size:11px;color:var(--text3)"></span>
             </div>
           </div>
         </div>
 
-        <!-- Résumé par mois -->
-        <div class="card">
-          <div class="card-header"><div class="card-title">💰 Gains anticipés par mois</div></div>
-          <div class="card-body" id="pub-gains-mois"></div>
-        </div>
       </div>
 
       <!-- Outil évaluation contrats -->
@@ -1506,7 +1512,7 @@
             Colle les propositions de contrat (copiées depuis le jeu). Format attendu par ligne :<br>
             <code style="background:var(--surface2);padding:2px 6px;border-radius:3px;font-size:10px">Annonceur &nbsp; NbDemandé &nbsp; NbDispo &nbsp; TypeSupport &nbsp; Durée(j) &nbsp; DateLimite &nbsp; Prix€ &nbsp; Consulter</code>
           </p>
-          <textarea id="eval-textarea" rows="6" placeholder="Coldgate&#9;8&#9;39&#9;Panneau de pub Latéral&#9;25 j&#9;25/03/2026&#9;22 400€&#9;Consulter&#10;Senex&#9;20&#9;39&#9;Panneau de pub Latéral&#9;29 j&#9;26/03/2026&#9;64 960€&#9;Consulter"
+          <textarea id="eval-textarea" rows="5" placeholder="Coldgate&#9;8&#9;39&#9;Panneau de pub Latéral&#9;25 j&#9;25/03/2026&#9;22 400€&#9;Consulter&#10;Senex&#9;20&#9;39&#9;Panneau de pub Latéral&#9;29 j&#9;26/03/2026&#9;64 960€&#9;Consulter"
             style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px;font-size:11px;font-family:'JetBrains Mono',monospace;resize:vertical;box-sizing:border-box"></textarea>
           <div id="eval-result" style="margin-top:12px"></div>
         </div>
@@ -2672,6 +2678,8 @@ function saveState() {
 // Force les propriétés attendues comme Array à rester des Array
 // (Supabase/JSON peut parfois convertir un Array vide en objet)
 function normaliserState() {
+  // Normalize ATELIER → Indispo
+  (state.bus||[]).forEach(b => { if(b.statut==='ATELIER') b.statut='Indispo'; });
   if (!state.todo) state.todo = [];
   if (!Array.isArray(state.todo)) state.todo = Object.values(state.todo);
   while (state.todo.length < 10) state.todo.push('');
@@ -2735,7 +2743,7 @@ function nav(el) {
 }
 
 function renderPage(page) {
-  const r = { dashboard: renderDashboard, alertes: renderAlertes, parc: renderParc,
+  const r = { dashboard: renderDashboard, alertes: renderAlertes, parc: () => { renderParc(); renderRepartitionParc(); },
     affectations: renderAffectations, frequentation: renderFrequentation, maintenance: renderMaintenance, abribus: renderAbribus,
     personnel: renderPersonnel, lignes: renderLignes, compta: renderCompta, bilan: renderBilan,
     pub: renderPub, achats: renderAchats, gasoil: renderGasoil, tourisme: renderTourisme, config: renderConfig, pubdispo: renderPubDispo, historique: renderHistoriqueBase };
@@ -2925,8 +2933,8 @@ function renderDashboard() {
     const pct = state.bus.length ? Math.round(n / state.bus.length * 100) : 0;
     rep += `<div class="gauge-row"><div class="gauge-label">${tNames[t]||t}</div><div class="gauge-bar"><div class="gauge-fill" style="width:${pct}%;background:${colors[t]||'var(--accent)'}"></div></div><div class="gauge-val">${n} (${pct}%)</div></div>`;
   });
-  const elRep = document.getElementById('repartition-parc');
-  if (elRep) elRep.innerHTML = rep || '<div style="color:var(--text3)">Aucun bus.</div>';
+  // Update both parc page and hidden dashboard placeholder
+  ['repartition-parc-parc'].forEach(rid => { const el = document.getElementById(rid); if(el) el.innerHTML = rep || '<div style="color:var(--text3)">Aucun bus.</div>'; });
 
   // ── État du parc ──────────────────────────────────────────
   const nbService  = state.bus.filter(b => ['En service','Service'].includes(b.statut)).length;
@@ -3040,7 +3048,9 @@ function renderDashboard() {
   // ── To-do list ────────────────────────────────────────────
   const elTodo = document.getElementById('dash-todo-body');
   if (elTodo) {
-    if (!state.todo) state.todo = [];
+    // Normalize ATELIER → Indispo
+  (state.bus||[]).forEach(b => { if(b.statut==='ATELIER') b.statut='Indispo'; });
+  if (!state.todo) state.todo = [];
     while (state.todo.length < 10) state.todo.push('');
     elTodo.innerHTML = state.todo.slice(0,10).map((t,i) => {
       const text = String(t && typeof t === 'object' ? (t.text||'') : (t||'')).replace(/"/g,'&quot;');
@@ -3143,9 +3153,14 @@ function renderDashboard() {
   </div>`).join('') || '<div style="color:var(--text3)">Aucune activité.</div>';
 
   // ── Badge alertes sidebar ─────────────────────────────────
-  const badgeTotal = (ctDiffs.filter(d=>d!==null&&d<=7).length) + (revDiffs.filter(d=>d!==null&&d>=0&&d<=7).length);
+  // Badge = same logic as renderAlertes (today only, non-lu)
+  const todayBadge = today();
+  const luK = (id) => !!( (state.alertesLues||{})[`${todayBadge}_${id}`] );
+  let badgeCount = 0;
+  ctDiffs.forEach((d,i) => { const b = state.bus.filter(x => { const ct=state.planningCT?.[x.nom]?.ctDate||ctPrevu(x.ct); return ct && Math.round((new Date(ct)-new Date(todayBadge))/(864e5)) === d; })[0]; if(d===0 && b && !luK('ct_'+b.nom)) badgeCount++; });
+  revDiffs.forEach((d,i) => { const b = state.bus.filter(x => { const rv=state.planningCT?.[x.nom]?.revDate||revisionPrevue(ctPrevu(x.ct)||''); return rv && Math.round((new Date(rv)-new Date(todayBadge))/(864e5)) === d; })[0]; if(d===0 && b && !luK('rev_'+b.nom)) badgeCount++; });
   const elBadge = document.getElementById('alert-badge');
-  if (elBadge) { elBadge.textContent = badgeTotal; elBadge.style.display = badgeTotal > 0 ? '' : 'none'; }
+  if (elBadge) { elBadge.textContent = badgeCount || ''; elBadge.style.display = badgeCount > 0 ? '' : 'none'; }
   // ── Appliquer le layout sauvegardé ───────────────────────
   applyDashLayoutCSS(getDashLayout());
 }
@@ -3316,8 +3331,7 @@ function renderAlertes() {
 
   document.getElementById('alertes-list').innerHTML = html;
   // Badge = uniquement alertes du jour (d=0) non lues
-  document.getElementById('alert-badge').textContent = totalAujourdHui;
-  document.getElementById('alert-badge').style.display = totalAujourdHui > 0 ? '' : 'none';
+  const _ab=document.getElementById('alert-badge'); if(_ab){_ab.textContent=totalAujourdHui;_ab.style.display=totalAujourdHui>0?'':'none';}
 }
 
 const sortState = {};
@@ -3334,7 +3348,7 @@ function sortTable(tableId, col) {
     const icon = thead.querySelector(`.sort-icon[data-col="${col}"]`);
     if (icon) icon.closest('th').classList.add(s.dir === 'asc' ? 'sort-asc' : 'sort-desc');
   }
-  const renders = { parc: renderParc, personnel: renderPersonnel, compta: renderCompta };
+  const renders = { parc: () => { renderParc(); renderRepartitionParc(); }, personnel: renderPersonnel, compta: renderCompta };
   if (renders[tableId]) renders[tableId]();
 }
 
@@ -3377,6 +3391,47 @@ function setParcView(el, view) {
   document.getElementById('parc-view-compact').style.display = view === 'compact' ? '' : 'none';
   document.getElementById('parc-view-full').style.display    = view === 'full'    ? '' : 'none';
   renderParc();
+}
+
+function renderRepartitionParc() {
+  const el = document.getElementById('repartition-parc-parc');
+  if (!el || !state.bus.length) { if(el) el.innerHTML='<div style="color:var(--text3);padding:10px">Aucun bus.</div>'; return; }
+  const colors = { MIN:'var(--accent)', MID:'var(--accent3)', STD:'var(--green)', ART:'var(--yellow)', CAR:'var(--orange)', TRAM:'var(--red)', '00':'var(--text3)' };
+  const tNames = { MIN:'Minibus', MID:'Midibus', STD:'Standard', ART:'Articulé', CAR:'Car/Autocar', TRAM:'Tramway', '00':'Remplaçant' };
+  const total = state.bus.length;
+
+  // Par type
+  const types = {}; state.bus.forEach(b => { types[b.type]=(types[b.type]||0)+1; });
+  // Par énergie
+  const energies = {}; state.bus.forEach(b => { const e=b.energie||'—'; energies[e]=(energies[e]||0)+1; });
+  // Par statut
+  const statuts = {}; state.bus.forEach(b => { const s=b.statut||'—'; statuts[s]=(statuts[s]||0)+1; });
+
+  const mkGauge = (label, n, tot, color) => {
+    const pct = tot>0 ? Math.round(n/tot*100) : 0;
+    return `<div class="gauge-row" style="margin-bottom:4px">
+      <div class="gauge-label" style="font-size:11px;min-width:100px">${label}</div>
+      <div class="gauge-bar"><div class="gauge-fill" style="width:${pct}%;background:${color}"></div></div>
+      <div class="gauge-val" style="font-size:11px">${n} <span style="color:var(--text3)">(${pct}%)</span></div>
+    </div>`;
+  };
+
+  let html = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;padding:10px">';
+  // Types
+  html += '<div><div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:6px;letter-spacing:1px">TYPE</div>';
+  Object.entries(types).sort((a,b)=>b[1]-a[1]).forEach(([t,n]) => html += mkGauge(tNames[t]||t, n, total, colors[t]||'var(--accent)'));
+  html += '</div>';
+  // Énergie
+  html += '<div><div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:6px;letter-spacing:1px">ÉNERGIE</div>';
+  const enColors = { Diesel:'#f59e0b', Hybride:'#34d399', GNV:'#60a5fa', Électrique:'#a78bfa', Hydrogène:'#67e8f9' };
+  Object.entries(energies).sort((a,b)=>b[1]-a[1]).forEach(([e,n]) => html += mkGauge(e, n, total, enColors[e]||'var(--text2)'));
+  html += '</div>';
+  // Statut
+  html += '<div><div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:6px;letter-spacing:1px">STATUT</div>';
+  const stColors = { 'En service':'var(--green)', 'Réserve':'var(--yellow)', 'Indispo':'var(--red)', 'En révision':'var(--orange)', 'CT':'var(--red)', 'ATELIER':'var(--text3)' };
+  Object.entries(statuts).sort((a,b)=>b[1]-a[1]).forEach(([s,n]) => html += mkGauge(s, n, total, stColors[s]||'var(--text2)'));
+  html += '</div></div>';
+  el.innerHTML = html;
 }
 
 function renderParc() {
@@ -3538,7 +3593,7 @@ function changerStatutBus(id, newStatut, sel) {
   toastMsg(`${b.nom} : ${newStatut}`, 'info');
 }
 
-function filterParc() { renderParc(); }
+function filterParc() { renderParc(); renderRepartitionParc(); }
 function filterByType(el, type) {
   document.querySelectorAll('#tabs-parc .tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
@@ -5143,6 +5198,21 @@ function supprimerPersonnel(id) {
 // ═══════════════════════════════════════════════════════
 //  LIGNES
 // ═══════════════════════════════════════════════════════
+function supprimerStatsJour() {
+  if (!state.statsLignes || !state.statsLignes.length) { toastMsg('Aucune donnée stats', 'error'); return; }
+  // Jour précédent
+  const hier = addDays(today(), -1);
+  const avant = state.statsLignes.filter(s => s.date !== hier);
+  const nb = state.statsLignes.length - avant.length;
+  if (nb === 0) { toastMsg(`Aucune entrée pour le ${fmtDateFR(hier)}`, 'info'); return; }
+  if (!confirm(`Supprimer les ${nb} entrées du ${fmtDateFR(hier)} ?`)) return;
+  state.statsLignes = avant;
+  saveStateWithSync();
+  renderLignes();
+  toastMsg(`🗑 ${nb} entrées du ${fmtDateFR(hier)} supprimées`, 'success');
+  journalLog(`Suppression stats du ${hier} (${nb} entrées)`, 'ok');
+}
+
 function renderLignes() {
   if (!state.statsLignes) state.statsLignes = [];
 
@@ -5632,7 +5702,7 @@ function renderCompta() {
   const _cd=document.getElementById('compta-depenses'); if(_cd) _cd.textContent=fmt(depenses);
   const _cb=document.getElementById('compta-benefice'); if(_cb) _cb.textContent=fmt(benefice);
   const _ct=document.getElementById('compta-tresor');   if(_ct) _ct.textContent=fmt(solde);
-  document.getElementById('stat-solde').textContent      = fmt(solde);
+  const _ss=document.getElementById('stat-solde'); if(_ss) _ss.textContent=fmt(solde);
   const topbarSolde = document.getElementById('topbar-solde-val');
   if (topbarSolde) { topbarSolde.textContent = fmt(solde); topbarSolde.style.color = solde >= 0 ? 'var(--green)' : 'var(--red)'; }
 
@@ -5868,14 +5938,14 @@ function importerContratsPub() {
   });
   if (!contrats.length) {
     toastMsg('Aucun contrat reconnu — vérifie le format (colonnes séparées par tabulations)', 'error');
-    document.getElementById('pub-import-status').textContent = '⚠ Aucun contrat trouvé';
+    const _pis1=document.getElementById('pub-import-status'); if(_pis1) _pis1.textContent = '⚠ Aucun contrat trouvé';
     return;
   }
   state.contratsPub = contrats;
   journalLog(contrats.length + ' contrats pub importés', 'ok');
   saveStateWithSync(); renderPub();
   document.getElementById('pub-texte-brut').value = '';
-  document.getElementById('pub-import-status').textContent = '✓ ' + contrats.length + ' contrats importés';
+  const _pis2=document.getElementById('pub-import-status'); if(_pis2) _pis2.textContent = '✓ ' + contrats.length + ' contrats importés';
   toastMsg(contrats.length + ' contrats pub importés ✓', 'success');
 }
 
@@ -6149,7 +6219,7 @@ function ajouterAchatManuel() {
 
 function renderAchats() {
   const tbody = document.getElementById('achats-tbody');
-  document.getElementById('achats-count-badge').textContent = state.achats.length + ' achats';
+  const _acb=document.getElementById('achats-count-badge'); if(_acb) _acb.textContent = state.achats.length + ' achats';
 
   tbody.innerHTML = [...state.achats].reverse().map(a => `<tr>
     <td class="mono"><b>${a.idJeu||'—'}</b></td>
@@ -6575,18 +6645,18 @@ function renderGasoil() {
 
   // Stats cards
   const latest = data[0];
-  document.getElementById('gas-diesel-today').textContent = latest?.diesel ? latest.diesel.toFixed(3)+' €' : '—';
-  document.getElementById('gas-gnv-today').textContent    = latest?.gnv    ? latest.gnv.toFixed(3)+' €'    : '—';
+  const _gdt=document.getElementById('gas-diesel-today'); if(_gdt) _gdt.textContent = latest?.diesel ? latest.diesel.toFixed(3)+' €' : '—';
+  const _ggt=document.getElementById('gas-gnv-today'); if(_ggt) _ggt.textContent = latest?.gnv ? latest.gnv.toFixed(3)+' €' : '—';
 
   const dieselVals = last30.filter(e => e.diesel).map(e => e.diesel);
   const gnvVals    = last30.filter(e => e.gnv).map(e => e.gnv);
   const moy = arr => arr.length ? (arr.reduce((s,v)=>s+v,0)/arr.length).toFixed(3) : '—';
   const min = arr => arr.length ? Math.min(...arr).toFixed(3) : '—';
 
-  document.getElementById('gas-diesel-moy').textContent = dieselVals.length ? moy(dieselVals)+' €' : '—';
-  document.getElementById('gas-gnv-moy').textContent    = gnvVals.length    ? moy(gnvVals)+' €'    : '—';
-  document.getElementById('gas-diesel-min').textContent = dieselVals.length ? min(dieselVals)+' €' : '—';
-  document.getElementById('gas-gnv-min').textContent    = gnvVals.length    ? min(gnvVals)+' €'    : '—';
+  const _gdm=document.getElementById('gas-diesel-moy'); if(_gdm) _gdm.textContent = dieselVals.length ? moy(dieselVals)+' €' : '—';
+  const _ggm=document.getElementById('gas-gnv-moy'); if(_ggm) _ggm.textContent = gnvVals.length ? moy(gnvVals)+' €' : '—';
+  const _gdmi=document.getElementById('gas-diesel-min'); if(_gdmi) _gdmi.textContent = dieselVals.length ? min(dieselVals)+' €' : '—';
+  const _ggmi=document.getElementById('gas-gnv-min'); if(_ggmi) _ggmi.textContent = gnvVals.length    ? min(gnvVals)+' €'    : '—';
 
   // Records
   const allDiesel = data.filter(e=>e.diesel).map(e=>e.diesel);
@@ -8276,11 +8346,38 @@ function renderFrequentation() {
 
   tbody.innerHTML = rows;
 
-  // Stats globales
+  // ── Stats globales ────────────────────────────────────────
   const statsEl = document.getElementById('freq-global-stats');
   if (statsEl && totalFreq > 0) {
     const pctGlobal = Math.round(totalTransportes / totalFreq * 100);
     statsEl.innerHTML = `Global : ${fmtNum(totalTransportes)} / ${fmtNum(totalFreq)} · <span style="color:${pctGlobal>=100?'var(--green)':'var(--red)'};font-weight:700">${pctGlobal}%</span> · ${totalManquants >= 0 ? '<span style="color:var(--green)">+'+fmtNum(totalManquants)+'</span>' : '<span style="color:var(--red)">'+fmtNum(totalManquants)+'</span>'} places`;
+  }
+
+  // ── Bannière lignes sous 100% ─────────────────────────────
+  const banner = document.getElementById('freq-warning-banner');
+  const bannerList = document.getElementById('freq-warning-list');
+  if (banner && bannerList) {
+    // Recalculer les lignes sous-exploitées (au moins un créneau < 100%)
+    const sousExpl = lignes.filter(ligne => {
+      const fv = freqData[ligne.num] || [];
+      return allCreneaux.some(cid => {
+        const idx = freqIdxMap[cid];
+        if (idx === undefined) return false;
+        const cible = typeof fv[idx] === 'number' ? fv[idx] : 0;
+        if (cible <= 0) return false;
+        const buses = getBusAffectesLigne(ligne.num, cid);
+        const places = buses.reduce((s, b) => s + (parseInt(b.capa)||0), 0);
+        return places < cible;
+      });
+    });
+    if (sousExpl.length > 0) {
+      banner.style.display = 'block';
+      bannerList.innerHTML = sousExpl.map(l =>
+        `<span style="background:${l.couleur||'#888'};color:#fff;padding:1px 7px;border-radius:4px;margin-right:4px;font-weight:700">${l.num}</span>`
+      ).join('');
+    } else {
+      banner.style.display = 'none';
+    }
   }
 }
 
@@ -8622,7 +8719,7 @@ function importerDispoPub() {
 
   if (!buses.length) {
     toastMsg('Aucune donnée reconnue — vérifie le format', 'error');
-    document.getElementById('pubdispo-status').textContent = '⚠ Aucun bus trouvé';
+    const _pds1=document.getElementById('pubdispo-status'); if(_pds1) _pds1.textContent = '⚠ Aucun bus trouvé';
     return;
   }
 
@@ -8662,7 +8759,7 @@ function renderPubDispoAlertes() {
 
   // Bus avec pub active ET sans affectation
   const problemes = data.filter(b => b.aPub && !b.aAffectation);
-  document.getElementById('pubdispo-alerte-count').textContent = problemes.length;
+  const _pdac=document.getElementById('pubdispo-alerte-count'); if(_pdac) _pdac.textContent = problemes.length;
 
   const tbody = document.getElementById('pubdispo-alerte-tbody');
   if (!problemes.length) {
