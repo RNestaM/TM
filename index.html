@@ -840,7 +840,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v99</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v101</span>
       <button id="sync-status" onclick="syncPush(true)" title="Cliquer pour synchroniser maintenant" style="font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 8px;border-radius:4px;display:none;cursor:pointer;border:none"></button>
       <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
@@ -2968,8 +2968,12 @@ function renderDashboard() {
   const nextFCO = fcoDiffs.length ? fcoDiffs[0] : null;
   const elFCO = document.getElementById('dash-ech-fco');
   if (elFCO) elFCO.innerHTML = fmtEch(nextFCO);
-  // Fin de location (bus avec garantie = date fin location?)
-  const locDiffs = state.bus.filter(b=>b.garantie && b.garantie > '2000').map(b=>diffD(b.garantie)).filter(d=>d!==null && !isNaN(d)).sort((a,b)=>a-b);
+  // Fin de location — seulement les dates futures (évite "Expiré depuis 2401j")
+  const locDiffs = state.bus
+    .filter(b => b.garantie && b.garantie > '2000' && b.garantie > todayISO)
+    .map(b => diffD(b.garantie))
+    .filter(d => d !== null && !isNaN(d) && d >= 0)
+    .sort((a,b) => a-b);
   const elLoc = document.getElementById('dash-ech-loc');
   if (elLoc) elLoc.innerHTML = locDiffs.length ? fmtEch(locDiffs[0]) : `<span style="color:var(--text3)">Pas de location</span>`;
 
@@ -2981,27 +2985,48 @@ function renderDashboard() {
   // ── Carburant meilleurs prix ──────────────────────────────
   const elCarbu = document.getElementById('dash-carbu');
   if (elCarbu) {
-    const data = (state.carburant||[]).sort((a,b)=>b.date.localeCompare(a.date));
-    const last30 = data.filter(e => e.date >= addDays(todayISO,-30));
-    const diesels = last30.filter(e=>e.diesel).map(e=>e.diesel);
-    const gnvs    = last30.filter(e=>e.gnv).map(e=>e.gnv);
-    const fmt2 = v => v ? v.toFixed(3)+' €' : '—';
-    const rows = [];
-    if (diesels.length) {
-      const moy = (diesels.reduce((s,v)=>s+v,0)/diesels.length);
-      const min = Math.min(...diesels);
-      rows.push(`<tr style="background:rgba(0,0,0,0.2)"><td colspan="3" style="padding:3px 8px;font-size:10px;font-weight:700;color:var(--text3)">DIESEL</td></tr>`);
-      rows.push(`<tr><td style="padding:4px 8px;font-size:11px;color:var(--text3)">Prix Moy.</td><td style="padding:4px 8px;font-size:11px;text-align:right">Meilleur Prix</td><td style="padding:4px 8px;font-size:11px;text-align:right">Période</td></tr>`);
-      rows.push(`<tr><td style="padding:4px 8px;font-family:'JetBrains Mono',monospace">${fmt2(moy)}</td><td style="padding:4px 8px;font-family:'JetBrains Mono',monospace;color:var(--green);text-align:right">${fmt2(min)}</td><td style="padding:4px 8px;font-size:10px;color:var(--text3);text-align:right">30 jours</td></tr>`);
-    }
-    if (gnvs.length) {
-      const moy = (gnvs.reduce((s,v)=>s+v,0)/gnvs.length);
-      const min = Math.min(...gnvs);
-      rows.push(`<tr style="background:rgba(0,0,0,0.2)"><td colspan="3" style="padding:3px 8px;font-size:10px;font-weight:700;color:var(--text3)">GNV</td></tr>`);
-      rows.push(`<tr><td style="padding:4px 8px;font-family:'JetBrains Mono',monospace">${fmt2(moy)}</td><td style="padding:4px 8px;font-family:'JetBrains Mono',monospace;color:var(--green);text-align:right">${fmt2(min)}</td><td style="padding:4px 8px;font-size:10px;color:var(--text3);text-align:right">30 jours</td></tr>`);
-    }
-    elCarbu.innerHTML = rows.length
-      ? `<table style="width:100%;border-collapse:collapse;font-size:12px">${rows.join('')}</table>`
+    const allData = (state.carburant||[]).sort((a,b)=>a.date.localeCompare(b.date));
+    const last30  = allData.filter(e => e.date >= addDays(todayISO,-30));
+    const fmt2 = v => v != null ? Number(v).toFixed(3)+' €' : '—';
+    const daysSince = (entries, field) => {
+      // Cherche la date la plus récente où ce prix min a été vu
+      const allVals = entries.filter(e=>e[field]);
+      if (!allVals.length) return null;
+      const minVal = Math.min(...allVals.map(e=>e[field]));
+      const lastSeen = allVals.filter(e=>Math.abs(e[field]-minVal)<0.001).map(e=>e.date).sort().reverse()[0];
+      return lastSeen ? diffD(lastSeen) : null;
+    };
+
+    const mkSection = (label, field) => {
+      const vals30  = last30.filter(e=>e[field]).map(e=>e[field]);
+      const valsAll = allData.filter(e=>e[field]).map(e=>e[field]);
+      if (!valsAll.length) return '';
+      const moy30    = vals30.length ? vals30.reduce((s,v)=>s+v,0)/vals30.length : null;
+      const min30    = vals30.length ? Math.min(...vals30) : null;
+      const minAll   = Math.min(...valsAll);
+      const jours    = daysSince(allData, field);
+      const vu       = jours === 0 ? 'auj.' : jours !== null ? `il y a ${Math.abs(jours)}j` : '—';
+      return `
+        <tr style="background:rgba(255,255,255,0.04)">
+          <td colspan="4" style="padding:3px 8px;font-size:10px;font-weight:700;color:var(--text3);letter-spacing:1px">${label}</td>
+        </tr>
+        <tr style="background:rgba(0,0,0,0.1)">
+          <td style="padding:2px 8px;font-size:9px;color:var(--text3)">Prix moy.</td>
+          <td style="padding:2px 8px;font-size:9px;color:var(--text3);text-align:center">Meilleur 30j</td>
+          <td style="padding:2px 8px;font-size:9px;color:var(--text3);text-align:center">Meilleur jamais</td>
+          <td style="padding:2px 8px;font-size:9px;color:var(--text3);text-align:right">Vu</td>
+        </tr>
+        <tr>
+          <td style="padding:3px 8px;font-family:'JetBrains Mono',monospace;font-size:12px">${fmt2(moy30)}</td>
+          <td style="padding:3px 8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--yellow);text-align:center">${fmt2(min30)}</td>
+          <td style="padding:3px 8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--green);text-align:center;font-weight:700">${fmt2(minAll)}</td>
+          <td style="padding:3px 8px;font-size:10px;color:var(--text3);text-align:right">${vu}</td>
+        </tr>`;
+    };
+
+    const rows = mkSection('DIESEL','diesel') + mkSection('GNV','gnv');
+    elCarbu.innerHTML = rows
+      ? `<table style="width:100%;border-collapse:collapse">${rows}</table>`
       : `<div style="color:var(--text3);font-size:11px;padding:10px">Aucune donnée carburant</div>`;
   }
 
@@ -3015,17 +3040,21 @@ function renderDashboard() {
   // ── To-do list ────────────────────────────────────────────
   const elTodo = document.getElementById('dash-todo-body');
   if (elTodo) {
-    if (!state.todo) state.todo = ['','','','',''];
+    if (!state.todo) state.todo = [];
     while (state.todo.length < 5) state.todo.push('');
-    elTodo.innerHTML = state.todo.slice(0,5).map((t,i) => `
+    elTodo.innerHTML = state.todo.slice(0,5).map((t,i) => {
+      const text = String(t && typeof t === 'object' ? (t.text||'') : (t||'')).replace(/"/g,'&quot;');
+      const done = t && typeof t === 'object' ? !!t.done : false;
+      return `
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-        <input type="checkbox" ${t.done?'checked':''} onchange="state.todo[${i}].done=this.checked;saveStateWithSync()" style="cursor:pointer">
-        <input type="text" value="${(t.text||t||'').replace(/"/g,'&quot;')}"
+        <input type="checkbox" ${done?'checked':''} onchange="if(!state.todo[${i}]||typeof state.todo[${i}]!=='object')state.todo[${i}]={text:'',done:false};state.todo[${i}].done=this.checked;saveStateWithSync()" style="cursor:pointer">
+        <input type="text" value="${text}"
           placeholder="Tâche ${i+1}…"
           onblur="saveTodo(${i},this.value)"
           onkeydown="if(event.key==='Enter')this.blur()"
-          style="flex:1;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);font-size:12px;padding:2px 4px;outline:none;${t.done?'text-decoration:line-through;color:var(--text3)':''}">
-      </div>`).join('');
+          style="flex:1;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);font-size:12px;padding:2px 4px;outline:none;${done?'text-decoration:line-through;color:var(--text3)':''}">
+      </div>`;
+    }).join('');
   }
 
   // ── Pub résumé ────────────────────────────────────────────
