@@ -840,7 +840,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v80</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v84</span>
       <button id="sync-status" onclick="syncPush(true)" title="Cliquer pour synchroniser maintenant" style="font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 8px;border-radius:4px;display:none;cursor:pointer;border:none"></button>
       <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
@@ -2601,6 +2601,21 @@ function loadState() {
 function saveState() {
   try { localStorage.setItem('tm_state', JSON.stringify(state)); } catch(e) {}
 }
+
+// Force les propriétés attendues comme Array à rester des Array
+// (Supabase/JSON peut parfois convertir un Array vide en objet)
+function normaliserState() {
+  const arrayFields = ['bus','affectations','maintenance','ct','personnel','lignes',
+    'statsLignes','achats','tourisme','abribus','contratsPub','compta','gasoil',
+    'carburant','pubDispo','journal','themes'];
+  arrayFields.forEach(k => {
+    if (!state[k]) { state[k] = []; }
+    else if (!Array.isArray(state[k])) {
+      // Objet → convertir en array (cas Supabase)
+      state[k] = Object.values(state[k]);
+    }
+  });
+}
 function resetTotal() {
   if (!confirm('⚠️ Réinitialisation complète !\n\nToutes les données seront effacées définitivement :\n• Parc de bus\n• Affectations\n• Personnel\n• Comptabilité\n• Stats lignes\n• Maintenance\n• Tout le reste\n\nContinuer ?')) return;
   if (!confirm('Dernière confirmation — cette action est irréversible.')) return;
@@ -2816,9 +2831,20 @@ function renderDashboard() {
   </div>`).join('') || '<div style="color:var(--text3)">Aucune activité.</div>';
 
   // Badge alertes — CT + révisions dans 5 jours uniquement (pas FCO = trop nombreux)
-  const SEUIL = 5;
-  const ctBadge  = state.bus.filter(b => b.ct && Math.round((new Date(b.ct) - new Date()) / (1000*60*60*24)) <= SEUIL).length;
-  const revBadge = state.bus.filter(b => b.revisionDate && Math.round((new Date(b.revisionDate) - new Date()) / (1000*60*60*24)) <= SEUIL).length;
+  const SEUIL = 7;
+  const todayISO2 = today();
+  const ctBadge  = state.bus.filter(b => {
+    const ctDate = state.planningCT?.[b.nom]?.ctDate || b.ct;
+    if (!ctDate) return false;
+    const d = Math.round((new Date(ctDate) - new Date()) / (1000*60*60*24));
+    return d >= 0 && d <= SEUIL;
+  }).length + state.bus.filter(b => b.ct && b.ct < todayISO2).length;
+  const revBadge = state.bus.filter(b => {
+    const revDate = state.planningCT?.[b.nom]?.revDate;
+    if (!revDate) return false;
+    const d = Math.round((new Date(revDate) - new Date()) / (1000*60*60*24));
+    return d >= 0 && d <= SEUIL;
+  }).length;
   const badgeTotal = ctBadge + revBadge;
   document.getElementById('alert-badge').textContent = badgeTotal;
   document.getElementById('alert-badge').style.display = badgeTotal > 0 ? '' : 'none';
@@ -2828,54 +2854,122 @@ function renderDashboard() {
 //  ALERTES
 // ═══════════════════════════════════════════════════════
 function renderAlertes() {
-  const SEUIL_JOURS = 5;
-  let html = `<div class="section-title">CT dans les ${SEUIL_JOURS} prochains jours</div>`;
+  const SEUIL_JOURS = 7;
+  const todayISO = today();
+  const now = new Date();
 
+  // Diff en jours (comparaison sur dates ISO pures, sans heure)
+  const diffTodayISO = today();
+  const diffJ = (dateISO) => {
+    if (!dateISO) return null;
+    const t1 = new Date(diffTodayISO).getTime();
+    const t2 = new Date(dateISO).getTime();
+    return Math.round((t2 - t1) / (1000*60*60*24));
+  };
+
+  // Dates prévues CT et révision — fallback sur calcul automatique si pas planifié
+  const getDatesCT = (b) => {
+    const plan = state.planningCT?.[b.nom] || {};
+    const ctDate  = plan.ctDate  || ctPrevu(b.ct) || null;
+    const revDate = plan.revDate || (ctDate ? revisionPrevue(ctDate) : null);
+    return { ctDate, revDate };
+  };
+
+  // ── CT ──────────────────────────────────────────────────
+  let html = `<div class="section-title">CT dans les ${SEUIL_JOURS} prochains jours</div>`;
   const ctAlerts = state.bus.filter(b => {
+    const { ctDate } = getDatesCT(b);
+    if (!ctDate) return false;
+    const d = diffJ(ctDate);
+    return d !== null && d >= 0 && d <= SEUIL_JOURS;
+  }).sort((a,b) => {
+    const da = getDatesCT(a).ctDate, db = getDatesCT(b).ctDate;
+    return new Date(da) - new Date(db);
+  });
+
+  // Aussi les CT expirés (date limite dépassée)
+  const ctExpires = state.bus.filter(b => {
     if (!b.ct) return false;
-    const diff = Math.round((new Date(b.ct) - new Date()) / (1000*60*60*24));
-    return diff <= SEUIL_JOURS;
+    return b.ct < todayISO;
   }).sort((a,b) => new Date(a.ct) - new Date(b.ct));
 
-  if (ctAlerts.length) {
-    ctAlerts.forEach(b => {
-      const diff = Math.round((new Date(b.ct) - new Date()) / (1000*60*60*24));
-      const label = diff < 0 ? `<b>EXPIRÉ depuis ${Math.abs(diff)} j</b>` : diff === 0 ? "<b>AUJOURD'HUI</b>" : `Dans <b>${diff} j</b> (${b.ct})`;
-      html += `<div class="alert-box ${diff<=0?'danger':'warning'}" style="margin-bottom:8px;display:flex;align-items:center;gap:8px">
-        <span>🔍 <b>${b.nom}</b> — CT le ${fmtDateFR(b.ct)} — ${label}</span>
+  if (ctExpires.length) {
+    ctExpires.forEach(b => {
+      const d = diffJ(b.ct);
+      html += `<div class="alert-box danger" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
+        <span>🔍 <b>${b.nom}</b> — CT limite ${fmtDateFR(b.ct)} — <b>EXPIRÉ depuis ${Math.abs(d)} j</b></span>
         <button class="btn btn-ghost btn-xs" style="margin-left:auto" onclick="ouvrirCTPlanif('${b.nom}')">Planifier</button>
       </div>`;
     });
-  } else html += `<div class="alert-box success" style="margin-bottom:8px">✅ Aucun CT dans les ${SEUIL_JOURS} prochains jours.</div>`;
+  }
+  if (ctAlerts.length) {
+    ctAlerts.forEach(b => {
+      const { ctDate } = getDatesCT(b);
+      const d = diffJ(ctDate);
+      const label = d === 0 ? "<b>AUJOURD'HUI</b>" : `Dans <b>${d} j</b>`;
+      html += `<div class="alert-box warning" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
+        <span>🔍 <b>${b.nom}</b> — CT prévu le ${fmtDateFR(ctDate)} — ${label}</span>
+        <button class="btn btn-ghost btn-xs" style="margin-left:auto" onclick="ouvrirCTPlanif('${b.nom}')">Planifier</button>
+      </div>`;
+    });
+  }
+  if (!ctExpires.length && !ctAlerts.length) {
+    html += `<div class="alert-box success" style="margin-bottom:8px">✅ Aucun CT dans les ${SEUIL_JOURS} prochains jours.</div>`;
+  }
 
+  // ── Révisions ────────────────────────────────────────────
   html += `<div class="section-title" style="margin-top:16px">Révisions dans les ${SEUIL_JOURS} prochains jours</div>`;
   const revAlerts = state.bus.filter(b => {
-    if (!b.revisionDate) return false;
-    const diff = Math.round((new Date(b.revisionDate) - new Date()) / (1000*60*60*24));
-    return diff <= SEUIL_JOURS;
-  }).sort((a,b) => new Date(a.revisionDate) - new Date(b.revisionDate));
+    const { revDate } = getDatesCT(b);
+    if (!revDate) return false;
+    const d = diffJ(revDate);
+    return d !== null && d >= 0 && d <= SEUIL_JOURS;
+  }).sort((a,b) => {
+    const da = getDatesCT(a).revDate, db = getDatesCT(b).revDate;
+    return new Date(da) - new Date(db);
+  });
 
   if (revAlerts.length) {
     revAlerts.forEach(b => {
-      const diff = Math.round((new Date(b.revisionDate) - new Date()) / (1000*60*60*24));
-      html += `<div class="alert-box warning" style="margin-bottom:8px">
-        🔧 <b>${b.nom}</b> — Révision le ${fmtDateFR(b.revisionDate)} — ${diff<=0?'<b>Aujourd\'hui</b>':'Dans '+diff+' j'}
+      const { revDate } = getDatesCT(b);
+      const d = diffJ(revDate);
+      const label = d === 0 ? '<b>AUJOURD\'HUI</b>' : `Dans <b>${d} j</b>`;
+      html += `<div class="alert-box warning" style="margin-bottom:6px">
+        🔧 <b>${b.nom}</b> — Révision prévue le ${fmtDateFR(revDate)} — ${label}
       </div>`;
     });
-  } else html += `<div class="alert-box success" style="margin-bottom:8px">✅ Aucune révision dans les ${SEUIL_JOURS} prochains jours.</div>`;
+  } else {
+    html += `<div class="alert-box success" style="margin-bottom:8px">✅ Aucune révision planifiée dans les ${SEUIL_JOURS} prochains jours.</div>`;
+  }
 
-  html += `<div class="section-title" style="margin-top:16px">FCO conducteurs expirées</div>`;
-  const fcoAlerts = state.personnel.filter(p => p.statut === 'FCO requise' || p.statut === 'FCO bientôt');
+  // ── FCO ──────────────────────────────────────────────────
+  // Calcule le prochain lundi (ou aujourd'hui si c'est lundi)
+  const nowFCO  = new Date();
+  const jourSem = nowFCO.getDay(); // 0=dim, 1=lun, ..., 6=sam
+  const joursAvantLundi = jourSem === 1 ? 0 : jourSem === 0 ? 1 : 8 - jourSem;
+  const prochainLundi   = new Date(nowFCO);
+  prochainLundi.setDate(nowFCO.getDate() + joursAvantLundi);
+  prochainLundi.setHours(0,0,0,0);
+  const prochainLundiISO = prochainLundi.toISOString().slice(0,10);
+
+  html += `<div class="section-title" style="margin-top:16px">FCO à lancer le ${jourSem===1?'aujourd\'hui':fmtDateFR(prochainLundiISO)} (lundi)</div>`;
+  const fcoAlerts = state.personnel.filter(p => {
+    if (!p.fco) return false;
+    // FCO à renouveler = fco <= prochainLundi
+    return p.fco <= prochainLundiISO;
+  });
   if (fcoAlerts.length) {
-    fcoAlerts.forEach(p => {
-      html += `<div class="alert-box ${p.statut==='FCO requise'?'danger':'warning'}" style="margin-bottom:8px">
-        🎓 <b>${p.nom}</b> (${p.matricule}) — ${p.statut} — FCO le : ${fmtDateFR(p.fco)||'inconnue'}
+    fcoAlerts.sort((a,b) => (a.fco||'').localeCompare(b.fco||'')).forEach(p => {
+      const dFCO = Math.round((new Date(p.fco) - nowFCO) / (1000*60*60*24));
+      const label = dFCO < 0 ? `<b style="color:var(--red)">EXPIRÉE depuis ${Math.abs(dFCO)} j</b>` : dFCO === 0 ? '<b>AUJOURD\'HUI</b>' : `Dans <b>${dFCO} j</b>`;
+      html += `<div class="alert-box ${dFCO<=0?'danger':'warning'}" style="margin-bottom:8px">
+        🎓 <b>${p.nom}</b> (${p.matricule}) — FCO expirée le ${fmtDateFR(p.fco)} — ${label}
       </div>`;
     });
-  } else html += '<div class="alert-box success" style="margin-bottom:8px">✅ Toutes les FCO sont à jour.</div>';
+  } else html += `<div class="alert-box success" style="margin-bottom:8px">✅ Aucune FCO à lancer ${jourSem===1?'aujourd\'hui':'lundi prochain'}.</div>`;
 
   document.getElementById('alertes-list').innerHTML = html;
-  const total = ctAlerts.length + revAlerts.length;
+  const total = ctExpires.length + ctAlerts.length + revAlerts.length + fcoAlerts.length;
   document.getElementById('alert-badge').textContent = total;
   document.getElementById('alert-badge').style.display = total > 0 ? '' : 'none';
 }
@@ -5976,15 +6070,21 @@ function enregistrerContratTourisme() {
   toastMsg(`✅ Contrat n°${c.num||'?'} enregistré`, 'success');
 }
 
-function setDecisionTourisme(num, val) {
-  const t = (state.tourisme||[]).find(x => x.num === num);
-  if (t) { t.decision = val; saveStateWithSync(); }
+function setDecisionTourisme(idx, val) {
+  if (!state.tourisme) return;
+  const i = parseInt(idx);
+  if (!isNaN(i) && state.tourisme[i]) { state.tourisme[i].decision = val; saveStateWithSync(); }
 }
 
-function supprimerContratTourisme(num) {
+function supprimerContratTourisme(idx) {
   if (!confirm('Supprimer ce contrat ?')) return;
-  state.tourisme = (state.tourisme||[]).filter(x => x.num !== num);
-  saveStateWithSync(); renderTourisme();
+  if (!state.tourisme || !state.tourisme.length) { toastMsg('Aucun contrat', 'error'); return; }
+  const i = parseInt(idx);
+  if (isNaN(i) || i < 0 || i >= state.tourisme.length) { toastMsg('Index invalide : ' + idx, 'error'); return; }
+  state.tourisme.splice(i, 1);
+  saveStateWithSync();
+  renderTourisme();
+  toastMsg('Contrat supprimé', 'success');
 }
 
 function viderTourisme() {
@@ -6007,6 +6107,7 @@ function renderTourisme() {
   const tbody = document.getElementById('tourisme-tbody');
   if (!tbody) return;
 
+  if (!state.tourisme) state.tourisme = [];
   const tous = state.tourisme;
   const moyenne    = tous.length ? Math.round(tous.reduce((s,t)=>s+(t.pctBenef||0),0)/tous.length*100)/100 : null;
   const moyBenef   = tous.length ? Math.round(tous.reduce((s,t)=>s+(t.benefice||0),0)/tous.length) : null;
@@ -6017,8 +6118,13 @@ function renderTourisme() {
     return;
   }
 
-  const sorted = [...tous].sort((a,b) => (b.pctBenef||0) - (a.pctBenef||0));
-  tbody.innerHTML = sorted.map(t => {
+  // Trier par % bénéfice décroissant, en gardant l'index original
+  const sortedIdx = tous
+    .map((t, i) => i)
+    .sort((a, b) => (tous[b].pctBenef||0) - (tous[a].pctBenef||0));
+
+  tbody.innerHTML = sortedIdx.map(origIdx => {
+    const t = tous[origIdx];
     const color = (t.pctBenef||0) >= 90 ? 'var(--green)' : (t.pctBenef||0) >= 80 ? 'var(--yellow)' : 'var(--red)';
     return `<tr>
       <td class="mono" style="font-weight:700">${t.num||'—'}</td>
@@ -6032,7 +6138,7 @@ function renderTourisme() {
       <td class="mono" style="color:${(t.benefice||0)>=0?'var(--green)':'var(--red)'};font-weight:700">${fmt(t.benefice||0)}</td>
       <td class="mono" style="color:${color};font-weight:700">${t.pctBenef||0}%</td>
       <td>
-        <select onchange="setDecisionTourisme('${t.num}',this.value)"
+        <select onchange="setDecisionTourisme(${origIdx},this.value)"
           style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:11px;padding:2px 4px">
           <option value="" ${!t.decision?'selected':''}>—</option>
           <option value="Accepté" ${t.decision==='Accepté'?'selected':''}>✅ Accepté</option>
@@ -6040,7 +6146,7 @@ function renderTourisme() {
           <option value="En attente" ${t.decision==='En attente'?'selected':''}>⏳ En attente</option>
         </select>
       </td>
-      <td><button class="btn btn-danger btn-xs" onclick="supprimerContratTourisme('${t.num}')">✕</button></td>
+      <td><button class="btn btn-danger btn-xs" onclick="supprimerContratTourisme(${origIdx})">✕</button></td>
     </tr>`;
   }).join('') + (tous.length > 0 ? `
     <tr style="border-top:2px solid var(--border);background:var(--surface2);font-size:11px">
@@ -6658,6 +6764,7 @@ function importerSauvegarde(input) {
       // Remplacer le state
       Object.keys(state).forEach(k => delete state[k]);
       Object.assign(state, data);
+      normaliserState();
       saveStateWithSync();
       // Rafraîchir l'UI
       renderDashboard();
@@ -6722,6 +6829,7 @@ async function syncPull(manual = false) {
     if (!loaded || typeof loaded !== 'object') throw new Error('Données invalides');
     if (Object.keys(loaded).length > 2) {
       Object.assign(state, loaded);
+      normaliserState();
       saveState();
       renderDashboard();
       updateBusSelects();
@@ -7980,6 +8088,7 @@ function updateClock() {
 //  INIT
 // ═══════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
+  normaliserState();
   document.querySelectorAll('input[type=date]').forEach(el => { if (!el.value) el.value = today(); });
   updateBusSelects();
   renderDashboard();
