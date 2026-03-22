@@ -840,7 +840,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v97</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v99</span>
       <button id="sync-status" onclick="syncPush(true)" title="Cliquer pour synchroniser maintenant" style="font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 8px;border-radius:4px;display:none;cursor:pointer;border:none"></button>
       <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
@@ -859,7 +859,7 @@
         </div>
         <div id="dash-layout-sliders"></div>
         <div style="margin-top:12px;display:flex;gap:8px">
-          <button class="btn btn-primary btn-sm" style="flex:1" onclick="applyDashLayout()">✓ Appliquer</button>
+          <button class="btn btn-primary btn-sm" style="flex:1" onclick="applyDashLayout(true)">✓ Appliquer</button>
           <button class="btn btn-ghost btn-sm" onclick="resetDashLayout()">↺ Reset</button>
         </div>
         <div style="margin-top:8px;font-size:10px;color:var(--text3)">Les valeurs sont sauvegardées automatiquement.</div>
@@ -872,7 +872,7 @@
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:8px;max-width:1400px;align-items:start">
 
         <!-- Échéances -->
-        <div class="card dash-l1-card" style="overflow:hidden">
+        <div class="card dash-l1-card" style="overflow:hidden;height:100%;box-sizing:border-box">
           <div class="card-header" style="padding:6px 12px"><div class="card-title" style="font-size:12px">📅 Prochaines échéances</div></div>
           <div class="card-body" style="padding:0">
             <table style="width:100%;border-collapse:collapse;font-size:11px">
@@ -897,7 +897,7 @@
         </div>
 
         <!-- Récap parc -->
-        <div class="card dash-l1-card" style="overflow:hidden">
+        <div class="card dash-l1-card" style="overflow:hidden;height:100%;box-sizing:border-box">
           <div class="card-header" style="padding:6px 12px"><div class="card-title" style="font-size:12px">🚍 État du parc</div></div>
           <div class="card-body" style="padding:0">
             <table style="width:100%;border-collapse:collapse;font-size:12px">
@@ -922,7 +922,7 @@
         </div>
 
         <!-- Carburant -->
-        <div class="card dash-l1-card" style="overflow:hidden">
+        <div class="card dash-l1-card" style="overflow:hidden;height:100%;box-sizing:border-box">
           <div class="card-header" style="padding:6px 12px"><div class="card-title" style="font-size:12px">⛽ Carburant — Meilleurs prix</div></div>
           <div class="card-body" style="padding:0" id="dash-carbu">
             <div style="color:var(--text3);font-size:11px;padding:10px">Aucune donnée</div>
@@ -945,10 +945,10 @@
       </div>
 
       <!-- Ligne 2 : Pub · To-do · Alertes résumé -->
-      <div id="dash-line2" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;max-width:1400px;align-items:start">
+      <div id="dash-line2" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;max-width:1400px;align-items:stretch">
 
         <!-- Pub résumé -->
-        <div class="card dash-l2-card" style="overflow:hidden">
+        <div class="card dash-l2-card" style="overflow:hidden;height:100%;box-sizing:border-box">
           <div class="card-header" style="padding:6px 12px"><div class="card-title" style="font-size:12px">📢 Publicité</div></div>
           <div class="card-body" style="padding:0" id="dash-pub">
             <div style="color:var(--text3);font-size:11px;padding:10px">Aucun contrat</div>
@@ -956,14 +956,14 @@
         </div>
 
         <!-- To-do list -->
-        <div class="card dash-l2-card" style="overflow:hidden">
+        <div class="card dash-l2-card" style="overflow:hidden;height:100%;box-sizing:border-box">
           <div class="card-header" style="padding:6px 12px"><div class="card-title" style="font-size:12px">✅ À faire</div></div>
           <div class="card-body" style="padding:6px 10px;max-height:160px;overflow-y:auto" id="dash-todo-body">
           </div>
         </div>
 
         <!-- Alertes résumé -->
-        <div class="card dash-l2-card" style="overflow:hidden">
+        <div class="card dash-l2-card" style="overflow:hidden;height:100%;box-sizing:border-box">
           <div class="card-header" style="padding:6px 12px">
             <div class="card-title" style="font-size:12px">⚠️ Alertes actives</div>
             <button class="btn btn-ghost btn-xs" onclick="nav(document.querySelector('[data-page=alertes]'))">Voir tout</button>
@@ -2700,7 +2700,7 @@ function resetTotal() {
   state.gasoil = []; state.journal = []; state.carburant = []; state.pubDispo = [];
   state.conso = { niveau: 5000, moy: 0 };
   state.config = { argentDepart: 0 };
-  state.prixKm = {}; state.cfgLignesParNiveau = {}; state.affCreneaux = {}; state.tourisme = []; state.todo = []; state.lastImport = {}; state.themes = []; state.planningCT = {}; state.freqCibles = {}; state.niveauJeu = 4; state.modeVacances = false;
+  state.prixKm = {}; state.cfgLignesParNiveau = {}; state.affCreneaux = {}; state.tourisme = []; state.todo = []; state.dashLayout = state.dashLayout || {}; state.lastImport = {}; state.themes = []; state.planningCT = {}; state.freqCibles = {}; state.niveauJeu = 4; state.modeVacances = false;
   saveState();
   // Supprimer les clés extension
   ['tm_ext_present','tm_ext_request'].forEach(k => localStorage.removeItem(k));
@@ -2811,32 +2811,24 @@ function ctStatus(dateStr) {
 // ═══════════════════════════════════════════════════════
 
 const DASH_LAYOUT_DEFAULTS = {
-  gap:       8,
-  l1height:  140,
-  l2height:  170,
-  l3height:  200,
-  l1cols:    '1fr 1fr 1fr 1fr',
-  l2cols:    '1fr 1fr 1fr',
-  l3cols:    '2fr 1fr',
-  rhMaxH:    180,
-  todoMaxH:  160,
+  gap:8, l1height:140, l2height:170, rhMaxH:180, todoMaxH:160,
+  l1col1:1, l1col2:1, l1col3:1, l1col4:1,
+  l2col1:1, l2col2:1, l2col3:1,
+  l3col1:2, l3col2:1,
 };
 
-function getDashLayout() {
-  return Object.assign({}, DASH_LAYOUT_DEFAULTS, state.dashLayout || {});
-}
+function getDashLayout() { return Object.assign({}, DASH_LAYOUT_DEFAULTS, state.dashLayout || {}); }
 
-function applyDashLayout() {
+function applyDashLayout(save) {
   const lay = getDashLayout();
-  // Lire les sliders
-  ['gap','l1height','l2height','l3height','rhMaxH','todoMaxH'].forEach(k => {
+  ['gap','l1height','l2height','rhMaxH','todoMaxH',
+   'l1col1','l1col2','l1col3','l1col4',
+   'l2col1','l2col2','l2col3','l3col1','l3col2'].forEach(k => {
     const el = document.getElementById('dl-' + k);
-    if (el) lay[k] = parseInt(el.value);
+    if (el) lay[k] = parseFloat(el.value);
   });
-  state.dashLayout = lay;
-  saveStateWithSync();
+  if (save) { state.dashLayout = lay; saveStateWithSync(); toastMsg('✅ Layout sauvegardé', 'success'); }
   applyDashLayoutCSS(lay);
-  toastMsg('✅ Layout sauvegardé', 'success');
 }
 
 function applyDashLayoutCSS(lay) {
@@ -2844,72 +2836,71 @@ function applyDashLayoutCSS(lay) {
   const l1 = document.getElementById('dash-line1');
   const l2 = document.getElementById('dash-line2');
   const l3 = document.getElementById('dash-line3');
-  if (l1) { l1.style.gap = l.gap+'px'; l1.style.marginBottom = l.gap+'px'; }
-  if (l2) { l2.style.gap = l.gap+'px'; l2.style.marginBottom = l.gap+'px'; }
-  if (l3) { l3.style.gap = l.gap+'px'; }
-  // Cards ligne 1 : hauteur fixe
-  document.querySelectorAll('.dash-l1-card').forEach(c => c.style.maxHeight = l.l1height+'px');
-  // Cards ligne 2
-  document.querySelectorAll('.dash-l2-card').forEach(c => c.style.maxHeight = l.l2height+'px');
-  // RH
-  const rh = document.getElementById('dash-rh-body');
-  if (rh) rh.style.maxHeight = l.rhMaxH+'px';
-  // Journal
-  const jl = document.getElementById('dash-journal-body');
-  if (jl) jl.style.maxHeight = l.rhMaxH+'px';
-  // Todo + alertes
-  const td = document.getElementById('dash-todo-body');
-  if (td) td.style.maxHeight = l.todoMaxH+'px';
-  const ar = document.getElementById('alertes-recap');
-  if (ar) ar.style.maxHeight = l.todoMaxH+'px';
+  if (l1) { l1.style.gap=l.gap+'px'; l1.style.marginBottom=l.gap+'px'; l1.style.gridTemplateColumns=`${l.l1col1}fr ${l.l1col2}fr ${l.l1col3}fr ${l.l1col4}fr`; l1.style.gridAutoRows=l.l1height+'px'; }
+  if (l2) { l2.style.gap=l.gap+'px'; l2.style.marginBottom=l.gap+'px'; l2.style.gridTemplateColumns=`${l.l2col1}fr ${l.l2col2}fr ${l.l2col3}fr`; l2.style.gridAutoRows=l.l2height+'px'; }
+  if (l3) { l3.style.gap=l.gap+'px'; l3.style.gridTemplateColumns=`${l.l3col1}fr ${l.l3col2}fr`; }
+  // Cards overflow
+  document.querySelectorAll('.dash-l1-card,.dash-l2-card').forEach(c => { c.style.overflow='hidden'; c.style.maxHeight=''; });
+  // RH/Journal/Todo/Alertes internal scroll
+  const rh=document.getElementById('dash-rh-body'); if(rh) rh.style.maxHeight=l.rhMaxH+'px';
+  const jl=document.getElementById('dash-journal-body'); if(jl) jl.style.maxHeight=l.rhMaxH+'px';
+  const td=document.getElementById('dash-todo-body'); if(td) td.style.maxHeight=l.todoMaxH+'px';
+  const ar=document.getElementById('alertes-recap'); if(ar) ar.style.maxHeight=l.todoMaxH+'px';
 }
 
 function resetDashLayout() {
-  state.dashLayout = {};
-  saveStateWithSync();
-  applyDashLayoutCSS(DASH_LAYOUT_DEFAULTS);
-  buildDashLayoutSliders();
+  state.dashLayout = {}; saveStateWithSync();
+  applyDashLayoutCSS(DASH_LAYOUT_DEFAULTS); buildDashLayoutSliders();
   toastMsg('Layout réinitialisé', 'info');
 }
 
 function buildDashLayoutSliders() {
   const lay = getDashLayout();
-  const sliders = [
-    { key:'gap',       label:'Espacement (gap)', min:4,  max:24, unit:'px' },
-    { key:'l1height',  label:'Hauteur ligne 1',  min:80, max:300, unit:'px' },
-    { key:'l2height',  label:'Hauteur ligne 2',  min:80, max:350, unit:'px' },
-    { key:'l3height',  label:'Hauteur ligne 3',  min:80, max:400, unit:'px' },
-    { key:'rhMaxH',    label:'Max RH / Journal', min:80, max:400, unit:'px' },
-    { key:'todoMaxH',  label:'Max To-do / Alertes', min:80, max:300, unit:'px' },
-  ];
+  const mk = (key, label, min, max, unit, step=1) => `
+    <div style="margin-bottom:6px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:1px">
+        <span style="color:var(--text2);font-size:10px">${label}</span>
+        <span id="dl-${key}-val" style="color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:10px">${lay[key]}${unit}</span>
+      </div>
+      <input type="range" id="dl-${key}" min="${min}" max="${max}" step="${step}" value="${lay[key]}"
+        style="width:100%;accent-color:var(--accent);height:3px"
+        oninput="document.getElementById('dl-${key}-val').textContent=this.value+'${unit}';applyDashLayout(false)">
+    </div>`;
+  const sec = (t) => `<div style="color:var(--text3);font-size:9px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;text-transform:uppercase">${t}</div>`;
   const el = document.getElementById('dash-layout-sliders');
   if (!el) return;
-  el.innerHTML = sliders.map(s => `
-    <div style="margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-        <span style="color:var(--text2)">${s.label}</span>
-        <span id="dl-${s.key}-val" style="color:var(--accent);font-family:'JetBrains Mono',monospace">${lay[s.key]}${s.unit}</span>
-      </div>
-      <input type="range" id="dl-${s.key}" min="${s.min}" max="${s.max}" value="${lay[s.key]}"
-        style="width:100%;accent-color:var(--accent)"
-        oninput="document.getElementById('dl-${s.key}-val').textContent=this.value+'${s.unit}';applyDashLayout()">
-    </div>`).join('');
+  el.innerHTML =
+    sec('Hauteurs') +
+    mk('l1height','Ligne 1',60,320,'px') +
+    mk('l2height','Ligne 2',60,400,'px') +
+    mk('rhMaxH','RH / Journal',60,400,'px') +
+    mk('todoMaxH','To-do / Alertes',60,300,'px') +
+    mk('gap','Espacement',2,24,'px') +
+    sec('Largeurs Ligne 1') +
+    mk('l1col1','Échéances',0.1,4,'fr',0.1) +
+    mk('l1col2','Parc',0.1,4,'fr',0.1) +
+    mk('l1col3','Carburant',0.1,4,'fr',0.1) +
+    mk('l1col4','Congés',0.1,4,'fr',0.1) +
+    sec('Largeurs Ligne 2') +
+    mk('l2col1','Pub',0.1,4,'fr',0.1) +
+    mk('l2col2','To-do',0.1,4,'fr',0.1) +
+    mk('l2col3','Alertes',0.1,4,'fr',0.1) +
+    sec('Largeurs Ligne 3') +
+    mk('l3col1','RH',0.1,6,'fr',0.1) +
+    mk('l3col2','Journal',0.1,4,'fr',0.1);
 }
 
 function toggleDashLayout() {
   const panel = document.getElementById('dash-layout-panel');
   if (!panel) return;
-  if (panel.style.display === 'none') {
-    panel.style.display = 'block';
-    buildDashLayoutSliders();
-  } else {
-    panel.style.display = 'none';
-  }
+  const hidden = panel.style.display === 'none';
+  panel.style.display = hidden ? 'block' : 'none';
+  if (hidden) buildDashLayoutSliders();
 }
 
 function closeDashLayout() {
-  const panel = document.getElementById('dash-layout-panel');
-  if (panel) panel.style.display = 'none';
+  const p = document.getElementById('dash-layout-panel');
+  if (p) p.style.display = 'none';
 }
 
 function renderDashboard() {
@@ -2978,7 +2969,7 @@ function renderDashboard() {
   const elFCO = document.getElementById('dash-ech-fco');
   if (elFCO) elFCO.innerHTML = fmtEch(nextFCO);
   // Fin de location (bus avec garantie = date fin location?)
-  const locDiffs = state.bus.filter(b=>b.garantie).map(b=>diffD(b.garantie)).filter(d=>d!==null).sort((a,b)=>a-b);
+  const locDiffs = state.bus.filter(b=>b.garantie && b.garantie > '2000').map(b=>diffD(b.garantie)).filter(d=>d!==null && !isNaN(d)).sort((a,b)=>a-b);
   const elLoc = document.getElementById('dash-ech-loc');
   if (elLoc) elLoc.innerHTML = locDiffs.length ? fmtEch(locDiffs[0]) : `<span style="color:var(--text3)">Pas de location</span>`;
 
@@ -3057,7 +3048,7 @@ function renderDashboard() {
         <tr style="border-top:1px solid var(--border)"><td style="padding:4px 8px;font-weight:700">Total portefeuille</td><td style="padding:4px 8px;text-align:right;font-weight:700;color:var(--green)">${fmt(total)}</td></tr>
       </table>
       ${prochains5.length ? `<div style="padding:4px 8px 2px;font-size:10px;color:var(--text3);border-top:1px solid var(--border);margin-top:2px">5 prochaines échéances :</div>
-      ${prochains5.map(c=>`<div style="padding:2px 8px;font-size:11px;display:flex;justify-content:space-between"><span style="color:var(--text2)">${c.annonceur||'—'}</span><span style="color:var(--yellow)">${fmtDateFR(c.fin)}</span></div>`).join('')}` : ''}`;
+      ${prochains5.map(c=>`<div style="padding:2px 8px;font-size:11px;display:flex;justify-content:space-between;gap:6px"><span style="color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.annonceur||'—'}</span><span style="color:var(--green);white-space:nowrap">${fmt(c.gains||0)}</span><span style="color:var(--yellow);white-space:nowrap">${fmtDateFR(c.fin)}</span></div>`).join('')}` : ''}`;
   }
 
   // ── Alertes résumé compact ────────────────────────────────
