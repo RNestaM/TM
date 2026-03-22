@@ -722,6 +722,9 @@
       <div class="nav-item" data-page="maintenance" onclick="nav(this)">
         <span class="icon">🔧</span> Révision / CT
       </div>
+      <div class="nav-item" data-page="gasoil" onclick="nav(this)">
+        <span class="icon">⛽</span> Carburant
+      </div>
       <div class="nav-item" data-page="abribus" onclick="nav(this)">
         <span class="icon">🏠</span> Abribus
       </div>
@@ -761,9 +764,9 @@
     </div>
 
     <div class="sidebar-section">
-      <div class="sidebar-section-title">Carburant</div>
-      <div class="nav-item" data-page="gasoil" onclick="nav(this)">
-        <span class="icon">⛽</span> Conso
+      <div class="sidebar-section-title">Tourisme</div>
+      <div class="nav-item" data-page="tourisme" onclick="nav(this)">
+        <span class="icon">🚌</span> Évaluation contrat
       </div>
     </div>
 
@@ -837,7 +840,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v74</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v80</span>
       <button id="sync-status" onclick="syncPush(true)" title="Cliquer pour synchroniser maintenant" style="font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 8px;border-radius:4px;display:none;cursor:pointer;border:none"></button>
       <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
@@ -972,6 +975,7 @@
                 <th onclick="sortTable('parc','ct')" class="sortable">CT <span class="sort-icon" data-col="ct">↕</span></th>
                 <th onclick="sortTable('parc','capa')" class="sortable">Places <span class="sort-icon" data-col="capa">↕</span></th>
                 <th onclick="sortTable('parc','energie')" class="sortable">Énergie <span class="sort-icon" data-col="energie">↕</span></th>
+                <th onclick="sortTable('parc','conso')" class="sortable">Conso <span class="sort-icon" data-col="conso">↕</span></th>
                 <th onclick="sortTable('parc','prixAchat')" class="sortable">Prix Achat <span class="sort-icon" data-col="prixAchat">↕</span></th>
                 <th onclick="sortTable('parc','kmDepart')" class="sortable">KM Départ <span class="sort-icon" data-col="kmDepart">↕</span></th>
                 <th onclick="sortTable('parc','km')" class="sortable">KM Actuel <span class="sort-icon" data-col="km">↕</span></th>
@@ -993,7 +997,7 @@
           <div class="card-body" style="padding:0;overflow-x:auto">
             <table class="data-table" id="parc-table-full">
               <thead><tr>
-                <th>ID</th><th>Numéro Parc</th><th>Modèle</th><th>Type</th><th>Énergie</th>
+                <th>ID</th><th>Numéro Parc</th><th>Modèle</th><th>Type</th><th>Énergie</th><th>Conso</th>
                 <th>Places</th><th>KM Actuel</th><th>KM Départ</th><th>Diff KM</th>
                 <th>CT</th><th>Révision</th><th>Tech</th><th>Int.</th>
                 <th>Balise</th><th>Self-S.</th><th>Btn Arrêt</th><th>Caméra</th>
@@ -1612,6 +1616,71 @@
           <table class="data-table">
             <thead><tr><th>ID jeu</th><th>Prix</th><th>KM départ</th><th>Date</th><th></th></tr></thead>
             <tbody id="achats-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ TOURISME ═══ -->
+    <div id="page-tourisme" class="page">
+
+      <div class="grid-2" style="margin-bottom:14px">
+        <!-- Panneau gauche : saisie -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📋 Analyser un contrat</div>
+            <button class="btn btn-ghost btn-sm" onclick="viderTourisme()">🗑 Vider</button>
+          </div>
+          <div class="card-body">
+            <p style="font-size:11px;color:var(--text3);margin-bottom:10px">
+              Colle le texte brut du contrat de tourisme tel que fourni par le jeu.
+            </p>
+            <textarea id="tourisme-textarea" rows="16"
+              placeholder="Contrat n°216566&#10;Informations commerciales&#10;* Demandeur : ...&#10;* Montant : 13 170 €&#10;..."
+              style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px;font-size:11px;font-family:'JetBrains Mono',monospace;resize:vertical;box-sizing:border-box"></textarea>
+            <div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-primary" onclick="analyserContratTourisme()">▶ Analyser</button>
+              <div style="font-size:11px;color:var(--text3)">Prix carburant max CAR-T :
+                <span id="tourisme-prix-carbu" style="color:var(--accent);font-weight:600">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panneau droit : résultat analyse -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">📊 Résultat</div></div>
+          <div class="card-body" id="tourisme-result">
+            <div style="color:var(--text3);font-size:12px;text-align:center;padding:30px">Colle un contrat et clique Analyser</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Historique des contrats -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📁 Historique des contrats tourisme
+            <span id="tourisme-count" class="badge badge-blue" style="margin-left:8px">0</span>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="if(confirm('Effacer tout l\'historique tourisme ?')){state.tourisme=[];saveStateWithSync();renderTourisme();}">🗑 Effacer</button>
+        </div>
+        <div class="card-body" style="padding:0;overflow-x:auto">
+          <table class="data-table" id="tourisme-table">
+            <thead><tr>
+              <th>N° Contrat</th>
+              <th>Demandeur</th>
+              <th>Date</th>
+              <th>KM</th>
+              <th>Montant</th>
+              <th>Carburant</th>
+              <th>Péage</th>
+              <th>Primes</th>
+              <th>Bénéfice</th>
+              <th>% Bénéfice</th>
+              <th>Décision</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="tourisme-tbody"></tbody>
           </table>
         </div>
       </div>
@@ -2537,12 +2606,12 @@ function resetTotal() {
   if (!confirm('Dernière confirmation — cette action est irréversible.')) return;
   // Remettre l'état à zéro sans recharger la page
   state.bus = []; state.affectations = []; state.maintenance = []; state.ct = [];
-  state.personnel = []; state.lignes = []; state.statsLignes = []; state.achats = [];
+  state.personnel = []; state.lignes = []; state.statsLignes = []; state.achats = []; state.tourisme = state.tourisme || [];
   state.abribus = []; state.contratsPub = []; state.compta = []; state.comptaMois = {};
   state.gasoil = []; state.journal = []; state.carburant = []; state.pubDispo = [];
   state.conso = { niveau: 5000, moy: 0 };
   state.config = { argentDepart: 0 };
-  state.prixKm = {}; state.cfgLignesParNiveau = {}; state.affCreneaux = {}; state.lastImport = {}; state.themes = []; state.planningCT = {}; state.freqCibles = {}; state.niveauJeu = 4; state.modeVacances = false;
+  state.prixKm = {}; state.cfgLignesParNiveau = {}; state.affCreneaux = {}; state.tourisme = []; state.lastImport = {}; state.themes = []; state.planningCT = {}; state.freqCibles = {}; state.niveauJeu = 4; state.modeVacances = false;
   saveState();
   // Supprimer les clés extension
   ['tm_ext_present','tm_ext_request'].forEach(k => localStorage.removeItem(k));
@@ -2584,7 +2653,7 @@ function renderPage(page) {
   const r = { dashboard: renderDashboard, alertes: renderAlertes, parc: renderParc,
     affectations: renderAffectations, frequentation: renderFrequentation, maintenance: renderMaintenance, abribus: renderAbribus,
     personnel: renderPersonnel, lignes: renderLignes, compta: renderCompta, bilan: renderBilan,
-    pub: renderPub, achats: renderAchats, gasoil: renderGasoil, config: renderConfig, pubdispo: renderPubDispo, historique: renderHistoriqueBase };
+    pub: renderPub, achats: renderAchats, gasoil: renderGasoil, tourisme: renderTourisme, config: renderConfig, pubdispo: renderPubDispo, historique: renderHistoriqueBase };
   if (r[page]) r[page]();
 }
 
@@ -2904,6 +2973,7 @@ function renderParc() {
         <td class="mono" style="font-size:11px;${ctStyle}">${fmtDateFR(b.ct)||'—'}</td>
         <td class="mono">${b.capa||'—'}</td>
         <td style="font-size:11px">${b.energie||'—'}</td>
+        <td class="mono" style="font-size:11px;color:var(--text3)">${b.conso ? b.conso+'L' : '—'}</td>
         <td class="mono" style="color:var(--text2)">${b.prixAchat ? fmt(b.prixAchat) : '—'}</td>
         <td class="mono" style="color:var(--text3)">${b.kmDepart ? fmtNum(b.kmDepart) : '—'}</td>
         <td class="mono">${fmtNum(b.km)}</td>
@@ -2932,6 +3002,7 @@ function renderParc() {
         <td style="font-size:10px;color:var(--text2)">${b.marque||''} ${b.modele||''}</td>
         <td>${getTypeBadge(b.type)}</td>
         <td style="font-size:11px">${b.energie||'—'}</td>
+        <td class="mono" style="font-size:11px;color:var(--text3)">${b.conso ? b.conso+'L/100' : '—'}</td>
         <td class="mono">${b.capa||'—'}</td>
         <td class="mono">${fmtNum(b.km)}</td>
         <td class="mono" style="color:var(--text3)">${b.kmDepart?fmtNum(b.kmDepart):'—'}</td>
@@ -3637,7 +3708,7 @@ function csvImporter() {
           }
         }
         Object.assign(exist, { km:b.km, statut:b.statut, ct:b.ct, revisionDate:b.revisionDate,
-          energie:b.energie, marque:b.marque, modele:b.modele, depot:b.depot });
+          energie:b.energie, conso:b.conso, marque:b.marque, modele:b.modele, depot:b.depot });
         if (b.idJeu) exist.idJeu = b.idJeu;
         maj++;
       } else {
@@ -3913,7 +3984,7 @@ function renderAffectations() {
         <td style="position:sticky;left:130px;background:${rowBg||'var(--surface)'};z-index:2;border-right:1px solid var(--border);padding:3px 6px;text-align:center">
           <select onchange="setAffStatut('${b.nom}',this.value)"
             style="background:transparent;border:${sStyle.border};border-radius:4px;color:${sStyle.color};font-size:11px;padding:2px 4px;cursor:pointer;width:100%">
-            ${['Service','Révision','CT','Révision puis CT','CT puis Révision','Indispo','Réserve','ATELIER'].map(s =>
+            ${['Service','Révision','CT','Révision puis CT','CT puis Révision','Indispo','Réserve'].map(s =>
               `<option value="${s}" ${s===statut?'selected':''}>${s}</option>`
             ).join('')}
           </select>
@@ -3932,11 +4003,13 @@ function renderAffectations() {
         }).join('')}
         <td class="mono" style="text-align:center;font-size:11px;font-weight:700;border-left:3px solid var(--border);color:${totalC>=8?'var(--red)':totalC>=6?'var(--yellow)':'var(--text2)'}">${totalC}</td>
         <td style="border-left:1px solid var(--border);padding:3px 6px">
-          <select onchange="setAffRemplacement('${b.nom}',this.value)"
-            style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:11px;padding:2px 4px;max-width:135px">
-            <option value="">—</option>
-            ${autresBus.map(x=>`<option value="${x.nom}" ${remp===x.nom?'selected':''}>${x.nom}</option>`).join('')}
-          </select>
+          <input type="text" value="${remp}" placeholder="Filtrer..."
+            list="list-aff-${b.nom.replace(/[^a-zA-Z0-9]/g,'_')}"
+            onchange="setAffRemplacement('${b.nom}',this.value)"
+            style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:11px;padding:2px 6px;width:130px">
+          <datalist id="list-aff-${b.nom.replace(/[^a-zA-Z0-9]/g,'_')}">
+            ${autresBus.map(x=>`<option value="${x.nom}">`).join('')}
+          </datalist>
         </td>
       </tr>`;
     });
@@ -4024,18 +4097,10 @@ function setAffStatut(busNom, newStatut) {
 }
 
 function setAffRemplacement(busNom, remplacant) {
+  // Page Affectation : enregistre seulement le remplacement, ne change pas le statut
   if (!state.planningCT) state.planningCT = {};
   if (!state.planningCT[busNom]) state.planningCT[busNom] = {};
-  const old = state.planningCT[busNom].remplacement;
-  if (old && old !== remplacant) {
-    const bOld = state.bus.find(b => b.nom === old);
-    if (bOld && bOld.statut === 'En révision') bOld.statut = 'En service';
-  }
   state.planningCT[busNom].remplacement = remplacant;
-  if (remplacant) {
-    const bPrinc = state.bus.find(b => b.nom === busNom);
-    if (bPrinc) bPrinc.statut = 'En révision';
-  }
   saveStateWithSync();
   renderAffectations();
 }
@@ -4073,23 +4138,21 @@ function estFerme(dateISO) {
   return jour === 0 || JOURS_FERIES.has(dateISO);
 }
 
-// Calcule date CT prévue (= date limite, ou j-1 si fermé ce jour)
+// CT fermé dimanche et jours fériés → recule au dernier jour ouvert
 function ctPrevu(dateLimiteISO) {
   if (!dateLimiteISO) return '';
-  if (!estFerme(dateLimiteISO)) return dateLimiteISO;
-  // Dimanche ou férié → j-2
   const d = new Date(dateLimiteISO);
-  d.setDate(d.getDate() - 2);
+  // Reculer jusqu'à trouver un jour où le CT est ouvert
+  while (estFerme(d.toISOString().slice(0,10))) {
+    d.setDate(d.getDate() - 1);
+  }
   return d.toISOString().slice(0, 10);
 }
 
-// Calcule date révision = j-1 du CT prévu (ou j-2 si j-1 est fermé)
+// Révision = J-1 du CT prévu (la révision est possible même un dimanche)
 function revisionPrevue(ctISO) {
   if (!ctISO) return '';
   const d = new Date(ctISO);
-  d.setDate(d.getDate() - 1);
-  const candidat = d.toISOString().slice(0, 10);
-  if (!estFerme(candidat)) return candidat;
   d.setDate(d.getDate() - 1);
   return d.toISOString().slice(0, 10);
 }
@@ -4154,16 +4217,27 @@ function renderMaintenance() {
     const rembEffec = plan.rembEffec || false;
 
     const key = b.nom.replace(/[^a-zA-Z0-9]/g,'_');
+    const urlBusCT = b.idJeu ? `https://transport-manager.net/jeu/vehicle.php?id=${b.idJeu}` : '';
+    const nomBusCT = urlBusCT
+      ? `<a href="${urlBusCT}" target="_blank" style="color:inherit;text-decoration:none;font-weight:700;cursor:alias" title="Voir le véhicule">${b.nom}</a>`
+      : `<b>${b.nom}</b>`;
 
-    const selectRemp = `<select id="remp-${key}" onchange="setRemplacement('${b.nom}',this.value)"
-      style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:3px 6px;font-size:11px;max-width:130px">
-      <option value="">—</option>
-      ${busDispos.filter(x=>x.nom!==b.nom).map(x=>`<option value="${x.nom}" ${plan.remplacement===x.nom?'selected':''}>${x.nom}</option>`).join('')}
-    </select>`;
+    const listId = `list-remp-${key}`;
+    const selectRemp = `<div style="position:relative">
+      <input type="text" id="remp-${key}"
+        value="${plan.remplacement||''}"
+        placeholder="Filtrer..."
+        list="${listId}"
+        onchange="setRemplacement('${b.nom}',this.value)"
+        style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:3px 6px;font-size:11px;width:130px">
+      <datalist id="${listId}">
+        ${busDispos.filter(x=>x.nom!==b.nom).map(x=>`<option value="${x.nom}">`).join('')}
+      </datalist>
+    </div>`;
 
     return `<tr style="${ferme?'background:rgba(239,68,68,0.04)':''}">
       <td class="mono" style="color:var(--text3)">${b.idJeu||'—'}</td>
-      <td class="mono"><b>${b.nom}</b></td>
+      <td class="mono">${nomBusCT}</td>
       <td class="mono" style="${limColor}">${fmtDateFR(b.ct)}${ferme?' 🚫':''}</td>
       <td><input type="date" value="${revVal}" id="rev-date-${key}"
         style="background:var(--surface2);border:1px solid var(--border);${revColor};border-radius:4px;color:var(--text);padding:3px 6px;font-size:11px"
@@ -5726,6 +5800,257 @@ function saisirManuelCarburant() {
 function supprimerPrixCarburant(id) {
   state.carburant = state.carburant.filter(e => e.id !== id);
   saveStateWithSync(); renderGasoil();
+}
+
+// ═══════════════════════════════════════════════════════
+//  TOURISME — Évaluation contrats
+// ═══════════════════════════════════════════════════════
+
+// Consommation moyenne estimée CAR-T en L/100km
+const CAR_T_CONSO_L100 = 30; // autocar standard
+
+function getPrixCarburantMaxCART() {
+  const livraisons = (state.gasoil?.livraisons || state.carburant || []);
+  if (!livraisons.length) return 1.95;
+  const prixMax = Math.max(...livraisons.map(l => parseFloat(l.prixUnitaire || l.prix || 0)).filter(p => p > 0));
+  return prixMax > 0 ? prixMax : 1.95;
+}
+
+function getConsoMoyenneCART() {
+  // Calcule la conso moyenne (L/100) des bus dont le nom contient "-T-"
+  const busT = (state.bus || []).filter(b => b.nom && b.nom.includes('-T-') && b.conso > 0);
+  if (!busT.length) return CAR_T_CONSO_L100; // fallback constante
+  const moy = busT.reduce((s, b) => s + b.conso, 0) / busT.length;
+  return Math.round(moy * 10) / 10;
+}
+
+function parserContratTourisme(texte) {
+  const get = (pattern) => {
+    const m = texte.match(pattern);
+    return m ? m[1].trim() : null;
+  };
+
+  const contrat = {
+    num         : get(/Contrat\s+n[°o]?\s*(\d+)/i),
+    demandeur   : get(/Demandeur\s*:\s*(.+)/i),
+    typeService : get(/Type service\s*:\s*(.+)/i),
+    dateTransport: get(/Date du transport\s*:\s*(.+)/i),
+    dateLimite  : get(/Date limite d.acceptation\s*:\s*(.+)/i),
+    nbJours     : parseInt(get(/Nombre jours\s*:\s*(\d+)/i) || 0),
+    montant     : null,
+    depart      : get(/Départ\/Arriv[eé]\s*:\s*(.+)/i),
+    nbPersonnes : parseInt(get(/Nombre de personnes\s*:\s*(\d+)/i) || 0),
+    km          : null,
+    nbVehicules : parseInt(get(/Nombre de véhicules\s*:\s*(\d+)/i) || 1),
+    typeVehicule: get(/Type de véhicule\s*:\s*(.+)/i),
+    primeParJour: null,
+    nbConducteurs: null,
+    carburantMax: null,
+    peageEstim  : null,
+    peagePer100 : null,
+  };
+
+  // Montant
+  const mMontant = texte.match(/Montant\s*:\s*([\d\s]+)\s*€/i);
+  if (mMontant) contrat.montant = parseInt(mMontant[1].replace(/\s/g,''));
+
+  // KM
+  const mKm = texte.match(/Kilom[eè]tres trajet\s*:\s*([\d\s,]+)\s*km/i);
+  if (mKm) contrat.km = parseFloat(mKm[1].replace(/\s/g,'').replace(',','.'));
+
+  // Prime conducteur — peut être sur plusieurs lignes
+  // Format : "Prime conducteur : 85 €/jour\nTotal: 850 € pour 2 conducteur(s) sur 5 jour(s)"
+  const mPrime = texte.match(/Prime conducteur\s*:\s*([\d,.]+)\s*€\/jour/i);
+  if (mPrime) contrat.primeParJour = parseFloat(mPrime[1].replace(',','.'));
+  const mCond = texte.match(/pour\s+(\d+)\s+conducteur/i);
+  if (mCond) contrat.nbConducteurs = parseInt(mCond[1]);
+
+  // Carburant max : "1,70 € - 1,95 €/litre"
+  const mCarbu = texte.match(/([\d,]+)\s*€\s*-\s*([\d,]+)\s*€\/litre/i);
+  if (mCarbu) contrat.carburantMax = parseFloat(mCarbu[2].replace(',','.'));
+
+  // Péage : "50 €/100 km" ou "Estimation: 213 €"
+  const mPeagePer = texte.match(/(\d+)\s*€\/100\s*km/i);
+  if (mPeagePer) contrat.peagePer100 = parseInt(mPeagePer[1]);
+  const mPeageEst = texte.match(/Estimation\s*:\s*([\d\s]+)\s*€/i);
+  if (mPeageEst) contrat.peageEstim = parseInt(mPeageEst[1].replace(/\s/g,''));
+
+  return contrat;
+}
+
+function calculerRentabilite(c, prixCarburantMax) {
+  const km = c.km || 0;
+  const nbVeh = c.nbVehicules || 1;
+  const nbJours = c.nbJours || 1;
+  const nbCond = c.nbConducteurs || nbVeh;
+  const primeJour = c.primeParJour || 0;
+
+  // Carburant : km réels (déjà aller-retour selon le jeu)
+  const prixCarbu = c.carburantMax || prixCarburantMax;
+  const consoL100 = getConsoMoyenneCART();
+  const coutCarbu = Math.round(km * nbVeh * consoL100 / 100 * prixCarbu);
+
+  // Péage
+  let coutPeage = 0;
+  if (c.peageEstim) {
+    coutPeage = c.peageEstim; // estimation déjà fournie par le jeu
+  } else if (c.peagePer100 && km > 0) {
+    coutPeage = Math.round(km / 100 * c.peagePer100 * nbVeh);
+  }
+
+  // Primes conducteurs
+  const coutPrimes = Math.round(primeJour * nbCond * nbJours);
+
+  const totalCharges = coutCarbu + coutPeage + coutPrimes;
+  const montant = c.montant || 0;
+  const benefice = montant - totalCharges;
+  const pctBenef = montant > 0 ? Math.round(benefice / montant * 100 * 100) / 100 : 0;
+
+  return { coutCarbu, coutPeage, coutPrimes, totalCharges, benefice, pctBenef, km, prixCarbu };
+}
+
+function analyserContratTourisme() {
+  const texte = document.getElementById('tourisme-textarea').value.trim();
+  if (!texte) { toastMsg('Colle un contrat à analyser', 'error'); return; }
+
+  const c = parserContratTourisme(texte);
+  const prixCarbu = c.carburantMax || getPrixCarburantMaxCART();
+  const r = calculerRentabilite(c, prixCarbu);
+
+  // Afficher prix carburant utilisé
+  const elPrix = document.getElementById('tourisme-prix-carbu');
+  if (elPrix) elPrix.textContent = prixCarbu.toFixed(2) + ' €/L';
+
+  const good = r.pctBenef >= 85;
+  const color = r.pctBenef >= 90 ? 'var(--green)' : r.pctBenef >= 80 ? 'var(--yellow)' : 'var(--red)';
+
+  document.getElementById('tourisme-result').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <div class="stat-card ${r.pctBenef>=90?'green':r.pctBenef>=80?'yellow':'red'}">
+        <div class="stat-label">% Bénéfice</div>
+        <div class="stat-value" style="color:${color}">${r.pctBenef}%</div>
+      </div>
+      <div class="stat-card ${r.benefice>0?'green':'red'}">
+        <div class="stat-label">Bénéfice net</div>
+        <div class="stat-value" style="color:${r.benefice>0?'var(--green)':'var(--red)'}">${fmt(r.benefice)}</div>
+      </div>
+    </div>
+    <table style="width:100%;font-size:12px;border-collapse:collapse">
+      <tr style="border-bottom:1px solid var(--border)"><td style="padding:4px 0;color:var(--text3)">N° Contrat</td><td style="text-align:right;font-weight:600">${c.num||'—'}</td></tr>
+      <tr style="border-bottom:1px solid var(--border)"><td style="padding:4px 0;color:var(--text3)">Demandeur</td><td style="text-align:right">${c.demandeur||'—'}</td></tr>
+      <tr style="border-bottom:1px solid var(--border)"><td style="padding:4px 0;color:var(--text3)">Montant</td><td style="text-align:right;font-weight:600;color:var(--green)">${fmt(c.montant||0)}</td></tr>
+      <tr style="border-bottom:1px solid var(--border)"><td style="padding:4px 0;color:var(--text3)">KM (aller-retour)</td><td style="text-align:right">${fmtNum(r.km)} km</td></tr>
+      <tr style="border-bottom:1px solid var(--border)"><td style="padding:4px 0;color:var(--text3)">Carburant (${r.prixCarbu.toFixed(2)}€/L · ${getConsoMoyenneCART()}L/100)</td><td style="text-align:right;color:var(--red)">${fmt(r.coutCarbu)}</td></tr>
+      <tr style="border-bottom:1px solid var(--border)"><td style="padding:4px 0;color:var(--text3)">Péage (AR)</td><td style="text-align:right;color:var(--red)">${fmt(r.coutPeage)}</td></tr>
+      <tr style="border-bottom:1px solid var(--border)"><td style="padding:4px 0;color:var(--text3)">Primes conducteurs (${c.nbConducteurs||1} cond. × ${c.nbJours} j)</td><td style="text-align:right;color:var(--red)">${fmt(r.coutPrimes)}</td></tr>
+      <tr style="border-bottom:2px solid var(--border);font-weight:700"><td style="padding:6px 0">Total charges</td><td style="text-align:right;color:var(--red)">${fmt(r.totalCharges)}</td></tr>
+    </table>
+    <div style="margin-top:14px;display:flex;gap:8px">
+      <button class="btn btn-success btn-sm" onclick="enregistrerContratTourisme()" style="flex:1;background:rgba(16,185,129,0.15);border:1px solid var(--green);color:var(--green)">✅ Enregistrer ce contrat</button>
+    </div>`;
+
+  // Stocker temporairement pour enregistrement
+  window._tourismeParsed = { c, r, prixCarbu };
+}
+
+function enregistrerContratTourisme() {
+  if (!window._tourismeParsed) { toastMsg('Analyse un contrat d\'abord', 'error'); return; }
+  const { c, r } = window._tourismeParsed;
+  if (!state.tourisme) state.tourisme = [];
+
+  // Éviter doublon même numéro
+  if (c.num && state.tourisme.find(t => t.num === c.num)) {
+    if (!confirm(`Contrat n°${c.num} déjà enregistré. Mettre à jour ?`)) return;
+    state.tourisme = state.tourisme.filter(t => t.num !== c.num);
+  }
+
+  state.tourisme.push({
+    num: c.num, demandeur: c.demandeur, dateTransport: c.dateTransport,
+    km: c.km, kmAR: r.km, montant: c.montant,
+    coutCarbu: r.coutCarbu, coutPeage: r.coutPeage, coutPrimes: r.coutPrimes,
+    totalCharges: r.totalCharges, benefice: r.benefice, pctBenef: r.pctBenef,
+    decision: '', dateEnreg: today(),
+  });
+  saveStateWithSync();
+  renderTourisme();
+  toastMsg(`✅ Contrat n°${c.num||'?'} enregistré`, 'success');
+}
+
+function setDecisionTourisme(num, val) {
+  const t = (state.tourisme||[]).find(x => x.num === num);
+  if (t) { t.decision = val; saveStateWithSync(); }
+}
+
+function supprimerContratTourisme(num) {
+  if (!confirm('Supprimer ce contrat ?')) return;
+  state.tourisme = (state.tourisme||[]).filter(x => x.num !== num);
+  saveStateWithSync(); renderTourisme();
+}
+
+function viderTourisme() {
+  document.getElementById('tourisme-textarea').value = '';
+  document.getElementById('tourisme-result').innerHTML = '<div style="color:var(--text3);font-size:12px;text-align:center;padding:30px">Colle un contrat et clique Analyser</div>';
+  window._tourismeParsed = null;
+}
+
+function renderTourisme() {
+  if (!state.tourisme) state.tourisme = [];
+
+  // Badge prix carburant
+  const prixCarbu = getPrixCarburantMaxCART();
+  const elPrix = document.getElementById('tourisme-prix-carbu');
+  if (elPrix) elPrix.textContent = prixCarbu.toFixed(2) + ' €/L';
+
+  const count = document.getElementById('tourisme-count');
+  if (count) count.textContent = state.tourisme.length;
+
+  const tbody = document.getElementById('tourisme-tbody');
+  if (!tbody) return;
+
+  const tous = state.tourisme;
+  const moyenne    = tous.length ? Math.round(tous.reduce((s,t)=>s+(t.pctBenef||0),0)/tous.length*100)/100 : null;
+  const moyBenef   = tous.length ? Math.round(tous.reduce((s,t)=>s+(t.benefice||0),0)/tous.length) : null;
+  const moyMontant = tous.length ? Math.round(tous.reduce((s,t)=>s+(t.montant||0),0)/tous.length) : null;
+
+  if (!tous.length) {
+    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:20px;color:var(--text3)">Aucun contrat enregistré</td></tr>';
+    return;
+  }
+
+  const sorted = [...tous].sort((a,b) => (b.pctBenef||0) - (a.pctBenef||0));
+  tbody.innerHTML = sorted.map(t => {
+    const color = (t.pctBenef||0) >= 90 ? 'var(--green)' : (t.pctBenef||0) >= 80 ? 'var(--yellow)' : 'var(--red)';
+    return `<tr>
+      <td class="mono" style="font-weight:700">${t.num||'—'}</td>
+      <td style="font-size:11px">${t.demandeur||'—'}</td>
+      <td class="mono" style="font-size:11px">${t.dateTransport||'—'}</td>
+      <td class="mono">${fmtNum(t.km||0)} km</td>
+      <td class="mono" style="color:var(--green)">${fmt(t.montant||0)}</td>
+      <td class="mono" style="color:var(--red)">${fmt(t.coutCarbu||0)}</td>
+      <td class="mono" style="color:var(--red)">${fmt(t.coutPeage||0)}</td>
+      <td class="mono" style="color:var(--red)">${fmt(t.coutPrimes||0)}</td>
+      <td class="mono" style="color:${(t.benefice||0)>=0?'var(--green)':'var(--red)'};font-weight:700">${fmt(t.benefice||0)}</td>
+      <td class="mono" style="color:${color};font-weight:700">${t.pctBenef||0}%</td>
+      <td>
+        <select onchange="setDecisionTourisme('${t.num}',this.value)"
+          style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:11px;padding:2px 4px">
+          <option value="" ${!t.decision?'selected':''}>—</option>
+          <option value="Accepté" ${t.decision==='Accepté'?'selected':''}>✅ Accepté</option>
+          <option value="Refusé" ${t.decision==='Refusé'?'selected':''}>❌ Refusé</option>
+          <option value="En attente" ${t.decision==='En attente'?'selected':''}>⏳ En attente</option>
+        </select>
+      </td>
+      <td><button class="btn btn-danger btn-xs" onclick="supprimerContratTourisme('${t.num}')">✕</button></td>
+    </tr>`;
+  }).join('') + (tous.length > 0 ? `
+    <tr style="border-top:2px solid var(--border);background:var(--surface2);font-size:11px">
+      <td colspan="4" style="text-align:right;color:var(--text3);padding:6px 8px;font-style:italic">Moyennes (${tous.length} contrat(s))</td>
+      <td style="font-weight:700;color:var(--green)">${fmt(moyMontant??0)}</td>
+      <td colspan="3"></td>
+      <td style="font-weight:700;color:${(moyBenef??0)>=0?'var(--green)':'var(--red)'}">${fmt(moyBenef??0)}</td>
+      <td style="font-weight:700;color:${(moyenne??0)>=90?'var(--green)':(moyenne??0)>=80?'var(--yellow)':'var(--red)'}">${moyenne??0}%</td>
+      <td colspan="2"></td>
+    </tr>` : '');
 }
 
 function renderGasoil() {
