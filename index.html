@@ -840,7 +840,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v101</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v102</span>
       <button id="sync-status" onclick="syncPush(true)" title="Cliquer pour synchroniser maintenant" style="font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 8px;border-radius:4px;display:none;cursor:pointer;border:none"></button>
       <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
@@ -869,7 +869,7 @@
       <div style="display:flex;justify-content:flex-end;margin-bottom:6px">
         <button class="btn btn-ghost btn-xs" onclick="toggleDashLayout()" style="font-size:10px;opacity:0.5">⚙️ Layout</button>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:8px;max-width:1400px;align-items:start">
+      <div id="dash-line1" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:8px;width:100%;align-items:stretch">
 
         <!-- Échéances -->
         <div class="card dash-l1-card" style="overflow:hidden;height:100%;box-sizing:border-box">
@@ -945,7 +945,7 @@
       </div>
 
       <!-- Ligne 2 : Pub · To-do · Alertes résumé -->
-      <div id="dash-line2" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;max-width:1400px;align-items:stretch">
+      <div id="dash-line2" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;width:100%;align-items:stretch">
 
         <!-- Pub résumé -->
         <div class="card dash-l2-card" style="overflow:hidden;height:100%;box-sizing:border-box">
@@ -973,7 +973,7 @@
       </div>
 
       <!-- Ligne 3 : RH + Journal -->
-      <div id="dash-line3" style="display:grid;grid-template-columns:2fr 1fr;gap:8px;max-width:1400px">
+      <div id="dash-line3" style="display:grid;grid-template-columns:2fr 1fr;gap:8px;width:100%">
         <div class="card">
           <div class="card-header" style="padding:6px 12px">
             <div class="card-title" style="font-size:12px">👥 Ressources Humaines</div>
@@ -2811,7 +2811,7 @@ function ctStatus(dateStr) {
 // ═══════════════════════════════════════════════════════
 
 const DASH_LAYOUT_DEFAULTS = {
-  gap:8, l1height:140, l2height:170, rhMaxH:180, todoMaxH:160,
+  gap:8, l1height:140, l2height:170, rhMaxH:180, todoMaxH:160, maxWidth:100,
   l1col1:1, l1col2:1, l1col3:1, l1col4:1,
   l2col1:1, l2col2:1, l2col3:1,
   l3col1:2, l3col2:1,
@@ -2821,7 +2821,7 @@ function getDashLayout() { return Object.assign({}, DASH_LAYOUT_DEFAULTS, state.
 
 function applyDashLayout(save) {
   const lay = getDashLayout();
-  ['gap','l1height','l2height','rhMaxH','todoMaxH',
+  ['gap','l1height','l2height','rhMaxH','todoMaxH','maxWidth',
    'l1col1','l1col2','l1col3','l1col4',
    'l2col1','l2col2','l2col3','l3col1','l3col2'].forEach(k => {
     const el = document.getElementById('dl-' + k);
@@ -2836,12 +2836,16 @@ function applyDashLayoutCSS(lay) {
   const l1 = document.getElementById('dash-line1');
   const l2 = document.getElementById('dash-line2');
   const l3 = document.getElementById('dash-line3');
-  if (l1) { l1.style.gap=l.gap+'px'; l1.style.marginBottom=l.gap+'px'; l1.style.gridTemplateColumns=`${l.l1col1}fr ${l.l1col2}fr ${l.l1col3}fr ${l.l1col4}fr`; l1.style.gridAutoRows=l.l1height+'px'; }
-  if (l2) { l2.style.gap=l.gap+'px'; l2.style.marginBottom=l.gap+'px'; l2.style.gridTemplateColumns=`${l.l2col1}fr ${l.l2col2}fr ${l.l2col3}fr`; l2.style.gridAutoRows=l.l2height+'px'; }
-  if (l3) { l3.style.gap=l.gap+'px'; l3.style.gridTemplateColumns=`${l.l3col1}fr ${l.l3col2}fr`; }
-  // Cards overflow
-  document.querySelectorAll('.dash-l1-card,.dash-l2-card').forEach(c => { c.style.overflow='hidden'; c.style.maxHeight=''; });
-  // RH/Journal/Todo/Alertes internal scroll
+  const gapPx = l.gap + 'px';
+  // Global max-width on dashboard
+  const dashPage = document.getElementById('page-dashboard');
+  if (dashPage) dashPage.style.maxWidth = l.maxWidth >= 100 ? 'none' : l.maxWidth+'%';
+  if (l1) { l1.style.gap=gapPx; l1.style.marginBottom=gapPx; l1.style.gridTemplateColumns=`${l.l1col1}fr ${l.l1col2}fr ${l.l1col3}fr ${l.l1col4}fr`; }
+  if (l2) { l2.style.gap=gapPx; l2.style.marginBottom=gapPx; l2.style.gridTemplateColumns=`${l.l2col1}fr ${l.l2col2}fr ${l.l2col3}fr`; }
+  if (l3) { l3.style.gap=gapPx; l3.style.gridTemplateColumns=`${l.l3col1}fr ${l.l3col2}fr`; }
+  // Set explicit height on cards (not gridAutoRows which conflicts with height:100%)
+  document.querySelectorAll('.dash-l1-card').forEach(c => { c.style.height=l.l1height+'px'; c.style.overflow='hidden'; c.style.boxSizing='border-box'; });
+  document.querySelectorAll('.dash-l2-card').forEach(c => { c.style.height=l.l2height+'px'; c.style.overflow='hidden'; c.style.boxSizing='border-box'; });
   const rh=document.getElementById('dash-rh-body'); if(rh) rh.style.maxHeight=l.rhMaxH+'px';
   const jl=document.getElementById('dash-journal-body'); if(jl) jl.style.maxHeight=l.rhMaxH+'px';
   const td=document.getElementById('dash-todo-body'); if(td) td.style.maxHeight=l.todoMaxH+'px';
@@ -2870,12 +2874,13 @@ function buildDashLayoutSliders() {
   const el = document.getElementById('dash-layout-sliders');
   if (!el) return;
   el.innerHTML =
-    sec('Hauteurs') +
-    mk('l1height','Ligne 1',60,320,'px') +
-    mk('l2height','Ligne 2',60,400,'px') +
-    mk('rhMaxH','RH / Journal',60,400,'px') +
-    mk('todoMaxH','To-do / Alertes',60,300,'px') +
-    mk('gap','Espacement',2,24,'px') +
+    sec('Global') +
+    mk('gap','Espacement entre cards',2,24,'px') +
+    sec('Hauteurs des lignes') +
+    mk('l1height','Ligne 1 (Échéances/Parc/...)',60,400,'px') +
+    mk('l2height','Ligne 2 (Pub/To-do/Alertes)',60,500,'px') +
+    mk('rhMaxH','Ligne 3 — RH / Journal',60,500,'px') +
+    mk('todoMaxH','Scroll To-do / Alertes',60,400,'px') +
     sec('Largeurs Ligne 1') +
     mk('l1col1','Échéances',0.1,4,'fr',0.1) +
     mk('l1col2','Parc',0.1,4,'fr',0.1) +
