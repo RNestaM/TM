@@ -840,7 +840,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v84</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v85</span>
       <button id="sync-status" onclick="syncPush(true)" title="Cliquer pour synchroniser maintenant" style="font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 8px;border-radius:4px;display:none;cursor:pointer;border:none"></button>
       <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
@@ -6038,36 +6038,23 @@ function analyserContratTourisme() {
       <tr style="border-bottom:1px solid var(--border)"><td style="padding:4px 0;color:var(--text3)">Péage (AR)</td><td style="text-align:right;color:var(--red)">${fmt(r.coutPeage)}</td></tr>
       <tr style="border-bottom:1px solid var(--border)"><td style="padding:4px 0;color:var(--text3)">Primes conducteurs (${c.nbConducteurs||1} cond. × ${c.nbJours} j)</td><td style="text-align:right;color:var(--red)">${fmt(r.coutPrimes)}</td></tr>
       <tr style="border-bottom:2px solid var(--border);font-weight:700"><td style="padding:6px 0">Total charges</td><td style="text-align:right;color:var(--red)">${fmt(r.totalCharges)}</td></tr>
-    </table>
-    <div style="margin-top:14px;display:flex;gap:8px">
-      <button class="btn btn-success btn-sm" onclick="enregistrerContratTourisme()" style="flex:1;background:rgba(16,185,129,0.15);border:1px solid var(--green);color:var(--green)">✅ Enregistrer ce contrat</button>
-    </div>`;
+    </table>`;
 
-  // Stocker temporairement pour enregistrement
-  window._tourismeParsed = { c, r, prixCarbu };
-}
-
-function enregistrerContratTourisme() {
-  if (!window._tourismeParsed) { toastMsg('Analyse un contrat d\'abord', 'error'); return; }
-  const { c, r } = window._tourismeParsed;
+  // Enregistrement automatique avec décision "En attente"
   if (!state.tourisme) state.tourisme = [];
-
-  // Éviter doublon même numéro
   if (c.num && state.tourisme.find(t => t.num === c.num)) {
-    if (!confirm(`Contrat n°${c.num} déjà enregistré. Mettre à jour ?`)) return;
     state.tourisme = state.tourisme.filter(t => t.num !== c.num);
   }
-
   state.tourisme.push({
     num: c.num, demandeur: c.demandeur, dateTransport: c.dateTransport,
-    km: c.km, kmAR: r.km, montant: c.montant,
+    km: c.km, montant: c.montant,
     coutCarbu: r.coutCarbu, coutPeage: r.coutPeage, coutPrimes: r.coutPrimes,
     totalCharges: r.totalCharges, benefice: r.benefice, pctBenef: r.pctBenef,
-    decision: '', dateEnreg: today(),
+    decision: 'En attente', dateEnreg: today(),
   });
   saveStateWithSync();
   renderTourisme();
-  toastMsg(`✅ Contrat n°${c.num||'?'} enregistré`, 'success');
+  toastMsg(`⏳ Contrat n°${c.num||'?'} enregistré — En attente`, 'success');
 }
 
 function setDecisionTourisme(idx, val) {
