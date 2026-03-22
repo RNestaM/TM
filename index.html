@@ -840,7 +840,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v94</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v95</span>
       <button id="sync-status" onclick="syncPush(true)" title="Cliquer pour synchroniser maintenant" style="font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 8px;border-radius:4px;display:none;cursor:pointer;border:none"></button>
       <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
@@ -850,91 +850,142 @@
 
     <!-- ═══════════════════════════════════════════ DASHBOARD ═══ -->
     <div id="page-dashboard" class="page active">
-      <div class="stat-cards">
-        <div class="stat-card blue">
-          <div class="stat-label">Bus total</div>
-          <div class="stat-value" id="stat-total">0</div>
-          <div class="stat-sub">dans le parc</div>
+
+      <!-- Ligne 1 : Échéances · Récap parc · Carburant · Congés -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:10px;max-width:1400px">
+
+        <!-- Échéances -->
+        <div class="card">
+          <div class="card-header" style="padding:6px 12px"><div class="card-title" style="font-size:12px">📅 Prochaines échéances</div></div>
+          <div class="card-body" style="padding:0">
+            <table style="width:100%;border-collapse:collapse;font-size:12px">
+              <tr style="background:rgba(239,68,68,0.12)">
+                <td style="padding:5px 10px;color:var(--text2)">Prochain CT</td>
+                <td style="padding:5px 10px;text-align:right;font-weight:600" id="dash-ech-ct">—</td>
+              </tr>
+              <tr style="background:rgba(245,158,11,0.10)">
+                <td style="padding:5px 10px;color:var(--text2)">Prochaine Révision</td>
+                <td style="padding:5px 10px;text-align:right;font-weight:600" id="dash-ech-rev">—</td>
+              </tr>
+              <tr style="background:rgba(124,58,237,0.10)">
+                <td style="padding:5px 10px;color:var(--text2)">FCO</td>
+                <td style="padding:5px 10px;text-align:right;font-weight:600" id="dash-ech-fco">—</td>
+              </tr>
+              <tr style="background:rgba(0,212,255,0.08)">
+                <td style="padding:5px 10px;color:var(--text2)">Fin de location</td>
+                <td style="padding:5px 10px;text-align:right;font-weight:600" id="dash-ech-loc">—</td>
+              </tr>
+            </table>
+          </div>
         </div>
-        <div class="stat-card green">
-          <div class="stat-label">En service</div>
-          <div class="stat-value" id="stat-service">0</div>
-          <div class="stat-sub">affectés aujourd'hui</div>
+
+        <!-- Récap parc -->
+        <div class="card">
+          <div class="card-header" style="padding:6px 12px"><div class="card-title" style="font-size:12px">🚍 État du parc</div></div>
+          <div class="card-body" style="padding:0">
+            <table style="width:100%;border-collapse:collapse;font-size:12px">
+              <tr style="background:rgba(16,185,129,0.12)">
+                <td style="padding:5px 10px;color:var(--text2)">En service</td>
+                <td style="padding:5px 10px;text-align:right;font-weight:700;color:var(--green)" id="dash-parc-service">—</td>
+              </tr>
+              <tr style="background:rgba(245,158,11,0.10)">
+                <td style="padding:5px 10px;color:var(--text2)">Réserve</td>
+                <td style="padding:5px 10px;text-align:right;font-weight:700;color:var(--yellow)" id="dash-parc-reserve">—</td>
+              </tr>
+              <tr style="background:rgba(239,68,68,0.08)">
+                <td style="padding:5px 10px;color:var(--text2)">Indispo / Atelier</td>
+                <td style="padding:5px 10px;text-align:right;font-weight:700;color:var(--red)" id="dash-parc-indispo">—</td>
+              </tr>
+              <tr style="background:rgba(0,212,255,0.06);border-top:1px solid var(--border)">
+                <td style="padding:5px 10px;font-weight:700">Total</td>
+                <td style="padding:5px 10px;text-align:right;font-weight:700" id="dash-parc-total">—</td>
+              </tr>
+            </table>
+          </div>
         </div>
-        <div class="stat-card yellow">
-          <div class="stat-label">En révision</div>
-          <div class="stat-value" id="stat-revision">0</div>
-          <div class="stat-sub">révision en cours</div>
+
+        <!-- Carburant -->
+        <div class="card">
+          <div class="card-header" style="padding:6px 12px"><div class="card-title" style="font-size:12px">⛽ Carburant — Meilleurs prix</div></div>
+          <div class="card-body" style="padding:0" id="dash-carbu">
+            <div style="color:var(--text3);font-size:11px;padding:10px">Aucune donnée</div>
+          </div>
         </div>
-        <div class="stat-card red">
-          <div class="stat-label">CT urgent</div>
-          <div class="stat-value" id="stat-ct">0</div>
-          <div class="stat-sub">contrôle à planifier</div>
-        </div>
-        <div class="stat-card orange">
-          <div class="stat-label">FCO requis</div>
-          <div class="stat-value" id="stat-fco">0</div>
-          <div class="stat-sub">conducteurs concernés</div>
-        </div>
-        <div class="stat-card purple">
-          <div class="stat-label">Solde</div>
-          <div class="stat-value" id="stat-solde" style="font-size:20px;">0 €</div>
-          <div class="stat-sub">trésorerie actuelle</div>
+
+        <!-- Congés + To-do -->
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="card">
+            <div class="card-header" style="padding:6px 12px"><div class="card-title" style="font-size:12px">🌴 Congés</div></div>
+            <div class="card-body" style="padding:6px 10px;font-size:11px;color:var(--text2)" id="dash-conges">—</div>
+          </div>
+          <!-- Alerte 1er/16 remboursement -->
+          <div class="card" id="dash-remb-alerte" style="display:none;border-color:rgba(245,158,11,0.4)">
+            <div class="card-body" style="padding:8px 10px;font-size:11px;color:var(--yellow)">
+              📨 Pense à envoyer ta demande de remboursement CT/Révision !
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="grid-2">
-        <!-- Parc par type -->
+      <!-- Ligne 2 : Pub · To-do · Alertes résumé -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;max-width:1400px">
+
+        <!-- Pub résumé -->
         <div class="card">
-          <div class="card-header">
-            <div class="card-title">Répartition du parc</div>
-          </div>
-          <div class="card-body" id="repartition-parc">
+          <div class="card-header" style="padding:6px 12px"><div class="card-title" style="font-size:12px">📢 Publicité</div></div>
+          <div class="card-body" style="padding:0" id="dash-pub">
+            <div style="color:var(--text3);font-size:11px;padding:10px">Aucun contrat</div>
           </div>
         </div>
 
-        <!-- Alertes récentes -->
+        <!-- To-do list -->
         <div class="card">
-          <div class="card-header">
-            <div class="card-title">⚠️ Alertes actives</div>
+          <div class="card-header" style="padding:6px 12px"><div class="card-title" style="font-size:12px">✅ À faire</div></div>
+          <div class="card-body" style="padding:6px 10px" id="dash-todo-body">
           </div>
-          <div class="card-body" id="alertes-recap">
+        </div>
+
+        <!-- Alertes résumé -->
+        <div class="card">
+          <div class="card-header" style="padding:6px 12px">
+            <div class="card-title" style="font-size:12px">⚠️ Alertes actives</div>
+            <button class="btn btn-ghost btn-xs" onclick="nav(document.querySelector('[data-page=alertes]'))">Voir tout</button>
           </div>
+          <div class="card-body" id="alertes-recap" style="padding:6px 10px"></div>
         </div>
       </div>
 
-      <!-- Tableau RH + Journal : 2/3 + 1/3 -->
-      <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px">
-        <!-- Tableau RH résumé -->
+      <!-- Ligne 3 : RH + Journal -->
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;max-width:1400px">
         <div class="card">
-          <div class="card-header">
-            <div class="card-title">👥 Ressources Humaines</div>
-            <button class="btn btn-ghost btn-sm" onclick="nav(document.querySelector('[data-page=personnel]'))">Voir tout</button>
+          <div class="card-header" style="padding:6px 12px">
+            <div class="card-title" style="font-size:12px">👥 Ressources Humaines</div>
+            <button class="btn btn-ghost btn-xs" onclick="nav(document.querySelector('[data-page=personnel]'))">Voir tout</button>
           </div>
           <div class="card-body" style="padding:0;overflow-x:auto">
             <table class="data-table" id="dash-rh-table">
               <thead><tr style="background:rgba(0,212,255,0.06)">
                 <th></th><th>Nb</th><th>Salaire</th><th>Moy.</th>
-                <th style="color:var(--red)">🤒</th>
-                <th style="color:var(--yellow)">🌴</th>
-                <th>✊</th><th>📅</th>
-                <th style="color:var(--green)">Dispo</th>
+                <th style="color:var(--red)">🤒</th><th style="color:var(--yellow)">🌴</th>
+                <th>✊</th><th>📅</th><th style="color:var(--green)">Dispo</th>
               </tr></thead>
               <tbody id="dash-rh-tbody"></tbody>
             </table>
           </div>
         </div>
-
-        <!-- Journal -->
         <div class="card">
-          <div class="card-header">
-            <div class="card-title">Journal d'activité</div>
-          </div>
-          <div class="card-body">
-            <div class="timeline" id="journal-timeline"></div>
-          </div>
+          <div class="card-header" style="padding:6px 12px"><div class="card-title" style="font-size:12px">Journal d'activité</div></div>
+          <div class="card-body"><div class="timeline" id="journal-timeline"></div></div>
         </div>
       </div>
+
+      <!-- IDs cachés pour compatibilité JS -->
+      <span id="stat-total" style="display:none"></span>
+      <span id="stat-service" style="display:none"></span>
+      <span id="stat-revision" style="display:none"></span>
+      <span id="stat-ct" style="display:none"></span>
+      <span id="stat-fco" style="display:none"></span>
+      <span id="repartition-parc" style="display:none"></span>
     </div>
 
     <!-- ═══════════════════════════════════════════ ALERTES ═══ -->
@@ -944,6 +995,10 @@
 
     <!-- ═══════════════════════════════════════════ PARC ═══ -->
     <div id="page-parc" class="page">
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-header"><div class="card-title">Répartition du parc</div></div>
+        <div class="card-body" id="repartition-parc"></div>
+      </div>
       <div class="search-bar">
         <input class="search-input" type="text" id="search-parc" placeholder="🔍 Rechercher un bus..." oninput="filterParc()">
         <div class="tabs" id="tabs-parc">
@@ -1829,6 +1884,18 @@
       </div><!-- /grid-2 -->
 
       <div class="card" style="margin-top:14px">
+        <div class="card-header"><div class="card-title">🌴 Mois de congés</div></div>
+        <div class="card-body">
+          <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Mois qui génèrent des droits à congés (affichés sur le tableau de bord).</p>
+          <input type="text" id="cfg-mois-conges"
+            value="${(state.config&&state.config.moisConges)||''}"
+            placeholder="Ex : Janvier, Avril, Juillet, Octobre"
+            onblur="saveMoisConges(this.value)"
+            style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 10px;font-size:12px;outline:none;box-sizing:border-box">
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px">
         <div class="card-header"><div class="card-title">📊 Résumé de la base</div></div>
         <div class="card-body" id="cfg-resume"></div>
       </div>
@@ -2592,6 +2659,9 @@ function saveState() {
 // Force les propriétés attendues comme Array à rester des Array
 // (Supabase/JSON peut parfois convertir un Array vide en objet)
 function normaliserState() {
+  if (!state.todo) state.todo = [];
+  if (!Array.isArray(state.todo)) state.todo = Object.values(state.todo);
+  while (state.todo.length < 5) state.todo.push('');
   const arrayFields = ['bus','affectations','maintenance','ct','personnel','lignes',
     'statsLignes','achats','tourisme','abribus','contratsPub','compta','gasoil',
     'carburant','pubDispo','journal','themes'];
@@ -2613,7 +2683,7 @@ function resetTotal() {
   state.gasoil = []; state.journal = []; state.carburant = []; state.pubDispo = [];
   state.conso = { niveau: 5000, moy: 0 };
   state.config = { argentDepart: 0 };
-  state.prixKm = {}; state.cfgLignesParNiveau = {}; state.affCreneaux = {}; state.tourisme = []; state.lastImport = {}; state.themes = []; state.planningCT = {}; state.freqCibles = {}; state.niveauJeu = 4; state.modeVacances = false;
+  state.prixKm = {}; state.cfgLignesParNiveau = {}; state.affCreneaux = {}; state.tourisme = []; state.todo = []; state.lastImport = {}; state.themes = []; state.planningCT = {}; state.freqCibles = {}; state.niveauJeu = 4; state.modeVacances = false;
   saveState();
   // Supprimer les clés extension
   ['tm_ext_present','tm_ext_request'].forEach(k => localStorage.removeItem(k));
@@ -2720,66 +2790,178 @@ function ctStatus(dateStr) {
 //  DASHBOARD
 // ═══════════════════════════════════════════════════════
 function renderDashboard() {
-  const enService = state.bus.filter(b => b.statut === 'En service').length;
-  const enRev = state.bus.filter(b => b.statut === 'En révision').length;
-  const ctUrgent = state.bus.filter(b => {
-    if (!b.ct) return false;
-    const d = new Date(b.ct), diff = Math.round((d - new Date()) / (1000*60*60*24));
-    return diff < 30;
-  }).length;
-  const fcoReq = state.personnel.filter(p => p.statut === 'FCO requise').length;
+  const todayISO = today();
+  const now = new Date(todayISO);
+
+  // ── Solde topbar ──────────────────────────────────────────
   const argentDepart = (state.config && state.config.argentDepart) || 0;
   const mouvements = allOps().reduce((a,o) => o.type === 'recette' ? a + o.montant : a - o.montant, 0);
   const solde = argentDepart + mouvements + ((state.config && state.config.ecartFinancier) || 0);
-
-  document.getElementById('stat-total').textContent = state.bus.length;
-  document.getElementById('stat-service').textContent = enService;
-  document.getElementById('stat-revision').textContent = enRev;
-  document.getElementById('stat-ct').textContent = ctUrgent;
-  document.getElementById('stat-fco').textContent = fcoReq;
-  document.getElementById('stat-solde').textContent = fmt(solde);
-
-  // Solde dans la topbar
+  const elSolde = document.getElementById('stat-solde');
+  if (elSolde) elSolde.textContent = fmt(solde);
   const topbarSolde = document.getElementById('topbar-solde-val');
-  if (topbarSolde) {
-    topbarSolde.textContent = fmt(solde);
-    topbarSolde.style.color = solde >= 0 ? 'var(--green)' : 'var(--red)';
-  }
+  if (topbarSolde) { topbarSolde.textContent = fmt(solde); topbarSolde.style.color = solde >= 0 ? 'var(--green)' : 'var(--red)'; }
 
-  // Répartition
-  const types = {};
-  state.bus.forEach(b => { types[b.type] = (types[b.type]||0) + 1; });
+  // ── Répartition parc (gauche + dashboard) ────────────────
+  const types = {}; state.bus.forEach(b => { types[b.type] = (types[b.type]||0) + 1; });
   const colors = { MIN:'var(--accent)', MID:'var(--accent3)', STD:'var(--green)', ART:'var(--yellow)', CAR:'var(--orange)', TRAM:'var(--red)' };
   const tNames = { MIN:'Minibus', MID:'Midibus', STD:'Standard', ART:'Articulé', CAR:'Car', TRAM:'Tram' };
   let rep = '';
   Object.entries(types).forEach(([t, n]) => {
-    const pct = Math.round(n / state.bus.length * 100);
-    rep += `<div class="gauge-row">
-      <div class="gauge-label">${tNames[t]||t}</div>
-      <div class="gauge-bar"><div class="gauge-fill" style="width:${pct}%;background:${colors[t]||'var(--accent)'}"></div></div>
-      <div class="gauge-val">${n} (${pct}%)</div>
-    </div>`;
+    const pct = state.bus.length ? Math.round(n / state.bus.length * 100) : 0;
+    rep += `<div class="gauge-row"><div class="gauge-label">${tNames[t]||t}</div><div class="gauge-bar"><div class="gauge-fill" style="width:${pct}%;background:${colors[t]||'var(--accent)'}"></div></div><div class="gauge-val">${n} (${pct}%)</div></div>`;
   });
-  document.getElementById('repartition-parc').innerHTML = rep || '<div style="color:var(--text3)">Aucun bus.</div>';
+  const elRep = document.getElementById('repartition-parc');
+  if (elRep) elRep.innerHTML = rep || '<div style="color:var(--text3)">Aucun bus.</div>';
 
-  // Alertes recap — seulement ce qui se passe AUJOURD'HUI
-  let alerts = '';
-  const today0 = today();
-  state.bus.forEach(b => {
-    // CT qui expire aujourd'hui ou déjà expiré
-    if (b.ct) {
-      const diff = Math.round((new Date(b.ct) - new Date()) / (1000*60*60*24));
-      if (diff <= 0) alerts += `<div class="alert-box danger" style="margin-bottom:6px;padding:7px 10px">
-        🔍 <b>${b.nom}</b> — CT ${diff < 0 ? 'expiré depuis '+Math.abs(diff)+' j' : 'expire aujourd\'hui'}</div>`;
+  // ── État du parc ──────────────────────────────────────────
+  const nbService  = state.bus.filter(b => ['En service','Service'].includes(b.statut)).length;
+  const nbReserve  = state.bus.filter(b => b.statut === 'Réserve').length;
+  const nbIndispo  = state.bus.filter(b => ['Indispo','ATELIER','CT','En révision','Révision','Révision puis CT','CT puis Révision'].includes(b.statut)).length;
+  const elS = document.getElementById('dash-parc-service');  if(elS) elS.textContent = nbService + ' bus';
+  const elR = document.getElementById('dash-parc-reserve');  if(elR) elR.textContent = nbReserve + ' bus';
+  const elI = document.getElementById('dash-parc-indispo');  if(elI) elI.textContent = nbIndispo + ' bus';
+  const elT = document.getElementById('dash-parc-total');    if(elT) elT.textContent = state.bus.length + ' bus';
+
+  // ── Prochaines échéances ──────────────────────────────────
+  const diffD = (iso) => iso ? Math.round((new Date(iso) - now) / (1000*60*60*24)) : null;
+  const fmtEch = (d, label) => {
+    if (d === null) return `<span style="color:var(--text3)">—</span>`;
+    if (d < 0) return `<span style="color:var(--red);font-weight:700">Expiré depuis ${Math.abs(d)} j</span>`;
+    if (d === 0) return `<span style="color:var(--red);font-weight:700">Aujourd'hui !</span>`;
+    return `<span style="color:${d<=3?'var(--red)':d<=7?'var(--yellow)':'var(--text)'}">Dans ${d} j</span>`;
+  };
+  // CT
+  const ctDiffs = state.bus.map(b => {
+    const ct = state.planningCT?.[b.nom]?.ctDate || ctPrevu(b.ct);
+    return ct ? diffD(ct) : null;
+  }).filter(d => d !== null).sort((a,b)=>a-b);
+  const nextCT = ctDiffs.length ? ctDiffs[0] : null;
+  const nbCTToday = ctDiffs.filter(d=>d===0).length;
+  const elCT = document.getElementById('dash-ech-ct');
+  if (elCT) elCT.innerHTML = nbCTToday > 0 ? `<span style="color:var(--red);font-weight:700">${nbCTToday} CT aujourd'hui</span>` : fmtEch(nextCT);
+  // Révision
+  const revDiffs = state.bus.map(b => {
+    const rv = state.planningCT?.[b.nom]?.revDate || revisionPrevue(ctPrevu(b.ct)||'');
+    return rv ? diffD(rv) : null;
+  }).filter(d => d !== null).sort((a,b)=>a-b);
+  const nextRev = revDiffs.length ? revDiffs[0] : null;
+  const nbRevToday = revDiffs.filter(d=>d===0).length;
+  const elRev = document.getElementById('dash-ech-rev');
+  if (elRev) elRev.innerHTML = nbRevToday > 0 ? `<span style="color:var(--yellow);font-weight:700">${nbRevToday} révision(s) aujourd'hui</span>` : fmtEch(nextRev);
+  // FCO
+  const fcoDiffs = (state.personnel||[]).filter(p=>p.fco).map(p=>diffD(p.fco)).filter(d=>d!==null).sort((a,b)=>a-b);
+  const nextFCO = fcoDiffs.length ? fcoDiffs[0] : null;
+  const elFCO = document.getElementById('dash-ech-fco');
+  if (elFCO) elFCO.innerHTML = fmtEch(nextFCO);
+  // Fin de location (bus avec garantie = date fin location?)
+  const locDiffs = state.bus.filter(b=>b.garantie).map(b=>diffD(b.garantie)).filter(d=>d!==null).sort((a,b)=>a-b);
+  const elLoc = document.getElementById('dash-ech-loc');
+  if (elLoc) elLoc.innerHTML = locDiffs.length ? fmtEch(locDiffs[0]) : `<span style="color:var(--text3)">Pas de location</span>`;
+
+  // ── Alerte 1er et 16 ──────────────────────────────────────
+  const jourDuMois = new Date().getDate();
+  const elRemb = document.getElementById('dash-remb-alerte');
+  if (elRemb) elRemb.style.display = (jourDuMois === 1 || jourDuMois === 16) ? 'block' : 'none';
+
+  // ── Carburant meilleurs prix ──────────────────────────────
+  const elCarbu = document.getElementById('dash-carbu');
+  if (elCarbu) {
+    const data = (state.carburant||[]).sort((a,b)=>b.date.localeCompare(a.date));
+    const last30 = data.filter(e => e.date >= addDays(todayISO,-30));
+    const diesels = last30.filter(e=>e.diesel).map(e=>e.diesel);
+    const gnvs    = last30.filter(e=>e.gnv).map(e=>e.gnv);
+    const fmt2 = v => v ? v.toFixed(3)+' €' : '—';
+    const rows = [];
+    if (diesels.length) {
+      const moy = (diesels.reduce((s,v)=>s+v,0)/diesels.length);
+      const min = Math.min(...diesels);
+      rows.push(`<tr style="background:rgba(0,0,0,0.2)"><td colspan="3" style="padding:3px 8px;font-size:10px;font-weight:700;color:var(--text3)">DIESEL</td></tr>`);
+      rows.push(`<tr><td style="padding:4px 8px;font-size:11px;color:var(--text3)">Prix Moy.</td><td style="padding:4px 8px;font-size:11px;text-align:right">Meilleur Prix</td><td style="padding:4px 8px;font-size:11px;text-align:right">Période</td></tr>`);
+      rows.push(`<tr><td style="padding:4px 8px;font-family:'JetBrains Mono',monospace">${fmt2(moy)}</td><td style="padding:4px 8px;font-family:'JetBrains Mono',monospace;color:var(--green);text-align:right">${fmt2(min)}</td><td style="padding:4px 8px;font-size:10px;color:var(--text3);text-align:right">30 jours</td></tr>`);
     }
-    // Révision qui commence/finit aujourd'hui
-    if (b.revisionDate === today0) alerts += `<div class="alert-box warning" style="margin-bottom:6px;padding:7px 10px">
-      🔧 <b>${b.nom}</b> — Révision prévue aujourd'hui</div>`;
-  });
-  if (!alerts) alerts = '<div class="alert-box success">✅ Aucune alerte pour aujourd\'hui</div>';
-  document.getElementById('alertes-recap').innerHTML = alerts;
+    if (gnvs.length) {
+      const moy = (gnvs.reduce((s,v)=>s+v,0)/gnvs.length);
+      const min = Math.min(...gnvs);
+      rows.push(`<tr style="background:rgba(0,0,0,0.2)"><td colspan="3" style="padding:3px 8px;font-size:10px;font-weight:700;color:var(--text3)">GNV</td></tr>`);
+      rows.push(`<tr><td style="padding:4px 8px;font-family:'JetBrains Mono',monospace">${fmt2(moy)}</td><td style="padding:4px 8px;font-family:'JetBrains Mono',monospace;color:var(--green);text-align:right">${fmt2(min)}</td><td style="padding:4px 8px;font-size:10px;color:var(--text3);text-align:right">30 jours</td></tr>`);
+    }
+    elCarbu.innerHTML = rows.length
+      ? `<table style="width:100%;border-collapse:collapse;font-size:12px">${rows.join('')}</table>`
+      : `<div style="color:var(--text3);font-size:11px;padding:10px">Aucune donnée carburant</div>`;
+  }
 
-  // Tableau RH dashboard
+  // ── Congés ────────────────────────────────────────────────
+  const elConges = document.getElementById('dash-conges');
+  if (elConges) {
+    const moisConges = (state.config && state.config.moisConges) || 'Non configuré';
+    elConges.textContent = moisConges;
+  }
+
+  // ── To-do list ────────────────────────────────────────────
+  const elTodo = document.getElementById('dash-todo-body');
+  if (elTodo) {
+    if (!state.todo) state.todo = ['','','','',''];
+    while (state.todo.length < 5) state.todo.push('');
+    elTodo.innerHTML = state.todo.slice(0,5).map((t,i) => `
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+        <input type="checkbox" ${t.done?'checked':''} onchange="state.todo[${i}].done=this.checked;saveStateWithSync()" style="cursor:pointer">
+        <input type="text" value="${(t.text||t||'').replace(/"/g,'&quot;')}"
+          placeholder="Tâche ${i+1}…"
+          onblur="saveTodo(${i},this.value)"
+          onkeydown="if(event.key==='Enter')this.blur()"
+          style="flex:1;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);font-size:12px;padding:2px 4px;outline:none;${t.done?'text-decoration:line-through;color:var(--text3)':''}">
+      </div>`).join('');
+  }
+
+  // ── Pub résumé ────────────────────────────────────────────
+  const elPub = document.getElementById('dash-pub');
+  if (elPub) {
+    const pubs = state.contratsPub || [];
+    const moisCourant = todayISO.slice(0,7);
+    const moisProchain = (() => { const d=new Date(now); d.setMonth(d.getMonth()+1); return d.toISOString().slice(0,7); })();
+    const gainsMois = (mois) => pubs.reduce((s,c) => {
+      if (!c.fin) return s;
+      const fm = new Date(c.fin); const dm = new Date(mois+'-01');
+      return (fm >= dm && fm <= new Date(mois+'-28')) ? s+c.gains : s;
+    }, 0);
+    const total = pubs.reduce((s,c)=>s+(c.gains||0),0);
+    const prochains5 = [...pubs].filter(c=>c.fin && c.fin >= todayISO).sort((a,b)=>a.fin.localeCompare(b.fin)).slice(0,5);
+    elPub.innerHTML = `
+      <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <tr style="background:rgba(249,115,22,0.1)"><td style="padding:4px 8px;color:var(--text3)">Mois en cours</td><td style="padding:4px 8px;text-align:right;color:var(--green);font-weight:600">${fmt(gainsMois(moisCourant))}</td></tr>
+        <tr><td style="padding:4px 8px;color:var(--text3)">Mois prochain</td><td style="padding:4px 8px;text-align:right;color:var(--green)">${fmt(gainsMois(moisProchain))}</td></tr>
+        <tr style="border-top:1px solid var(--border)"><td style="padding:4px 8px;font-weight:700">Total portefeuille</td><td style="padding:4px 8px;text-align:right;font-weight:700;color:var(--green)">${fmt(total)}</td></tr>
+      </table>
+      ${prochains5.length ? `<div style="padding:4px 8px 2px;font-size:10px;color:var(--text3);border-top:1px solid var(--border);margin-top:2px">5 prochaines échéances :</div>
+      ${prochains5.map(c=>`<div style="padding:2px 8px;font-size:11px;display:flex;justify-content:space-between"><span style="color:var(--text2)">${c.annonceur||'—'}</span><span style="color:var(--yellow)">${fmtDateFR(c.fin)}</span></div>`).join('')}` : ''}`;
+  }
+
+  // ── Alertes résumé compact ────────────────────────────────
+  const elRecap = document.getElementById('alertes-recap');
+  if (elRecap) {
+    const msgs = [];
+    const nbCT = ctDiffs.filter(d=>d!==null&&d<=0).length;
+    const nbCTSoon = ctDiffs.filter(d=>d!==null&&d>0&&d<=7).length;
+    if (nbCT > 0) msgs.push(`<div style="color:var(--red);font-size:11px;padding:2px 0">🔍 ${nbCT} CT expiré(s)</div>`);
+    if (nbCTSoon > 0) msgs.push(`<div style="color:var(--yellow);font-size:11px;padding:2px 0">🔍 ${nbCTSoon} CT dans 7j</div>`);
+    const nbRevSoon = revDiffs.filter(d=>d!==null&&d>=0&&d<=7).length;
+    if (nbRevSoon > 0) msgs.push(`<div style="color:var(--yellow);font-size:11px;padding:2px 0">🔧 ${nbRevSoon} révision(s) à venir</div>`);
+    const nbFCO = (state.personnel||[]).filter(p=>p.fco&&p.fco<=todayISO).length;
+    if (nbFCO > 0) msgs.push(`<div style="color:var(--accent3);font-size:11px;padding:2px 0">🎓 ${nbFCO} FCO expirée(s)</div>`);
+    const nbContrat = (state.tourisme||[]).filter(t => {
+      if (!t.dateTransport) return false;
+      const iso = t.dateTransport.replace(/(\d{2})\/(\d{2})\/(\d{4})/,'$3-$2-$1');
+      const d3 = new Date(todayISO); d3.setDate(d3.getDate()+3);
+      return iso >= todayISO && iso <= d3.toISOString().slice(0,10);
+    }).length;
+    if (nbContrat > 0) msgs.push(`<div style="color:var(--orange);font-size:11px;padding:2px 0">🚌 ${nbContrat} contrat(s) tourisme imminent(s)</div>`);
+    elRecap.innerHTML = msgs.length
+      ? msgs.join('')
+      : `<div style="color:var(--green);font-size:11px">✅ Aucune alerte active</div>`;
+  }
+
+  // ── RH ────────────────────────────────────────────────────
   const dashRhTbody = document.getElementById('dash-rh-tbody');
   if (dashRhTbody) {
     const pers = state.personnel;
@@ -2810,31 +2992,26 @@ function renderDashboard() {
     }).join('');
   }
 
-  // Journal
+  // ── Journal ───────────────────────────────────────────────
   const tl = document.getElementById('journal-timeline');
-  tl.innerHTML = state.journal.slice(0,8).map(j => `<div class="timeline-item ${j.type}">
+  if (tl) tl.innerHTML = state.journal.slice(0,8).map(j => `<div class="timeline-item ${j.type}">
     <div class="timeline-date">${fmtDateFR(j.date)}</div>
     <div class="timeline-text">${j.text}</div>
   </div>`).join('') || '<div style="color:var(--text3)">Aucune activité.</div>';
 
-  // Badge alertes — CT + révisions dans 5 jours uniquement (pas FCO = trop nombreux)
-  const SEUIL = 7;
-  const todayISO2 = today();
-  const ctBadge  = state.bus.filter(b => {
-    const ctDate = state.planningCT?.[b.nom]?.ctDate || b.ct;
-    if (!ctDate) return false;
-    const d = Math.round((new Date(ctDate) - new Date()) / (1000*60*60*24));
-    return d >= 0 && d <= SEUIL;
-  }).length + state.bus.filter(b => b.ct && b.ct < todayISO2).length;
-  const revBadge = state.bus.filter(b => {
-    const revDate = state.planningCT?.[b.nom]?.revDate;
-    if (!revDate) return false;
-    const d = Math.round((new Date(revDate) - new Date()) / (1000*60*60*24));
-    return d >= 0 && d <= SEUIL;
-  }).length;
-  const badgeTotal = ctBadge + revBadge;
-  document.getElementById('alert-badge').textContent = badgeTotal;
-  document.getElementById('alert-badge').style.display = badgeTotal > 0 ? '' : 'none';
+  // ── Badge alertes sidebar ─────────────────────────────────
+  const badgeTotal = (ctDiffs.filter(d=>d!==null&&d<=7).length) + (revDiffs.filter(d=>d!==null&&d>=0&&d<=7).length);
+  const elBadge = document.getElementById('alert-badge');
+  if (elBadge) { elBadge.textContent = badgeTotal; elBadge.style.display = badgeTotal > 0 ? '' : 'none'; }
+}
+
+function saveTodo(idx, val) {
+  if (!state.todo) state.todo = ['','','','',''];
+  // Preserve done state
+  const existing = state.todo[idx];
+  const done = typeof existing === 'object' ? existing.done : false;
+  state.todo[idx] = { text: val, done };
+  saveStateWithSync();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -6608,6 +6785,15 @@ function fetchViaExtension() {
 // ═══════════════════════════════════════════════════════
 //  CONFIGURATION
 // ═══════════════════════════════════════════════════════
+function saveMoisConges(val) {
+  if (!state.config) state.config = {};
+  state.config.moisConges = val.trim();
+  saveStateWithSync();
+  const el = document.getElementById('dash-conges');
+  if (el) el.textContent = val.trim() || '—';
+  toastMsg('✅ Mois de congés enregistrés', 'success');
+}
+
 function setCfgNiveau(n) {
   n = Math.max(1, Math.min(5, parseInt(n) || 1));
   state.niveauJeu = n;
