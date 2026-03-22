@@ -739,14 +739,14 @@
 
     <div class="sidebar-section">
       <div class="sidebar-section-title">Finance</div>
-      <div class="nav-item" data-page="lignes" onclick="nav(this)">
-        <span class="icon">📊</span> Stats de lignes
-      </div>
       <div class="nav-item" data-page="compta" onclick="nav(this)">
         <span class="icon">💰</span> Comptabilité
       </div>
       <div class="nav-item" data-page="bilan" onclick="nav(this)">
-        <span class="icon">📊</span> Tableau financier
+        <span class="icon">📈</span> Tableau financier
+      </div>
+      <div class="nav-item" data-page="lignes" onclick="nav(this)">
+        <span class="icon">📊</span> Stats de lignes
       </div>
       <div class="nav-item" data-page="achats" onclick="nav(this)">
         <span class="icon">🛒</span> Achats de bus
@@ -766,7 +766,7 @@
     <div class="sidebar-section">
       <div class="sidebar-section-title">Tourisme</div>
       <div class="nav-item" data-page="tourisme" onclick="nav(this)">
-        <span class="icon">🚌</span> Évaluation contrat
+        <span class="icon">🚌</span> Contrats
       </div>
     </div>
 
@@ -840,7 +840,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v85</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v92</span>
       <button id="sync-status" onclick="syncPush(true)" title="Cliquer pour synchroniser maintenant" style="font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 8px;border-radius:4px;display:none;cursor:pointer;border:none"></button>
       <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
@@ -964,9 +964,9 @@
       <!-- Vue COMPACTE -->
       <div id="parc-view-compact">
         <div class="card">
-          <div class="card-body" style="padding:0;overflow-x:auto">
+          <div class="card-body" style="padding:0;overflow-x:auto;overflow-y:auto;max-height:1000px">
             <table class="data-table" id="parc-table">
-              <thead><tr>
+              <thead style="position:sticky;top:0;z-index:2;background:var(--surface2)"><tr>
                 <th onclick="sortTable('parc','idJeu')" class="sortable">ID <span class="sort-icon" data-col="idJeu">↕</span></th>
                 <th onclick="sortTable('parc','nom')" class="sortable">Numéro Parc <span class="sort-icon" data-col="nom">↕</span></th>
                 <th onclick="sortTable('parc','marque')" class="sortable">Modèle <span class="sort-icon" data-col="marque">↕</span></th>
@@ -1270,26 +1270,6 @@
     <!-- ═══════════════════════════════════════════ COMPTA ═══ -->
     <div id="page-compta" class="page">
 
-      <!-- Stats globales -->
-      <div class="stat-cards">
-        <div class="stat-card green">
-          <div class="stat-label">Recettes totales</div>
-          <div class="stat-value" id="compta-recettes" style="font-size:20px">0 €</div>
-        </div>
-        <div class="stat-card red">
-          <div class="stat-label">Dépenses totales</div>
-          <div class="stat-value" id="compta-depenses" style="font-size:20px">0 €</div>
-        </div>
-        <div class="stat-card blue">
-          <div class="stat-label">Bénéfice net</div>
-          <div class="stat-value" id="compta-benefice" style="font-size:20px">0 €</div>
-        </div>
-        <div class="stat-card yellow">
-          <div class="stat-label">Trésorerie</div>
-          <div class="stat-value" id="compta-tresor" style="font-size:20px">0 €</div>
-        </div>
-      </div>
-
       <!-- Suivi par mois (gauche) + Graphique évolution (droite) -->
       <div class="grid-2" style="margin-bottom:14px">
         <div class="card">
@@ -1345,9 +1325,9 @@
             <button class="btn btn-ghost btn-sm" onclick="resetFiltreCompta()">✕ Réinitialiser</button>
           </div>
         </div>
-        <div class="card-body" style="padding:0">
+        <div class="card-body" style="padding:0;overflow-y:auto;max-height:600px">
           <table class="data-table">
-            <thead><tr>
+            <thead style="position:sticky;top:0;z-index:2;background:var(--surface2)"><tr>
               <th onclick="sortTable('compta','date')" class="sortable">Date <span class="sort-icon" data-col="date">↕</span></th>
               <th onclick="sortTable('compta','cat')" class="sortable">Catégorie <span class="sort-icon" data-col="cat">↕</span></th>
               <th>Description</th>
@@ -1474,9 +1454,9 @@
             <button class="btn btn-ghost btn-sm" onclick="setPubFiltre('avenir')" id="pub-f-avenir">À venir</button>
           </div>
         </div>
-        <div class="card-body" style="padding:0;overflow-x:auto">
+        <div class="card-body" style="padding:0;overflow-x:auto;overflow-y:auto;max-height:400px">
           <table class="data-table" id="pub-table">
-            <thead><tr>
+            <thead style="position:sticky;top:0;z-index:2;background:var(--surface2)"><tr>
               <th>N° Contrat</th>
               <th onclick="sortTable('pub','annonceur')" class="sortable">Annonceur <span class="sort-icon" data-col="annonceur">↕</span></th>
               <th>Support</th>
@@ -1624,34 +1604,31 @@
     <!-- ═══════════════════════════════════════════ TOURISME ═══ -->
     <div id="page-tourisme" class="page">
 
-      <div class="grid-2" style="margin-bottom:14px">
+      <div class="grid-2" style="margin-bottom:10px;align-items:start;gap:8px">
         <!-- Panneau gauche : saisie -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">📋 Analyser un contrat</div>
-            <button class="btn btn-ghost btn-sm" onclick="viderTourisme()">🗑 Vider</button>
+        <div class="card" style="height:280px;overflow:hidden">
+          <div class="card-header" style="padding:8px 12px">
+            <div class="card-title" style="font-size:13px">📋 Analyser un contrat</div>
+            <button class="btn btn-ghost btn-sm" onclick="viderTourisme()">🗑</button>
           </div>
-          <div class="card-body">
-            <p style="font-size:11px;color:var(--text3);margin-bottom:10px">
-              Colle le texte brut du contrat de tourisme tel que fourni par le jeu.
-            </p>
-            <textarea id="tourisme-textarea" rows="16"
+          <div class="card-body" style="padding:8px 12px">
+            <textarea id="tourisme-textarea" rows="6"
               placeholder="Contrat n°216566&#10;Informations commerciales&#10;* Demandeur : ...&#10;* Montant : 13 170 €&#10;..."
-              style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px;font-size:11px;font-family:'JetBrains Mono',monospace;resize:vertical;box-sizing:border-box"></textarea>
-            <div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap">
-              <button class="btn btn-primary" onclick="analyserContratTourisme()">▶ Analyser</button>
-              <div style="font-size:11px;color:var(--text3)">Prix carburant max CAR-T :
+              style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 8px;font-size:11px;font-family:'JetBrains Mono',monospace;resize:vertical;box-sizing:border-box"></textarea>
+            <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+              <button class="btn btn-primary btn-sm" onclick="analyserContratTourisme()">▶ Analyser</button>
+              <span style="font-size:11px;color:var(--text3)">Carburant CAR-T :
                 <span id="tourisme-prix-carbu" style="color:var(--accent);font-weight:600">—</span>
-              </div>
+              </span>
             </div>
           </div>
         </div>
 
         <!-- Panneau droit : résultat analyse -->
-        <div class="card">
-          <div class="card-header"><div class="card-title">📊 Résultat</div></div>
-          <div class="card-body" id="tourisme-result">
-            <div style="color:var(--text3);font-size:12px;text-align:center;padding:30px">Colle un contrat et clique Analyser</div>
+        <div class="card" style="height:280px;overflow-y:auto">
+          <div class="card-header" style="padding:8px 12px"><div class="card-title" style="font-size:13px">📊 Résultat</div></div>
+          <div class="card-body" style="padding:8px 12px" id="tourisme-result">
+            <div style="color:var(--text3);font-size:12px;text-align:center;padding:20px">Colle un contrat et clique Analyser</div>
           </div>
         </div>
       </div>
@@ -1659,14 +1636,14 @@
       <!-- Historique des contrats -->
       <div class="card">
         <div class="card-header">
-          <div class="card-title">📁 Historique des contrats tourisme
+          <div class="card-title">📁 Contrats
             <span id="tourisme-count" class="badge badge-blue" style="margin-left:8px">0</span>
           </div>
           <button class="btn btn-ghost btn-sm" onclick="if(confirm('Effacer tout l\'historique tourisme ?')){state.tourisme=[];saveStateWithSync();renderTourisme();}">🗑 Effacer</button>
         </div>
-        <div class="card-body" style="padding:0;overflow-x:auto">
-          <table class="data-table" id="tourisme-table">
-            <thead><tr>
+        <div class="card-body" style="padding:0;overflow-x:auto;overflow-y:auto;max-height:330px">
+          <table class="data-table" id="tourisme-table" style="min-width:900px;border-collapse:collapse"><colgroup></colgroup>
+            <thead style="position:sticky;top:0;z-index:2"><tr>
               <th>N° Contrat</th>
               <th>Demandeur</th>
               <th>Date</th>
@@ -1683,6 +1660,7 @@
             <tbody id="tourisme-tbody"></tbody>
           </table>
         </div>
+        <div id="tourisme-stats-footer" style="padding:6px 12px;background:var(--surface2);border-top:1px solid var(--border);font-size:11px;display:flex;gap:24px;flex-wrap:wrap;align-items:center"></div>
       </div>
     </div>
 
@@ -2853,21 +2831,33 @@ function renderDashboard() {
 // ═══════════════════════════════════════════════════════
 //  ALERTES
 // ═══════════════════════════════════════════════════════
+function marquerAlerteLue(id) {
+  if (!state.alertesLues) state.alertesLues = {};
+  const key = `${today()}_${id}`;
+  state.alertesLues[key] = true;
+  // Nettoyer les anciennes clés (> 30 jours) pour ne pas grossir le state
+  const limite = new Date(); limite.setDate(limite.getDate() - 30);
+  const limiteISO = limite.toISOString().slice(0,10);
+  Object.keys(state.alertesLues).forEach(k => {
+    const dateK = k.slice(0, 10);
+    if (dateK < limiteISO) delete state.alertesLues[k];
+  });
+  saveStateWithSync();
+  renderAlertes();
+}
+
 function renderAlertes() {
   const SEUIL_JOURS = 7;
-  const todayISO = today();
-  const now = new Date();
+  const todayA = today();
+  const nowA   = new Date(todayA);
 
-  // Diff en jours (comparaison sur dates ISO pures, sans heure)
-  const diffTodayISO = today();
+  if (!state.alertesLues) state.alertesLues = {};
+
   const diffJ = (dateISO) => {
     if (!dateISO) return null;
-    const t1 = new Date(diffTodayISO).getTime();
-    const t2 = new Date(dateISO).getTime();
-    return Math.round((t2 - t1) / (1000*60*60*24));
+    return Math.round((new Date(dateISO) - nowA) / (1000*60*60*24));
   };
 
-  // Dates prévues CT et révision — fallback sur calcul automatique si pas planifié
   const getDatesCT = (b) => {
     const plan = state.planningCT?.[b.nom] || {};
     const ctDate  = plan.ctDate  || ctPrevu(b.ct) || null;
@@ -2875,108 +2865,130 @@ function renderAlertes() {
     return { ctDate, revDate };
   };
 
-  // ── CT ──────────────────────────────────────────────────
-  let html = `<div class="section-title">CT dans les ${SEUIL_JOURS} prochains jours</div>`;
+  const luKey  = (id) => `${todayA}_${id}`;
+  const estLu  = (id) => !!state.alertesLues[luKey(id)];
+  // Lu = n'affecte que le badge, l'alerte reste visible mais avec style "lu"
+  const btnLu  = (id) => estLu(id)
+    ? `<span style="margin-left:auto;font-size:10px;color:var(--text3);opacity:0.5">✓ lu</span>`
+    : `<button class="btn btn-ghost btn-xs" style="margin-left:auto;opacity:0.6;white-space:nowrap" onclick="marquerAlerteLue('${id}')">✓ Lu</button>`;
+
+  let html = '';
+  let totalAujourdHui = 0;
+
+  // ── Contrats Tourisme dans les 3 prochains jours ────────
+  html += `<div class="section-title">🚌 Contrats tourisme imminents</div>`;
+  const in3ISO = (() => { const d = new Date(todayA); d.setDate(d.getDate()+3); return d.toISOString().slice(0,10); })();
+  const contratsProches = (state.tourisme||[]).filter(t => {
+    if (!t.dateTransport) return false;
+    const iso = t.dateTransport.replace(/(\d{2})\/(\d{2})\/(\d{4})/,'$3-$2-$1');
+    return iso >= todayA && iso <= in3ISO;
+  });
+  let nbContratsAffiches = 0;
+  contratsProches.forEach((t, i) => {
+    const id = `contrat_${t.num||i}`;
+    const iso = t.dateTransport.replace(/(\d{2})\/(\d{2})\/(\d{4})/,'$3-$2-$1');
+    const d = diffJ(iso);
+    const label = d === 0 ? "<b>AUJOURD'HUI</b>" : d === 1 ? 'Demain' : `Dans <b>${d} j</b>`;
+    if (d === 0 && !estLu(id)) totalAujourdHui++;
+    nbContratsAffiches++;
+    html += `<div class="alert-box warning" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
+      <span>🚌 Contrat <b>#${t.num||'?'}</b> — ${t.demandeur||'—'} — ${t.dateTransport} — ${label} — <span style="color:var(--green)">${fmt(t.montant||0)}</span></span>
+      ${btnLu(id)}
+    </div>`;
+  });
+  if (!nbContratsAffiches) html += `<div class="alert-box success" style="margin-bottom:8px">✅ Aucun contrat dans les 3 prochains jours.</div>`;
+
+  // ── CT expirés ──────────────────────────────────────────
+  html += `<div class="section-title" style="margin-top:14px">CT dans les ${SEUIL_JOURS} prochains jours</div>`;
+  const ctExpires = state.bus.filter(b => b.ct && b.ct < todayA);
+  let nbCTAffiches = 0;
+  ctExpires.forEach(b => {
+    const id = `ct_exp_${b.nom}`;
+    nbCTAffiches++;
+    const d = diffJ(b.ct);
+    html += `<div class="alert-box danger" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
+      <span>🔍 <b>${b.nom}</b> — CT limite ${fmtDateFR(b.ct)} — <b>EXPIRÉ depuis ${Math.abs(d)} j</b></span>
+      ${btnLu(id)}
+    </div>`;
+  });
+
+  // ── CT à venir ──────────────────────────────────────────
   const ctAlerts = state.bus.filter(b => {
     const { ctDate } = getDatesCT(b);
     if (!ctDate) return false;
     const d = diffJ(ctDate);
     return d !== null && d >= 0 && d <= SEUIL_JOURS;
-  }).sort((a,b) => {
-    const da = getDatesCT(a).ctDate, db = getDatesCT(b).ctDate;
-    return new Date(da) - new Date(db);
+  }).sort((a,b) => new Date(getDatesCT(a).ctDate) - new Date(getDatesCT(b).ctDate));
+
+  ctAlerts.forEach(b => {
+    const { ctDate } = getDatesCT(b);
+    const d = diffJ(ctDate);
+    const id = `ct_${b.nom}`;
+    nbCTAffiches++;
+    if (d === 0 && !estLu(id)) totalAujourdHui++;
+    const label = d === 0 ? "<b>AUJOURD'HUI</b>" : `Dans <b>${d} j</b>`;
+    html += `<div class="alert-box warning" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
+      <span>🔍 <b>${b.nom}</b> — CT prévu le ${fmtDateFR(ctDate)} — ${label}</span>
+      ${btnLu(id)}
+    </div>`;
+
   });
+  if (!nbCTAffiches) html += `<div class="alert-box success" style="margin-bottom:8px">✅ Aucun CT dans les ${SEUIL_JOURS} prochains jours.</div>`;
 
-  // Aussi les CT expirés (date limite dépassée)
-  const ctExpires = state.bus.filter(b => {
-    if (!b.ct) return false;
-    return b.ct < todayISO;
-  }).sort((a,b) => new Date(a.ct) - new Date(b.ct));
-
-  if (ctExpires.length) {
-    ctExpires.forEach(b => {
-      const d = diffJ(b.ct);
-      html += `<div class="alert-box danger" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
-        <span>🔍 <b>${b.nom}</b> — CT limite ${fmtDateFR(b.ct)} — <b>EXPIRÉ depuis ${Math.abs(d)} j</b></span>
-        <button class="btn btn-ghost btn-xs" style="margin-left:auto" onclick="ouvrirCTPlanif('${b.nom}')">Planifier</button>
-      </div>`;
-    });
-  }
-  if (ctAlerts.length) {
-    ctAlerts.forEach(b => {
-      const { ctDate } = getDatesCT(b);
-      const d = diffJ(ctDate);
-      const label = d === 0 ? "<b>AUJOURD'HUI</b>" : `Dans <b>${d} j</b>`;
-      html += `<div class="alert-box warning" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
-        <span>🔍 <b>${b.nom}</b> — CT prévu le ${fmtDateFR(ctDate)} — ${label}</span>
-        <button class="btn btn-ghost btn-xs" style="margin-left:auto" onclick="ouvrirCTPlanif('${b.nom}')">Planifier</button>
-      </div>`;
-    });
-  }
-  if (!ctExpires.length && !ctAlerts.length) {
-    html += `<div class="alert-box success" style="margin-bottom:8px">✅ Aucun CT dans les ${SEUIL_JOURS} prochains jours.</div>`;
-  }
-
-  // ── Révisions ────────────────────────────────────────────
-  html += `<div class="section-title" style="margin-top:16px">Révisions dans les ${SEUIL_JOURS} prochains jours</div>`;
+  // ── Révisions ───────────────────────────────────────────
+  html += `<div class="section-title" style="margin-top:14px">Révisions dans les ${SEUIL_JOURS} prochains jours</div>`;
   const revAlerts = state.bus.filter(b => {
     const { revDate } = getDatesCT(b);
     if (!revDate) return false;
     const d = diffJ(revDate);
     return d !== null && d >= 0 && d <= SEUIL_JOURS;
-  }).sort((a,b) => {
-    const da = getDatesCT(a).revDate, db = getDatesCT(b).revDate;
-    return new Date(da) - new Date(db);
+  }).sort((a,b) => new Date(getDatesCT(a).revDate) - new Date(getDatesCT(b).revDate));
+
+  let nbRevAffiches = 0;
+  revAlerts.forEach(b => {
+    const { revDate } = getDatesCT(b);
+    const d = diffJ(revDate);
+    const id = `rev_${b.nom}`;
+    nbRevAffiches++;
+    if (d === 0 && !estLu(id)) totalAujourdHui++;
+    const label = d === 0 ? "<b>AUJOURD'HUI</b>" : `Dans <b>${d} j</b>`;
+    html += `<div class="alert-box warning" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
+      <span>🔧 <b>${b.nom}</b> — Révision prévue le ${fmtDateFR(revDate)} — ${label}</span>
+      ${btnLu(id)}
+    </div>`;
   });
+  if (!nbRevAffiches) html += `<div class="alert-box success" style="margin-bottom:8px">✅ Aucune révision planifiée dans les ${SEUIL_JOURS} prochains jours.</div>`;
 
-  if (revAlerts.length) {
-    revAlerts.forEach(b => {
-      const { revDate } = getDatesCT(b);
-      const d = diffJ(revDate);
-      const label = d === 0 ? '<b>AUJOURD\'HUI</b>' : `Dans <b>${d} j</b>`;
-      html += `<div class="alert-box warning" style="margin-bottom:6px">
-        🔧 <b>${b.nom}</b> — Révision prévue le ${fmtDateFR(revDate)} — ${label}
-      </div>`;
-    });
-  } else {
-    html += `<div class="alert-box success" style="margin-bottom:8px">✅ Aucune révision planifiée dans les ${SEUIL_JOURS} prochains jours.</div>`;
-  }
-
-  // ── FCO ──────────────────────────────────────────────────
-  // Calcule le prochain lundi (ou aujourd'hui si c'est lundi)
-  const nowFCO  = new Date();
-  const jourSem = nowFCO.getDay(); // 0=dim, 1=lun, ..., 6=sam
+  // ── FCO ─────────────────────────────────────────────────
+  const nowFCO = new Date(todayA);
+  const jourSem = new Date().getDay();
   const joursAvantLundi = jourSem === 1 ? 0 : jourSem === 0 ? 1 : 8 - jourSem;
-  const prochainLundi   = new Date(nowFCO);
-  prochainLundi.setDate(nowFCO.getDate() + joursAvantLundi);
-  prochainLundi.setHours(0,0,0,0);
+  const prochainLundi = new Date(todayA);
+  prochainLundi.setDate(prochainLundi.getDate() + joursAvantLundi);
   const prochainLundiISO = prochainLundi.toISOString().slice(0,10);
 
-  html += `<div class="section-title" style="margin-top:16px">FCO à lancer le ${jourSem===1?'aujourd\'hui':fmtDateFR(prochainLundiISO)} (lundi)</div>`;
-  const fcoAlerts = state.personnel.filter(p => {
-    if (!p.fco) return false;
-    // FCO à renouveler = fco <= prochainLundi
-    return p.fco <= prochainLundiISO;
+  html += `<div class="section-title" style="margin-top:14px">FCO à lancer le ${jourSem===1?"aujourd'hui":fmtDateFR(prochainLundiISO)} (lundi)</div>`;
+  const fcoAlerts = (state.personnel||[]).filter(p => p.fco && p.fco <= prochainLundiISO);
+  let nbFCOAffiches = 0;
+  fcoAlerts.sort((a,b) => (a.fco||'').localeCompare(b.fco||'')).forEach(p => {
+    const id = `fco_${p.matricule}`;
+    nbFCOAffiches++;
+    const dFCO = diffJ(p.fco);
+    if (dFCO === 0) totalAujourdHui++;
+    const label = dFCO < 0 ? `<b style="color:var(--red)">EXPIRÉE depuis ${Math.abs(dFCO)} j</b>` : dFCO === 0 ? "<b>AUJOURD'HUI</b>" : `Dans <b>${dFCO} j</b>`;
+    html += `<div class="alert-box ${dFCO<=0?'danger':'warning'}" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
+      <span>🎓 <b>${p.nom}</b> (${p.matricule}) — FCO le ${fmtDateFR(p.fco)} — ${label}</span>
+      ${btnLu(id)}
+    </div>`;
   });
-  if (fcoAlerts.length) {
-    fcoAlerts.sort((a,b) => (a.fco||'').localeCompare(b.fco||'')).forEach(p => {
-      const dFCO = Math.round((new Date(p.fco) - nowFCO) / (1000*60*60*24));
-      const label = dFCO < 0 ? `<b style="color:var(--red)">EXPIRÉE depuis ${Math.abs(dFCO)} j</b>` : dFCO === 0 ? '<b>AUJOURD\'HUI</b>' : `Dans <b>${dFCO} j</b>`;
-      html += `<div class="alert-box ${dFCO<=0?'danger':'warning'}" style="margin-bottom:8px">
-        🎓 <b>${p.nom}</b> (${p.matricule}) — FCO expirée le ${fmtDateFR(p.fco)} — ${label}
-      </div>`;
-    });
-  } else html += `<div class="alert-box success" style="margin-bottom:8px">✅ Aucune FCO à lancer ${jourSem===1?'aujourd\'hui':'lundi prochain'}.</div>`;
+  if (!nbFCOAffiches) html += `<div class="alert-box success" style="margin-bottom:8px">✅ Aucune FCO à lancer ${jourSem===1?"aujourd'hui":'lundi prochain'}.</div>`;
 
   document.getElementById('alertes-list').innerHTML = html;
-  const total = ctExpires.length + ctAlerts.length + revAlerts.length + fcoAlerts.length;
-  document.getElementById('alert-badge').textContent = total;
-  document.getElementById('alert-badge').style.display = total > 0 ? '' : 'none';
+  // Badge = uniquement alertes du jour (d=0) non lues
+  document.getElementById('alert-badge').textContent = totalAujourdHui;
+  document.getElementById('alert-badge').style.display = totalAujourdHui > 0 ? '' : 'none';
 }
 
-// ═══════════════════════════════════════════════════════
-//  SYSTÈME DE TRI GÉNÉRIQUE
-// ═══════════════════════════════════════════════════════
 const sortState = {};
 
 function sortTable(tableId, col) {
@@ -5239,10 +5251,10 @@ function renderCompta() {
   const benefice = recettes - depenses;
   const solde    = argentDepart + benefice + ((state.config && state.config.ecartFinancier) || 0);
 
-  document.getElementById('compta-recettes').textContent = fmt(recettes);
-  document.getElementById('compta-depenses').textContent = fmt(depenses);
-  document.getElementById('compta-benefice').textContent = fmt(benefice);
-  document.getElementById('compta-tresor').textContent   = fmt(solde);
+  const _cr=document.getElementById('compta-recettes'); if(_cr) _cr.textContent=fmt(recettes);
+  const _cd=document.getElementById('compta-depenses'); if(_cd) _cd.textContent=fmt(depenses);
+  const _cb=document.getElementById('compta-benefice'); if(_cb) _cb.textContent=fmt(benefice);
+  const _ct=document.getElementById('compta-tresor');   if(_ct) _ct.textContent=fmt(solde);
   document.getElementById('stat-solde').textContent      = fmt(solde);
   const topbarSolde = document.getElementById('topbar-solde-val');
   if (topbarSolde) { topbarSolde.textContent = fmt(solde); topbarSolde.style.color = solde >= 0 ? 'var(--green)' : 'var(--red)'; }
@@ -5401,6 +5413,7 @@ function renderComptaTableau() {
   if (typeFiltre) ops = ops.filter(o => o.type === typeFiltre);
   const sorted = sortData([...ops], 'compta', 'date').reverse();
   const tbody = document.getElementById('compta-tbody');
+  if (!tbody) return;
   tbody.innerHTML = sorted.map(o => `<tr>
     <td class="mono">${fmtDateFR(o.date)}</td>
     <td><span class="badge badge-gray">${o.cat}</span></td>
@@ -5897,7 +5910,7 @@ function supprimerPrixCarburant(id) {
 }
 
 // ═══════════════════════════════════════════════════════
-//  TOURISME — Évaluation contrats
+//  TOURISME — Contrats
 // ═══════════════════════════════════════════════════════
 
 // Consommation moyenne estimée CAR-T en L/100km
@@ -6096,27 +6109,48 @@ function renderTourisme() {
 
   if (!state.tourisme) state.tourisme = [];
   const tous = state.tourisme;
-  const moyenne    = tous.length ? Math.round(tous.reduce((s,t)=>s+(t.pctBenef||0),0)/tous.length*100)/100 : null;
-  const moyBenef   = tous.length ? Math.round(tous.reduce((s,t)=>s+(t.benefice||0),0)/tous.length) : null;
-  const moyMontant = tous.length ? Math.round(tous.reduce((s,t)=>s+(t.montant||0),0)/tous.length) : null;
+  const n = tous.length;
+
+  // Statistiques
+  const moyenne    = n ? Math.round(tous.reduce((s,t)=>s+(t.pctBenef||0),0)/n*100)/100 : null;
+  const moyBenef   = n ? Math.round(tous.reduce((s,t)=>s+(t.benefice||0),0)/n) : null;
+  const moyMontant = n ? Math.round(tous.reduce((s,t)=>s+(t.montant||0),0)/n) : null;
+
+  const maxMontant = n ? Math.max(...tous.map(t=>t.montant||0)) : null;
+  const maxBenef   = n ? Math.max(...tous.map(t=>t.benefice||0)) : null;
+  const maxPct     = n ? Math.max(...tous.map(t=>t.pctBenef||0)) : null;
+  const minMontant = n ? Math.min(...tous.map(t=>t.montant||0)) : null;
+  const minBenef   = n ? Math.min(...tous.map(t=>t.benefice||0)) : null;
+  const minPct     = n ? Math.min(...tous.map(t=>t.pctBenef||0)) : null;
 
   if (!tous.length) {
     tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:20px;color:var(--text3)">Aucun contrat enregistré</td></tr>';
     return;
   }
 
-  // Trier par % bénéfice décroissant, en gardant l'index original
+  // Trier par date du transport (plus proche en premier), index original conservé
   const sortedIdx = tous
     .map((t, i) => i)
-    .sort((a, b) => (tous[b].pctBenef||0) - (tous[a].pctBenef||0));
+    .sort((a, b) => {
+      const da = tous[a].dateTransport || '';
+      const db = tous[b].dateTransport || '';
+      return da.localeCompare(db);
+    });
+
+  const todayISO = today();
+  const in3days  = new Date(); in3days.setDate(in3days.getDate() + 3);
+  const in3ISO   = in3days.toISOString().slice(0,10);
 
   tbody.innerHTML = sortedIdx.map(origIdx => {
     const t = tous[origIdx];
     const color = (t.pctBenef||0) >= 90 ? 'var(--green)' : (t.pctBenef||0) >= 80 ? 'var(--yellow)' : 'var(--red)';
-    return `<tr>
-      <td class="mono" style="font-weight:700">${t.num||'—'}</td>
+    const dateISO = (t.dateTransport||'').replace(/(\d{2})\/(\d{2})\/(\d{4})/,'$3-$2-$1');
+    const proche  = dateISO >= todayISO && dateISO <= in3ISO;
+    const rowBg   = proche ? 'background:rgba(245,158,11,0.08)' : '';
+    return `<tr style="${rowBg}">
+      <td class="mono" style="font-weight:700">${proche?'⚡ ':''}<span style="color:${proche?'var(--yellow)':'inherit'}">${t.num||'—'}</span></td>
       <td style="font-size:11px">${t.demandeur||'—'}</td>
-      <td class="mono" style="font-size:11px">${t.dateTransport||'—'}</td>
+      <td class="mono" style="font-size:11px;color:${proche?'var(--yellow)':'inherit'};font-weight:${proche?700:400}">${t.dateTransport||'—'}</td>
       <td class="mono">${fmtNum(t.km||0)} km</td>
       <td class="mono" style="color:var(--green)">${fmt(t.montant||0)}</td>
       <td class="mono" style="color:var(--red)">${fmt(t.coutCarbu||0)}</td>
@@ -6135,15 +6169,21 @@ function renderTourisme() {
       </td>
       <td><button class="btn btn-danger btn-xs" onclick="supprimerContratTourisme(${origIdx})">✕</button></td>
     </tr>`;
-  }).join('') + (tous.length > 0 ? `
-    <tr style="border-top:2px solid var(--border);background:var(--surface2);font-size:11px">
-      <td colspan="4" style="text-align:right;color:var(--text3);padding:6px 8px;font-style:italic">Moyennes (${tous.length} contrat(s))</td>
-      <td style="font-weight:700;color:var(--green)">${fmt(moyMontant??0)}</td>
-      <td colspan="3"></td>
-      <td style="font-weight:700;color:${(moyBenef??0)>=0?'var(--green)':'var(--red)'}">${fmt(moyBenef??0)}</td>
-      <td style="font-weight:700;color:${(moyenne??0)>=90?'var(--green)':(moyenne??0)>=80?'var(--yellow)':'var(--red)'}">${moyenne??0}%</td>
-      <td colspan="2"></td>
-    </tr>` : '');
+  }).join('');
+
+  // Stats dans le footer sous le tableau (pas dans tbody)
+  const footer = document.getElementById('tourisme-stats-footer');
+  if (footer && n > 0) {
+    const statCell = (label, val, color) =>
+      `<span style="color:var(--text3)">${label}</span> <b style="color:${color}">${val}</b>`;
+    footer.innerHTML = `
+      <span style="color:var(--text3);font-weight:600;margin-right:8px">📊 ${n} contrat(s)</span>
+      <span style="border-left:1px solid var(--border);padding-left:12px">Moy. : ${statCell('Montant',fmt(moyMontant??0),'var(--green)')} · ${statCell('Bénéf.',fmt(moyBenef??0),(moyBenef??0)>=0?'var(--green)':'var(--red)')} · ${statCell('%',`${moyenne??0}%`,(moyenne??0)>=90?'var(--green)':(moyenne??0)>=80?'var(--yellow)':'var(--red)')}</span>
+      <span style="border-left:1px solid var(--border);padding-left:12px">Max : ${statCell('',fmt(maxMontant??0),'var(--green)')} · ${statCell('',fmt(maxBenef??0),'var(--green)')} · ${statCell('',`${maxPct??0}%`,'var(--green)')}</span>
+      <span style="border-left:1px solid var(--border);padding-left:12px">Min : ${statCell('',fmt(minMontant??0),'var(--text2)')} · ${statCell('',fmt(minBenef??0),(minBenef??0)>=0?'var(--green)':'var(--red)')} · ${statCell('',`${minPct??0}%`,(minPct??0)>=90?'var(--green)':(minPct??0)>=80?'var(--yellow)':'var(--red)')}</span>`;
+  } else if (footer) {
+    footer.innerHTML = '';
+  }
 }
 
 function renderGasoil() {
