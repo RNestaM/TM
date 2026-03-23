@@ -864,7 +864,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:Inter, var(--font-sans, sans-serif);background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v148</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:Inter, var(--font-sans, sans-serif);background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v150</span>
       <button id="sync-status" onclick="syncPush(true)" title="Cliquer pour synchroniser maintenant" style="font-size:11px;font-family:Inter, var(--font-sans, sans-serif);padding:3px 8px;border-radius:4px;display:none;cursor:pointer;border:none"></button>
       <span id="ext-status" style="font-size:11px;font-family:Inter, var(--font-sans, sans-serif);padding:3px 10px;border-radius:6px;display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(100,100,100,0.3);background:rgba(100,100,100,0.08);color:var(--text3)" title="Extension Firefox">🦊 Extension inactive</span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
@@ -7444,16 +7444,31 @@ function renderPrepaAff() {
   const rLabel = reseau === 'normal' ? 'Normal' : reseau === 'nocturne' ? 'Nocturne' : 'Scolaire';
   if (title) title.textContent = '\uD83D\uDC65 Fréquentation prépa — ' + rLabel + ' — N' + n;
 
-  const lignes = (state.cfgLignesParNiveau?.[n] || []).filter(l => {
-    if (reseau === 'nocturne') return l.num.startsWith('PL') || l.num.startsWith('PLEINE');
-    if (reseau === 'scolaire') return /^(6\d\d)$/.test(l.num);
-    return !l.num.startsWith('PL') && !l.num.startsWith('PLEINE') && !/^(6\d\d)$/.test(l.num);
-  });
-
   // Fréquences : prépa niveau d'abord, sinon fallback sur niveau jeu actif
   const freqData = state.freqCibles?.[n]?.[periKey]?.[reseau]
     || state.freqCibles?.[state.niveauJeu]?.[periKey]?.[reseau]
     || {};
+
+  // Lignes : construites depuis freqData (source de vérité pour les fréquences)
+  // enrichies avec les infos de cfg (couleur, durée, véhicules) si disponibles
+  const nLignes = state.cfgLignesParNiveau?.[n]?.length ? n : (state.niveauJeu || 4);
+  const cfgLignes = state.cfgLignesParNiveau?.[nLignes] || [];
+  const cfgByNum = {};
+  cfgLignes.forEach(l => { cfgByNum[l.num] = l; });
+
+  // Prendre toutes les lignes présentes dans freqData, triées numériquement
+  const lignesNums = Object.keys(freqData).sort((a, b) => {
+    const na = parseInt(a) || 0, nb = parseInt(b) || 0;
+    return na !== nb ? na - nb : a.localeCompare(b);
+  });
+
+  const lignes = lignesNums
+    .filter(num => {
+      if (reseau === 'nocturne') return num.startsWith('PL') || num.startsWith('PLEINE');
+      if (reseau === 'scolaire') return /^(6\d\d)$/.test(num);
+      return !num.startsWith('PL') && !num.startsWith('PLEINE') && !/^(6\d\d)$/.test(num);
+    })
+    .map(num => cfgByNum[num] || { num, couleur: '#888', duree: 0, vehicules: '—', bornes: false });
 
   const groupes = reseau === 'nocturne'
     ? CRENEAU_GROUPES_FREQ_NOCTURNE
@@ -7477,8 +7492,7 @@ function renderPrepaAff() {
   // Helper : générer un thead pour une table
   function makeTheadHTML() {
     return '<tr>'
-      + '<th rowspan="2" style="position:sticky;left:0;z-index:6;background:' + BG2 + ';min-width:55px;border-right:2px solid var(--border);text-align:center">Ligne</th>'
-      + '<th rowspan="2" style="position:sticky;left:55px;z-index:6;background:' + BG2 + ';min-width:38px;border-right:3px solid var(--border);font-size:12px;text-align:center">Dur.</th>'
+      + '<th rowspan="2" style="position:sticky;left:0;z-index:6;background:' + BG2 + ';min-width:90px;border-right:2px solid var(--border);text-align:center">Ligne</th>'
       + '<th rowspan="2" style="background:' + BG2 + ';min-width:80px;border-right:2px solid var(--border);text-align:right;color:var(--text3)"></th>'
       + '<th style="text-align:center;background:#1a3a6b;color:#60a5fa;font-weight:700;font-size:13px;border-left:3px solid #60a5fa">Semaine HP</th>'
       + '</tr><tr>'
@@ -7510,6 +7524,7 @@ function renderPrepaAff() {
     var freqVals = freqData[freqKey] || [];
     var couleur  = ligne.couleur || '#888';
     var dureeAR  = ligne.duree || 0;
+    var vehicules = (ligne.vehicules || '').replace(/ - /g,'<br>');
     var bornes   = ligne.bornes ? '<div style="color:#ffe;font-size:11px">⚡</div>' : '';
 
     var fi = freqIdxMap['sem_pointe'];
@@ -7532,8 +7547,7 @@ function renderPrepaAff() {
     var colTD = function(style, val) { return '<td style="text-align:center;' + BL + ';' + style + '">' + val + '</td>'; };
 
     return '<tr>'
-      + '<td rowspan="6" style="background:' + couleur + ';padding:3px 4px;border-right:2px solid var(--border);' + TT + ';vertical-align:middle;text-align:center;min-width:55px"><div style="color:#fff;font-weight:700;font-size:13px">' + ligne.num + '</div>' + bornes + '</td>'
-      + '<td rowspan="6" style="background:' + couleur + '44;border-right:3px solid var(--border);' + TT + ';text-align:center;vertical-align:middle;font-size:12px;color:#fff;padding:2px;min-width:38px">' + (dureeAR>0?dureeAR+'m':'—') + '</td>'
+      + '<td rowspan="6" style="background:' + couleur + ';padding:4px 6px;border-right:2px solid var(--border);' + TT + ';vertical-align:middle;text-align:center;min-width:90px"><div style="color:#fff;font-weight:700;font-size:14px">' + ligne.num + '</div>' + bornes + (vehicules ? '<div style="color:#ffffffcc;font-size:11px;margin-top:3px;line-height:1.3">' + vehicules + '</div>' : '') + '</td>'
       + '<td style="' + LBL + TT + '">Fréquentation</td>'
       + colTD(TT, cible===(-1)?'●':(cible>0?cible:'—'))
       + '</tr><tr>'
