@@ -864,7 +864,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:Inter, var(--font-sans, sans-serif);background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v144</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:Inter, var(--font-sans, sans-serif);background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v145</span>
       <button id="sync-status" onclick="syncPush(true)" title="Cliquer pour synchroniser maintenant" style="font-size:11px;font-family:Inter, var(--font-sans, sans-serif);padding:3px 8px;border-radius:4px;display:none;cursor:pointer;border:none"></button>
       <span id="ext-status" style="font-size:11px;font-family:Inter, var(--font-sans, sans-serif);padding:3px 10px;border-radius:6px;display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(100,100,100,0.3);background:rgba(100,100,100,0.08);color:var(--text3)" title="Extension Firefox">🦊 Extension inactive</span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
@@ -2858,6 +2858,7 @@ if (!state.freqCibles) state.freqCibles = {};
 if (!state.freqCiblesPrepa) state.freqCiblesPrepa = {};
 if (state.prepaNiveauFreq === undefined) state.prepaNiveauFreq = 5;
 if (state.prepaModeVacances === undefined) state.prepaModeVacances = false;
+if (state.prepaAffVide === undefined) state.prepaAffVide = false;
 if (state.themes.length === 0) state.themes = [
   {id:'th_rec_gen',nom:'Recettes générales',type:'recette',couleur:'#10b981',categories:[
     {id:'c_gains_bonus',nom:'Gains bonus quotidien',couleur:'#6ee7b7',regles:[]},
@@ -7239,6 +7240,7 @@ function ajouterLignePrepaFreq() {
 function clearPrepaCreneaux() {
   if (!confirm('Vider toutes les affectations prépa ? Les affectations réelles ne sont pas touchées.')) return;
   state.affCreneauxPrepa = {};
+  state.prepaAffVide = true;
   saveStateWithSync();
   renderPrepaCreneaux();
   toastMsg('Affectation prépa vidée', 'info');
@@ -7247,6 +7249,7 @@ function clearPrepaCreneaux() {
 function copierCreneauxVersPrepa() {
   if (!confirm('Copier toutes les affectations réelles vers la prépa ?\n\nCela écrase les créneaux prépa existants.')) return;
   state.affCreneauxPrepa = JSON.parse(JSON.stringify(state.affCreneaux || {}));
+  state.prepaAffVide = false;
   saveStateWithSync();
   renderPrepaCreneaux();
   toastMsg('Affectations copiées vers prépa', 'success');
@@ -7378,6 +7381,7 @@ function setPrepaAffReseau(el) {
 function clearPrepaAff() {
   if (!confirm('Vider toutes les affectations prépa ? Les affectations réelles du jeu ne sont pas touchées.')) return;
   state.affCreneauxPrepa = {};
+  state.prepaAffVide = true;
   saveStateWithSync();
   renderPrepaAff();
   toastMsg('Affectations prépa vidées', 'info');
@@ -7385,7 +7389,10 @@ function clearPrepaAff() {
 
 function getPrepaAffCreneaux(busNom) {
   if (!state.affCreneauxPrepa) state.affCreneauxPrepa = {};
-  if (!state.affCreneauxPrepa[busNom]) {
+  // Si le tableau a été vidé volontairement (flag prepaAffVide), on NE copie pas depuis le réel
+  if (state.prepaAffVide) {
+    if (!state.affCreneauxPrepa[busNom]) state.affCreneauxPrepa[busNom] = {};
+  } else if (!state.affCreneauxPrepa[busNom]) {
     state.affCreneauxPrepa[busNom] = Object.assign({}, state.affCreneaux?.[busNom] || {});
   }
   return state.affCreneauxPrepa[busNom];
@@ -7395,7 +7402,10 @@ function getBusAffectesLignePrepa(ligneNum, creneauId) {
   const cible = normaliseLigneNum(ligneNum);
   const buses = [];
   state.bus.forEach(b => {
-    const aff = state.affCreneauxPrepa?.[b.nom] ?? state.affCreneaux?.[b.nom] ?? {};
+    // Si vidé volontairement, on ne fallback PAS sur les affectations réelles
+    const aff = state.prepaAffVide
+      ? (state.affCreneauxPrepa?.[b.nom] || {})
+      : (state.affCreneauxPrepa?.[b.nom] ?? state.affCreneaux?.[b.nom] ?? {});
     const val = normaliseLigneNum(aff[creneauId] || '');
     if (val === cible) buses.push(b);
   });
