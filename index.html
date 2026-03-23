@@ -840,7 +840,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v120</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v121</span>
       <button id="sync-status" onclick="syncPush(true)" title="Cliquer pour synchroniser maintenant" style="font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 8px;border-radius:4px;display:none;cursor:pointer;border:none"></button>
       <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
@@ -5800,7 +5800,7 @@ function renderCompta() {
   let rep = '';
   Object.entries(catsDep).sort((a,b)=>b[1]-a[1]).forEach(([cat, val]) => {
     const pct = depenses > 0 ? Math.round(val/depenses*100) : 0;
-    rep += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px"><span style="font-size:11px;color:var(--text2);min-width:120px;flex:0 0 auto">${cat}</span><div style="flex:1;max-width:500px;height:10px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:${pct}%;height:100%;background:var(--accent2);border-radius:3px"></div></div><span style="font-size:10px;color:var(--text3);min-width:80px;text-align:right">${pct}% — ${fmt(val)}</span></div>`;
+    rep += `<div style="display:grid;grid-template-columns:220px 300px 110px;align-items:center;gap:8px;margin-bottom:3px"><span style="font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${cat}">${cat}</span><div style="height:10px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:${pct}%;height:100%;background:var(--accent2);border-radius:3px"></div></div><span style="font-size:10px;color:var(--text3);text-align:right">${pct}% — ${fmt(val)}</span></div>`;
   });
   const elRep = document.getElementById('compta-repartition');
   if (elRep) elRep.innerHTML = rep || '<div style="color:var(--text3)">Aucune dépense.</div>';
@@ -5811,7 +5811,7 @@ function renderCompta() {
   let repRec = '';
   Object.entries(catsRec).sort((a,b)=>b[1]-a[1]).forEach(([cat, val]) => {
     const pct = recettes > 0 ? Math.round(val/recettes*100) : 0;
-    repRec += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px"><span style="font-size:11px;color:var(--text2);min-width:120px;flex:0 0 auto">${cat}</span><div style="flex:1;max-width:500px;height:10px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:${pct}%;height:100%;background:var(--green);border-radius:3px"></div></div><span style="font-size:10px;color:var(--text3);min-width:80px;text-align:right">${pct}% — ${fmt(val)}</span></div>`;
+    repRec += `<div style="display:grid;grid-template-columns:220px 300px 110px;align-items:center;gap:8px;margin-bottom:3px"><span style="font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${cat}">${cat}</span><div style="height:10px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:${pct}%;height:100%;background:var(--green);border-radius:3px"></div></div><span style="font-size:10px;color:var(--text3);text-align:right">${pct}% — ${fmt(val)}</span></div>`;
   });
   const elRepRec = document.getElementById('compta-repartition-rec');
   if (elRepRec) elRepRec.innerHTML = repRec || '<div style="color:var(--text3)">Aucune recette.</div>';
