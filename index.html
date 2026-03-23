@@ -728,6 +728,9 @@
       <div class="nav-item" data-page="abribus" onclick="nav(this)">
         <span class="icon">🏠</span> Abribus
       </div>
+      <div class="nav-item" data-page="renovation" onclick="nav(this)">
+        <span class="icon">🔨</span> Rénovation
+      </div>
     </div>
 
     <div class="sidebar-section">
@@ -840,7 +843,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v121</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v122</span>
       <button id="sync-status" onclick="syncPush(true)" title="Cliquer pour synchroniser maintenant" style="font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 8px;border-radius:4px;display:none;cursor:pointer;border:none"></button>
       <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
@@ -1212,6 +1215,52 @@
             </tr></thead>
             <tbody id="abribus-tbody"></tbody>
           </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ RÉNOVATION ═══ -->
+    <div id="page-renovation" class="page">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+
+        <!-- Tableau gauche : État technique -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🔧 État technique</div>
+            <span style="font-size:11px;color:var(--text3)" id="renov-tech-count"></span>
+          </div>
+          <div class="card-body" style="padding:0;overflow-x:auto">
+            <table class="data-table" id="renov-tech-table">
+              <thead><tr>
+                <th>Statut</th>
+                <th>Numéro de parc</th>
+                <th onclick="sortRenov('tech','etatTech')" style="cursor:pointer">État tech ↕</th>
+                <th>État int.</th>
+                <th>Remplacé par</th>
+              </tr></thead>
+              <tbody id="renov-tech-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tableau droit : État intérieur -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🪑 État intérieur</div>
+            <span style="font-size:11px;color:var(--text3)" id="renov-int-count"></span>
+          </div>
+          <div class="card-body" style="padding:0;overflow-x:auto">
+            <table class="data-table" id="renov-int-table">
+              <thead><tr>
+                <th>Statut</th>
+                <th>Numéro de parc</th>
+                <th onclick="sortRenov('int','etatInt')" style="cursor:pointer">État int. ↕</th>
+                <th>État tech.</th>
+                <th>Remplacé par</th>
+              </tr></thead>
+              <tbody id="renov-int-tbody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -2742,7 +2791,7 @@ function nav(el) {
 
 function renderPage(page) {
   const r = { dashboard: renderDashboard, alertes: renderAlertes, parc: () => { renderParc(); renderRepartitionParc(); },
-    affectations: renderAffectations, frequentation: renderFrequentation, maintenance: renderMaintenance, abribus: renderAbribus,
+    affectations: renderAffectations, frequentation: renderFrequentation, maintenance: renderMaintenance, abribus: renderAbribus, renovation: renderRenovation,
     personnel: renderPersonnel, lignes: renderLignes, compta: renderCompta, bilan: renderBilan,
     pub: renderPub, achats: renderAchats, gasoil: renderGasoil, tourisme: renderTourisme, config: renderConfig, pubdispo: renderPubDispo, historique: renderHistoriqueBase };
   if (r[page]) r[page]();
@@ -3105,6 +3154,10 @@ function renderDashboard() {
     if (nbRevSoon > 0) msgs.push(`<div style="color:var(--yellow);font-size:16px;padding:3px 0">🔧 ${nbRevSoon} révision(s) à venir</div>`);
     const nbFCO = (state.personnel||[]).filter(p=>p.fco&&p.fco<=todayISO).length;
     if (nbFCO > 0) msgs.push(`<div style="color:var(--accent3);font-size:16px;padding:3px 0">🎓 ${nbFCO} FCO expirée(s)</div>`);
+    const nbRenovUrgent = (state.bus||[]).filter(b =>
+      (b.etatTech && parseInt(b.etatTech) < 45) || (b.etatInt && parseInt(b.etatInt) < 45)
+    ).length;
+    if (nbRenovUrgent > 0) msgs.push(`<div style="color:var(--red);font-size:16px;padding:3px 0">🔨 ${nbRenovUrgent} bus à rénover d'urgence</div>`);
     const nbContrat = (state.tourisme||[]).filter(t => {
       if (!t.dateTransport) return false;
       const iso = t.dateTransport.replace(/(\d{2})\/(\d{2})\/(\d{4})/,'$3-$2-$1');
@@ -3223,6 +3276,28 @@ function renderAlertes() {
 
   let html = '';
   let totalAujourdHui = 0;
+
+  // ── Rénovation urgente (état < 45) ───────────────────────
+  state.bus.forEach(b => {
+    const techAlert = b.etatTech && parseInt(b.etatTech) < 45;
+    const intAlert  = b.etatInt  && parseInt(b.etatInt)  < 45;
+    if (!techAlert && !intAlert) return;
+    const id = `renov_${b.nom}`;
+    const parts = [];
+    if (techAlert) parts.push(`état tech ${b.etatTech}/100`);
+    if (intAlert)  parts.push(`état int. ${b.etatInt}/100`);
+    const msg = parts.join(' · ');
+    const lu = estLu(id);
+    totalAujourdHui++;
+    alerts += `<div class="alert-box danger" style="margin-bottom:8px;opacity:${lu?0.5:1}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div><span style="font-weight:700">🔨 Rénovation urgente</span> — <b>${b.nom}</b><br>
+        <span style="font-size:11px;color:var(--text3)">${msg}</span></div>
+        ${btnLu(id)}
+      </div>
+    </div>`;
+  });
+
 
   // ── Contrats Tourisme dans les 3 prochains jours ────────
   html += `<div class="section-title">🚌 Contrats tourisme imminents</div>`;
@@ -5109,6 +5184,83 @@ function clearAbribus() { state.abribus = []; saveStateWithSync(); renderAbribus
 // ═══════════════════════════════════════════════════════
 //  PERSONNEL / FCO
 // ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+//  RÉNOVATION
+// ═══════════════════════════════════════════════════════
+let renovSort = { tech: 'etatTech', int: 'etatInt' };
+
+function sortRenov(table, col) {
+  renovSort[table] = col;
+  renderRenovation();
+}
+
+function renderRenovation() {
+  const buses = [...state.bus].filter(b => b.etatTech || b.etatInt);
+
+  const etatColor = (v) => {
+    if (!v) return 'var(--text3)';
+    const n = parseInt(v);
+    if (n < 45) return 'var(--red)';
+    if (n < 60) return 'var(--yellow)';
+    return 'var(--text)';
+  };
+
+  const mkRow = (b, mainField, secField) => {
+    const mainVal = b[mainField];
+    const secVal  = b[secField];
+    const nomUrl  = b.idJeu
+      ? `<a href="https://transport-manager.net/jeu/vehicle.php?id=${b.idJeu}" target="_blank"
+           style="color:var(--accent);text-decoration:none;font-weight:700;cursor:alias"
+           title="Voir le véhicule">${b.nom}</a>`
+      : `<b>${b.nom}</b>`;
+    const remp = state.planningCT?.[b.nom]?.remplacement || '';
+    const busKey = b.nom.replace(/[^a-zA-Z0-9]/g,'_');
+    const allBus = [...state.bus].sort((a,x)=>a.nom.localeCompare(x.nom)).filter(x=>x.nom!==b.nom);
+    const mainAlert = mainVal && parseInt(mainVal) < 45 ? 'background:rgba(239,68,68,0.08)' : '';
+
+    return `<tr style="${mainAlert}">
+      <td style="font-size:11px;color:${b.statut==='Indispo'?'var(--red)':b.statut==='Réserve'?'var(--yellow)':'var(--green)'}">${b.statut||'—'}</td>
+      <td>${nomUrl}</td>
+      <td class="mono" style="font-weight:700;color:${etatColor(mainVal)};text-align:center">${mainVal||'—'}</td>
+      <td class="mono" style="color:${etatColor(secVal)};text-align:center">${secVal||'—'}</td>
+      <td style="padding:2px 6px">
+        <input type="text" value="${remp}" placeholder="Filtrer..."
+          list="list-renov-${busKey}"
+          onchange="setRemplacementRenov('${b.nom}',this.value)"
+          style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:11px;padding:2px 6px;width:120px">
+        <datalist id="list-renov-${busKey}">
+          ${allBus.map(x=>`<option value="${x.nom}">`).join('')}
+        </datalist>
+      </td>
+    </tr>`;
+  };
+
+  // Tableau tech: trié par etatTech croissant
+  const techSorted = [...buses].filter(b => b.etatTech).sort((a,b) => (parseInt(a.etatTech)||999) - (parseInt(b.etatTech)||999));
+  const techBody = document.getElementById('renov-tech-tbody');
+  if (techBody) techBody.innerHTML = techSorted.map(b => mkRow(b,'etatTech','etatInt')).join('') || '<tr><td colspan="5" style="color:var(--text3);text-align:center;padding:16px">Aucune donnée</td></tr>';
+  const techCount = document.getElementById('renov-tech-count');
+  if (techCount) techCount.textContent = `${techSorted.filter(b=>parseInt(b.etatTech)<45).length} bus < 45 · ${techSorted.length} total`;
+
+  // Tableau int: trié par etatInt croissant
+  const intSorted = [...buses].filter(b => b.etatInt).sort((a,b) => (parseInt(a.etatInt)||999) - (parseInt(b.etatInt)||999));
+  const intBody = document.getElementById('renov-int-tbody');
+  if (intBody) intBody.innerHTML = intSorted.map(b => mkRow(b,'etatInt','etatTech')).join('') || '<tr><td colspan="5" style="color:var(--text3);text-align:center;padding:16px">Aucune donnée</td></tr>';
+  const intCount = document.getElementById('renov-int-count');
+  if (intCount) intCount.textContent = `${intSorted.filter(b=>parseInt(b.etatInt)<45).length} bus < 45 · ${intSorted.length} total`;
+}
+
+function setRemplacementRenov(busNom, remplacant) {
+  if (!state.planningCT) state.planningCT = {};
+  if (!state.planningCT[busNom]) state.planningCT[busNom] = {};
+  state.planningCT[busNom].remplacement = remplacant;
+  // Depuis Rénovation → raison atelier = Rénovation
+  if (remplacant) state.planningCT[busNom].raisonAtelier = 'Rénovation';
+  saveStateWithSync();
+  if (document.getElementById('page-affectations')?.classList.contains('active')) renderAffectations();
+  if (document.getElementById('page-maintenance')?.classList.contains('active')) renderMaintenance();
+}
+
 function renderPersonnel() {
   const pers = state.personnel;
 
