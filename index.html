@@ -615,8 +615,8 @@
     background: var(--surface2); color: var(--text2); font-size: 11px; font-weight: 600;
     cursor: pointer; transition: all 0.15s;
   }
-  .freq-tab.active { background: var(--cfg-green-dim); color: var(--cfg-green); border-color: var(--cfg-green); }
-  .freq-tab:hover { color: var(--cfg-green); }
+  .freq-tab.active, .prepa-freq-tab.active { background: var(--cfg-green-dim); color: var(--cfg-green); border-color: var(--cfg-green); }
+  .freq-tab:hover, .prepa-freq-tab:hover { color: var(--cfg-green); }
   #freq-table thead th { position: sticky; top: 0; z-index: 4; background: var(--surface2); }
   #freq-table td.freq-cell { cursor: pointer; text-align: right; font-family: Inter, var(--font-sans, sans-serif); font-size: 11px; }
   #freq-table td.freq-cell:hover { background: rgba(34,197,94,0.08); }
@@ -823,6 +823,16 @@
     </div>
 
     <div class="sidebar-section">
+      <div class="sidebar-section-title">Prépa Niveau</div>
+      <div class="nav-item cfg-nav" data-page="cfg-prepa-freq" onclick="navConfig(this)">
+        <span class="icon">🔬</span> Fréquentation prépa
+      </div>
+      <div class="nav-item cfg-nav" data-page="cfg-prepa-aff" onclick="navConfig(this)">
+        <span class="icon">📋</span> Affectation prépa
+      </div>
+    </div>
+
+    <div class="sidebar-section">
       <div class="sidebar-section-title">Danger</div>
       <div class="nav-item cfg-nav" data-page="cfg-reset" onclick="navConfig(this)">
         <span class="icon">🗑️</span> Réinitialisation
@@ -854,7 +864,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:Inter, var(--font-sans, sans-serif);background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v138</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:Inter, var(--font-sans, sans-serif);background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v140</span>
       <button id="sync-status" onclick="syncPush(true)" title="Cliquer pour synchroniser maintenant" style="font-size:11px;font-family:Inter, var(--font-sans, sans-serif);padding:3px 8px;border-radius:4px;display:none;cursor:pointer;border:none"></button>
       <span id="ext-status" style="font-size:11px;font-family:Inter, var(--font-sans, sans-serif);padding:3px 10px;border-radius:6px;display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(100,100,100,0.3);background:rgba(100,100,100,0.08);color:var(--text3)" title="Extension Firefox">🦊 Extension inactive</span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
@@ -2177,6 +2187,76 @@
       </div>
     </div>
 
+
+    <!-- ═══════════════════════ CFG — PRÉPA FRÉQUENTATION ═══ -->
+    <div id="page-cfg-prepa-freq" class="page">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px">
+        <div style="font-size:20px;font-weight:700;color:var(--cfg-green)">🔬 Fréquentation prépa</div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <!-- Niveau prépa -->
+          <div style="display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--cfg-green-border);border-radius:8px;padding:6px 12px">
+            <span style="font-size:11px;color:var(--text3)">Niveau prépa</span>
+            <button onclick="changerNiveauPrepa(-1)" style="background:none;border:none;color:var(--cfg-green);font-size:16px;cursor:pointer;padding:0 4px">◀</button>
+            <span id="prepa-freq-niveau-badge" style="font-size:18px;font-weight:700;color:var(--cfg-green);min-width:20px;text-align:center">5</span>
+            <button onclick="changerNiveauPrepa(+1)" style="background:none;border:none;color:var(--cfg-green);font-size:16px;cursor:pointer;padding:0 4px">▶</button>
+          </div>
+          <!-- Période prépa -->
+          <div style="display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--cfg-green-border);border-radius:8px;padding:6px 12px">
+            <span style="font-size:11px;color:var(--text3)">Période</span>
+            <button id="prepa-btn-normal" onclick="setPrepaVacances(false)" style="padding:4px 10px;border-radius:6px;border:none;cursor:pointer;font-size:11px;font-weight:600">Normale</button>
+            <button id="prepa-btn-vacances" onclick="setPrepaVacances(true)" style="padding:4px 10px;border-radius:6px;border:none;cursor:pointer;font-size:11px;font-weight:600">Vacances</button>
+          </div>
+          <!-- Réseau -->
+          <div style="display:flex;gap:4px">
+            <button class="prepa-freq-tab active" data-reseau="normal" onclick="setPrepaReseau(this)">🚌 Normal</button>
+            <button class="prepa-freq-tab" data-reseau="nocturne" onclick="setPrepaReseau(this)">🌙 Nocturne</button>
+            <button class="prepa-freq-tab" data-reseau="scolaire" onclick="setPrepaReseau(this)">🎒 Scolaire</button>
+          </div>
+          <button class="btn btn-sm" style="background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green)" onclick="copierFreqVersPrepa()">📋 Copier depuis niveau actif</button>
+          <button class="btn btn-sm" style="background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.3);color:var(--accent3)" onclick="ouvrirImportPrepaFreq()">📥 Coller un tableau</button>
+        </div>
+      </div>
+      <div id="prepa-freq-scolaire-warning" style="display:none;margin-bottom:10px;padding:8px 12px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:6px;font-size:11px;color:var(--yellow)">
+        ⚠️ Pas de lignes scolaires pendant les vacances.
+      </div>
+      <div class="card" style="border-color:var(--cfg-green-border)">
+        <div class="card-header" style="border-bottom-color:var(--cfg-green-border)">
+          <div class="card-title" style="color:var(--cfg-green)" id="prepa-freq-table-title">Réseau normal — Période normale — Niveau 5</div>
+          <div style="font-size:11px;color:var(--text3)">Cliquer sur une cellule pour modifier · Indépendant du niveau de jeu actuel</div>
+        </div>
+        <div class="card-body" style="padding:0;overflow-x:auto;max-height:600px;overflow-y:auto">
+          <table class="data-table" id="prepa-freq-table">
+            <thead id="prepa-freq-thead"></thead>
+            <tbody id="prepa-freq-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════ CFG — PRÉPA AFFECTATION ═══ -->
+    <div id="page-cfg-prepa-aff" class="page">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px">
+        <div style="font-size:20px;font-weight:700;color:var(--cfg-green)">📋 Affectation prépa</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="font-size:11px;color:var(--text3);padding:4px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px">
+            Basée sur le parc actuel · lecture + modification créneaux
+          </span>
+          <input type="text" id="prepa-aff-search" placeholder="🔍 Filtrer..." oninput="renderPrepaAff()"
+            style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:5px 10px;font-size:12px;width:180px">
+          <button class="btn btn-sm" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--red)"
+            onclick="clearPrepaAff()">🗑 Vider le tableau</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-body" style="padding:0;overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 180px)">
+          <table class="data-table" id="prepa-aff-table" style="border-collapse:separate;border-spacing:0;min-width:1200px">
+            <thead id="prepa-aff-thead" style="position:sticky;top:0;z-index:5"></thead>
+            <tbody id="prepa-aff-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- ═══════════════════════ CFG — SYNCHRONISATION ═══ -->
     <div id="page-cfg-sync" class="page">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
@@ -2525,6 +2605,52 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-import-prepa-freq">
+  <div class="modal" style="max-width:620px">
+    <div class="modal-header">
+      <div class="modal-title">📋 Importer un tableau de fréquentation</div>
+      <div class="modal-close" onclick="closeModal('modal-import-prepa-freq')">✕</div>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:center">
+        <div class="form-group" style="margin:0">
+          <label style="font-size:11px;color:var(--text3)">Niveau</label>
+          <select id="import-prepa-freq-niveau" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 10px;margin-left:6px">
+            <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+            <option value="4" selected>4</option><option value="5">5</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin:0">
+          <label style="font-size:11px;color:var(--text3)">Période</label>
+          <select id="import-prepa-freq-periode" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 10px;margin-left:6px">
+            <option value="normal">Normale</option>
+            <option value="vacances">Vacances scolaires</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin:0">
+          <label style="font-size:11px;color:var(--text3)">Type réseau</label>
+          <select id="import-prepa-freq-reseau" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 10px;margin-left:6px">
+            <option value="normal">Réseau normal</option>
+            <option value="nocturne">Nocturne</option>
+            <option value="scolaire">Scolaire</option>
+          </select>
+        </div>
+      </div>
+      <p style="font-size:11px;color:var(--text3);margin-bottom:8px">
+        Colle le tableau tel quel depuis le jeu. La première ligne (en-tête) et le titre de période sont ignorés automatiquement.
+      </p>
+      <textarea id="import-prepa-freq-textarea" rows="14"
+        placeholder="Période normale&#10;Ligne&#9;LU-VE Creuses&#9;LU-VE Pointes&#9;...&#10;1&#9;900&#9;1500&#9;..."
+        style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px;font-size:11px;font-family:Inter, var(--font-sans, sans-serif);resize:vertical;box-sizing:border-box"></textarea>
+      <div id="import-prepa-freq-preview" style="margin-top:8px;font-size:11px;color:var(--text3)"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-import-prepa-freq')">Annuler</button>
+      <button class="btn" style="background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green)" onclick="importerTableauPrepaFreq()">✓ Importer</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════════════════════════════════════ MODALS ═══ -->
 
 <!-- Modal Ajouter Bus -->
@@ -2740,6 +2866,9 @@ if (!state.affCreneaux) state.affCreneaux = {};
 if (state.niveauJeu === undefined) state.niveauJeu = 4;
 if (state.modeVacances === undefined) state.modeVacances = false;
 if (!state.freqCibles) state.freqCibles = {};
+if (!state.freqCiblesPrepa) state.freqCiblesPrepa = {};
+if (state.prepaNiveauFreq === undefined) state.prepaNiveauFreq = 5;
+if (state.prepaModeVacances === undefined) state.prepaModeVacances = false;
 if (state.themes.length === 0) state.themes = [
   {id:'th_rec_gen',nom:'Recettes générales',type:'recette',couleur:'#10b981',categories:[
     {id:'c_gains_bonus',nom:'Gains bonus quotidien',couleur:'#6ee7b7',regles:[]},
@@ -2834,7 +2963,7 @@ function resetTotal() {
   state.gasoil = []; state.journal = []; state.carburant = []; state.pubDispo = [];
   state.conso = { niveau: 5000, moy: 0 };
   state.config = { argentDepart: 0 };
-  state.prixKm = {}; state.cfgLignesParNiveau = {}; state.affCreneaux = {}; state.tourisme = []; state.todo = []; state.dashLayout = state.dashLayout || {}; state.lastImport = {}; state.themes = []; state.planningCT = {}; state.freqCibles = {}; state.niveauJeu = 4; state.modeVacances = false;
+  state.prixKm = {}; state.cfgLignesParNiveau = {}; state.affCreneaux = {}; state.tourisme = []; state.todo = []; state.dashLayout = state.dashLayout || {}; state.lastImport = {}; state.themes = []; state.planningCT = {}; state.freqCibles = {}; state.freqCiblesPrepa = {}; state.affCreneauxPrepa = {}; state.prepaNiveauFreq = 5; state.prepaModeVacances = false; state.niveauJeu = 4; state.modeVacances = false;
   saveState();
   // Supprimer les clés extension
   ['tm_ext_present','tm_ext_request'].forEach(k => localStorage.removeItem(k));
@@ -6906,6 +7035,337 @@ function viderTourisme() {
   window._tourismeParsed = null;
 }
 
+
+// ═══════════════════════════════════════════════════════
+//  PRÉPA NIVEAU — FRÉQUENTATION
+// ═══════════════════════════════════════════════════════
+
+let prepaFreqReseau = 'normal';
+
+function changerNiveauPrepa(delta) {
+  const n = Math.max(1, Math.min(5, (state.prepaNiveauFreq || 5) + delta));
+  state.prepaNiveauFreq = n;
+  saveStateWithSync();
+  renderPrepaFreq();
+}
+
+function setPrepaVacances(vac) {
+  state.prepaModeVacances = vac;
+  saveStateWithSync();
+  renderPrepaFreq();
+}
+
+function setPrepaReseau(el) {
+  document.querySelectorAll('.prepa-freq-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  prepaFreqReseau = el.dataset.reseau;
+  renderPrepaFreqTableau();
+}
+
+function getPrepaFreqData(niveau, vacances, reseau) {
+  return (state.freqCiblesPrepa?.[niveau]?.[vacances?'vacances':'normal']?.[reseau]) || {};
+}
+
+function copierFreqVersPrepa() {
+  const nSrc  = state.niveauJeu || 4;
+  const nDst  = state.prepaNiveauFreq || 5;
+  if (!confirm(`Copier toutes les données de fréquentation du niveau ${nSrc} vers le niveau prépa ${nDst} ?
+
+Cela écrasera les données prépa existantes.`)) return;
+  if (!state.freqCiblesPrepa) state.freqCiblesPrepa = {};
+  // Copie profonde
+  const src = state.freqCibles?.[nSrc];
+  if (src) {
+    state.freqCiblesPrepa[nDst] = JSON.parse(JSON.stringify(src));
+    saveStateWithSync();
+    toastMsg(`✅ Données N${nSrc} copiées vers prépa N${nDst}`, 'success');
+    renderPrepaFreqTableau();
+  } else {
+    toastMsg(`Aucune donnée pour N${nSrc}`, 'error');
+  }
+}
+
+function ouvrirImportPrepaFreq() {
+  const selN = document.getElementById('import-prepa-freq-niveau');
+  const selP = document.getElementById('import-prepa-freq-periode');
+  const selR = document.getElementById('import-prepa-freq-reseau');
+  if (selN) selN.value = state.prepaNiveauFreq || 5;
+  if (selP) selP.value = (state.prepaModeVacances || false) ? 'vacances' : 'normal';
+  if (selR) selR.value = prepaFreqReseau || 'normal';
+  const ta = document.getElementById('import-prepa-freq-textarea');
+  if (ta) ta.value = '';
+  openModal('modal-import-prepa-freq');
+}
+
+function importerTableauPrepaFreq() {
+  const texte   = document.getElementById('import-prepa-freq-textarea').value.trim();
+  const niveau  = parseInt(document.getElementById('import-prepa-freq-niveau').value);
+  const periode = document.getElementById('import-prepa-freq-periode').value;
+  const reseau  = document.getElementById('import-prepa-freq-reseau').value;
+  if (!texte) { toastMsg('Colle un tableau à importer', 'error'); return; }
+  const { data, nbLignes } = parseTableauFreq(texte);
+  if (!nbLignes) { toastMsg('Aucune ligne reconnue', 'error'); return; }
+  if (!confirm(`Importer ${nbLignes} lignes vers prépa N${niveau} — ${periode === 'vacances' ? 'Vacances' : 'Normale'} — ${reseau} ?`)) return;
+  if (!state.freqCiblesPrepa) state.freqCiblesPrepa = {};
+  if (!state.freqCiblesPrepa[niveau]) state.freqCiblesPrepa[niveau] = {};
+  if (!state.freqCiblesPrepa[niveau][periode]) state.freqCiblesPrepa[niveau][periode] = {};
+  state.freqCiblesPrepa[niveau][periode][reseau] = data;
+  saveStateWithSync();
+  closeModal('modal-import-prepa-freq');
+  renderPrepaFreqTableau();
+  toastMsg(`✅ ${nbLignes} lignes importées en prépa`, 'success');
+}
+
+function renderPrepaFreq() {
+  const n   = state.prepaNiveauFreq || 5;
+  const vac = state.prepaModeVacances || false;
+
+  const badge = document.getElementById('prepa-freq-niveau-badge');
+  if (badge) badge.textContent = n;
+
+  const btnN = document.getElementById('prepa-btn-normal');
+  const btnV = document.getElementById('prepa-btn-vacances');
+  if (btnN) { btnN.style.background = !vac ? 'var(--cfg-green)' : 'var(--surface2)'; btnN.style.color = !vac ? '#000' : 'var(--text2)'; }
+  if (btnV) { btnV.style.background = vac ? 'var(--yellow)' : 'var(--surface2)'; btnV.style.color = vac ? '#000' : 'var(--text2)'; }
+
+  const warn = document.getElementById('prepa-freq-scolaire-warning');
+  if (warn) warn.style.display = (vac && prepaFreqReseau === 'scolaire') ? 'block' : 'none';
+
+  renderPrepaFreqTableau();
+}
+
+function renderPrepaFreqTableau() {
+  const n      = state.prepaNiveauFreq || 5;
+  const vac    = state.prepaModeVacances || false;
+  const reseau = prepaFreqReseau;
+
+  const title = document.getElementById('prepa-freq-table-title');
+  const periodeLabel = vac ? 'Vacances' : 'Période normale';
+  const reseauLabel  = reseau === 'normal' ? 'Réseau normal' : reseau === 'nocturne' ? 'Réseau nocturne' : 'Lignes scolaires';
+  if (title) title.textContent = `${reseauLabel} — ${periodeLabel} — Prépa N${n}`;
+
+  if (vac && reseau === 'scolaire') {
+    const el = document.getElementById('prepa-freq-tbody');
+    const h  = document.getElementById('prepa-freq-thead');
+    if (el) el.innerHTML = '';
+    if (h)  h.innerHTML = '';
+    return;
+  }
+
+  const creneaux = reseau === 'nocturne' ? CRENEAUX_NOCTURNE : reseau === 'scolaire' ? CRENEAUX_SCOLAIRE : CRENEAUX_NORMAL;
+  const data     = getPrepaFreqData(n, vac, reseau);
+  const lignes   = Object.keys(data);
+
+  const thead = document.getElementById('prepa-freq-thead');
+  if (thead) thead.innerHTML = `<tr>
+    <th style="text-align:left;position:sticky;left:0;z-index:5;background:var(--surface2)">Ligne</th>
+    ${creneaux.map(cr => `<th style="text-align:right;font-size:10px">${cr}</th>`).join('')}
+  </tr>`;
+
+  const tbody = document.getElementById('prepa-freq-tbody');
+  if (!tbody) return;
+
+  if (!lignes.length) {
+    tbody.innerHTML = `<tr><td colspan="${creneaux.length+1}" style="text-align:center;padding:24px;color:var(--text3)">
+      Aucune donnée pour prépa N${n} — ${periodeLabel}.<br>
+      <button class="btn btn-sm" style="margin-top:8px;background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green)" onclick="ajouterLignePrepaFreq()">+ Ajouter une ligne</button>
+      <button class="btn btn-sm" style="margin-top:8px;margin-left:8px" onclick="copierFreqVersPrepa()">📋 Copier depuis N${state.niveauJeu||4}</button>
+    </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = lignes.map(ligne => {
+    const vals = data[ligne] || [];
+    return `<tr>
+      <td class="freq-ligne">${ligne}</td>
+      ${creneaux.map((cr, i) => {
+        const v = vals[i];
+        const display = v === null || v === undefined ? '—' : v === 'Active' ? '<span style="color:var(--green);font-weight:700">●</span>' : v;
+        return `<td class="freq-cell" onclick="editPrepaFreqCell(this,'${ligne}',${i})" data-ligne="${ligne}" data-idx="${i}">${display}</td>`;
+      }).join('')}
+    </tr>`;
+  }).join('') + `<tr><td colspan="${creneaux.length+1}" style="padding:6px 8px">
+    <button class="btn btn-sm btn-ghost" onclick="ajouterLignePrepaFreq()" style="font-size:11px">+ Ajouter une ligne</button>
+  </td></tr>`;
+}
+
+function editPrepaFreqCell(td, ligne, idx) {
+  if (td.classList.contains('editing')) return;
+  const current = td.textContent.trim();
+  const val = current === '—' ? '' : current === '●' ? 'Active' : current;
+  td.classList.add('editing');
+  td.innerHTML = `<input type="text" value="${val}" placeholder="—"
+    onblur="savePrepaFreqCell(this,'${ligne}',${idx})"
+    onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape'){this.value='CANCEL';this.blur();}">`;
+  td.querySelector('input').focus();
+  td.querySelector('input').select();
+}
+
+function savePrepaFreqCell(input, ligne, idx) {
+  const td = input.parentElement;
+  td.classList.remove('editing');
+  if (input.value === 'CANCEL') { renderPrepaFreqTableau(); return; }
+  const n      = state.prepaNiveauFreq || 5;
+  const vac    = state.prepaModeVacances || false;
+  const reseau = prepaFreqReseau;
+  const periKey = vac ? 'vacances' : 'normal';
+  if (!state.freqCiblesPrepa) state.freqCiblesPrepa = {};
+  if (!state.freqCiblesPrepa[n]) state.freqCiblesPrepa[n] = {};
+  if (!state.freqCiblesPrepa[n][periKey]) state.freqCiblesPrepa[n][periKey] = {};
+  if (!state.freqCiblesPrepa[n][periKey][reseau]) state.freqCiblesPrepa[n][periKey][reseau] = {};
+  if (!state.freqCiblesPrepa[n][periKey][reseau][ligne]) state.freqCiblesPrepa[n][periKey][reseau][ligne] = [];
+  const creneaux = reseau === 'nocturne' ? CRENEAUX_NOCTURNE : reseau === 'scolaire' ? CRENEAUX_SCOLAIRE : CRENEAUX_NORMAL;
+  while (state.freqCiblesPrepa[n][periKey][reseau][ligne].length < creneaux.length) state.freqCiblesPrepa[n][periKey][reseau][ligne].push(null);
+  const raw = input.value.trim();
+  if (raw === '' || raw === '-' || raw === '—') state.freqCiblesPrepa[n][periKey][reseau][ligne][idx] = null;
+  else if (raw.toLowerCase() === 'active') state.freqCiblesPrepa[n][periKey][reseau][ligne][idx] = 'Active';
+  else { const num = parseInt(raw); state.freqCiblesPrepa[n][periKey][reseau][ligne][idx] = isNaN(num) ? null : num; }
+  saveStateWithSync();
+  renderPrepaFreqTableau();
+}
+
+function ajouterLignePrepaFreq() {
+  const num = prompt('Numéro de ligne à ajouter :');
+  if (!num || !num.trim()) return;
+  const n      = state.prepaNiveauFreq || 5;
+  const vac    = state.prepaModeVacances || false;
+  const reseau = prepaFreqReseau;
+  const periKey = vac ? 'vacances' : 'normal';
+  const creneaux = reseau === 'nocturne' ? CRENEAUX_NOCTURNE : reseau === 'scolaire' ? CRENEAUX_SCOLAIRE : CRENEAUX_NORMAL;
+  if (!state.freqCiblesPrepa) state.freqCiblesPrepa = {};
+  if (!state.freqCiblesPrepa[n]) state.freqCiblesPrepa[n] = {};
+  if (!state.freqCiblesPrepa[n][periKey]) state.freqCiblesPrepa[n][periKey] = {};
+  if (!state.freqCiblesPrepa[n][periKey][reseau]) state.freqCiblesPrepa[n][periKey][reseau] = {};
+  state.freqCiblesPrepa[n][periKey][reseau][num.trim()] = new Array(creneaux.length).fill(null);
+  saveStateWithSync();
+  renderPrepaFreqTableau();
+}
+
+// ═══════════════════════════════════════════════════════
+//  PRÉPA NIVEAU — AFFECTATION (lecture parc actuel)
+// ═══════════════════════════════════════════════════════
+
+// state.affCreneauxPrepa : affectations brouillon indépendantes
+// Basé sur state.bus (toujours à jour), créneaux modifiables
+
+function getPrepaAffCreneaux(busNom) {
+  if (!state.affCreneauxPrepa) state.affCreneauxPrepa = {};
+  // Si pas encore de données prépa pour ce bus, copier depuis affectations réelles
+  if (!state.affCreneauxPrepa[busNom]) {
+    state.affCreneauxPrepa[busNom] = Object.assign({}, state.affCreneaux?.[busNom] || {});
+  }
+  return state.affCreneauxPrepa[busNom];
+}
+
+function renderPrepaAff() {
+  if (!state.affCreneauxPrepa) state.affCreneauxPrepa = {};
+  const search = (document.getElementById('prepa-aff-search')?.value || '').toLowerCase();
+  let allBus = [...state.bus].sort((a, b) => a.nom.localeCompare(b.nom));
+  if (search) allBus = allBus.filter(b => b.nom.toLowerCase().includes(search));
+
+  const NCOLS = AFF_CRENEAUX.length;
+  const BG2   = 'var(--surface2)';
+
+  const groupes = [];
+  let lastG = null, cnt = 0;
+  AFF_CRENEAUX.forEach((c, i) => {
+    if (c.groupe !== lastG) {
+      if (lastG !== null) groupes.push({ g: lastG, n: cnt });
+      lastG = c.groupe; cnt = 1;
+    } else cnt++;
+    if (i === NCOLS - 1) groupes.push({ g: lastG, n: cnt });
+  });
+  const groupeStartIdx = {};
+  let gi = 0;
+  groupes.forEach(gr => { groupeStartIdx[gi] = gr.g; gi += gr.n; });
+
+  const thead = document.getElementById('prepa-aff-thead');
+  if (thead) {
+    const thF = `position:sticky;z-index:6;background:${BG2};border-bottom:2px solid var(--border);text-align:center`;
+    thead.innerHTML = `<tr>
+      <th rowspan="2" style="${thF};left:0;min-width:130px;border-right:2px solid var(--border)">Bus</th>
+      <th rowspan="2" style="${thF};left:130px;min-width:50px;border-right:3px solid var(--border)">Places</th>
+      ${groupes.map(gr => {
+        const gc = AFF_GROUPE_COLORS[gr.g];
+        return `<th colspan="${gr.n}" style="text-align:center;background:${gc.bg};color:${gc.color};font-weight:700;font-size:11px;border-left:3px solid ${gc.color}66;border-bottom:2px solid var(--border)">${gr.g}</th>`;
+      }).join('')}
+      <th rowspan="2" style="${thF};text-align:center;min-width:50px;border-left:3px solid var(--border)">Total</th>
+    </tr><tr>
+      ${AFF_CRENEAUX.map((c, i) => {
+        const gc = AFF_GROUPE_COLORS[c.groupe];
+        const isFirst = (i in groupeStartIdx);
+        return `<th style="text-align:center;font-size:10px;background:${gc.bg}ee;color:${gc.color};border-bottom:2px solid var(--border);${isFirst?`border-left:3px solid ${gc.color}66`:''};padding:4px 2px"><div style="font-weight:600">${c.label}</div><div style="opacity:.7;font-weight:400">(${c.th})</div></th>`;
+      }).join('')}
+    </tr>`;
+  }
+
+  const tbody = document.getElementById('prepa-aff-tbody');
+  if (!tbody) return;
+
+  if (!allBus.length) {
+    tbody.innerHTML = `<tr><td colspan="${NCOLS+3}" style="text-align:center;padding:24px;color:var(--text3)">Aucun bus</td></tr>`;
+    return;
+  }
+
+  const parCat = {};
+  allBus.forEach(b => {
+    const cat = getAffCategorie(b.nom);
+    if (!parCat[cat.label]) parCat[cat.label] = [];
+    parCat[cat.label].push(b);
+  });
+
+  let rows = '';
+  const ordreLabels = [...AFF_CATEGORIES.map(c => c.label), 'Autres'];
+  ordreLabels.forEach(label => {
+    const busCat = parCat[label];
+    if (!busCat || !busCat.length) return;
+    const cat = AFF_CATEGORIES.find(c => c.label === label) || { label, color:'#6b7280' };
+    rows += `<tr><td colspan="${NCOLS+3}" style="background:${cat.color}22;color:${cat.color};font-size:11px;font-weight:700;padding:4px 12px;border-top:2px solid ${cat.color}55;text-align:center">${label}</td></tr>`;
+
+    busCat.forEach(b => {
+      const creneaux = getPrepaAffCreneaux(b.nom);
+      const totalC   = AFF_CRENEAUX.filter(c => creneaux[c.id] && creneaux[c.id] !== '').length;
+      rows += `<tr>
+        <td style="position:sticky;left:0;background:var(--surface);z-index:2;font-size:12px;border-right:2px solid var(--border);padding:4px 8px;white-space:nowrap;text-align:center"><b>${b.nom}</b></td>
+        <td class="mono" style="position:sticky;left:130px;background:var(--surface);z-index:2;text-align:center;border-right:3px solid var(--border);font-size:12px">${b.capa||'—'}</td>
+        ${AFF_CRENEAUX.map((c, ci) => {
+          const val = creneaux[c.id] || '';
+          const isFirstGrp = (ci in groupeStartIdx);
+          const leftBorder = isFirstGrp ? `border-left:3px solid ${AFF_GROUPE_COLORS[c.groupe].color}55` : 'border-left:1px solid var(--border)';
+          const cellBg = AFF_GROUPE_COLORS[c.groupe]?.bgCell || 'transparent';
+          return `<td class="aff-cell" style="text-align:center;cursor:pointer;font-size:12px;font-weight:600;color:${val?'var(--text)':'var(--text3)'};${leftBorder};padding:3px 4px;background:${cellBg}"
+            onclick="editPrepaAffCell(this,'${b.nom}','${c.id}')">${val||''}</td>`;
+        }).join('')}
+        <td class="mono" style="text-align:center;font-size:11px;font-weight:700;border-left:3px solid var(--border);color:${totalC>=8?'var(--red)':totalC>=6?'var(--yellow)':'var(--text2)'}">${totalC}</td>
+      </tr>`;
+    });
+  });
+  tbody.innerHTML = rows;
+}
+
+function editPrepaAffCell(td, busNom, creneauId) {
+  if (td.querySelector('input')) return;
+  const current = td.textContent.trim();
+  td.innerHTML = `<input type="text" value="${current}" placeholder="—" style="width:50px;font-size:11px;text-align:center;background:var(--surface2);border:1px solid var(--accent);border-radius:3px;color:var(--text);padding:2px 3px"
+    onblur="savePrepaAffCell(this,'${busNom}','${creneauId}')"
+    onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape'){this.value='CANCEL';this.blur();}">`;
+  td.querySelector('input').focus();
+  td.querySelector('input').select();
+}
+
+function savePrepaAffCell(input, busNom, creneauId) {
+  const td = input.parentElement;
+  if (input.value === 'CANCEL') { renderPrepaAff(); return; }
+  if (!state.affCreneauxPrepa) state.affCreneauxPrepa = {};
+  if (!state.affCreneauxPrepa[busNom]) state.affCreneauxPrepa[busNom] = Object.assign({}, state.affCreneaux?.[busNom] || {});
+  const val = input.value.trim();
+  if (!val || val === '—') delete state.affCreneauxPrepa[busNom][creneauId];
+  else state.affCreneauxPrepa[busNom][creneauId] = val;
+  saveStateWithSync();
+  td.textContent = val || '';
+  td.style.color = val ? 'var(--text)' : 'var(--text3)';
+}
+
 // ═══════════════════════════════════════════════════════
 //  OUTILS — AIDE PLANNING
 // ═══════════════════════════════════════════════════════
@@ -8058,6 +8518,8 @@ function navConfig(el) {
   const titles = {
     'historique':        '📜 Import Historique',
     'cfg-jeu':           '🎮 Jeu',
+    'cfg-prepa-freq':    '🔬 Fréquentation prépa',
+    'cfg-prepa-aff':     '📋 Affectation prépa',
     'config':            '⚙️ Paramètres financiers',
     'cfg-categories':    '🏷️ Catégories',
     'cfg-lignes':        '🛣️ Gestion des lignes',
@@ -8074,6 +8536,8 @@ function navConfig(el) {
   if (page === 'cfg-categories') renderCategories();
   if (page === 'cfg-frequentation') renderFrequentations();
   if (page === 'cfg-jeu') renderCfgJeu();
+  if (page === 'cfg-prepa-freq') renderPrepaFreq();
+  if (page === 'cfg-prepa-aff') renderPrepaAff();
   if (page === 'cfg-lignes') renderCfgLignes();
   if (page === 'cfg-sync') renderSyncPage();
 }
