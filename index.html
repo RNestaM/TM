@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Transport Manager — Gestion Parc</title>
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #0a0d14;
@@ -154,7 +154,8 @@
     gap: 12px;
   }
   #date-badge {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: Inter, var(--font-sans, sans-serif);
+    
     font-size: 11px;
     color: var(--text3);
     background: var(--surface2);
@@ -267,7 +268,8 @@
   }
   .data-table tr:last-child td { border-bottom: none; }
   .data-table tr:hover td { background: rgba(0,212,255,0.03); }
-  .data-table td.mono { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+  .data-table td.mono { font-family: Inter, var(--font-sans, sans-serif); font-size: 11px; }
+  .data-table td.id-num { font-size: 11px; color: var(--text3); font-variant-numeric: tabular-nums; }
 
   /* BADGES */
   .badge {
@@ -447,7 +449,7 @@
   .gauge-label { font-size: 11px; color: var(--text2); width: 100px; flex-shrink: 0; }
   .gauge-bar { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
   .gauge-fill { height: 100%; border-radius: 3px; }
-  .gauge-val { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text2); width: 40px; text-align: right; }
+  .gauge-val { font-family: Inter, var(--font-sans, sans-serif); font-size: 11px; color: var(--text2); width: 40px; text-align: right; }
 
   /* TIMELINE */
   .timeline { position: relative; padding-left: 20px; }
@@ -461,7 +463,7 @@
   .timeline-item.warn::before { background: var(--yellow); }
   .timeline-item.danger::before { background: var(--red); }
   .timeline-item.ok::before { background: var(--green); }
-  .timeline-date { font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+  .timeline-date { font-size: 10px; color: var(--text3); font-family: Inter, var(--font-sans, sans-serif); }
   .timeline-text { font-size: 12px; color: var(--text2); margin-top: 2px; }
 
   /* SCROLLBAR */
@@ -616,10 +618,10 @@
   .freq-tab.active { background: var(--cfg-green-dim); color: var(--cfg-green); border-color: var(--cfg-green); }
   .freq-tab:hover { color: var(--cfg-green); }
   #freq-table thead th { position: sticky; top: 0; z-index: 4; background: var(--surface2); }
-  #freq-table td.freq-cell { cursor: pointer; text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+  #freq-table td.freq-cell { cursor: pointer; text-align: right; font-family: Inter, var(--font-sans, sans-serif); font-size: 11px; }
   #freq-table td.freq-cell:hover { background: rgba(34,197,94,0.08); }
   #freq-table td.freq-cell.editing { background: rgba(34,197,94,0.15); padding: 0; }
-  #freq-table td.freq-cell input { width: 60px; background: transparent; border: none; color: var(--cfg-green); font-family: 'JetBrains Mono', monospace; font-size: 11px; text-align: right; padding: 4px 8px; outline: none; }
+  #freq-table td.freq-cell input { width: 60px; background: transparent; border: none; color: var(--cfg-green); font-family: Inter, var(--font-sans, sans-serif); font-size: 11px; text-align: right; padding: 4px 8px; outline: none; }
   #freq-table td.freq-ligne { font-weight: 700; position: sticky; left: 0; background: var(--surface); z-index: 1; }
 
     position: sticky;
@@ -658,10 +660,10 @@
   .bilan-table .bilan-solde-row td { font-weight:700; font-size:13px; background:rgba(0,212,255,0.1); border-top:3px solid var(--accent); padding:8px; }
 
   /* Cellules numériques */
-  .bilan-table td.num { text-align:right; font-family:'JetBrains Mono',monospace; }
+  .bilan-table td.num { text-align:right; font-family:Inter, var(--font-sans, sans-serif); }
   .bilan-table th { text-align:right; }
   .bilan-table th:first-child { text-align:left; }
-  .bilan-table td.zero { color:var(--text3); text-align:right; font-family:'JetBrains Mono',monospace; }
+  .bilan-table td.zero { color:var(--text3); text-align:right; font-family:Inter, var(--font-sans, sans-serif); }
   .bilan-table .col-total { background:rgba(239,68,68,0.12) !important; font-weight:700; color:var(--red); }
   .bilan-table .col-total.num { color:var(--red); }
   .bilan-table .col-moy { background:rgba(124,58,237,0.06) !important; color:var(--accent3); }
@@ -794,20 +796,16 @@
   <div id="sidebar-menu-config" style="flex:1;overflow-y:auto;display:none;flex-direction:column">
 
     <div class="sidebar-section">
-      <div class="sidebar-section-title">Données</div>
-      <div class="nav-item cfg-nav" data-page="historique" onclick="navConfig(this)">
-        <span class="icon">📜</span> Import Historique
+      <div class="sidebar-section-title">Paramètres</div>
+      <div class="nav-item cfg-nav" data-page="cfg-jeu" onclick="navConfig(this)">
+        <span class="icon">🎮</span> Jeu
       </div>
       <div class="nav-item cfg-nav" data-page="cfg-sync" onclick="navConfig(this)">
         <span class="icon">💾</span> Sauvegarde
         <span id="sync-nav-badge" style="margin-left:auto;font-size:9px;padding:2px 6px;border-radius:8px;display:none"></span>
       </div>
-    </div>
-
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Paramètres</div>
       <div class="nav-item cfg-nav" data-page="config" onclick="navConfig(this)">
-        <span class="icon">⚙️</span> Paramètres financiers
+        <span class="icon">⚙️</span> Financiers
       </div>
       <div class="nav-item cfg-nav" data-page="cfg-categories" onclick="navConfig(this)">
         <span class="icon">🏷️</span> Catégories
@@ -817,7 +815,7 @@
     <div class="sidebar-section">
       <div class="sidebar-section-title">Réseau</div>
       <div class="nav-item cfg-nav" data-page="cfg-lignes" onclick="navConfig(this)">
-        <span class="icon">🛣️</span> Gestion des lignes
+        <span class="icon">🛣️</span> Lignes
       </div>
       <div class="nav-item cfg-nav" data-page="cfg-frequentation" onclick="navConfig(this)">
         <span class="icon">📈</span> Fréquentations
@@ -828,6 +826,9 @@
       <div class="sidebar-section-title">Danger</div>
       <div class="nav-item cfg-nav" data-page="cfg-reset" onclick="navConfig(this)">
         <span class="icon">🗑️</span> Réinitialisation
+      </div>
+      <div class="nav-item cfg-nav" data-page="historique" onclick="navConfig(this)">
+        <span class="icon">📜</span> Import Historique
       </div>
     </div>
 
@@ -849,13 +850,13 @@
     <div id="topbar-title">Tableau de bord</div>
     <div id="topbar-solde" style="position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px">
       <span style="font-size:11px;color:var(--text3);letter-spacing:1px;text-transform:uppercase">Solde</span>
-      <span id="topbar-solde-val" style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:var(--green)">0 €</span>
+      <span id="topbar-solde-val" style="font-family:Inter, var(--font-sans, sans-serif);font-size:18px;font-weight:700;color:var(--green)">0 €</span>
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v132</span>
-      <button id="sync-status" onclick="syncPush(true)" title="Cliquer pour synchroniser maintenant" style="font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 8px;border-radius:4px;display:none;cursor:pointer;border:none"></button>
-      <span id="ext-status" style="font-size:10px;color:var(--text3);margin-right:4px" title="Extension Firefox"></span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:Inter, var(--font-sans, sans-serif);background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v137</span>
+      <button id="sync-status" onclick="syncPush(true)" title="Cliquer pour synchroniser maintenant" style="font-size:11px;font-family:Inter, var(--font-sans, sans-serif);padding:3px 8px;border-radius:4px;display:none;cursor:pointer;border:none"></button>
+      <span id="ext-status" style="font-size:11px;font-family:Inter, var(--font-sans, sans-serif);padding:3px 10px;border-radius:6px;display:none;border:1px solid var(--accent3);background:rgba(124,58,237,0.12)" title="Extension Firefox"></span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
     </div>
   </div>
@@ -1075,12 +1076,20 @@
       <!-- Vue COMPLÈTE (toutes les options) -->
       <div id="parc-view-full" style="display:none">
         <div class="card">
-          <div class="card-body" style="padding:0;overflow-x:auto">
+          <div class="card-body" style="padding:0;overflow-x:auto;overflow-y:auto;max-height:1000px">
             <table class="data-table" id="parc-table-full">
-              <thead><tr>
-                <th>ID</th><th>Numéro Parc</th><th>Modèle</th><th>Type</th><th>Énergie</th><th>Conso</th>
-                <th>Places</th><th>KM Actuel</th><th>KM Départ</th><th>Diff KM</th>
-                <th>CT</th><th>Révision</th><th>Tech</th><th>Int.</th>
+              <thead style="position:sticky;top:0;z-index:2;background:var(--surface2)"><tr>
+                <th onclick="sortParcFull('id')" style="cursor:pointer;user-select:none">ID ↕</th>
+                <th onclick="sortParcFull('nom')" style="cursor:pointer;user-select:none">Numéro Parc ↕</th>
+                <th>Modèle</th><th>Type</th><th>Énergie</th><th>Conso</th>
+                <th onclick="sortParcFull('capa')" style="cursor:pointer;user-select:none">Places ↕</th>
+                <th onclick="sortParcFull('km')" style="cursor:pointer;user-select:none">KM Actuel ↕</th>
+                <th>KM Départ</th>
+                <th onclick="sortParcFull('diffKm')" style="cursor:pointer;user-select:none">Diff KM ↕</th>
+                <th onclick="sortParcFull('ct')" style="cursor:pointer;user-select:none">CT ↕</th>
+                <th onclick="sortParcFull('rev')" style="cursor:pointer;user-select:none">Révision ↕</th>
+                <th onclick="sortParcFull('etatTech')" style="cursor:pointer;user-select:none">Tech ↕</th>
+                <th onclick="sortParcFull('etatInt')" style="cursor:pointer;user-select:none">Int. ↕</th>
                 <th>Balise</th><th>Self-S.</th><th>Btn Arrêt</th><th>Caméra</th>
                 <th>Pub Arr.</th><th>Pub Av.</th><th>Pub Lat.</th>
                 <th>Rack Bag.</th><th>Rack Vél.</th><th>Ethylo</th>
@@ -1179,7 +1188,7 @@
           </p>
           <div id="alliance-result"></div>
           <div id="alliance-texte-container" style="display:none;margin-top:10px">
-            <textarea id="alliance-texte" rows="5" readonly style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px;font-family:'JetBrains Mono',monospace;font-size:11px;box-sizing:border-box"></textarea>
+            <textarea id="alliance-texte" rows="5" readonly style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px;font-family:Inter, var(--font-sans, sans-serif);font-size:11px;box-sizing:border-box"></textarea>
             <button class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="copierAllianceTexte()">📋 Copier</button>
           </div>
         </div>
@@ -1318,10 +1327,7 @@
     <div id="page-frequentation" class="page">
       <!-- Barre de contrôle -->
       <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
-        <button id="freq-btn-normal" onclick="setFreqPeriode(false)"
-          style="padding:6px 14px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600">Période normale</button>
-        <button id="freq-btn-vacances" onclick="setFreqPeriode(true)"
-          style="padding:6px 14px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600">Vacances scolaires</button>
+
         <div id="freq-reseau-tabs" style="display:flex;gap:4px">
           <button class="freq-tab active" data-reseau="normal"   onclick="setFreqReseau(this)">🚌 Normal</button>
           <button class="freq-tab"        data-reseau="nocturne" onclick="setFreqReseau(this)">🌙 Nocturne</button>
@@ -1352,10 +1358,8 @@
 
     <!-- ═══════════════════════════════════════════ LIGNES ═══ -->
     <div id="page-lignes" class="page">
-      <div class="card" style="margin-bottom:14px">
-        <div class="card-header"><div class="card-title">📊 Statistiques globales</div></div>
-        <div class="card-body" id="stats-lignes-recap"></div>
-      </div>
+      <!-- stats-lignes-recap supprimé (doublon) -->
+      <div id="stats-lignes-recap" style="display:none"></div>
       <div class="card" style="margin-top:14px">
         <div class="card-header">
           <div class="card-title">Stats par ligne (depuis CSV)</div>
@@ -1384,16 +1388,13 @@
 
     <!-- ═══════════════════════════════════════════ BILAN ═══ -->
     <div id="page-bilan" class="page">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
-        <div style="font-size:20px;font-weight:700;color:var(--text)">📊 Tableau financier</div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <select id="bilan-annee" onchange="renderBilan()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 10px;font-size:12px"></select>
-          <button class="btn btn-ghost btn-sm" onclick="exportBilanCSV()">⬇️ Export CSV</button>
-        </div>
+      <div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:10px;gap:8px;flex-wrap:wrap">
+        <select id="bilan-annee" onchange="renderBilan()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 10px;font-size:12px"></select>
+        <button class="btn btn-ghost btn-sm" onclick="exportBilanCSV()">⬇️ Export CSV</button>
       </div>
 
       <!-- Stat cards résumé -->
-      <div class="stat-cards" style="margin-bottom:14px" id="bilan-stat-cards"></div>
+      <div class="stat-cards" style="margin-bottom:10px" id="bilan-stat-cards"></div>
 
       <!-- Tableau -->
       <div class="card">
@@ -1510,7 +1511,7 @@
             Colle le contenu de ton tableau (Google Sheets → Copier tout). Le parser détecte automatiquement les années (2023, 2024, 2025, 2026…) et les 12 mois en colonnes côte à côte.
             Format attendu : <code style="background:var(--surface);padding:1px 4px;border-radius:3px">vide | Date | Libellé | Dépenses | Revenus</code> × 12 colonnes.
           </p>
-          <textarea id="histo-textarea" rows="12" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:8px;resize:vertical;outline:none;line-height:1.4" placeholder="Colle ici le tableau copié depuis Google Sheets...&#10;&#10;La première ligne doit contenir les en-têtes (Date de l'opération, Libellé, Dépenses, Revenus...)"></textarea>
+          <textarea id="histo-textarea" rows="12" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:Inter, var(--font-sans, sans-serif);font-size:10px;padding:8px;resize:vertical;outline:none;line-height:1.4" placeholder="Colle ici le tableau copié depuis Google Sheets...&#10;&#10;La première ligne doit contenir les en-têtes (Date de l'opération, Libellé, Dépenses, Revenus...)"></textarea>
           <div id="histo-preview" style="margin-top:12px;display:none">
             <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:var(--accent)">Aperçu de l'analyse :</div>
             <div id="histo-preview-content" style="font-size:11px;color:var(--text2);background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px;max-height:200px;overflow-y:auto"></div>
@@ -1554,7 +1555,7 @@
           </div>
           <div class="card-body" style="padding:8px 12px">
             <textarea id="eval-textarea" rows="4" placeholder="Coldgate&#9;8&#9;39&#9;Panneau de pub Latéral&#9;25 j&#9;25/03/2026&#9;22 400€&#9;Consulter"
-              style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px;font-size:11px;font-family:'JetBrains Mono',monospace;resize:vertical;box-sizing:border-box"></textarea>
+              style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px;font-size:11px;font-family:Inter, var(--font-sans, sans-serif);resize:vertical;box-sizing:border-box"></textarea>
             <div id="eval-result" style="margin-top:8px"></div>
           </div>
         </div>
@@ -1566,7 +1567,7 @@
             <button class="btn btn-primary btn-sm" onclick="importerContratsPub()">✓ Importer</button>
           </div>
           <div class="card-body" style="padding:8px 12px">
-            <textarea id="pub-texte-brut" rows="4" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:6px;resize:vertical;outline:none;box-sizing:border-box" placeholder="1618551  Super R  53  Abribus  05/03/2026  19/03/2026  222 600 € (100.0%)  Voir&#10;..."></textarea>
+            <textarea id="pub-texte-brut" rows="4" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:Inter, var(--font-sans, sans-serif);font-size:10px;padding:6px;resize:vertical;outline:none;box-sizing:border-box" placeholder="1618551  Super R  53  Abribus  05/03/2026  19/03/2026  222 600 € (100.0%)  Voir&#10;..."></textarea>
             <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
               <button class="btn btn-ghost btn-sm" onclick="if(confirm('Remplacer tous les contrats ?')){state.contratsPub=[];saveStateWithSync();renderPub();}">🗑 Vider</button>
               <span id="pub-import-status" style="font-size:11px;color:var(--text3)"></span>
@@ -1616,7 +1617,7 @@
             <p style="font-size:11px;color:var(--text3);margin-bottom:10px">
               Colle le tableau "Disponibilité pub" copié depuis le jeu (colonnes séparées par tabulations) :
             </p>
-            <textarea id="pubdispo-texte" rows="10" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:8px;resize:vertical;outline:none"
+            <textarea id="pubdispo-texte" rows="10" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:Inter, var(--font-sans, sans-serif);font-size:10px;padding:8px;resize:vertical;outline:none"
               placeholder="Scania Omnicity G II n°ART-08-186&#9;&#9;Non&#9;Non équipé&#9;Libre&#9;Libre&#9;Libre&#9;Libre&#9;Libre&#10;..."></textarea>
             <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
               <button class="btn btn-primary" onclick="importerDispoPub()">✓ Analyser</button>
@@ -1712,10 +1713,8 @@
           </div>
         </div>
 
-        <div class="card">
-          <div class="card-header"><div class="card-title">📊 Résumé achats</div></div>
-          <div class="card-body" id="achats-resume"></div>
-        </div>
+        <!-- achats-resume supprimé -->
+        <div id="achats-resume" style="display:none"></div>
       </div>
 
       <div class="card" style="margin-top:14px">
@@ -1745,7 +1744,7 @@
           <div class="card-body" style="padding:8px 12px">
             <textarea id="tourisme-textarea" rows="6"
               placeholder="Contrat n°216566&#10;Informations commerciales&#10;* Demandeur : ...&#10;* Montant : 13 170 €&#10;..."
-              style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 8px;font-size:11px;font-family:'JetBrains Mono',monospace;resize:vertical;box-sizing:border-box"></textarea>
+              style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 8px;font-size:11px;font-family:Inter, var(--font-sans, sans-serif);resize:vertical;box-sizing:border-box"></textarea>
             <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
               <button class="btn btn-primary btn-sm" onclick="analyserContratTourisme()">▶ Analyser</button>
               <span style="font-size:11px;color:var(--text3)">Carburant CAR-T :
@@ -1842,7 +1841,7 @@
           </div>
           <div class="card-body">
             <p style="font-size:11px;color:var(--text3);margin-bottom:12px">Colle directement le texte depuis le jeu :</p>
-            <textarea id="gas-texte-brut" rows="6" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;padding:10px;resize:vertical;outline:none" placeholder="Diesel&#10;1.990 €&#10;GNV&#10;2.080 €"></textarea>
+            <textarea id="gas-texte-brut" rows="6" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:Inter, var(--font-sans, sans-serif);font-size:12px;padding:10px;resize:vertical;outline:none" placeholder="Diesel&#10;1.990 €&#10;GNV&#10;2.080 €"></textarea>
             <div class="form-row" style="margin-top:10px">
               <div class="form-group">
                 <label>Date (optionnel — aujourd'hui par défaut)</label>
@@ -1925,13 +1924,13 @@
         <div class="card-body">
           <p style="font-size:12px;color:var(--text3);margin-bottom:8px">
             Colle les besoins extraits du jeu (11 valeurs séparées par des espaces) :<br>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent)">
+            <span style="font-family:Inter, var(--font-sans, sans-serif);font-size:11px;color:var(--accent)">
               SemCreuse · SemPointe · SemSoir · SemNuit · SamCreuse · SamPointe · SamSoir · SamNuit · DimCreuse · DimPointe · DimNuit
             </span>
           </p>
           <div style="display:flex;gap:8px;align-items:flex-end">
             <input type="text" id="planning-input" placeholder="100 165 37 6 72 112 47 6 35 71 3"
-              style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;padding:8px 12px;outline:none">
+              style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:Inter, var(--font-sans, sans-serif);font-size:13px;padding:8px 12px;outline:none">
             <button class="btn btn-primary" onclick="calculerPlanning()">▶ Calculer</button>
             <button class="btn btn-ghost btn-sm" onclick="document.getElementById('planning-input').value='';document.getElementById('planning-result').innerHTML=''">✕ Vider</button>
           </div>
@@ -1941,37 +1940,69 @@
     </div>
 
     <!-- ═══════════════════════════════════════════ CONFIG ═══ -->
-    <div id="page-config" class="page">
 
-      <!-- ── Niveau du jeu ── -->
+    <!-- ═══════════════════════ CFG — JEU ═══ -->
+    <div id="page-cfg-jeu" class="page">
+      <div style="font-size:20px;font-weight:700;color:var(--cfg-green);margin-bottom:16px">🎮 Paramètres du jeu</div>
+
+      <!-- Niveau du jeu -->
       <div class="card" style="margin-bottom:14px;border-color:rgba(0,212,255,0.3)">
         <div class="card-header" style="border-bottom-color:rgba(0,212,255,0.2)">
-          <div class="card-title" style="color:var(--accent)">🎮 Niveau du jeu</div>
-          <span id="cfg-niveau-badge" style="font-size:13px;font-weight:700;color:var(--accent);font-family:'JetBrains Mono',monospace"></span>
+          <div class="card-title" style="color:var(--accent)">📊 Niveau du jeu</div>
+          <span id="jeu-niveau-badge" style="font-size:13px;font-weight:700;color:var(--accent);font-family:Inter, var(--font-sans, sans-serif)"></span>
         </div>
         <div class="card-body">
           <p style="font-size:11px;color:var(--text3);margin-bottom:14px">
-            Le niveau actif détermine quelles fréquentations cibles et quelles configurations de lignes sont utilisées sur tout le site (Fréquentation, Stats de lignes, Affectations).
+            Le niveau actif détermine quelles fréquentations cibles et configurations de lignes sont utilisées sur tout le site (Fréquentation, Stats, Affectations).
           </p>
           <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
             <div style="display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid rgba(0,212,255,0.3);border-radius:10px;padding:8px 16px">
               <button onclick="setCfgNiveau(state.niveauJeu-1)"
                 style="background:none;border:none;color:var(--accent);font-size:22px;cursor:pointer;padding:0 8px;line-height:1">◀</button>
-              <span id="cfg-niveau-display" style="font-family:'JetBrains Mono',monospace;font-size:32px;font-weight:700;color:var(--accent);min-width:40px;text-align:center">4</span>
+              <span id="jeu-niveau-display" style="font-family:Inter, var(--font-sans, sans-serif);font-size:32px;font-weight:700;color:var(--accent);min-width:40px;text-align:center">4</span>
               <button onclick="setCfgNiveau(state.niveauJeu+1)"
                 style="background:none;border:none;color:var(--accent);font-size:22px;cursor:pointer;padding:0 8px;line-height:1">▶</button>
             </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap" id="cfg-niveau-btns">
-              <button onclick="setCfgNiveau(1)" id="cfg-niveau-btn-1" style="width:42px;height:42px;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;transition:.15s;border:2px solid var(--border);background:var(--surface2);color:var(--text2)">1</button>
-              <button onclick="setCfgNiveau(2)" id="cfg-niveau-btn-2" style="width:42px;height:42px;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;transition:.15s;border:2px solid var(--border);background:var(--surface2);color:var(--text2)">2</button>
-              <button onclick="setCfgNiveau(3)" id="cfg-niveau-btn-3" style="width:42px;height:42px;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;transition:.15s;border:2px solid var(--border);background:var(--surface2);color:var(--text2)">3</button>
-              <button onclick="setCfgNiveau(4)" id="cfg-niveau-btn-4" style="width:42px;height:42px;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;transition:.15s;border:2px solid var(--border);background:var(--surface2);color:var(--text2)">4</button>
-              <button onclick="setCfgNiveau(5)" id="cfg-niveau-btn-5" style="width:42px;height:42px;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;transition:.15s;border:2px solid var(--border);background:var(--surface2);color:var(--text2)">5</button>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button onclick="setCfgNiveau(1)" id="jeu-niveau-btn-1" style="width:42px;height:42px;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;transition:.15s;border:2px solid var(--border);background:var(--surface2);color:var(--text2)">1</button>
+              <button onclick="setCfgNiveau(2)" id="jeu-niveau-btn-2" style="width:42px;height:42px;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;transition:.15s;border:2px solid var(--border);background:var(--surface2);color:var(--text2)">2</button>
+              <button onclick="setCfgNiveau(3)" id="jeu-niveau-btn-3" style="width:42px;height:42px;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;transition:.15s;border:2px solid var(--border);background:var(--surface2);color:var(--text2)">3</button>
+              <button onclick="setCfgNiveau(4)" id="jeu-niveau-btn-4" style="width:42px;height:42px;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;transition:.15s;border:2px solid var(--border);background:var(--surface2);color:var(--text2)">4</button>
+              <button onclick="setCfgNiveau(5)" id="jeu-niveau-btn-5" style="width:42px;height:42px;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;transition:.15s;border:2px solid var(--border);background:var(--surface2);color:var(--text2)">5</button>
             </div>
-            <div id="cfg-niveau-info" style="font-size:12px;color:var(--text3)"></div>
+            <div id="jeu-niveau-info" style="font-size:12px;color:var(--text3)"></div>
           </div>
         </div>
       </div>
+
+      <!-- Mode vacances -->
+      <div class="card" style="border-color:rgba(0,212,255,0.2)">
+        <div class="card-header" style="border-bottom-color:rgba(0,212,255,0.2)">
+          <div class="card-title" style="color:var(--accent)">📅 Mode de période</div>
+          <span id="jeu-vacances-badge" style="font-size:11px;padding:3px 10px;border-radius:6px;font-weight:600"></span>
+        </div>
+        <div class="card-body">
+          <p style="font-size:11px;color:var(--text3);margin-bottom:14px">
+            Détermine si on est en période normale ou en vacances scolaires. Ce paramètre est enregistré et configure automatiquement l'onglet Fréquentation.
+          </p>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <button id="jeu-btn-normal" onclick="setModeJeu(false)"
+              style="padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:.15s;border:2px solid var(--border);background:var(--surface2);color:var(--text2)">
+              🏫 Période normale
+            </button>
+            <button id="jeu-btn-vacances" onclick="setModeJeu(true)"
+              style="padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:.15s;border:2px solid var(--border);background:var(--surface2);color:var(--text2)">
+              🏖️ Vacances scolaires
+            </button>
+          </div>
+          <p style="font-size:11px;color:var(--text3);margin-top:12px">
+            💡 L'onglet <b>Fréquentations</b> se mettra automatiquement en mode vacances quand activé.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-config" class="page">
 
       <div class="grid-2">
 
@@ -1995,11 +2026,11 @@
           <div class="card-body">
             <p style="font-size:11px;color:var(--text3);margin-bottom:12px">Si ton solde ici diffère du solde dans le jeu, saisis l'écart pour le corriger. Cette valeur s'ajoute directement au solde affiché, <b>sans créer de mouvement comptable</b>.</p>
             <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
-              <input type="number" id="cfg-ecart" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 10px;font-size:14px;font-family:'JetBrains Mono',monospace" placeholder="Ex: +1000 ou -500">
+              <input type="number" id="cfg-ecart" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 10px;font-size:14px;font-family:Inter, var(--font-sans, sans-serif)" placeholder="Ex: +1000 ou -500">
               <button class="btn btn-primary" onclick="appliquerEcart()">✓ Appliquer</button>
             </div>
             <div style="font-size:12px;color:var(--text2)">
-              Correction actuelle : <b id="cfg-ecart-actuel" style="font-family:'JetBrains Mono',monospace;color:var(--accent)">0 €</b>
+              Correction actuelle : <b id="cfg-ecart-actuel" style="font-family:Inter, var(--font-sans, sans-serif);color:var(--accent)">0 €</b>
               <button class="btn btn-ghost btn-xs" style="margin-left:8px" onclick="resetEcart()">↺ Réinitialiser</button>
             </div>
             <div id="cfg-ecart-preview" style="margin-top:10px;font-size:11px;color:var(--text3);display:none"></div>
@@ -2067,7 +2098,7 @@
           <div style="display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--cfg-green-border);border-radius:8px;padding:6px 12px">
             <span style="font-size:11px;color:var(--text3)">Niveau</span>
             <button onclick="changerNiveauLignes(-1)" style="background:none;border:none;color:var(--cfg-green);font-size:16px;cursor:pointer;padding:0 4px">◀</button>
-            <span id="lignes-niveau-badge" style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:var(--cfg-green);min-width:20px;text-align:center">4</span>
+            <span id="lignes-niveau-badge" style="font-family:Inter, var(--font-sans, sans-serif);font-size:18px;font-weight:700;color:var(--cfg-green);min-width:20px;text-align:center">4</span>
             <button onclick="changerNiveauLignes(+1)" style="background:none;border:none;color:var(--cfg-green);font-size:16px;cursor:pointer;padding:0 4px">▶</button>
           </div>
           <button class="btn btn-sm" style="background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.3);color:var(--accent3)" onclick="ouvrirImportLignes()">📋 Coller un tableau</button>
@@ -2109,18 +2140,11 @@
           <div style="display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--cfg-green-border);border-radius:8px;padding:6px 12px">
             <span style="font-size:11px;color:var(--text3)">Niveau</span>
             <button onclick="changerNiveau(-1)" style="background:none;border:none;color:var(--cfg-green);font-size:16px;cursor:pointer;padding:0 4px">◀</button>
-            <span id="freq-niveau-badge" style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:var(--cfg-green);min-width:20px;text-align:center">4</span>
+            <span id="freq-niveau-badge" style="font-family:Inter, var(--font-sans, sans-serif);font-size:18px;font-weight:700;color:var(--cfg-green);min-width:20px;text-align:center">4</span>
             <button onclick="changerNiveau(+1)" style="background:none;border:none;color:var(--cfg-green);font-size:16px;cursor:pointer;padding:0 4px">▶</button>
           </div>
 
-          <!-- Période -->
-          <div style="display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--cfg-green-border);border-radius:8px;padding:6px 12px">
-            <span style="font-size:11px;color:var(--text3)">Période :</span>
-            <button id="btn-mode-normal" onclick="setPeriode(false)"
-              style="padding:4px 10px;border-radius:6px;border:none;cursor:pointer;font-size:11px;font-weight:600">Normale</button>
-            <button id="btn-mode-vacances" onclick="setPeriode(true)"
-              style="padding:4px 10px;border-radius:6px;border:none;cursor:pointer;font-size:11px;font-weight:600">Vacances scolaires</button>
-          </div>
+<!-- boutons période déplacés dans onglet Jeu -->
 
           <!-- Type réseau -->
           <div id="freq-tabs" style="display:flex;gap:4px">
@@ -2422,7 +2446,7 @@
         </div>
         <textarea id="import-lignes-urbaines" rows="5"
           placeholder="[1] Aéroport...&#9;#dc241f&#9;14,6 km&#9;46 min&#9;44&#9;-&#9;Tramways"
-          style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px;font-size:11px;font-family:'JetBrains Mono',monospace;resize:vertical;box-sizing:border-box"></textarea>
+          style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px;font-size:11px;font-family:Inter, var(--font-sans, sans-serif);resize:vertical;box-sizing:border-box"></textarea>
       </div>
 
       <!-- Suburbaines -->
@@ -2432,7 +2456,7 @@
         </div>
         <textarea id="import-lignes-suburbaines" rows="4"
           placeholder="[101] Centre...&#9;#dc241f&#9;12,4 km&#9;38 min&#9;22&#9;Standard"
-          style="width:100%;background:var(--surface2);border:1px solid rgba(245,158,11,0.3);border-radius:6px;color:var(--text);padding:8px;font-size:11px;font-family:'JetBrains Mono',monospace;resize:vertical;box-sizing:border-box"></textarea>
+          style="width:100%;background:var(--surface2);border:1px solid rgba(245,158,11,0.3);border-radius:6px;color:var(--text);padding:8px;font-size:11px;font-family:Inter, var(--font-sans, sans-serif);resize:vertical;box-sizing:border-box"></textarea>
       </div>
 
       <!-- Interurbaines -->
@@ -2442,7 +2466,7 @@
         </div>
         <textarea id="import-lignes-interurbaines" rows="4"
           placeholder="[201] Ville A...&#9;#007229&#9;25,3 km&#9;52 min&#9;18&#9;Car"
-          style="width:100%;background:var(--surface2);border:1px solid rgba(16,185,129,0.3);border-radius:6px;color:var(--text);padding:8px;font-size:11px;font-family:'JetBrains Mono',monospace;resize:vertical;box-sizing:border-box"></textarea>
+          style="width:100%;background:var(--surface2);border:1px solid rgba(16,185,129,0.3);border-radius:6px;color:var(--text);padding:8px;font-size:11px;font-family:Inter, var(--font-sans, sans-serif);resize:vertical;box-sizing:border-box"></textarea>
       </div>
 
       <div id="import-lignes-preview" style="font-size:11px;color:var(--text3)"></div>
@@ -2491,7 +2515,7 @@
       </p>
       <textarea id="import-freq-textarea" rows="14"
         placeholder="Période normale&#10;Ligne&#9;LU-VE Creuses&#9;LU-VE Pointes&#9;...&#10;1&#9;900&#9;1500&#9;..."
-        style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px;font-size:11px;font-family:'JetBrains Mono',monospace;resize:vertical;box-sizing:border-box"></textarea>
+        style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px;font-size:11px;font-family:Inter, var(--font-sans, sans-serif);resize:vertical;box-sizing:border-box"></textarea>
       <div id="import-freq-preview" style="margin-top:8px;font-size:11px;color:var(--text3)"></div>
     </div>
     <div class="modal-footer">
@@ -2633,13 +2657,13 @@
       <!-- Ou coller texte -->
       <details style="margin-bottom:12px">
         <summary style="cursor:pointer;color:var(--text2);font-size:11px;margin-bottom:6px">▶ Ou coller le contenu manuellement</summary>
-        <textarea id="csv-paste-text" style="width:100%;height:120px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:8px;resize:vertical;outline:none;margin-top:8px;box-sizing:border-box" placeholder="Colle ici le contenu du CSV..."></textarea>
+        <textarea id="csv-paste-text" style="width:100%;height:120px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:Inter, var(--font-sans, sans-serif);font-size:10px;padding:8px;resize:vertical;outline:none;margin-top:8px;box-sizing:border-box" placeholder="Colle ici le contenu du CSV..."></textarea>
       </details>
 
       <!-- Résultat preview -->
       <div id="csv-preview-zone" style="display:none">
         <div id="csv-preview-label" style="font-size:12px;margin-bottom:8px;padding:8px 10px;border-radius:6px"></div>
-        <div id="csv-preview-list" style="max-height:180px;overflow-y:auto;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px;font-size:11px;font-family:'JetBrains Mono',monospace"></div>
+        <div id="csv-preview-list" style="max-height:180px;overflow-y:auto;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px;font-size:11px;font-family:Inter, var(--font-sans, sans-serif)"></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -2973,7 +2997,7 @@ function buildDashLayoutSliders() {
     <div style="margin-bottom:6px">
       <div style="display:flex;justify-content:space-between;margin-bottom:1px">
         <span style="color:var(--text2);font-size:10px">${label}</span>
-        <span id="dl-${key}-val" style="color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:10px">${lay[key]}${unit}</span>
+        <span id="dl-${key}-val" style="color:var(--accent);font-family:Inter, var(--font-sans, sans-serif);font-size:10px">${lay[key]}${unit}</span>
       </div>
       <input type="range" id="dl-${key}" min="${min}" max="${max}" step="${step}" value="${lay[key]}"
         style="width:100%;accent-color:var(--accent);height:3px"
@@ -3136,9 +3160,9 @@ function renderDashboard() {
           <td style="padding:2px 8px;font-size:9px;color:var(--text3);text-align:right">Vu</td>
         </tr>
         <tr>
-          <td style="padding:3px 8px;font-family:'JetBrains Mono',monospace;font-size:12px">${fmt2(moy30)}</td>
-          <td style="padding:3px 8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--yellow);text-align:center">${fmt2(min30)}</td>
-          <td style="padding:3px 8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--green);text-align:center;font-weight:700">${fmt2(minAll)}</td>
+          <td style="padding:3px 8px;font-family:Inter, var(--font-sans, sans-serif);font-size:12px">${fmt2(moy30)}</td>
+          <td style="padding:3px 8px;font-family:Inter, var(--font-sans, sans-serif);font-size:12px;color:var(--yellow);text-align:center">${fmt2(min30)}</td>
+          <td style="padding:3px 8px;font-family:Inter, var(--font-sans, sans-serif);font-size:12px;color:var(--green);text-align:center;font-weight:700">${fmt2(minAll)}</td>
           <td style="padding:3px 8px;font-size:10px;color:var(--text3);text-align:right">${vu}</td>
         </tr>`;
     };
@@ -3521,6 +3545,29 @@ function ouvrirCTPlanif(nomBus) {
   nav(document.querySelector('[data-page=maintenance]'));
 }
 
+
+let parcFullSortKey = 'nom';
+let parcFullSortAsc = true;
+
+function sortParcFull(key) {
+  if (parcFullSortKey === key) { parcFullSortAsc = !parcFullSortAsc; }
+  else { parcFullSortKey = key; parcFullSortAsc = true; }
+  // Update header arrows
+  document.querySelectorAll('#parc-table-full th').forEach(th => {
+    const k = th.getAttribute('onclick');
+    if (!k) return;
+    const m = k.match(/'(\w+)'/);
+    if (!m) return;
+    const base = th.textContent.replace(/ [↑↓↕]$/,'');
+    if (m[1] === parcFullSortKey) {
+      th.textContent = base + ' ' + (parcFullSortAsc ? '↑' : '↓');
+    } else {
+      th.textContent = base + ' ↕';
+    }
+  });
+  renderParc();
+}
+
 function setParcView(el, view) {
   parcView = view;
   document.querySelectorAll('#parc-view-tabs .tab').forEach(t => t.classList.remove('active'));
@@ -3594,7 +3641,7 @@ function renderParc() {
       const ctDiff = b.ct ? Math.round((new Date(b.ct) - new Date()) / (1000*60*60*24)) : null;
       const ctStyle = ctDiff !== null && ctDiff <= 0 ? 'color:var(--red)' : ctDiff !== null && ctDiff <= 5 ? 'color:var(--orange)' : '';
       return `<tr>
-        <td class="mono" style="color:var(--text3);font-size:11px">${b.idJeu||'—'}</td>
+        <td class="id-num">${b.idJeu||'—'}</td>
         <td><b>${b.nom}</b></td>
         <td style="font-size:10px;color:var(--text3)">${b.marque||''} ${b.modele||''}</td>
         <td class="mono" style="font-size:11px">${b.anneMES ? b.anneMES.substring(0,4) : '—'}</td>
@@ -3620,13 +3667,22 @@ function renderParc() {
 
   } else {
     const yn = v => v ? '<span style="color:var(--green)">✓</span>' : '<span style="color:var(--red);font-size:10px">✗</span>';
+    // Sort for full view
+    const keyMap = { id:'idJeu', nom:'nom', capa:'capa', km:'km', diffKm:'diffKm', ct:'ct', rev:'revisionDate', etatTech:'etatTech', etatInt:'etatInt' };
+    const sk = keyMap[parcFullSortKey] || 'nom';
+    filtered = [...filtered].sort((a,b) => {
+      let va = a[sk] ?? '', vb = b[sk] ?? '';
+      if (typeof va === 'number' && typeof vb === 'number') return parcFullSortAsc ? va-vb : vb-va;
+      va = String(va); vb = String(vb);
+      return parcFullSortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+    });
     const tbody = document.getElementById('parc-tbody-full');
     tbody.innerHTML = filtered.map(b => {
       const cls  = STATUS_CLASS[b.statut] || 'status-indispo';
       const opts = statusOptions.map(s => `<option value="${s}"${b.statut===s?' selected':''}>${s}</option>`).join('');
       const venteOk = b.reventeDate && new Date(b.reventeDate) <= new Date();
       return `<tr>
-        <td class="mono" style="font-size:10px;color:var(--text3)">${b.idJeu||'—'}</td>
+        <td class="id-num">${b.idJeu||'—'}</td>
         <td style="font-size:11px"><b>${b.nom}</b></td>
         <td style="font-size:10px;color:var(--text2)">${b.marque||''} ${b.modele||''}</td>
         <td>${getTypeBadge(b.type)}</td>
@@ -4057,12 +4113,13 @@ function parserBus(rows) {
     else if (statutJeu.includes('réserve') || statutJeu.includes('reserve')) statut = 'Réserve';
 
     let type = 'STD';
-    const nu = nom.toUpperCase();
+    const nu = nom.toUpperCase().replace(/^00-/, ''); // strip leading 00-
     if (nu.startsWith('MIN-')) type = 'MIN';
     else if (nu.startsWith('MID-')) type = 'MID';
     else if (nu.startsWith('ART-')) type = 'ART';
     else if (nu.startsWith('CAR-')) type = 'CAR';
     else if (nu.startsWith('TRAM-')) type = 'TRAM';
+    else if (nu.startsWith('STD-')) type = 'STD';
 
     // Récupérer prix/km depuis notre base ou depuis le CSV
     const pkData = idJeu ? (state.prixKm && state.prixKm[idJeu] ? state.prixKm[idJeu] : {}) : {};
@@ -6017,7 +6074,7 @@ function renderCompta() {
   let rep = '';
   Object.entries(catsDep).sort((a,b)=>b[1]-a[1]).forEach(([cat, val]) => {
     const pct = depenses > 0 ? Math.round(val/depenses*100) : 0;
-    rep += `<div style="display:grid;grid-template-columns:220px 120px 250px 45px;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid var(--border)"><span style="font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${cat}">${cat}</span><span style="font-size:11px;color:var(--text2);font-family:'JetBrains Mono',monospace;text-align:right">${fmt(val)}</span><div style="height:10px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:${pct}%;height:100%;background:var(--accent2);border-radius:3px"></div></div><span style="font-size:11px;color:var(--text3);text-align:right">${pct}%</span></div>`;
+    rep += `<div style="display:grid;grid-template-columns:220px 120px 250px 45px;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid var(--border)"><span style="font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${cat}">${cat}</span><span style="font-size:11px;color:var(--text2);font-family:Inter, var(--font-sans, sans-serif);text-align:right">${fmt(val)}</span><div style="height:10px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:${pct}%;height:100%;background:var(--accent2);border-radius:3px"></div></div><span style="font-size:11px;color:var(--text3);text-align:right">${pct}%</span></div>`;
   });
   const elRep = document.getElementById('compta-repartition');
   if (elRep) elRep.innerHTML = rep || '<div style="color:var(--text3)">Aucune dépense.</div>';
@@ -6031,7 +6088,7 @@ function renderCompta() {
   let repRec = '';
   Object.entries(catsRec).sort((a,b)=>b[1]-a[1]).forEach(([cat, val]) => {
     const pct = recettes > 0 ? Math.round(val/recettes*100) : 0;
-    repRec += `<div style="display:grid;grid-template-columns:220px 120px 250px 45px;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid var(--border)"><span style="font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${cat}">${cat}</span><span style="font-size:11px;color:var(--text2);font-family:'JetBrains Mono',monospace;text-align:right">${fmt(val)}</span><div style="height:10px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:${pct}%;height:100%;background:var(--green);border-radius:3px"></div></div><span style="font-size:11px;color:var(--text3);text-align:right">${pct}%</span></div>`;
+    repRec += `<div style="display:grid;grid-template-columns:220px 120px 250px 45px;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid var(--border)"><span style="font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${cat}">${cat}</span><span style="font-size:11px;color:var(--text2);font-family:Inter, var(--font-sans, sans-serif);text-align:right">${fmt(val)}</span><div style="height:10px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:${pct}%;height:100%;background:var(--green);border-radius:3px"></div></div><span style="font-size:11px;color:var(--text3);text-align:right">${pct}%</span></div>`;
   });
   const elRepRec = document.getElementById('compta-repartition-rec');
   if (elRepRec) elRepRec.innerHTML = repRec || '<div style="color:var(--text3)">Aucune recette.</div>';
@@ -6298,7 +6355,7 @@ function noteBar(note) {
     <div style="flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden">
       <div style="width:${pct}%;height:100%;background:${color};border-radius:4px;transition:width 0.3s"></div>
     </div>
-    <span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:${color};min-width:36px;text-align:right">${note}/10</span>
+    <span style="font-family:Inter, var(--font-sans, sans-serif);font-weight:700;color:${color};min-width:36px;text-align:right">${note}/10</span>
   </div>`;
 }
 
@@ -6928,18 +6985,7 @@ function calculerPlanning() {
 
   const grpColor = { SEM:'var(--accent)', SAM:'var(--accent3)', DIM:'var(--green)' };
 
-  let html = `<div class="card" style="margin-bottom:10px">
-    <div class="card-header" style="padding:6px 12px"><div class="card-title">📊 Besoins saisis</div></div>
-    <div class="card-body" style="padding:8px">
-      <div style="display:flex;flex-wrap:wrap;gap:6px">`;
-  PLAN_INFO.forEach((c,i) => {
-    html += `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;
-      padding:4px 10px;text-align:center;min-width:76px">
-      <div style="font-size:10px;color:${grpColor[c.grp]}">${c.label}</div>
-      <div style="font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace">${Borig[i]}</div>
-    </div>`;
-  });
-  html += `</div></div></div>`;
+  let html = '';
 
   html += `<div class="card" style="margin-bottom:10px;border:2px solid var(--accent)55">
     <div class="card-body" style="padding:12px">
@@ -6947,11 +6993,11 @@ function calculerPlanning() {
       <div style="display:flex;gap:16px;flex-wrap:wrap">
         <div style="background:var(--accent)15;border:1px solid var(--accent)44;border-radius:8px;padding:10px 22px;text-align:center">
           <div style="font-size:11px;color:var(--accent);margin-bottom:2px">Temps plein</div>
-          <div style="font-size:36px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--accent)">${totalPlein}</div>
+          <div style="font-size:36px;font-weight:800;font-family:Inter, var(--font-sans, sans-serif);color:var(--accent)">${totalPlein}</div>
         </div>
         <div style="background:#c084fc15;border:1px solid #c084fc44;border-radius:8px;padding:10px 22px;text-align:center">
           <div style="font-size:11px;color:#c084fc;margin-bottom:2px">Temps partiel</div>
-          <div style="font-size:36px;font-weight:800;font-family:'JetBrains Mono',monospace;color:#c084fc">${totalPartiel}</div>
+          <div style="font-size:36px;font-weight:800;font-family:Inter, var(--font-sans, sans-serif);color:#c084fc">${totalPartiel}</div>
         </div>
       </div>
     </div>
@@ -6965,8 +7011,8 @@ function calculerPlanning() {
       <div class="card-body" style="padding:0">
         <table class="data-table" style="width:100%">
           <thead><tr style="background:${color}18">
-            <th>Créneau semaine</th>
-            <th>Créneau weekend</th>
+            <th>Affectation 1</th>
+            <th>Affectation 2</th>
             <th style="text-align:center">H/sem</th>
             <th style="text-align:center">Besoin sem.</th>
             <th style="text-align:center">Besoin wkd</th>
@@ -6980,7 +7026,7 @@ function calculerPlanning() {
       t += `<tr style="${hi}">
         <td style="font-weight:${fw};color:${tc}">${l.label}</td>
         <td style="color:${tc}">${l.c2label}</td>
-        <td style="text-align:center;font-family:'JetBrains Mono',monospace;color:${hc}">${l.h}h</td>
+        <td style="text-align:center;font-family:Inter, var(--font-sans, sans-serif);color:${hc}">${l.h}h</td>
         <td style="text-align:center;font-size:12px;color:var(--text3)">${Borig[l.c1]}</td>
         <td style="text-align:center;font-size:12px;color:var(--text3)">${l.c2!==null?Borig[l.c2]:'—'}</td>
         <td style="text-align:center;font-size:${l.n>0?16:13}px;font-weight:800;color:${l.n>0?color:'var(--text3)'}">${l.n}</td>
@@ -7131,14 +7177,11 @@ function renderTourisme() {
     return;
   }
 
-  // Trier par date du transport (plus proche en premier), index original conservé
+  // Trier par date du transport (ISO, croissant), index original conservé
+  const toISO = d => d ? d.replace(/^(\d{2})\/(\d{2})\/(\d{4})$/, '$3-$2-$1') : '9999-99-99';
   const sortedIdx = tous
     .map((t, i) => i)
-    .sort((a, b) => {
-      const da = tous[a].dateTransport || '';
-      const db = tous[b].dateTransport || '';
-      return da.localeCompare(db);
-    });
+    .sort((a, b) => toISO(tous[a].dateTransport).localeCompare(toISO(tous[b].dateTransport)));
 
   const todayISO = today();
   const in3days  = new Date(); in3days.setDate(in3days.getDate() + 3);
@@ -7230,12 +7273,12 @@ function renderGasoil() {
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#EFAC19;margin-bottom:8px">🛢 Diesel</div>
         <div style="padding:8px;background:rgba(16,185,129,0.08);border-radius:6px;margin-bottom:6px">
           <div style="font-size:10px;color:var(--text3)">Meilleur prix</div>
-          <div style="font-size:18px;font-weight:700;color:var(--green);font-family:'JetBrains Mono',monospace">${recordDieselMin ? recordDieselMin.toFixed(3)+' €' : '—'}</div>
+          <div style="font-size:18px;font-weight:700;color:var(--green);font-family:Inter, var(--font-sans, sans-serif)">${recordDieselMin ? recordDieselMin.toFixed(3)+' €' : '—'}</div>
           <div style="font-size:10px;color:var(--text3)">${dateOf(recordDieselMin,'diesel')}</div>
         </div>
         <div style="padding:8px;background:rgba(239,68,68,0.08);border-radius:6px">
           <div style="font-size:10px;color:var(--text3)">Prix le plus haut</div>
-          <div style="font-size:18px;font-weight:700;color:var(--red);font-family:'JetBrains Mono',monospace">${recordDieselMax ? recordDieselMax.toFixed(3)+' €' : '—'}</div>
+          <div style="font-size:18px;font-weight:700;color:var(--red);font-family:Inter, var(--font-sans, sans-serif)">${recordDieselMax ? recordDieselMax.toFixed(3)+' €' : '—'}</div>
           <div style="font-size:10px;color:var(--text3)">${dateOf(recordDieselMax,'diesel')}</div>
         </div>
       </div>
@@ -7243,12 +7286,12 @@ function renderGasoil() {
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#99B900;margin-bottom:8px">💨 GNV</div>
         <div style="padding:8px;background:rgba(16,185,129,0.08);border-radius:6px;margin-bottom:6px">
           <div style="font-size:10px;color:var(--text3)">Meilleur prix</div>
-          <div style="font-size:18px;font-weight:700;color:var(--green);font-family:'JetBrains Mono',monospace">${recordGnvMin ? recordGnvMin.toFixed(3)+' €' : '—'}</div>
+          <div style="font-size:18px;font-weight:700;color:var(--green);font-family:Inter, var(--font-sans, sans-serif)">${recordGnvMin ? recordGnvMin.toFixed(3)+' €' : '—'}</div>
           <div style="font-size:10px;color:var(--text3)">${dateOf(recordGnvMin,'gnv')}</div>
         </div>
         <div style="padding:8px;background:rgba(239,68,68,0.08);border-radius:6px">
           <div style="font-size:10px;color:var(--text3)">Prix le plus haut</div>
-          <div style="font-size:18px;font-weight:700;color:var(--red);font-family:'JetBrains Mono',monospace">${recordGnvMax ? recordGnvMax.toFixed(3)+' €' : '—'}</div>
+          <div style="font-size:18px;font-weight:700;color:var(--red);font-family:Inter, var(--font-sans, sans-serif)">${recordGnvMax ? recordGnvMax.toFixed(3)+' €' : '—'}</div>
           <div style="font-size:10px;color:var(--text3)">${dateOf(recordGnvMax,'gnv')}</div>
         </div>
       </div>
@@ -7325,7 +7368,7 @@ function renderGasoilGraphique() {
     ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
     const val = vmax - ((vmax - vmin) / 4) * i;
     ctx.fillStyle = 'rgba(148,163,184,0.7)';
-    ctx.font = '10px JetBrains Mono, monospace';
+    ctx.font = '10px Inter, sans-serif';
     ctx.textAlign = 'right';
     ctx.fillText(val.toFixed(3), pad.left - 6, y + 4);
   }
@@ -7382,7 +7425,7 @@ function renderGasoilGraphique() {
     // Label moy.
     ctx.globalAlpha = 0.85;
     ctx.fillStyle = color;
-    ctx.font = 'bold 10px JetBrains Mono, monospace';
+    ctx.font = 'bold 10px Inter, sans-serif';
     ctx.textAlign = labelX === 'right' ? 'right' : 'left';
     const lx = labelX === 'right' ? W - pad.right - 4 : pad.left + 4;
     ctx.fillText('moy. ' + avg.toFixed(3) + ' €', lx, y - 4);
@@ -7597,6 +7640,7 @@ function setCfgNiveau(n) {
   n = Math.max(1, Math.min(5, parseInt(n) || 1));
   state.niveauJeu = n;
   saveStateWithSync();
+  renderCfgJeu();
   updateNiveauUI();
   // Propager aux pages ouvertes
   if (document.getElementById('page-cfg-frequentation')?.classList.contains('active')) renderFrequentations();
@@ -7668,7 +7712,7 @@ function renderConfig() {
     <div class="gauge-row"><div class="gauge-label">📋 Affectations</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--orange)"></div></div><div class="gauge-val">${Object.keys(state.affCreneaux||{}).length}</div></div>
     <div style="margin-top:14px;padding:10px;background:rgba(0,212,255,0.05);border:1px solid var(--border);border-radius:6px">
       <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Solde calculé</div>
-      <div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:${solde>=0?'var(--green)':'var(--red)'}">
+      <div style="font-family:Inter, var(--font-sans, sans-serif);font-size:20px;font-weight:700;color:${solde>=0?'var(--green)':'var(--red)'}">
         ${fmt(solde)}
       </div>
       <div style="font-size:10px;color:var(--text3);margin-top:4px">${fmt(argentDepart)} départ + ${fmt(mouvements)} mouvements${ecart!==0?' + <span style="color:'+(ecart>0?'var(--green)':'var(--red)')+'">'+fmt(ecart)+' correction</span>':''}</div>
@@ -7978,7 +8022,7 @@ function toggleModeConfig() {
     // Aller sur la première page config
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.cfg-nav').forEach(n => n.classList.remove('active'));
-    const first = document.querySelector('.cfg-nav');
+    const first = document.querySelector('.cfg-nav[data-page="cfg-jeu"]');
     if (first) navConfig(first);
     document.getElementById('topbar-title').textContent = '⚙️ Mode Configuration';
   } else {
@@ -8003,6 +8047,7 @@ function navConfig(el) {
 
   const titles = {
     'historique':        '📜 Import Historique',
+    'cfg-jeu':           '🎮 Jeu',
     'config':            '⚙️ Paramètres financiers',
     'cfg-categories':    '🏷️ Catégories',
     'cfg-lignes':        '🛣️ Gestion des lignes',
@@ -8018,6 +8063,7 @@ function navConfig(el) {
   if (page === 'config') renderConfig();
   if (page === 'cfg-categories') renderCategories();
   if (page === 'cfg-frequentation') renderFrequentations();
+  if (page === 'cfg-jeu') renderCfgJeu();
   if (page === 'cfg-lignes') renderCfgLignes();
   if (page === 'cfg-sync') renderSyncPage();
 }
@@ -8236,7 +8282,7 @@ function renderReglesContainer(regles) {
   container.innerHTML = rows.map((r, i) => `
     <div style="display:flex;gap:6px;align-items:center" id="regle-row-${i}">
       <input type="text" value="${r}" placeholder="Ex: *pub* ou Contrat *" id="regle-${i}"
-        style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:12px">
+        style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 10px;font-family:Inter, var(--font-sans, sans-serif);font-size:12px">
       <button class="btn btn-danger btn-xs" onclick="supprimerRegleUI(${i})">✕</button>
     </div>`).join('');
 }
@@ -8248,7 +8294,7 @@ function ajouterRegle() {
   div.style.cssText = 'display:flex;gap:6px;align-items:center';
   div.id = `regle-row-${idx}`;
   div.innerHTML = `<input type="text" value="" placeholder="Ex: *pub* ou Contrat *" id="regle-${idx}"
-    style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:12px">
+    style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 10px;font-family:Inter, var(--font-sans, sans-serif);font-size:12px">
     <button class="btn btn-danger btn-xs" onclick="supprimerRegleUI(${idx})">✕</button>`;
   container.appendChild(div);
   document.getElementById(`regle-${idx}`).focus();
@@ -8418,6 +8464,60 @@ function changerNiveau(delta) {
   renderFrequentations();
 }
 
+
+function setModeJeu(vacances) {
+  state.modeVacances = vacances;
+  saveStateWithSync();
+  setPeriode(vacances); // synchronise avec l'onglet fréquentation
+  renderCfgJeu();
+  toastMsg(vacances ? '🏖️ Mode vacances scolaires activé' : '🏫 Période normale activée', 'info');
+}
+
+function renderCfgJeu() {
+  const n   = state.niveauJeu || 4;
+  const vac = state.modeVacances || false;
+
+  // Niveau display
+  const disp = document.getElementById('jeu-niveau-display');
+  if (disp) disp.textContent = n;
+  const badge = document.getElementById('jeu-niveau-badge');
+  if (badge) badge.textContent = 'Niveau ' + n;
+  for (let i = 1; i <= 5; i++) {
+    const btn = document.getElementById('jeu-niveau-btn-' + i);
+    if (btn) {
+      btn.style.borderColor = i === n ? 'var(--accent)' : 'var(--border)';
+      btn.style.background  = i === n ? 'rgba(0,212,255,0.15)' : 'var(--surface2)';
+      btn.style.color       = i === n ? 'var(--accent)' : 'var(--text2)';
+    }
+  }
+  const ninfo = document.getElementById('jeu-niveau-info');
+  if (ninfo) {
+    const labels = ['', 'Très petite ville', 'Petite ville', 'Ville moyenne', 'Grande ville', 'Métropole'];
+    ninfo.textContent = labels[n] || '';
+  }
+
+  // Vacances
+  const btnN = document.getElementById('jeu-btn-normal');
+  const btnV = document.getElementById('jeu-btn-vacances');
+  const vacBadge = document.getElementById('jeu-vacances-badge');
+  if (btnN) {
+    btnN.style.borderColor = !vac ? 'var(--accent)' : 'var(--border)';
+    btnN.style.background  = !vac ? 'rgba(0,212,255,0.12)' : 'var(--surface2)';
+    btnN.style.color       = !vac ? 'var(--accent)' : 'var(--text2)';
+  }
+  if (btnV) {
+    btnV.style.borderColor = vac ? 'var(--yellow)' : 'var(--border)';
+    btnV.style.background  = vac ? 'rgba(245,158,11,0.12)' : 'var(--surface2)';
+    btnV.style.color       = vac ? 'var(--yellow)' : 'var(--text2)';
+  }
+  if (vacBadge) {
+    vacBadge.textContent   = vac ? '🏖️ Vacances scolaires' : '🏫 Période normale';
+    vacBadge.style.background = vac ? 'rgba(245,158,11,0.12)' : 'rgba(0,212,255,0.10)';
+    vacBadge.style.color      = vac ? 'var(--yellow)' : 'var(--accent)';
+    vacBadge.style.border     = vac ? '1px solid rgba(245,158,11,0.3)' : '1px solid rgba(0,212,255,0.3)';
+  }
+}
+
 function setPeriode(vacances) {
   state.modeVacances = vacances;
   saveStateWithSync();
@@ -8436,12 +8536,7 @@ function renderFrequentations() {
   const badge = document.getElementById('freq-niveau-badge');
   if (badge) badge.textContent = n;
 
-  // Boutons période
-  const btnNormal   = document.getElementById('btn-mode-normal');
-  const btnVacances = document.getElementById('btn-mode-vacances');
   const vac = state.modeVacances || false;
-  if (btnNormal)   { btnNormal.style.background   = !vac ? 'var(--cfg-green)' : 'var(--surface2)'; btnNormal.style.color   = !vac ? '#000' : 'var(--text2)'; }
-  if (btnVacances) { btnVacances.style.background = vac  ? 'var(--yellow)'    : 'var(--surface2)'; btnVacances.style.color = vac  ? '#000' : 'var(--text2)'; }
 
   // Warning scolaire en vacances
   const warn = document.getElementById('freq-scolaire-warning');
@@ -8669,12 +8764,9 @@ function ajouterLigneFreq() {
 // ═══════════════════════════════════════════════════════
 
 let freqPageReseau   = 'normal';
-let freqPageVacances = false;
+// freqPageVacances remplacé par state.modeVacances
 
-function setFreqPeriode(vac) {
-  freqPageVacances = vac;
-  renderFrequentation();
-}
+// setFreqPeriode supprimé — géré par state.modeVacances via onglet Jeu
 
 function setFreqReseau(el) {
   document.querySelectorAll('#freq-reseau-tabs .freq-tab').forEach(t => t.classList.remove('active'));
@@ -8747,15 +8839,11 @@ function getBusAffectesLigne(ligneNum, creneauId) {
 
 function renderFrequentation() {
   const n       = state.niveauJeu || 4;
-  const vac     = freqPageVacances;
+  const vac     = state.modeVacances || false;
   const reseau  = freqPageReseau;
   const periKey = vac ? 'vacances' : 'normal';
 
   // Mettre à jour les boutons période
-  const btnN = document.getElementById('freq-btn-normal');
-  const btnV = document.getElementById('freq-btn-vacances');
-  if (btnN) { btnN.style.background = !vac ? 'var(--green)' : 'var(--surface2)'; btnN.style.color = !vac ? '#000' : 'var(--text2)'; btnN.style.border = '1px solid var(--border)'; }
-  if (btnV) { btnV.style.background = vac  ? 'var(--yellow)': 'var(--surface2)'; btnV.style.color = vac  ? '#000' : 'var(--text2)'; btnV.style.border = '1px solid var(--border)'; }
 
   // Badge niveau actif
   const badge = document.getElementById('freq-niveau-actif-badge');
@@ -8886,7 +8974,7 @@ function renderFrequentation() {
           const { cible, isActive } = colonnes[ci];
           const border = colSpan(ci);
           if (isActive) return `<td style="text-align:center;font-size:15px;font-weight:700;color:var(--green);${border};${TD_TOP}">●</td>`;
-          return `<td style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--text);${border};${TD_TOP}">${cible > 0 ? cible : '—'}</td>`;
+          return `<td style="text-align:center;font-family:Inter, var(--font-sans, sans-serif);font-size:14px;color:var(--text);${border};${TD_TOP}">${cible > 0 ? cible : '—'}</td>`;
         }).join('')}
       </tr>
       <tr>
@@ -8894,7 +8982,7 @@ function renderFrequentation() {
         ${allCreneaux.map((cid, ci) => {
           const { places, cible, isActive } = colonnes[ci];
           if (isActive || cible <= 0) return `<td style="text-align:center;${colSpan(ci)};${TD_NORMAL}">—</td>`;
-          return `<td style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--text);${colSpan(ci)};${TD_NORMAL}">${places}</td>`;
+          return `<td style="text-align:center;font-family:Inter, var(--font-sans, sans-serif);font-size:14px;font-weight:600;color:var(--text);${colSpan(ci)};${TD_NORMAL}">${places}</td>`;
         }).join('')}
       </tr>
       <tr>
@@ -8910,7 +8998,7 @@ function renderFrequentation() {
           const { manque, cible, isActive } = colonnes[ci];
           if (isActive || cible <= 0) return `<td style="text-align:center;${colSpan(ci)};${TD_NORMAL}">—</td>`;
           const good = manque >= 0;
-          return `<td style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;background:${good?'rgba(16,185,129,0.12)':'rgba(239,68,68,0.12)'};${colSpan(ci)};${TD_NORMAL};color:${good?'var(--green)':'var(--red)'}">${manque >= 0 ? '+'+manque : manque}</td>`;
+          return `<td style="text-align:center;font-family:Inter, var(--font-sans, sans-serif);font-size:14px;font-weight:700;background:${good?'rgba(16,185,129,0.12)':'rgba(239,68,68,0.12)'};${colSpan(ci)};${TD_NORMAL};color:${good?'var(--green)':'var(--red)'}">${manque >= 0 ? '+'+manque : manque}</td>`;
         }).join('')}
       </tr>
       <tr>
@@ -9054,7 +9142,7 @@ function renderCfgLignes() {
     <td class="mono" style="font-weight:700">
       <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${l.couleur||'#888'};margin-right:6px;vertical-align:middle"></span>${l.num}
     </td>
-    <td><span style="font-family:'JetBrains Mono',monospace;font-size:11px;background:${l.couleur||'#888'}22;color:${l.couleur||'#888'};padding:2px 7px;border-radius:4px;border:1px solid ${l.couleur||'#888'}44">${l.couleur||'—'}</span></td>
+    <td><span style="font-family:Inter, var(--font-sans, sans-serif);font-size:11px;background:${l.couleur||'#888'}22;color:${l.couleur||'#888'};padding:2px 7px;border-radius:4px;border:1px solid ${l.couleur||'#888'}44">${l.couleur||'—'}</span></td>
     <td class="mono">${l.km ? l.km+' km' : '—'}</td>
     <td class="mono">${l.duree ? l.duree+' min' : '—'}</td>
     <td class="mono">${l.arrets||'—'}</td>
