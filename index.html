@@ -685,7 +685,7 @@
   <div id="cfg-mode-banner">⚙ Mode Configuration</div>
 
   <!-- Logo normal -->
-  <div class="sidebar-logo" id="sidebar-logo-normal">
+  <div class="sidebar-logo" id="sidebar-logo-normal" onclick="window.open('https://transport-manager.net','_blank')" style="cursor:pointer" title="Ouvrir transport-manager.net">
     <h1>🚌 TM Manager</h1>
     <span>Transport Manager — Parc</span>
   </div>
@@ -864,7 +864,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:Inter, var(--font-sans, sans-serif);background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v150</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:Inter, var(--font-sans, sans-serif);background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v151</span>
       <button id="sync-status" onclick="syncPush(true)" title="Cliquer pour synchroniser maintenant" style="font-size:11px;font-family:Inter, var(--font-sans, sans-serif);padding:3px 8px;border-radius:4px;display:none;cursor:pointer;border:none"></button>
       <span id="ext-status" style="font-size:11px;font-family:Inter, var(--font-sans, sans-serif);padding:3px 10px;border-radius:6px;display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(100,100,100,0.3);background:rgba(100,100,100,0.08);color:var(--text3)" title="Extension Firefox">🦊 Extension inactive</span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
@@ -953,7 +953,7 @@
         <div style="display:flex;flex-direction:column;gap:10px">
           <div class="card">
             <div class="card-header" style="padding:6px 12px"><div class="card-title" style="font-size:12px">🌴 Congés</div></div>
-            <div class="card-body" style="padding:6px 10px;font-size:11px;color:var(--text2)" id="dash-conges">—</div>
+            <div class="card-body" style="padding:10px;font-size:12px;color:var(--text2);text-align:center;display:flex;align-items:center;justify-content:center;min-height:40px;line-height:1.5" id="dash-conges">—</div>
           </div>
           <!-- Alerte 1er/16 remboursement -->
           <div class="card" id="dash-remb-alerte" style="display:none;border-color:rgba(245,158,11,0.4)">
@@ -1380,7 +1380,7 @@
         </div>
         <div class="card-body" style="padding:0;overflow-y:auto;max-height:360px">
           <table class="data-table" style="border-collapse:separate;border-spacing:0">
-            <thead style="position:sticky;top:0;z-index:2;background:var(--surface2)"><tr><th>Ligne</th><th>Tickets total</th><th>Abonnés</th><th>Gains total</th><th>Jours</th><th>Part des gains</th></tr></thead>
+            <thead style="position:sticky;top:0;z-index:2;background:var(--surface2)"><tr><th>Ligne</th><th>Tickets total</th><th>Abonnés</th><th>Gains total</th><th>Jours</th><th style="text-align:center">% du total</th></tr></thead>
             <tbody id="lignes-tbody"></tbody>
           </table>
         </div>
@@ -4029,6 +4029,23 @@ const CSV_INFO = {
   lastmonth: '📅 <b>compta.csv (fin de mois)</b> — Importe les opérations du mois précédent complet (csvcomptalastmonth). Ajout sans conflit avec les lignes existantes.'
 };
 
+function refreshLastImportBadge() {
+  const type = currentCsvType;
+  const infoEl = document.getElementById('csv-type-info');
+  if (!infoEl || !type) return;
+  const last = state.lastImport && state.lastImport[type];
+  const lastBadge = last
+    ? `<div style="margin-top:8px;padding:5px 10px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:6px;font-size:11px;color:var(--green);display:inline-flex;align-items:center;gap:6px"><span>✓</span><span>Dernière MAJ : ${last}</span></div>`
+    : '';
+  // Mettre à jour uniquement le badge, pas tout le contenu
+  const badgeEl = infoEl.querySelector('[data-last-badge]');
+  if (badgeEl) badgeEl.innerHTML = lastBadge;
+}
+// Rafraîchir toutes les 3s
+setInterval(() => {
+  if (document.getElementById('modal-maj-csv')?.style.display !== 'none') refreshLastImportBadge();
+}, 3000);
+
 function selectCsvType(el, type) {
   currentCsvType = type;
   document.querySelectorAll('#csv-type-tabs .csv-tab').forEach(t => {
@@ -4041,7 +4058,7 @@ function selectCsvType(el, type) {
   const lastBadge = last
     ? `<div style="margin-top:8px;padding:5px 10px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:6px;font-size:11px;color:var(--green);display:inline-flex;align-items:center;gap:6px"><span>✓</span><span>Dernière MAJ : ${last}</span></div>`
     : `<div style="margin-top:8px;padding:5px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text3);display:inline-flex;align-items:center;gap:6px"><span>⏳</span><span>Jamais importé</span></div>`;
-  document.getElementById('csv-type-info').innerHTML = `<div style="color:var(--text2)">${CSV_INFO[type]}</div><div style="text-align:center">${lastBadge}</div>`;
+  document.getElementById('csv-type-info').innerHTML = `<div style="color:var(--text2)">${CSV_INFO[type]}</div><div style="text-align:center" data-last-badge>${lastBadge}</div>`;
   document.getElementById('csv-preview-zone').style.display = 'none';
   document.getElementById('csv-paste-text').value = '';
   csvRawContent = '';
@@ -4348,8 +4365,16 @@ function parserAffects(rows) {
   ];
 
   const STATUT_SPECIAL = {
-    '- atelier -': 'Indispo',
-    '- ct -':      'CT',
+    '- atelier -':   'Indispo',
+    '- ct -':        'Indispo',
+    '- panne -':     'Indispo',
+    '- rénovation -':'Indispo',
+    '- renovation -':'Indispo',
+    '- révision -':  'Indispo',
+    '- revision -':  'Indispo',
+    '- indispo -':   'Indispo',
+    '- reserve -':   'Réserve',
+    '- réserve -':   'Réserve',
   };
 
   const results = [];
@@ -4636,6 +4661,7 @@ function csvImporter() {
       }
     }
     state.lastImport[currentCsvType] = nowStr;
+    window._extFetchDone = true;
     journalLog(`MAJ CSV compta ${mois} : ${nb} opérations`, 'ok');
     saveStateWithSync(); renderDashboard();
     if (document.getElementById('page-compta').classList.contains('active')) renderCompta();
@@ -4816,7 +4842,11 @@ function renderAffectations() {
       // Auto-statut si pas manuellement forcé
       const statutManuel = b.statut || '';
       const statutsForces = ['En révision','CT','Révision puis CT','CT puis Révision','Indispo','Réserve','ATELIER'];
-      if (!statutsForces.includes(statutManuel)) {
+      const INDISPO_VALS = ['- ct -','- panne -','- atelier -','- révision -','- revision -','- indispo -','- rénovation -','- renovation -'];
+      const hasIndispoVal = AFF_CRENEAUX.some(cr => INDISPO_VALS.includes((creneaux[cr.id]||'').toLowerCase().trim()));
+      if (hasIndispoVal) {
+        b.statut = 'Indispo';
+      } else if (!statutsForces.includes(statutManuel)) {
         b.statut = totalC === 0 ? 'Réserve' : 'En service';
       }
 
@@ -4846,7 +4876,7 @@ function renderAffectations() {
         <td class="mono" style="position:sticky;left:260px;background:${rowBg||'var(--surface)'};z-index:2;text-align:center;border-right:3px solid var(--border);font-size:12px">${b.capa||'—'}</td>
         ${AFF_CRENEAUX.map((c, ci) => {
           const val = creneaux[c.id] || '';
-          const isAtelier  = statut === 'Indispo' || statut === 'ATELIER';
+          const isAtelier  = statut === 'Indispo' || statut === 'ATELIER' || /^-\s*.+\s*-$/.test((val||'').trim().toLowerCase());
           const isFirstGrp = (ci in groupeStartIdx);
           const leftBorder = isFirstGrp
             ? `border-left:3px solid ${AFF_GROUPE_COLORS[c.groupe].color}55`
@@ -4909,7 +4939,11 @@ function saveAffCell(input, busNom, creneauId) {
 
   const b = state.bus.find(x => x.nom === busNom);
   const statutsForces = ['En révision','CT','Révision puis CT','CT puis Révision','Indispo','ATELIER'];
-  if (b && !statutsForces.includes(b.statut || '')) {
+  const INDISPO_VALS2 = ['- ct -','- panne -','- atelier -','- révision -','- revision -','- indispo -','- rénovation -','- renovation -'];
+  const hasIndispoVal2 = AFF_CRENEAUX.some(cr => INDISPO_VALS2.includes((creneaux[cr.id]||'').toLowerCase().trim()));
+  if (b && hasIndispoVal2) {
+    b.statut = 'Indispo';
+  } else if (b && !statutsForces.includes(b.statut || '')) {
     b.statut = totalC === 0 ? 'Réserve' : 'En service';
     saveStateWithSync();
     const affStatut = getAffStatut(b);
@@ -5728,20 +5762,22 @@ function renderLignes() {
   const tbody = document.getElementById('lignes-tbody');
   if (Object.keys(byLigne).length) {
     const maxGains = Math.max(...Object.values(byLigne).map(v=>v.gains), 1);
+    const totalGains = Object.values(byLigne).reduce((s,v)=>s+v.gains, 0) || 1;
     tbody.innerHTML = Object.entries(byLigne)
       .sort((a,b) => b[1].gains - a[1].gains)
       .map(([ligne, d]) => {
         const jours = d.jours.size || 1;
         const gainJour = d.gains / jours;
         const tkJour   = d.tickets / jours;
-        const pct      = Math.round(d.gains / maxGains * 100);
+        const pctGains = totalGains > 0 ? (d.gains / totalGains * 100).toFixed(1) : '0.0';
+        const pctColor = d.gains / totalGains > 0.1 ? 'var(--green)' : d.gains / totalGains > 0.05 ? 'var(--yellow)' : 'var(--text3)';
         return `<tr>
           <td class="mono"><b>${ligne}</b></td>
           <td>${fmtNum(d.tickets)} <span style="color:var(--text3);font-size:10px">(${Math.round(tkJour)}/j)</span></td>
           <td class="mono">${fmtNum(d.abonnes)}</td>
           <td class="mono" style="color:var(--green)">${fmt(d.gains)} <span style="color:var(--text3);font-size:10px">(${fmt(gainJour)}/j)</span></td>
           <td>${jours} j</td>
-          <td><div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:var(--green)"></div></div></td>
+          <td style="text-align:center;font-family:Inter,sans-serif;font-weight:700;color:${pctColor}">${pctGains}%</td>
         </tr>`;
       }).join('');
   } else {
@@ -8123,10 +8159,41 @@ function renderGasoilGraphique() {
     ctx.restore();
   };
 
+  // Ligne horizontale min/max
+  const drawMinMax = (values, color, side) => {
+    const valid = values.filter(v => v);
+    if (!valid.length) return;
+    const minV = Math.min(...valid);
+    const maxV = Math.max(...valid);
+    const yMin = toY(minV);
+    const yMax = toY(maxV);
+    const lx   = side === 'right' ? W - pad.right - 4 : pad.left + 4;
+    const align = side === 'right' ? 'right' : 'left';
+    ctx.save();
+    ctx.globalAlpha = 0.4;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 5]);
+    // Min
+    ctx.strokeStyle = color;
+    ctx.beginPath(); ctx.moveTo(pad.left, yMin); ctx.lineTo(W - pad.right, yMin); ctx.stroke();
+    // Max
+    ctx.beginPath(); ctx.moveTo(pad.left, yMax); ctx.lineTo(W - pad.right, yMax); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 0.7;
+    ctx.fillStyle = color;
+    ctx.font = '9px Inter, sans-serif';
+    ctx.textAlign = align;
+    ctx.fillText('min ' + minV.toFixed(3), lx, yMin + 10);
+    ctx.fillText('max ' + maxV.toFixed(3), lx, yMax - 3);
+    ctx.restore();
+  };
+
   drawLine(diesel, '#EFAC19');  // Diesel
   drawLine(gnv,    '#99B900');  // GNV
   drawAvg(diesel,  '#EFAC19', 'left');
   drawAvg(gnv,     '#99B900', 'right');
+  drawMinMax(diesel, '#EFAC19', 'left');
+  drawMinMax(gnv,    '#99B900', 'right');
 
   // Légende
   ctx.font = '11px monospace';
@@ -8162,6 +8229,19 @@ function detectExtension() {
   return present;
 }
 setInterval(detectExtension, 2000);
+
+// Rafraîchissement dynamique du badge "Dernière MAJ"
+setInterval(() => {
+  const infoEl = document.getElementById('csv-type-info');
+  if (!infoEl) return;
+  const badgeEl = infoEl.querySelector('[data-last-badge]');
+  if (!badgeEl || !currentCsvType) return;
+  const last = state.lastImport && state.lastImport[currentCsvType];
+  const lastBadge = last
+    ? `<span style="font-size:10px;color:var(--green)">✅ Dernière MAJ : ${last}</span>`
+    : `<span style="font-size:10px;color:var(--text3)">Jamais importé</span>`;
+  badgeEl.innerHTML = lastBadge;
+}, 2000);
 
 // Importe directement un contenu CSV pour un type donné (sans passer par le modal)
 function importerCSVDirect(type, contenu) {
@@ -8291,37 +8371,57 @@ function demarrerPollingExtension() {
 function fetchViaExtension() {
   const type  = currentCsvType;
   const btn   = document.getElementById('btn-ext-fetch');
-  btn.textContent = '⏳ En cours (~5s)...';
-  btn.disabled = true;
 
-  // Écrire la requête pour l'extension
+  const resetBtn = () => {
+    if (btn) { btn.textContent = '🦊 Récupérer via Extension'; btn.disabled = false; }
+  };
+
+  if (btn) { btn.textContent = '⏳ En cours (~5s)...'; btn.disabled = true; }
+
   localStorage.setItem('tm_ext_request', JSON.stringify({ type, timestamp: Date.now() }));
 
-  let waited  = 0;
-  let keySeen = false; // a-t-on vu la clé apparaître ?
+  let done = false;
 
-  const check = setInterval(() => {
-    waited += 500;
-    const keyPresent = !!localStorage.getItem('tm_ext_csv_' + type);
+  // Sécurité absolue : reset au bout de 12s quoi qu'il arrive
+  const safetyTimeout = setTimeout(() => {
+    if (!done) {
+      done = true;
+      resetBtn();
+      toastMsg('Extension : pas de réponse', 'error');
+    }
+  }, 12000);
 
-    if (keyPresent) keySeen = true; // la clé est apparue, l'extension a répondu
+  // Écouter le storage event — l'extension écrit la clé, processExtensionData la lit et la supprime
+  // On surveille AUSSI la fin du traitement via un flag sur window
+  window._extFetchDone = false;
 
-    // Le polling du site consomme la clé → import fait
-    if (keySeen && !keyPresent) {
-      clearInterval(check);
-      btn.textContent = '🦊 Récupérer via Extension';
-      btn.disabled = false;
-      closeModal('modal-maj-csv');
+  const storageListener = (e) => {
+    if (done) return;
+    // L'extension a écrit la clé → processExtensionData va la consommer → on attend la fin
+    if (e.key === 'tm_ext_csv_' + type && e.newValue) {
+      // Petite attente pour laisser processExtensionData tourner
+      setTimeout(() => {
+        if (!done) { done = true; clearTimeout(safetyTimeout); window.removeEventListener('storage', storageListener); resetBtn(); }
+      }, 2000);
+    }
+  };
+  window.addEventListener('storage', storageListener);
+
+  // Fallback polling léger pour les cas où storage event ne fire pas (même onglet)
+  let waited = 0;
+  const poll = setInterval(() => {
+    if (done) { clearInterval(poll); return; }
+    waited += 300;
+    if (window._extFetchDone) {
+      clearInterval(poll);
+      clearTimeout(safetyTimeout);
+      window.removeEventListener('storage', storageListener);
+      done = true;
+      setTimeout(resetBtn, 500);
       return;
     }
-
-    if (waited >= 13000) {
-      clearInterval(check);
-      btn.textContent = '🦊 Récupérer via Extension';
-      btn.disabled = false;
-      if (!keySeen) toastMsg('Extension : pas de réponse — vérifie que tu es connecté sur transport-manager.net', 'error');
-    }
-  }, 500);
+    if (waited > 11000) { clearInterval(poll); }
+  }, 300);
 }
 
 
