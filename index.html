@@ -851,7 +851,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="game-day">TM</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">v176</span>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="game-day">TM</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">v179</span>
   </div>
 </div>
 
@@ -1264,6 +1264,81 @@
 
     <!-- ═══════════════════════════════════════════ RÉNOVATION ═══ -->
     <div id="page-renovation" class="page">
+
+      <!-- Cards du dessus -->
+      <div class="grid-2" style="margin-bottom:14px;align-items:start">
+
+        <!-- Card Calcul prix rénovation -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">💶 Calcul prix rénovation</div></div>
+          <div class="card-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+              <div>
+                <label style="font-size:10px;color:var(--text3);display:block;margin-bottom:4px">État intérieur actuel (/100)</label>
+                <input type="number" id="reno-int-actuel" min="0" max="90" placeholder="Ex: 55"
+                  oninput="calcRenovPrix()"
+                  style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:6px 8px;font-size:13px;box-sizing:border-box">
+              </div>
+              <div>
+                <label style="font-size:10px;color:var(--text3);display:block;margin-bottom:4px">État technique actuel (/100)</label>
+                <input type="number" id="reno-tech-actuel" min="0" max="90" placeholder="Ex: 54"
+                  oninput="calcRenovPrix()"
+                  style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:6px 8px;font-size:13px;box-sizing:border-box">
+              </div>
+            </div>
+            <div id="reno-prix-result">
+              <div style="font-size:11px;color:var(--text3);text-align:center">Entrez les états pour voir le calcul</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card Demande Alliance -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">🤝 Demande Alliance</div></div>
+          <div class="card-body" style="padding:0">
+            <table class="data-table" style="font-size:12px">
+              <thead><tr>
+                <th>Type</th>
+                <th>Dernier remboursement</th>
+                <th>Prochaine demande</th>
+              </tr></thead>
+              <tbody id="reno-alliance-tbody">
+                <tr>
+                  <td colspan="3" style="color:var(--text3);text-align:center;padding:10px">
+                    <button class="btn btn-sm btn-primary" onclick="showRenoAllianceForm()">+ Saisir les dates</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div id="reno-alliance-form" style="display:none;padding:12px;border-top:1px solid var(--border)">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+                <div>
+                  <label style="font-size:10px;color:var(--text3);display:block;margin-bottom:3px">Intérieur</label>
+                  <input type="date" id="reno-date-int" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:4px 8px;font-size:12px;box-sizing:border-box">
+                </div>
+                <div>
+                  <label style="font-size:10px;color:var(--text3);display:block;margin-bottom:3px">Tech 10%</label>
+                  <input type="date" id="reno-date-tech10" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:4px 8px;font-size:12px;box-sizing:border-box">
+                </div>
+                <div>
+                  <label style="font-size:10px;color:var(--text3);display:block;margin-bottom:3px">Tech 20%</label>
+                  <input type="date" id="reno-date-tech20" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:4px 8px;font-size:12px;box-sizing:border-box">
+                </div>
+                <div>
+                  <label style="font-size:10px;color:var(--text3);display:block;margin-bottom:3px">Tech 30%</label>
+                  <input type="date" id="reno-date-tech30" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:4px 8px;font-size:12px;box-sizing:border-box">
+                </div>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-primary btn-sm" onclick="sauvegarderAlliance()">✓ Enregistrer</button>
+                <button class="btn btn-ghost btn-sm" onclick="document.getElementById('reno-alliance-form').style.display='none'">Annuler</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /grid-2 cards -->
+
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
 
         <!-- Tableau gauche : État technique -->
@@ -5562,7 +5637,146 @@ function sortRenov(table, col) {
   renderRenovation();
 }
 
+
+// ═══════════════════════════════════════════════════════
+//  RÉNOVATION — Calcul prix + Alliance
+// ═══════════════════════════════════════════════════════
+
+function edatePlus(dateISO, months) {
+  // EDATE : ajoute N mois à une date ISO yyyy-mm-dd
+  const d = new Date(dateISO + 'T12:00:00');
+  d.setMonth(d.getMonth() + months);
+  return d.toISOString().slice(0,10);
+}
+
+function calcRenovPrix() {
+  const intVal  = parseInt(document.getElementById('reno-int-actuel')?.value) || null;
+  const techVal = parseInt(document.getElementById('reno-tech-actuel')?.value) || null;
+  const el = document.getElementById('reno-prix-result');
+  if (!el) return;
+
+  if (intVal === null && techVal === null) {
+    el.innerHTML = '<div style="font-size:11px;color:var(--text3);text-align:center">Entrez les états pour voir le calcul</div>';
+    return;
+  }
+
+  const MAX = 90;
+  let html = '';
+
+  // ── Intérieur ──────────────────────────────────────
+  if (intVal !== null) {
+    const R10 = Math.max(0, MAX - intVal); // ce qui manque
+    const prixInt = (Math.floor(R10/30) * 3100)
+      + (Math.floor((R10 - Math.floor(R10/30)*30) / 20) * 2300)
+      + (Math.floor((R10 - Math.floor(R10/30)*30 - Math.floor((R10 - Math.floor(R10/30)*30)/20)*20) / 10) * 1500)
+      + (Math.floor((R10 - Math.floor(R10/30)*30 - Math.floor((R10 - Math.floor(R10/30)*30)/20)*20 - Math.floor((R10 - Math.floor(R10/30)*30 - Math.floor((R10 - Math.floor(R10/30)*30)/20)*20)/10)*10) / 3) * 600);
+    html += `<div style="display:grid;grid-template-columns:1fr auto auto auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
+      <a href="https://docs.google.com/forms/d/e/1FAIpQLSdw61gpWDZW7-Ji-FEq1pYzZmqxZ02QiR3zK_t52mbk8ynJKg/viewform" target="_blank"
+        style="color:var(--accent);font-size:12px;font-weight:600;text-decoration:none">🪑 Intérieur</a>
+      <span style="font-size:11px;color:var(--text3)">État: ${intVal}</span>
+      <span style="font-size:11px;color:var(--text3)">Manque: <b style="color:var(--yellow)">${R10}</b></span>
+      <span style="font-size:13px;font-weight:700;color:var(--green)">${fmt(prixInt)} €</span>
+    </div>`;
+  }
+
+  // ── Technique ─────────────────────────────────────
+  if (techVal !== null) {
+    const R11 = Math.max(0, MAX - techVal);
+    const prixTech = (Math.floor(R11/30) * 40000)
+      + (Math.floor((R11 - Math.floor(R11/30)*30) / 20) * 28000)
+      + (Math.floor((R11 - Math.floor(R11/30)*30 - Math.floor((R11 - Math.floor(R11/30)*30)/20)*20) / 10) * 15000);
+    html += `<div style="display:grid;grid-template-columns:1fr auto auto auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
+      <a href="https://docs.google.com/forms/d/e/1FAIpQLScDTHo8VYXM1X3R_AzAQZ9J3ofyhOf51PLIHcdvEwrMMtTVOA/viewform" target="_blank"
+        style="color:var(--accent3);font-size:12px;font-weight:600;text-decoration:none">🔧 Technique</a>
+      <span style="font-size:11px;color:var(--text3)">État: ${techVal}</span>
+      <span style="font-size:11px;color:var(--text3)">Manque: <b style="color:var(--yellow)">${R11}</b></span>
+      <span style="font-size:13px;font-weight:700;color:var(--green)">${fmt(prixTech)} €</span>
+    </div>`;
+  }
+
+  // ── Total ─────────────────────────────────────────
+  if (intVal !== null && techVal !== null) {
+    const R10 = Math.max(0, MAX - intVal);
+    const R11 = Math.max(0, MAX - techVal);
+    const pInt  = (Math.floor(R10/30)*3100)+(Math.floor((R10-Math.floor(R10/30)*30)/20)*2300)+(Math.floor((R10-Math.floor(R10/30)*30-Math.floor((R10-Math.floor(R10/30)*30)/20)*20)/10)*1500)+(Math.floor((R10-Math.floor(R10/30)*30-Math.floor((R10-Math.floor(R10/30)*30)/20)*20-Math.floor((R10-Math.floor(R10/30)*30-Math.floor((R10-Math.floor(R10/30)*30)/20)*20)/10)*10)/3)*600);
+    const pTech = (Math.floor(R11/30)*40000)+(Math.floor((R11-Math.floor(R11/30)*30)/20)*28000)+(Math.floor((R11-Math.floor(R11/30)*30-Math.floor((R11-Math.floor(R11/30)*30)/20)*20)/10)*15000);
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;margin-top:2px">
+      <span style="font-size:12px;font-weight:700;color:var(--text)">Total rénovation</span>
+      <span style="font-size:15px;font-weight:700;color:var(--green)">${fmt(pInt + pTech)} €</span>
+    </div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+function showRenoAllianceForm() {
+  const form = document.getElementById('reno-alliance-form');
+  if (!form) return;
+  // Préremplir avec les dates sauvegardées
+  const d = state.config?.allianceDates || {};
+  if (d.int)    document.getElementById('reno-date-int').value    = d.int;
+  if (d.tech10) document.getElementById('reno-date-tech10').value = d.tech10;
+  if (d.tech20) document.getElementById('reno-date-tech20').value = d.tech20;
+  if (d.tech30) document.getElementById('reno-date-tech30').value = d.tech30;
+  form.style.display = 'block';
+}
+
+function sauvegarderAlliance() {
+  if (!state.config) state.config = {};
+  state.config.allianceDates = {
+    int:    document.getElementById('reno-date-int').value    || '',
+    tech10: document.getElementById('reno-date-tech10').value || '',
+    tech20: document.getElementById('reno-date-tech20').value || '',
+    tech30: document.getElementById('reno-date-tech30').value || '',
+  };
+  saveStateWithSync();
+  document.getElementById('reno-alliance-form').style.display = 'none';
+  renderAllianceTable();
+  toastMsg('Dates Alliance enregistrées ✓', 'success');
+}
+
+function renderAllianceTable() {
+  const tbody = document.getElementById('reno-alliance-tbody');
+  if (!tbody) return;
+  const d = state.config?.allianceDates;
+  if (!d || (!d.int && !d.tech10 && !d.tech20 && !d.tech30)) {
+    tbody.innerHTML = `<tr><td colspan="3" style="color:var(--text3);text-align:center;padding:10px">
+      <button class="btn btn-sm btn-primary" onclick="showRenoAllianceForm()">+ Saisir les dates</button>
+    </td></tr>`;
+    return;
+  }
+
+  const today = new Date().toISOString().slice(0,10);
+  const mkRow = (label, dateRemb, dateProchaine) => {
+    if (!dateRemb) return '';
+    const urgent = dateProchaine && dateProchaine <= today;
+    const proche = dateProchaine && !urgent && dateProchaine <= new Date(Date.now()+30*24*60*60*1000).toISOString().slice(0,10);
+    const couleur = urgent ? 'var(--red)' : proche ? 'var(--yellow)' : 'var(--green)';
+    return `<tr>
+      <td style="font-size:12px;font-weight:600">${label}</td>
+      <td class="mono" style="font-size:11px">${fmtDateFR(dateRemb)}</td>
+      <td class="mono" style="font-size:11px;font-weight:700;color:${couleur}">${fmtDateFR(dateProchaine)}</td>
+    </tr>`;
+  };
+
+  // Formules EDATE
+  const pInt    = d.int    ? edatePlus(d.int,    2) : '';
+  const pTech10 = d.tech10 ? edatePlus(d.tech10, 2) : '';
+  const pTech20 = d.tech20 ? edatePlus(d.tech20, 3) : '';
+  const pTech30 = d.tech30 ? edatePlus(d.tech30, 4) : '';
+
+  tbody.innerHTML =
+    mkRow('Intérieur',  d.int,    pInt)
+    + mkRow('Tech 10%', d.tech10, pTech10)
+    + mkRow('Tech 20%', d.tech20, pTech20)
+    + mkRow('Tech 30%', d.tech30, pTech30)
+    + `<tr><td colspan="3" style="text-align:right;padding:4px 8px">
+        <button class="btn btn-ghost btn-xs" onclick="showRenoAllianceForm()">✏️ Modifier</button>
+      </td></tr>`;
+}
+
 function renderRenovation() {
+  renderAllianceTable();
   const buses = [...state.bus].filter(b => b.etatTech || b.etatInt);
 
   const etatColor = (v) => {
@@ -6688,7 +6902,7 @@ function renderEstimationFinDeMois() {
         ${row('Amendes', fmt(amendesEstim), 'var(--green)')}
         ${row('Total CA estimé', fmt(totalCA), 'var(--green)', true, true)}
         ${row('Fin de mois précédent', fmt(fdmPrec), 'var(--red)')}
-        ${empruntsEstim > 0 ? row('Emprunts (à prélever)', fmt(empruntsEstim), 'var(--red)') : row('Emprunts', '✅ Prélevé ce mois', 'var(--text3)')}
+        ${emprunts.length === 0 ? row("Emprunts", "Pas d'emprunt", "var(--text3)") : empruntsEstim > 0 ? row('Emprunts (à prélever)', fmt(empruntsEstim), 'var(--red)') : row('Emprunts', '✅ Prélevé ce mois', 'var(--text3)')}
         ${row('Assurance (≤14)', fmt(assurance), 'var(--red)')}
         ${row('Gasoil (max mensuel)', fmt(gasoilEstim), 'var(--red)')}
         ${inputRow(0)}
