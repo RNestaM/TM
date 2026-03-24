@@ -851,7 +851,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="game-day">TM</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">v179</span>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="game-day">TM</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">v180</span>
   </div>
 </div>
 
@@ -5675,7 +5675,7 @@ function calcRenovPrix() {
         style="color:var(--accent);font-size:12px;font-weight:600;text-decoration:none">🪑 Intérieur</a>
       <span style="font-size:11px;color:var(--text3)">État: ${intVal}</span>
       <span style="font-size:11px;color:var(--text3)">Manque: <b style="color:var(--yellow)">${R10}</b></span>
-      <span style="font-size:13px;font-weight:700;color:var(--green)">${fmt(prixInt)} €</span>
+      <span style="font-size:13px;font-weight:700;color:var(--green)">${fmt(prixInt)}</span>
     </div>`;
   }
 
@@ -5690,7 +5690,7 @@ function calcRenovPrix() {
         style="color:var(--accent3);font-size:12px;font-weight:600;text-decoration:none">🔧 Technique</a>
       <span style="font-size:11px;color:var(--text3)">État: ${techVal}</span>
       <span style="font-size:11px;color:var(--text3)">Manque: <b style="color:var(--yellow)">${R11}</b></span>
-      <span style="font-size:13px;font-weight:700;color:var(--green)">${fmt(prixTech)} €</span>
+      <span style="font-size:13px;font-weight:700;color:var(--green)">${fmt(prixTech)}</span>
     </div>`;
   }
 
@@ -5702,7 +5702,7 @@ function calcRenovPrix() {
     const pTech = (Math.floor(R11/30)*40000)+(Math.floor((R11-Math.floor(R11/30)*30)/20)*28000)+(Math.floor((R11-Math.floor(R11/30)*30-Math.floor((R11-Math.floor(R11/30)*30)/20)*20)/10)*15000);
     html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;margin-top:2px">
       <span style="font-size:12px;font-weight:700;color:var(--text)">Total rénovation</span>
-      <span style="font-size:15px;font-weight:700;color:var(--green)">${fmt(pInt + pTech)} €</span>
+      <span style="font-size:15px;font-weight:700;color:var(--green)">${fmt(pInt + pTech)}</span>
     </div>`;
   }
 
