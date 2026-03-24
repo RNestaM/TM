@@ -865,7 +865,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:Inter, var(--font-sans, sans-serif);background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v158</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:Inter, var(--font-sans, sans-serif);background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v162</span>
       <button id="sync-status" onclick="syncPush(true)" title="Cliquer pour synchroniser maintenant" style="font-size:11px;font-family:Inter, var(--font-sans, sans-serif);padding:3px 8px;border-radius:4px;display:none;cursor:pointer;border:none"></button>
       <span id="ext-status" style="font-size:11px;font-family:Inter, var(--font-sans, sans-serif);padding:3px 10px;border-radius:6px;display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(100,100,100,0.3);background:rgba(100,100,100,0.08);color:var(--text3)" title="Extension Firefox">🦊 Extension inactive</span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
@@ -6423,28 +6423,48 @@ function renderEstimationFinDeMois() {
   // ── Gains quotidiens ──────────────────────────────────
   const gainQuot = (state.config?.estim?.gainQuotidien ?? 4000) * joursRestants;
 
-  // ── Ventes de titres : depuis les stats lignes ────────
-  // On calcule la moyenne par jour-de-semaine depuis les stats
-  // puis on somme les jours restants
+  // ── Ventes de titres : moyenne par type de jour depuis comptaMois ──
+  // Cherche les recettes catégorie "Ventes de titres" uniquement
+  // Calcule la moyenne sur les 4 dernières semaines par : semaine / samedi / dimanche
   let ventesTitres = 0;
-  if (state.statsLignes && state.statsLignes.length) {
-    const moyParJour = [0,0,0,0,0,0,0]; // 0=dim,1=lun,...6=sam
-    const cntParJour = [0,0,0,0,0,0,0];
-    state.statsLignes.forEach(s => {
-      if (!s.date || !s.gains) return;
-      const j = new Date(s.date).getDay();
-      moyParJour[j] += s.gains;
-      cntParJour[j]++;
+  {
+    const cutoff28 = new Date(); cutoff28.setDate(cutoff28.getDate() - 28);
+    const cutoffISO = cutoff28.toISOString().slice(0,10);
+
+    // Recettes ventes de titres par date (28 derniers jours)
+    const recParDate = {};
+    Object.values(state.comptaMois || {}).forEach(ops => {
+      ops.forEach(o => {
+        if (o.type !== 'recette' || !o.date || o.date < cutoffISO) return;
+        // Filtrer sur catégorie ventes de titres uniquement
+        const cat = (o.cat || '').toLowerCase();
+        const desc = (o.desc || '').toLowerCase();
+        if (!cat.includes('titre') && !cat.includes('vente') && !desc.includes('titre')) return;
+        recParDate[o.date] = (recParDate[o.date] || 0) + o.montant;
+      });
     });
-    for (let i = 0; i < 7; i++) if (cntParJour[i]) moyParJour[i] /= cntParJour[i];
-    // Compter les jours restants (demain inclus → fin de mois)
-    for (let d = now.getDate()+1; d <= lastDay; d++) {
+
+    // Calculer moyennes semaine / samedi / dimanche
+    let sumSem = 0, cntSem = 0, sumSam = 0, cntSam = 0, sumDim = 0, cntDim = 0;
+    Object.entries(recParDate).forEach(([date, total]) => {
+      const j = new Date(date).getDay(); // 0=dim, 6=sam
+      if (j === 0)      { sumDim += total; cntDim++; }
+      else if (j === 6) { sumSam += total; cntSam++; }
+      else              { sumSem += total; cntSem++; }
+    });
+
+    const moySem = cntSem ? Math.round(sumSem / cntSem) : 100000;
+    const moySam = cntSam ? Math.round(sumSam / cntSam) : 90000;
+    const moyDim = cntDim ? Math.round(sumDim / cntDim) : 50000;
+
+    // Sommer les jours restants (aujourd'hui inclus → fin du mois)
+    for (let d = now.getDate(); d <= lastDay; d++) {
       const j = new Date(annee, now.getMonth(), d).getDay();
-      ventesTitres += moyParJour[j];
+      if (j === 0)      ventesTitres += moyDim;
+      else if (j === 6) ventesTitres += moySam;
+      else              ventesTitres += moySem;
     }
     ventesTitres = Math.round(ventesTitres);
-  } else {
-    ventesTitres = state.config?.estim?.ventesTitresEstim ?? 0;
   }
 
   // ── Contrats pub restants ce mois ────────────────────
@@ -6480,14 +6500,26 @@ function renderEstimationFinDeMois() {
   const totalCA = gainQuot + ventesTitres + pubRestant + amendesEstim;
 
   // ── Somme 1er du mois (FDM précédent) ────────────────
+  // Le prélèvement FDM apparaît dans le mois COURANT (payé le 1er)
+  // On cherche dans le mois actuel OU précédent la catégorie "Fin de mois précédent"
   const moisPrecKey = (() => {
     const d = new Date(annee, now.getMonth()-1, 1);
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
   })();
-  const opsFDMPrec = (state.comptaMois?.[moisPrecKey] || []).filter(o =>
-    o.type === 'depense' && ((o.cat||'').toLowerCase().includes('fin de mois') || (o.desc||'').toLowerCase().includes('fin de mois'))
+  const opsFDMPrec = [
+    ...(state.comptaMois?.[moisKey] || []),
+    ...(state.comptaMois?.[moisPrecKey] || [])
+  ].filter(o =>
+    o.type === 'depense' && (
+      (o.cat||'').toLowerCase().includes('fin de mois') ||
+      (o.desc||'').toLowerCase().includes('fin de mois') ||
+      (o.cat||'').toLowerCase().includes('fdm')
+    )
   );
-  const fdmPrec = opsFDMPrec.reduce((s,o) => s+o.montant, 0);
+  // Prendre le montant le plus récent (évite les doublons inter-mois)
+  const fdmPrec = opsFDMPrec.length
+    ? Math.max(...opsFDMPrec.map(o => o.montant))
+    : 0;
 
   // ── Assurance ─────────────────────────────────────────
   // Avant et incluant le 14 : montant assurance du mois précédent
