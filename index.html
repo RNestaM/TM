@@ -851,7 +851,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="game-day">TM</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">v180</span>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="game-day">TM</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">v181</span>
   </div>
 </div>
 
@@ -3880,10 +3880,10 @@ function renderRepartitionParc() {
 
   const mkGauge = (label, n, tot, color) => {
     const pct = tot>0 ? Math.round(n/tot*100) : 0;
-    return `<div class="gauge-row" style="margin-bottom:4px">
-      <div class="gauge-label" style="font-size:11px;min-width:100px">${label}</div>
-      <div class="gauge-bar"><div class="gauge-fill" style="width:${pct}%;background:${color}"></div></div>
-      <div class="gauge-val" style="font-size:11px">${n} <span style="color:var(--text3)">(${pct}%)</span></div>
+    return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+      <div style="font-size:10px;color:var(--text2);min-width:80px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${label}">${label}</div>
+      <div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;max-width:80px"><div style="width:${pct}%;height:100%;background:${color};border-radius:3px"></div></div>
+      <div style="font-size:10px;color:var(--text3);white-space:nowrap">${n} <span style="color:var(--text3);font-size:9px">(${pct}%)</span></div>
     </div>`;
   };
 
@@ -3928,8 +3928,8 @@ function renderParc() {
       const ctDiff = b.ct ? Math.round((new Date(b.ct) - new Date()) / (1000*60*60*24)) : null;
       const ctStyle = ctDiff !== null && ctDiff <= 0 ? 'color:var(--red)' : ctDiff !== null && ctDiff <= 5 ? 'color:var(--orange)' : '';
       return `<tr>
-        <td class="id-num">${b.idJeu||'—'}</td>
-        <td><b>${b.nom}</b></td>
+        <td class="id-num">${b.idJeu ? '<a href="https://transport-manager.net/jeu/vehicle.php?id='+b.idJeu+'" target="_blank" style="color:var(--accent);text-decoration:none;font-weight:700" title="Voir le véhicule">'+b.idJeu+'</a>' : '—'}</td>
+        <td><b>${b.idJeu ? '<a href="https://transport-manager.net/jeu/vehicle.php?id='+b.idJeu+'" target="_blank" style="color:inherit;text-decoration:none;font-weight:700;cursor:alias" title="Ouvrir le véhicule">'+b.nom+'</a>' : b.nom}</b></td>
         <td style="font-size:10px;color:var(--text3)">${b.marque||''} ${b.modele||''}</td>
         <td class="mono" style="font-size:11px">${b.anneMES ? b.anneMES.substring(0,4) : '—'}</td>
         <td class="mono" style="font-size:11px;${b.revisionDate&&b.revisionDate<=today()?'color:var(--orange)':''}">${fmtDateFR(b.revisionDate)||'—'}</td>
