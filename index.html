@@ -851,7 +851,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="game-day">TM</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">v172</span>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="game-day">TM</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">v176</span>
   </div>
 </div>
 
@@ -2123,18 +2123,40 @@
         </div>
       </div>
 
-      <div class="card" style="margin-top:14px">
-        <div class="card-header"><div class="card-title">📊 Résumé de la base</div></div>
-        <div class="card-body" id="cfg-resume"></div>
-      </div>
-
-      <div class="card" style="margin-top:14px;border-color:rgba(239,68,68,0.2)">
-        <div class="card-header" style="border-bottom-color:rgba(239,68,68,0.1)">
-          <div class="card-title" style="color:var(--text3)">⚠️ Réinitialisation</div>
+      <div class="grid-2" style="margin-top:14px;align-items:start">
+        <div class="card">
+          <div class="card-header"><div class="card-title">📊 Résumé de la base</div></div>
+          <div class="card-body" id="cfg-resume"></div>
         </div>
-        <div class="card-body" style="display:flex;align-items:center;gap:14px">
-          <span style="font-size:12px;color:var(--text3)">Les options de réinitialisation sont disponibles dans le Mode Configuration.</span>
-          <button class="btn btn-sm" style="background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green);white-space:nowrap" onclick="ouvrirModeConfigPage('cfg-reset')">⚙️ Ouvrir Mode Config</button>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🏦 Emprunts</div>
+            <button class="btn btn-sm btn-primary" onclick="ajouterEmprunt()">+ Ajouter</button>
+          </div>
+          <div class="card-body" style="padding:0">
+            <div id="cfg-emprunts-list"></div>
+            <div id="cfg-emprunt-form" style="display:none;padding:12px;border-top:1px solid var(--border)">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+                <div>
+                  <label style="font-size:10px;color:var(--text3);display:block;margin-bottom:3px">Numéro d'emprunt</label>
+                  <input type="text" id="emprunt-numero" placeholder="Ex: 12345" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:5px 8px;font-size:12px;box-sizing:border-box">
+                </div>
+                <div>
+                  <label style="font-size:10px;color:var(--text3);display:block;margin-bottom:3px">Mensualité (€)</label>
+                  <input type="number" id="emprunt-mensualite" placeholder="Ex: 15000" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:5px 8px;font-size:12px;box-sizing:border-box">
+                </div>
+                <div>
+                  <label style="font-size:10px;color:var(--text3);display:block;margin-bottom:3px">Nb mensualités</label>
+                  <input type="number" id="emprunt-nb" placeholder="Ex: 60" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:5px 8px;font-size:12px;box-sizing:border-box">
+                </div>
+
+              </div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-primary btn-sm" onclick="validerEmprunt()">✓ Valider</button>
+                <button class="btn btn-ghost btn-sm" onclick="document.getElementById('cfg-emprunt-form').style.display='none'">Annuler</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -4727,6 +4749,7 @@ function csvImporter() {
       }
     }
     state.lastImport[currentCsvType] = nowStr;
+    mettreAJourEmprunts();
     journalLog(`MAJ CSV compta ${mois} : ${nb} opérations`, 'ok');
     saveStateWithSync(); renderDashboard();
     if (document.getElementById('page-compta').classList.contains('active')) renderCompta();
@@ -6591,6 +6614,24 @@ function renderEstimationFinDeMois() {
   const gasoilMoisActuel = gasoilParMois[moisKey] || 0;
   const gasoilEstim = Math.max(0, gasoilMax - gasoilMoisActuel);
 
+  // ── Emprunts : mensualités non encore prélevées ce mois ─
+  let empruntsEstim = 0;
+  const emprunts = state.config?.emprunts || [];
+  if (emprunts.length) {
+    const pattern = (num) => new RegExp('cr[eé]dit\\s+' + num + '(?:\\s|$)', 'i');
+    // Ops dépense du mois courant
+    const opsMoisDep = (state.comptaMois?.[moisKey] || []).filter(o => o.type === 'depense');
+    emprunts.forEach(e => {
+      if (!e.numero || (e.nbRestant ?? e.nb) <= 0) return;
+      const re = pattern(e.numero);
+      // Vérifier si le prélèvement de CE mois est déjà présent
+      const dejaPreleve = opsMoisDep.some(o => re.test(o.desc || ''));
+      if (!dejaPreleve) {
+        empruntsEstim += e.mensualite || 0;
+      }
+    });
+  }
+
   // ── Lignes custom configurables ───────────────────────
   const custom = state.config?.estim?.custom || [
     { label: '', montant: 0 }, { label: '', montant: 0 },
@@ -6598,7 +6639,7 @@ function renderEstimationFinDeMois() {
   ];
 
   // ── Totaux ────────────────────────────────────────────
-  const totalDep = fdmPrec + assurance + gasoilEstim + custom.reduce((s,c)=>s+(c.montant||0),0);
+  const totalDep = fdmPrec + empruntsEstim + assurance + gasoilEstim + custom.reduce((s,c)=>s+(c.montant||0),0);
   const diff     = totalCA - totalDep;
 
   // Solde actuel
@@ -6647,7 +6688,7 @@ function renderEstimationFinDeMois() {
         ${row('Amendes', fmt(amendesEstim), 'var(--green)')}
         ${row('Total CA estimé', fmt(totalCA), 'var(--green)', true, true)}
         ${row('Fin de mois précédent', fmt(fdmPrec), 'var(--red)')}
-        ${row('Emprunts', '— (à venir)', 'var(--text3)')}
+        ${empruntsEstim > 0 ? row('Emprunts (à prélever)', fmt(empruntsEstim), 'var(--red)') : row('Emprunts', '✅ Prélevé ce mois', 'var(--text3)')}
         ${row('Assurance (≤14)', fmt(assurance), 'var(--red)')}
         ${row('Gasoil (max mensuel)', fmt(gasoilEstim), 'var(--red)')}
         ${inputRow(0)}
@@ -8678,11 +8719,13 @@ function importerCSVDirect(type, contenu) {
         importerOpsMois(moisPrec.toISOString().substring(0, 7), opsJ1);
       }
       state.lastImport.compta = nowStr;
+      mettreAJourEmprunts();
       journalLog(`MAJ compta ${mois} : ${nbNouvelles} nouvelles opérations`, 'ok');
       toastMsg(`💰 ${nbNouvelles} opérations importées (${mois})`, 'success');
     } else {
       nbNouvelles = importerOpsMois(mois, ops);
       state.lastImport.lastmonth = nowStr;
+      mettreAJourEmprunts();
       journalLog(`MAJ compta fin de mois ${mois} : ${nbNouvelles} opérations ajoutées`, 'ok');
       toastMsg(`💰 FDM ${mois} : ${nbNouvelles} opérations ajoutées`, 'success');
     }
@@ -8889,20 +8932,130 @@ function renderConfig() {
   const mouvements   = allOps().reduce((a,o) => o.type === 'recette' ? a + o.montant : a - o.montant, 0);
   const solde        = argentDepart + mouvements + ecart;
 
-  document.getElementById('cfg-resume').innerHTML = `
-    <div class="gauge-row"><div class="gauge-label">🚍 Bus dans le parc</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--accent)"></div></div><div class="gauge-val">${state.bus.length}</div></div>
-    <div class="gauge-row"><div class="gauge-label">👤 Personnel</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--accent3)"></div></div><div class="gauge-val">${state.personnel.length}</div></div>
-    <div class="gauge-row"><div class="gauge-label">💰 Opérations compta</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--green)"></div></div><div class="gauge-val">${allOps().length}</div></div>
-    <div class="gauge-row"><div class="gauge-label">📊 Entrées stats</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--yellow)"></div></div><div class="gauge-val">${(state.statsLignes||[]).length}</div></div>
-    <div class="gauge-row"><div class="gauge-label">📋 Affectations</div><div class="gauge-bar"><div class="gauge-fill" style="width:100%;background:var(--orange)"></div></div><div class="gauge-val">${Object.keys(state.affCreneaux||{}).length}</div></div>
-    <div style="margin-top:14px;padding:10px;background:rgba(0,212,255,0.05);border:1px solid var(--border);border-radius:6px">
-      <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Solde calculé</div>
-      <div style="font-family:Inter, var(--font-sans, sans-serif);font-size:20px;font-weight:700;color:${solde>=0?'var(--green)':'var(--red)'}">
-        ${fmt(solde)}
+  const row = (ico, label, val) =>
+    `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:11px;color:var(--text2)">${ico} ${label}</span>
+      <span style="font-size:12px;font-weight:600;color:var(--text)">${val}</span>
+    </div>`;
+  document.getElementById('cfg-resume').innerHTML =
+    row('🚍','Bus dans le parc', state.bus.length)
+    + row('👤','Personnel', state.personnel.length)
+    + row('💰','Opérations compta', allOps().length)
+    + row('📊','Entrées stats', (state.statsLignes||[]).length)
+    + row('📋','Affectations', Object.keys(state.affCreneaux||{}).length)
+    + `<div style="margin-top:12px;padding:10px;background:rgba(0,212,255,0.05);border:1px solid var(--border);border-radius:6px">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Solde calculé</div>
+        <div style="font-size:20px;font-weight:700;color:${solde>=0?'var(--green)':'var(--red)'};">${fmt(solde)}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:4px">${fmt(argentDepart)} départ + ${fmt(mouvements)} mouvements${ecart!==0?' + <span style="color:'+(ecart>0?'var(--green)':'var(--red)')+'">'+fmt(ecart)+' correction</span>':''}</div>
+      </div>`;
+  renderEmprunts();
+}
+
+
+// ═══════════════════════════════════════════════════════
+//  EMPRUNTS
+// ═══════════════════════════════════════════════════════
+
+function ajouterEmprunt() {
+  const form = document.getElementById('cfg-emprunt-form');
+  if (form) {
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    document.getElementById('emprunt-numero').value = '';
+    document.getElementById('emprunt-mensualite').value = '';
+    document.getElementById('emprunt-nb').value = '';
+  }
+}
+
+function validerEmprunt() {
+  const numero     = (document.getElementById('emprunt-numero').value || '').trim();
+  const mensualite = parseFloat(document.getElementById('emprunt-mensualite').value) || 0;
+  const nb         = parseInt(document.getElementById('emprunt-nb').value) || 0;
+  if (!numero)     { toastMsg("Numéro d'emprunt requis", 'error'); return; }
+  if (!mensualite || !nb) { toastMsg('Mensualité et nombre requis', 'error'); return; }
+  if (!state.config) state.config = {};
+  if (!state.config.emprunts) state.config.emprunts = [];
+  state.config.emprunts.push({
+    id: Date.now(), numero, mensualite, nb, nbRestant: nb,
+    dateCreation: new Date().toISOString().slice(0,10)
+  });
+  saveStateWithSync();
+  document.getElementById('cfg-emprunt-form').style.display = 'none';
+  document.getElementById('emprunt-numero').value = '';
+  renderEmprunts();
+  toastMsg('Emprunt #' + numero + ' ajouté', 'success');
+}
+
+function supprimerEmprunt(id) {
+  if (!confirm('Supprimer cet emprunt ?')) return;
+  state.config.emprunts = (state.config.emprunts || []).filter(e => e.id !== id);
+  saveStateWithSync();
+  renderEmprunts();
+}
+
+
+function mettreAJourEmprunts() {
+  const emprunts = state.config?.emprunts;
+  if (!emprunts || !emprunts.length) return;
+
+  let changed = false;
+  emprunts.forEach(e => {
+    if (!e.numero) return;
+    const numStr = String(e.numero).toLowerCase();
+    const dateCreation = e.dateCreation || '2000-01-01';
+
+    // Compter toutes les ops "Prélèvement crédit XXXX" postérieures à la création
+    let count = 0;
+    Object.values(state.comptaMois || {}).forEach(ops => {
+      ops.forEach(o => {
+        if (o.type !== 'depense' || !o.date) return;
+        if (o.date <= dateCreation) return;
+        // Regex : cr(e/é)dit suivi du numéro + espace ou fin de chaîne (évite 12345 qui matche 123456)
+        const desc = (o.desc || '');
+        const regex = new RegExp('cr[eé]dit\s+' + numStr + '(?:\s|$)', 'i');
+        if (regex.test(desc)) {
+          count++;
+        }
+      });
+    });
+
+    const nbRestant = Math.max(0, e.nb - count);
+    if (nbRestant !== (e.nbRestant ?? e.nb)) {
+      e.nbRestant = nbRestant;
+      changed = true;
+    }
+  });
+
+  if (changed) {
+    saveStateWithSync();
+    renderEmprunts();
+  }
+}
+
+function renderEmprunts() {
+  const el = document.getElementById('cfg-emprunts-list');
+  if (!el) return;
+  const emprunts = state.config?.emprunts || [];
+  if (!emprunts.length) {
+    el.innerHTML = '<div style="padding:12px;color:var(--text3);font-size:12px;text-align:center">Aucun emprunt</div>';
+    return;
+  }
+  el.innerHTML = emprunts.map(e => {
+    const total = e.mensualite * (e.nbRestant ?? e.nb);
+    return `<div style="padding:10px 12px;border-bottom:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:11px;color:var(--accent3);font-weight:700">#${e.numero||'—'}</span>
+          <span style="font-size:13px;font-weight:600;color:var(--text)">${fmt(e.mensualite)}/mois</span>
+
+        </div>
+        <button class="btn btn-ghost btn-xs" onclick="supprimerEmprunt(${e.id})">✕</button>
       </div>
-      <div style="font-size:10px;color:var(--text3);margin-top:4px">${fmt(argentDepart)} départ + ${fmt(mouvements)} mouvements${ecart!==0?' + <span style="color:'+(ecart>0?'var(--green)':'var(--red)')+'">'+fmt(ecart)+' correction</span>':''}</div>
-    </div>
-  `;
+      <div style="font-size:11px;color:var(--text3);margin-top:4px">
+        ${e.nbRestant??e.nb}/${e.nb} mensualités restantes · Reste : <span style="color:var(--red)">${fmt(total)}</span>
+        ${e.dateCreation ? `<span style="margin-left:8px">· créé le ${e.dateCreation}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function getSoldeCalcule() {
@@ -10522,6 +10675,7 @@ document.addEventListener('DOMContentLoaded', () => {
   updateClock();
   setInterval(updateClock, 1000);
   syncSidebarVersion();
+  mettreAJourEmprunts();
   // Backup pour GitHub Pages où DOMContentLoaded peut être raté
   window.addEventListener('load', updateClock);
 
