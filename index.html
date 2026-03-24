@@ -831,6 +831,9 @@
       <div class="nav-item cfg-nav" data-page="cfg-prepa-aff" onclick="navConfig(this)">
         <span class="icon">📋</span> Fréquentation prépa
       </div>
+      <div class="nav-item cfg-nav" data-page="cfg-prepa-aide" onclick="navConfig(this)">
+        <span class="icon">🔍</span> Aide affectation prépa
+      </div>
     </div>
 
     <div class="sidebar-section">
@@ -851,7 +854,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="game-day">TM</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">v181</span>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="game-day">TM</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.182</span>
   </div>
 </div>
 
@@ -1609,12 +1612,7 @@
 
       </div><!-- /grid -->
 
-      <!-- Champs cachés nécessaires pour ajouterOperation -->
-      <span id="op-type" style="display:none"></span>
-      <span id="op-cat" style="display:none"></span>
-      <span id="op-montant" style="display:none"></span>
-      <span id="op-date" style="display:none"></span>
-      <span id="op-desc" style="display:none"></span>
+
     </div>
 
     <!-- ═══════════════════════════════════════════ HISTORIQUE ═══ -->
@@ -2348,6 +2346,25 @@
 
 
     <!-- ═══════════════════════ CFG — PRÉPA CRÉNEAUX ═══ -->
+
+    <!-- ═══════════════════════ CFG — AIDE AFFECTATION PRÉPA ═══ -->
+    <div id="page-cfg-prepa-aide" class="page">
+      <div style="font-size:20px;font-weight:700;color:var(--cfg-green);margin-bottom:16px">🔍 Aide affectation prépa</div>
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-header">
+          <div class="card-title">📋 Quel bus sur quelle ligne ? (Prépa Niveau <span id="prepa-aide-niveau"></span>)</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <label style="font-size:12px;color:var(--text3)">Ligne :</label>
+            <select id="prepa-aide-ligne" onchange="renderPrepaAideAff()"
+              style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 10px;font-size:13px;font-weight:700">
+              <option value="">— Choisir une ligne —</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div id="prepa-aide-result"></div>
+    </div>
+
     <div id="page-cfg-prepa-creneaux" class="page">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px">
         <div style="font-size:20px;font-weight:700;color:var(--cfg-green)">🗓️ Affectation prépa</div>
@@ -6603,76 +6620,6 @@ function renderCompta() {
   renderComptaTableau();
 }
 
-function renderComptaChart(annee) {
-  const canvas = document.getElementById('compta-chart');
-  if (!canvas) return;
-  const moisDeLannee = Object.keys(state.comptaMois).filter(m => m.startsWith(annee)).sort();
-  if (!moisDeLannee.length) { canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height); return; }
-
-  const W = canvas.offsetWidth || 800, H = 240;
-  canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0,0,W,H);
-
-  const data = moisDeLannee.map(m => {
-    const ops = state.comptaMois[m];
-    const rec = ops.filter(o=>o.type==='recette').reduce((s,o)=>s+o.montant,0);
-    const dep = ops.filter(o=>o.type==='depense').reduce((s,o)=>s+o.montant,0);
-    return { m, rec, dep, sol: rec - dep };
-  });
-
-  const vals = [...data.map(d=>d.rec), ...data.map(d=>d.dep)];
-  const vmax = Math.max(...vals, 1);
-  const pad = { top:20, right:20, bottom:36, left:70 };
-  const cw = W - pad.left - pad.right;
-  const ch = H - pad.top - pad.bottom;
-  const bw = Math.min(30, cw / data.length / 3);
-  const gap = cw / data.length;
-
-  // Grille
-  ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
-  for (let i = 0; i <= 4; i++) {
-    const y = pad.top + (ch/4)*i;
-    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W-pad.right, y); ctx.stroke();
-    ctx.fillStyle = 'rgba(148,163,184,0.7)'; ctx.font = '10px monospace'; ctx.textAlign = 'right';
-    ctx.fillText(fmt(Math.round(vmax - (vmax/4)*i)), pad.left-6, y+4);
-  }
-
-  data.forEach((d, i) => {
-    const cx = pad.left + gap*i + gap/2;
-    const toH = v => Math.max(2, (v/vmax)*ch);
-
-    // Barre recettes (cyan)
-    ctx.fillStyle = 'rgba(0,212,255,0.7)';
-    const hRec = toH(d.rec);
-    ctx.fillRect(cx - bw - 2, pad.top + ch - hRec, bw, hRec);
-
-    // Barre dépenses (rouge)
-    ctx.fillStyle = 'rgba(239,68,68,0.7)';
-    const hDep = toH(d.dep);
-    ctx.fillRect(cx + 2, pad.top + ch - hDep, bw, hDep);
-
-    // Label mois
-    ctx.fillStyle = 'rgba(100,116,139,0.9)'; ctx.font = '9px monospace'; ctx.textAlign = 'center';
-    const mLabel = new Date(d.m+'-15').toLocaleDateString('fr-FR', {month:'short'});
-    ctx.fillText(mLabel, cx, H - 8);
-
-    // Solde point
-    const ySol = pad.top + ch - (Math.max(0,d.sol)/vmax)*ch;
-    ctx.fillStyle = d.sol >= 0 ? '#10b981' : '#ef4444';
-    ctx.beginPath(); ctx.arc(cx, ySol, 4, 0, Math.PI*2); ctx.fill();
-  });
-
-  // Légende
-  ctx.font = '10px monospace';
-  ctx.fillStyle = 'rgba(0,212,255,0.9)'; ctx.fillRect(pad.left, 4, 12, 9);
-  ctx.fillStyle='#e2e8f0'; ctx.textAlign='left'; ctx.fillText('Recettes', pad.left+15, 12);
-  ctx.fillStyle = 'rgba(239,68,68,0.9)'; ctx.fillRect(pad.left+75, 4, 12, 9);
-  ctx.fillStyle='#e2e8f0'; ctx.fillText('Dépenses', pad.left+90, 12);
-  ctx.fillStyle = '#10b981'; ctx.beginPath(); ctx.arc(pad.left+160, 8, 4, 0, Math.PI*2); ctx.fill();
-  ctx.fillStyle='#e2e8f0'; ctx.fillText('Solde mois', pad.left+168, 12);
-}
-
 
 // ═══════════════════════════════════════════════════════
 //  ESTIMATION FIN DE MOIS
@@ -6732,7 +6679,6 @@ function renderEstimationFinDeMois() {
       else if (j === 6) { sumSam += total; cntSam++; }
       else              { sumSem += total; cntSem++; }
     });
-
 
 
     const moySem = cntSem ? Math.round(sumSem / cntSem) : 0;
@@ -6918,13 +6864,6 @@ function renderEstimationFinDeMois() {
     </div>`;
 }
 
-function setEstimGainQuot(val) {
-  if (!state.config) state.config = {};
-  if (!state.config.estim) state.config.estim = {};
-  state.config.estim.gainQuotidien = val;
-  saveStateWithSync();
-  renderEstimationFinDeMois();
-}
 
 function setEstimCustom(idx, key, val) {
   if (!state.config) state.config = {};
@@ -7016,21 +6955,6 @@ function resetFiltreCompta() {
   renderComptaTableau();
 }
 
-function ajouterOperation() {
-  const montant = parseFloat(document.getElementById('op-montant').value)||0;
-  if (!montant) { toastMsg('Montant requis', 'error'); return; }
-  const date  = document.getElementById('op-date').value || today();
-  const type  = document.getElementById('op-type').value;
-  const cat   = document.getElementById('op-cat').value;
-  const desc  = document.getElementById('op-desc').value;
-  const mois  = date.substring(0, 7);
-  const op    = { id: Date.now(), date, type, cat, desc, montant };
-  if (!state.comptaMois[mois]) state.comptaMois[mois] = [];
-  state.comptaMois[mois].push(op);
-  journalLog(`${type === 'recette' ? 'Recette' : 'Dépense'} : ${fmt(montant)} (${cat})`, 'info');
-  saveStateWithSync(); renderCompta();
-  toastMsg('Opération enregistrée ✓', 'success');
-}
 
 // ═══════════════════════════════════════════════════════
 //  PUB
@@ -7883,7 +7807,6 @@ function ajouterLignePrepaFreq() {
 }
 
 
-
 // ═══════════════════════════════════════════════════════
 //  PRÉPA — CRÉNEAUX (tableau affectation éditable)
 // ═══════════════════════════════════════════════════════
@@ -8378,6 +8301,100 @@ function calculerPlanning() {
   result.innerHTML = html;
 }
 
+
+// ═══════════════════════════════════════════════════════
+//  AIDE AFFECTATION PRÉPA (mode config)
+// ═══════════════════════════════════════════════════════
+
+function initPrepaAideAff() {
+  const sel = document.getElementById('prepa-aide-ligne');
+  if (!sel) return;
+  const val = sel.value;
+  const n = state.prepaNiveauFreq || 5;
+  const lignes = (state.cfgLignesParNiveau?.[n] || state.lignes || [])
+    .filter(l => l.num && l.num !== '');
+  sel.innerHTML = '<option value="">— Choisir une ligne —</option>' +
+    lignes.map(l => `<option value="${l.num}" ${l.num===val?'selected':''}>${l.num}</option>`).join('');
+  const el = document.getElementById('prepa-aide-niveau');
+  if (el) el.textContent = n;
+}
+
+function renderPrepaAideAff() {
+  const sel    = document.getElementById('prepa-aide-ligne');
+  const result = document.getElementById('prepa-aide-result');
+  if (!sel || !result) return;
+  const ligneNum = sel.value;
+  if (!ligneNum) { result.innerHTML = ''; return; }
+
+  const n = state.prepaNiveauFreq || 5;
+  const GROUPES = ['SEMAINE','SAMEDI','DIMANCHE'];
+  const crenByGroupe = {};
+  GROUPES.forEach(g => { crenByGroupe[g] = []; });
+  AFF_CRENEAUX.forEach(cr => { if (crenByGroupe[cr.groupe]) crenByGroupe[cr.groupe].push(cr); });
+
+  // Bus affectés par créneau via les données PRÉPA
+  const busParCreneau = {};
+  AFF_CRENEAUX.forEach(cr => {
+    busParCreneau[cr.id] = getBusAffectesLignePrepa(ligneNum, cr.id)
+      .sort((a,b) => a.nom.localeCompare(b.nom));
+  });
+
+  const maxBus = Math.max(1, ...Object.values(busParCreneau).map(arr => arr.length));
+
+  // Ligne info
+  const lignes = state.cfgLignesParNiveau?.[n] || state.lignes || [];
+  const ligneInfo = lignes.find(l => String(l.num) === String(ligneNum));
+  const ligneCouleur = ligneInfo?.couleur || 'var(--cfg-green)';
+
+  let html = `<div class="card">
+    <div class="card-header" style="background:${ligneCouleur}22;border-bottom:3px solid ${ligneCouleur}">
+      <div class="card-title" style="color:${ligneCouleur};font-size:18px">Ligne ${ligneNum} — Prépa N${n}</div>
+      <span style="font-size:12px;color:var(--text3)">${maxBus > 0 ? 'Bus affectés par créneau (données prépa)' : 'Aucune affectation prépa trouvée'}</span>
+    </div>
+    <div class="card-body" style="padding:0;overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;min-width:700px">
+        <thead>`;
+
+  // Row 1 : groupe headers
+  html += '<tr>';
+  GROUPES.forEach(g => {
+    const gc = AFF_GROUPE_COLORS[g];
+    const crens = crenByGroupe[g];
+    html += `<th colspan="${crens.length}" style="background:${gc.bg};color:${gc.color};font-weight:700;padding:8px;text-align:center;font-size:12px;letter-spacing:1px;border:1px solid rgba(255,255,255,0.08)">${g}</th>`;
+  });
+  html += '</tr>';
+
+  // Row 2 : créneau labels
+  html += '<tr>';
+  AFF_CRENEAUX.forEach(cr => {
+    const gc = AFF_GROUPE_COLORS[cr.groupe];
+    html += `<th style="background:${gc.bg}cc;color:${gc.color};padding:5px 8px;text-align:center;font-size:11px;border:1px solid rgba(255,255,255,0.08)">${cr.label}<br><span style="opacity:0.7;font-weight:400">(${cr.th})</span></th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  // Data rows
+  for (let row = 0; row < maxBus; row++) {
+    html += '<tr>';
+    AFF_CRENEAUX.forEach(cr => {
+      const gc  = AFF_GROUPE_COLORS[cr.groupe];
+      const bus = busParCreneau[cr.id][row];
+      const statut = bus?.statut || '';
+      const isIndispo = ['Indispo','ATELIER','En révision','CT','Révision puis CT','CT puis Révision'].includes(statut);
+      const cellBg  = bus ? (isIndispo ? 'rgba(239,68,68,0.18)' : gc.bgCell) : gc.bgCell;
+      const cellTxt = bus
+        ? (isIndispo
+            ? `<span style="color:var(--red);font-weight:700">${bus.nom}</span><br><span style="font-size:9px;color:var(--red)">${statut}</span>`
+            : `<span style="font-weight:600">${bus.nom}</span>`)
+        : '';
+      html += `<td style="padding:6px 8px;text-align:center;font-size:12px;background:${cellBg};border:1px solid rgba(255,255,255,0.06)">${cellTxt}</td>`;
+    });
+    html += '</tr>';
+  }
+
+  html += '</tbody></table></div></div>';
+  result.innerHTML = html;
+}
+
 function initAideAffectation() {
   const sel = document.getElementById('aide-aff-ligne');
   if (!sel) return;
@@ -8835,7 +8852,6 @@ function detectExtension() {
   return present;
 }
 setInterval(detectExtension, 2000);
-
 
 
 // Importe directement un contenu CSV pour un type donné (sans passer par le modal)
@@ -9627,6 +9643,7 @@ function navConfig(el) {
     'cfg-jeu':           '🎮 Jeu',
     'cfg-prepa-creneaux':'🗓️ Affectation prépa',
     'cfg-prepa-aff':     '📋 Fréquentation prépa',
+    'cfg-prepa-aide':    '🔍 Aide affectation prépa',
     'config':            '⚙️ Paramètres financiers',
     'cfg-categories':    '🏷️ Catégories',
     'cfg-lignes':        '🛣️ Gestion des lignes',
@@ -9645,6 +9662,7 @@ function navConfig(el) {
   if (page === 'cfg-jeu') renderCfgJeu();
   if (page === 'cfg-prepa-creneaux') renderPrepaCreneaux();
   if (page === 'cfg-prepa-aff') renderPrepaAff();
+  if (page === 'cfg-prepa-aide') { initPrepaAideAff(); renderPrepaAideAff(); };
   if (page === 'cfg-lignes') renderCfgLignes();
   if (page === 'cfg-sync') renderSyncPage();
 }
