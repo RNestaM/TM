@@ -864,7 +864,7 @@
     </div>
     <div class="topbar-right">
       <div id="date-badge">--/--/----</div>
-      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:Inter, var(--font-sans, sans-serif);background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v151</span>
+      <span id="github-version" style="font-size:11px;color:var(--accent3);font-family:Inter, var(--font-sans, sans-serif);background:rgba(124,58,237,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(124,58,237,0.3)" title="Version du site">v152</span>
       <button id="sync-status" onclick="syncPush(true)" title="Cliquer pour synchroniser maintenant" style="font-size:11px;font-family:Inter, var(--font-sans, sans-serif);padding:3px 8px;border-radius:4px;display:none;cursor:pointer;border:none"></button>
       <span id="ext-status" style="font-size:11px;font-family:Inter, var(--font-sans, sans-serif);padding:3px 10px;border-radius:6px;display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(100,100,100,0.3);background:rgba(100,100,100,0.08);color:var(--text3)" title="Extension Firefox">🦊 Extension inactive</span>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 MAJ via CSV</button>
@@ -4033,18 +4033,22 @@ function refreshLastImportBadge() {
   const type = currentCsvType;
   const infoEl = document.getElementById('csv-type-info');
   if (!infoEl || !type) return;
+  const badgeEl = infoEl.querySelector('[data-last-badge]');
+  if (!badgeEl) return;
   const last = state.lastImport && state.lastImport[type];
-  const lastBadge = last
+  const newText = last ? 'MAJ:' + last : '';
+  // Ne réécrire que si la valeur a réellement changé → évite tout reflow inutile
+  if (badgeEl.dataset.lastVal === newText) return;
+  badgeEl.dataset.lastVal = newText;
+  badgeEl.innerHTML = last
     ? `<div style="margin-top:8px;padding:5px 10px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:6px;font-size:11px;color:var(--green);display:inline-flex;align-items:center;gap:6px"><span>✓</span><span>Dernière MAJ : ${last}</span></div>`
     : '';
-  // Mettre à jour uniquement le badge, pas tout le contenu
-  const badgeEl = infoEl.querySelector('[data-last-badge]');
-  if (badgeEl) badgeEl.innerHTML = lastBadge;
 }
-// Rafraîchir toutes les 3s
+// Rafraîchir toutes les 2s, seulement si le modal est ouvert
 setInterval(() => {
-  if (document.getElementById('modal-maj-csv')?.style.display !== 'none') refreshLastImportBadge();
-}, 3000);
+  const modal = document.getElementById('modal-maj-csv');
+  if (modal && modal.style.display !== 'none' && modal.style.display !== '') refreshLastImportBadge();
+}, 2000);
 
 function selectCsvType(el, type) {
   currentCsvType = type;
@@ -4661,7 +4665,6 @@ function csvImporter() {
       }
     }
     state.lastImport[currentCsvType] = nowStr;
-    window._extFetchDone = true;
     journalLog(`MAJ CSV compta ${mois} : ${nb} opérations`, 'ok');
     saveStateWithSync(); renderDashboard();
     if (document.getElementById('page-compta').classList.contains('active')) renderCompta();
@@ -8230,18 +8233,7 @@ function detectExtension() {
 }
 setInterval(detectExtension, 2000);
 
-// Rafraîchissement dynamique du badge "Dernière MAJ"
-setInterval(() => {
-  const infoEl = document.getElementById('csv-type-info');
-  if (!infoEl) return;
-  const badgeEl = infoEl.querySelector('[data-last-badge]');
-  if (!badgeEl || !currentCsvType) return;
-  const last = state.lastImport && state.lastImport[currentCsvType];
-  const lastBadge = last
-    ? `<span style="font-size:10px;color:var(--green)">✅ Dernière MAJ : ${last}</span>`
-    : `<span style="font-size:10px;color:var(--text3)">Jamais importé</span>`;
-  badgeEl.innerHTML = lastBadge;
-}, 2000);
+
 
 // Importe directement un contenu CSV pour un type donné (sans passer par le modal)
 function importerCSVDirect(type, contenu) {
@@ -8362,66 +8354,61 @@ function demarrerPollingExtension() {
       try {
         const payload = JSON.parse(raw);
         importerCSVDirect(type, payload.content);
-      } catch(err) { console.error('TM import error:', err); }
+        // Signaler la fin pour fetchViaExtension
+        window._extFetchDone = true;
+        window._extFetchDoneType = type;
+      } catch(err) {
+        console.error('TM import error:', err);
+        window._extFetchDone = true; // reset quand même le bouton
+      }
     });
   }, 500);
 }
 
 // Bouton "Récupérer via Extension" dans le modal
 function fetchViaExtension() {
-  const type  = currentCsvType;
-  const btn   = document.getElementById('btn-ext-fetch');
+  const type = currentCsvType;
+  const btn  = document.getElementById('btn-ext-fetch');
 
-  const resetBtn = () => {
+  const resetBtn = (success) => {
     if (btn) { btn.textContent = '🦊 Récupérer via Extension'; btn.disabled = false; }
+    refreshLastImportBadge();
   };
 
   if (btn) { btn.textContent = '⏳ En cours (~5s)...'; btn.disabled = true; }
 
+  // Initialiser le flag AVANT d'écrire la requête
+  window._extFetchDone     = false;
+  window._extFetchDoneType = null;
+
   localStorage.setItem('tm_ext_request', JSON.stringify({ type, timestamp: Date.now() }));
 
-  let done = false;
+  let done    = false;
+  let waited  = 0;
+  const TIMEOUT = 10000; // 10s max
+  const TICK    = 250;
 
-  // Sécurité absolue : reset au bout de 12s quoi qu'il arrive
-  const safetyTimeout = setTimeout(() => {
-    if (!done) {
-      done = true;
-      resetBtn();
-      toastMsg('Extension : pas de réponse', 'error');
-    }
-  }, 12000);
-
-  // Écouter le storage event — l'extension écrit la clé, processExtensionData la lit et la supprime
-  // On surveille AUSSI la fin du traitement via un flag sur window
-  window._extFetchDone = false;
-
-  const storageListener = (e) => {
-    if (done) return;
-    // L'extension a écrit la clé → processExtensionData va la consommer → on attend la fin
-    if (e.key === 'tm_ext_csv_' + type && e.newValue) {
-      // Petite attente pour laisser processExtensionData tourner
-      setTimeout(() => {
-        if (!done) { done = true; clearTimeout(safetyTimeout); window.removeEventListener('storage', storageListener); resetBtn(); }
-      }, 2000);
-    }
-  };
-  window.addEventListener('storage', storageListener);
-
-  // Fallback polling léger pour les cas où storage event ne fire pas (même onglet)
-  let waited = 0;
   const poll = setInterval(() => {
-    if (done) { clearInterval(poll); return; }
-    waited += 300;
+    waited += TICK;
+
+    // Succès : demarrerPollingExtension a traité la clé et posé le flag
     if (window._extFetchDone) {
       clearInterval(poll);
-      clearTimeout(safetyTimeout);
-      window.removeEventListener('storage', storageListener);
       done = true;
-      setTimeout(resetBtn, 500);
+      resetBtn(true);
       return;
     }
-    if (waited > 11000) { clearInterval(poll); }
-  }, 300);
+
+    // Timeout
+    if (waited >= TIMEOUT) {
+      clearInterval(poll);
+      if (!done) {
+        done = true;
+        resetBtn(false);
+        toastMsg('Extension : pas de réponse — vérifie que tu es connecté sur transport-manager.net', 'error');
+      }
+    }
+  }, TICK);
 }
 
 
