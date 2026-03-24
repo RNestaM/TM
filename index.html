@@ -851,7 +851,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="game-day">TM</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">v170</span>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="game-day">TM</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">v171</span>
   </div>
 </div>
 
@@ -869,7 +869,7 @@
     <div class="topbar-right">
       <!-- Boutons MAJ Extension -->
       <div style="display:flex;align-items:center;gap:6px;padding:0 8px;border-right:1px solid var(--border)">
-        <button onclick="quickFetchExt('stats')" title="MAJ Stats Lignes via Extension"
+        <button onclick="quickFetchExt(['stats','bus'])" title="MAJ Matin : Stats Lignes + Parc Bus via Extension"
           style="font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">📊 Matin</button>
         <button onclick="quickFetchExt('bus')" title="MAJ Parc Bus via Extension"
           style="font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">🚍 Parc</button>
@@ -8715,34 +8715,42 @@ function demarrerPollingExtension() {
 function quickFetchExt(type) {
   const btn = event.currentTarget;
   const origText = btn.textContent;
-  btn.textContent = '⏳';
-  btn.disabled = true;
-  btn.style.color = 'var(--yellow)';
+  // Supporte un seul type ou un tableau (séquence)
+  const types = Array.isArray(type) ? type : [type];
 
-  window._extFetchDone = false;
-  window._extFetchDoneType = null;
-  currentCsvType = type;
-  localStorage.setItem('tm_ext_request', JSON.stringify({ type, timestamp: Date.now() }));
+  const setBtn = (text, color, disabled) => {
+    btn.textContent = text; btn.style.color = color; btn.disabled = disabled;
+  };
+  setBtn('⏳', 'var(--yellow)', true);
 
-  let waited = 0;
-  const poll = setInterval(() => {
-    waited += 250;
-    if (window._extFetchDone) {
-      clearInterval(poll);
-      btn.textContent = '✅';
-      btn.style.color = 'var(--green)';
-      btn.disabled = false;
-      setTimeout(() => { btn.textContent = origText; btn.style.color = 'var(--text2)'; }, 2000);
-      return;
+  // Fetch en séquence : attend que chaque type soit traité avant de passer au suivant
+  const fetchOne = (t) => new Promise((resolve, reject) => {
+    window._extFetchDone = false;
+    window._extFetchDoneType = null;
+    currentCsvType = t;
+    localStorage.setItem('tm_ext_request', JSON.stringify({ type: t, timestamp: Date.now() }));
+    let waited = 0;
+    const poll = setInterval(() => {
+      waited += 250;
+      if (window._extFetchDone) { clearInterval(poll); resolve(); return; }
+      if (waited >= 12000) { clearInterval(poll); reject(new Error('Pas de réponse pour ' + t)); }
+    }, 250);
+  });
+
+  (async () => {
+    for (const t of types) {
+      try {
+        await fetchOne(t);
+      } catch(e) {
+        setBtn('❌', 'var(--red)', false);
+        toastMsg('Extension : ' + e.message, 'error');
+        setTimeout(() => { btn.textContent = origText; btn.style.color = 'var(--text2)'; }, 3000);
+        return;
+      }
     }
-    if (waited >= 10000) {
-      clearInterval(poll);
-      btn.textContent = '❌';
-      btn.style.color = 'var(--red)';
-      btn.disabled = false;
-      setTimeout(() => { btn.textContent = origText; btn.style.color = 'var(--text2)'; }, 3000);
-    }
-  }, 250);
+    setBtn('✅', 'var(--green)', false);
+    setTimeout(() => { btn.textContent = origText; btn.style.color = 'var(--text2)'; }, 2000);
+  })();
 }
 
 // Bouton "Récupérer via Extension" dans le modal
