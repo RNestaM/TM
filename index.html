@@ -851,7 +851,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="game-day">TM</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">v171</span>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="game-day">TM</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">v172</span>
   </div>
 </div>
 
@@ -2093,16 +2093,19 @@
         <div class="card">
           <div class="card-header"><div class="card-title">⚖️ Correction d'écart financier</div></div>
           <div class="card-body">
-            <p style="font-size:11px;color:var(--text3);margin-bottom:12px">Si ton solde ici diffère du solde dans le jeu, saisis l'écart pour le corriger. Cette valeur s'ajoute directement au solde affiché, <b>sans créer de mouvement comptable</b>.</p>
+            <p style="font-size:11px;color:var(--text3);margin-bottom:4px">Entre le <b>solde affiché dans le jeu</b>. Le site calculera automatiquement l'écart à appliquer.</p>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:10px">
+              Solde calculé actuellement : <b id="cfg-solde-calcule" style="color:var(--accent)">—</b>
+            </div>
             <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
-              <input type="number" id="cfg-ecart" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 10px;font-size:14px;font-family:Inter, var(--font-sans, sans-serif)" placeholder="Ex: +1000 ou -500">
+              <input type="number" id="cfg-ecart" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 10px;font-size:14px;font-family:Inter, var(--font-sans, sans-serif)" placeholder="Solde réel dans le jeu (ex: 12000000)" oninput="previewEcart()">
               <button class="btn btn-primary" onclick="appliquerEcart()">✓ Appliquer</button>
             </div>
             <div style="font-size:12px;color:var(--text2)">
               Correction actuelle : <b id="cfg-ecart-actuel" style="font-family:Inter, var(--font-sans, sans-serif);color:var(--accent)">0 €</b>
               <button class="btn btn-ghost btn-xs" style="margin-left:8px" onclick="resetEcart()">↺ Réinitialiser</button>
             </div>
-            <div id="cfg-ecart-preview" style="margin-top:10px;font-size:11px;color:var(--text3);display:none"></div>
+            <div id="cfg-ecart-preview" style="margin-top:8px;font-size:11px;display:none;padding:6px 10px;border-radius:6px;background:var(--surface2);border:1px solid var(--border)"></div>
           </div>
         </div>
 
@@ -8867,6 +8870,12 @@ function renderConfig() {
   if (elActuel) elActuel.textContent = fmt(cfg.argentDepart || 0);
 
   const ecart = cfg.ecartFinancier || 0;
+  // Afficher le solde calculé (sans écart)
+  const elSoldeCalc = document.getElementById('cfg-solde-calcule');
+  if (elSoldeCalc) {
+    const sc = getSoldeCalcule();
+    elSoldeCalc.textContent = fmt(sc);
+  }
   const elEcart = document.getElementById('cfg-ecart-actuel');
   if (elEcart) {
     elEcart.textContent = (ecart >= 0 ? '+' : '') + fmt(ecart);
@@ -8896,13 +8905,38 @@ function renderConfig() {
   `;
 }
 
+function getSoldeCalcule() {
+  const argentDepart = (state.config && state.config.argentDepart) || 0;
+  const mouvements   = allOps().reduce((a,o) => o.type === 'recette' ? a+o.montant : a-o.montant, 0);
+  return argentDepart + mouvements; // Sans écart actuel
+}
+
+function previewEcart() {
+  const input = document.getElementById('cfg-ecart');
+  const preview = document.getElementById('cfg-ecart-preview');
+  const val = parseFloat(input ? input.value : '');
+  if (isNaN(val) || input.value === '') { if (preview) preview.style.display='none'; return; }
+  const soldeCalc = getSoldeCalcule();
+  const nouvelEcart = val - soldeCalc;
+  const signe = nouvelEcart >= 0 ? '+' : '';
+  if (preview) {
+    preview.style.display = 'block';
+    preview.style.color = nouvelEcart >= 0 ? 'var(--green)' : 'var(--red)';
+    preview.innerHTML = `Solde calculé : <b>${fmt(soldeCalc)}</b> → Écart à appliquer : <b>${signe}${fmt(nouvelEcart)}</b>`;
+  }
+}
+
 function appliquerEcart() {
   const input = document.getElementById('cfg-ecart');
-  const val = parseFloat(input ? input.value : 0);
-  if (isNaN(val) || val === 0) { toastMsg('Saisis un nombre non nul', 'error'); return; }
+  const soldeJeu = parseFloat(input ? input.value : '');
+  if (isNaN(soldeJeu) || input.value === '') { toastMsg('Saisis le solde réel du jeu', 'error'); return; }
+  const soldeCalc  = getSoldeCalcule();
+  const nouvelEcart = soldeJeu - soldeCalc;
   if (!state.config) state.config = {};
-  state.config.ecartFinancier = (state.config.ecartFinancier || 0) + val;
+  state.config.ecartFinancier = nouvelEcart;
   if (input) input.value = '';
+  const preview = document.getElementById('cfg-ecart-preview');
+  if (preview) preview.style.display = 'none';
   saveStateWithSync();
   const el = document.getElementById('cfg-ecart-actuel');
   if (el) {
@@ -8912,9 +8946,9 @@ function appliquerEcart() {
   }
   renderDashboard();
   if (document.getElementById('page-compta') && document.getElementById('page-compta').classList.contains('active')) renderCompta();
-  const signe = val >= 0 ? '+' : '';
-  toastMsg(`Correction appliquée : ${signe}${fmt(val)} → écart total ${fmt(state.config.ecartFinancier)}`, 'success');
-  journalLog(`Correction écart financier : ${signe}${fmt(val)}`, 'info');
+  const signe = nouvelEcart >= 0 ? '+' : '';
+  toastMsg(`Écart appliqué : ${signe}${fmt(nouvelEcart)} (solde jeu ${fmt(soldeJeu)} vs calculé ${fmt(soldeCalc)})`, 'success');
+  journalLog(`Correction écart : solde jeu ${fmt(soldeJeu)} → écart ${signe}${fmt(nouvelEcart)}`, 'info');
 }
 
 function resetEcart() {
