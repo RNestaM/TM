@@ -854,7 +854,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="game-day">TM</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.182</span>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="game-day">TM</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.183</span>
   </div>
 </div>
 
@@ -3702,7 +3702,7 @@ function renderAlertes() {
     const label = d === 0 ? "<b>AUJOURD'HUI</b>" : d === 1 ? 'Demain' : `Dans <b>${d} j</b>`;
     if (d === 0 && !estLu(id)) totalAujourdHui++;
     nbContratsAffiches++;
-    html += `<div class="alert-box warning" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
+    html += `<div class="alert-box ${d===0?'danger':'warning'}" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
       <span>🚌 Contrat <b>#${t.num||'?'}</b> — ${t.demandeur||'—'} — ${t.dateTransport} — ${label} — <span style="color:var(--green)">${fmt(t.montant||0)}</span></span>
       ${btnLu(id)}
     </div>`;
@@ -3738,7 +3738,7 @@ function renderAlertes() {
     nbCTAffiches++;
     if (d === 0 && !estLu(id)) totalAujourdHui++;
     const label = d === 0 ? "<b>AUJOURD'HUI</b>" : `Dans <b>${d} j</b>`;
-    html += `<div class="alert-box warning" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
+    html += `<div class="alert-box ${d===0?'danger':'warning'}" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
       <span>🔍 <b>${b.nom}</b> — CT prévu le ${fmtDateFR(ctDate)} — ${label}</span>
       ${btnLu(id)}
     </div>`;
@@ -3763,7 +3763,7 @@ function renderAlertes() {
     nbRevAffiches++;
     if (d === 0 && !estLu(id)) totalAujourdHui++;
     const label = d === 0 ? "<b>AUJOURD'HUI</b>" : `Dans <b>${d} j</b>`;
-    html += `<div class="alert-box warning" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
+    html += `<div class="alert-box ${d===0?'danger':'warning'}" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
       <span>🔧 <b>${b.nom}</b> — Révision prévue le ${fmtDateFR(revDate)} — ${label}</span>
       ${btnLu(id)}
     </div>`;
@@ -3787,7 +3787,7 @@ function renderAlertes() {
     const dFCO = diffJ(p.fco);
     if (dFCO === 0) totalAujourdHui++;
     const label = dFCO < 0 ? `<b style="color:var(--red)">EXPIRÉE depuis ${Math.abs(dFCO)} j</b>` : dFCO === 0 ? "<b>AUJOURD'HUI</b>" : `Dans <b>${dFCO} j</b>`;
-    html += `<div class="alert-box ${dFCO<=0?'danger':'warning'}" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
+    html += `<div class="alert-box ${dFCO<=0?'danger':'warning'}" style="margin-bottom:6px;display:flex;align-items:center;gap:8px;${dFCO===0?'border-width:2px':''}">
       <span>🎓 <b>${p.nom}</b> (${p.matricule}) — FCO le ${fmtDateFR(p.fco)} — ${label}</span>
       ${btnLu(id)}
     </div>`;
@@ -8818,10 +8818,10 @@ function renderGasoilGraphique() {
   drawMinMax(diesel, '#EFAC19', 'left');
   drawMinMax(gnv,    '#99B900', 'right');
 
-  // Légende
+  // Légende (deux lignes pour éviter chevauchement)
   ctx.font = '11px monospace';
-  ctx.fillStyle = '#EFAC19'; ctx.fillRect(pad.left, 4, 14, 10); ctx.fillStyle='#e2e8f0'; ctx.fillText('Diesel', pad.left+18, 13);
-  ctx.fillStyle = '#99B900'; ctx.fillRect(pad.left+70, 4, 14, 10); ctx.fillStyle='#e2e8f0'; ctx.fillText('GNV', pad.left+88, 13);
+  ctx.fillStyle = '#EFAC19'; ctx.fillRect(pad.left, 4, 14, 10); ctx.fillStyle='#e2e8f0'; ctx.textAlign='left'; ctx.fillText('Diesel', pad.left+18, 13);
+  ctx.fillStyle = '#99B900'; ctx.fillRect(pad.left, 20, 14, 10); ctx.fillStyle='#e2e8f0'; ctx.fillText('GNV', pad.left+18, 29);
 }
 
 
