@@ -857,7 +857,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="game-day">TM</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.186</span>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="game-day">TM</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.187</span>
   </div>
 </div>
 
@@ -1460,7 +1460,7 @@
             <select id="panne-filtre-statut" onchange="renderPannes()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:3px 8px;font-size:12px">
               <option value="">Tous</option>
               <option value="En attente">En attente</option>
-              <option value="En cours">En cours</option>
+              <option value="À l'atelier">À l'atelier</option>
               <option value="Réparé">Réparé</option>
             </select>
             <button class="btn btn-ghost btn-sm" onclick="if(confirm('Supprimer toutes les pannes ?')){state.pannes=[];saveStateWithSync();renderPannes();}">🗑 Tout vider</button>
@@ -5950,6 +5950,19 @@ function importerPannes() {
   if (!nouvelles.length) { toastMsg('Aucune panne reconnue', 'error'); return; }
   if (!state.pannes) state.pannes = [];
   state.pannes = [...nouvelles, ...state.pannes]; // plus récentes en premier
+
+  // Mettre les bus concernés en Indispo + raisonAtelier = 'Panne'
+  nouvelles.forEach(p => {
+    if (!p.nomParc) return;
+    const b = (state.bus || []).find(x => x.nom === p.nomParc);
+    if (b) {
+      b.statut = 'Indispo';
+      if (!state.planningCT) state.planningCT = {};
+      if (!state.planningCT[b.nom]) state.planningCT[b.nom] = {};
+      state.planningCT[b.nom].raisonAtelier = 'Panne';
+    }
+  });
+
   saveStateWithSync();
   document.getElementById('panne-import-texte').value = '';
   renderPannes();
@@ -6042,7 +6055,7 @@ function renderPannes() {
         <select onchange="setPanneStatut(${p.id},this.value)"
           style="background:transparent;border:1px solid ${couleur}33;border-radius:4px;color:${couleur};font-size:11px;padding:2px 6px;cursor:pointer">
           <option value="En attente" ${p.statut==='En attente'?'selected':''}>En attente</option>
-          <option value="En cours"   ${p.statut==='En cours'  ?'selected':''}>En cours</option>
+          <option value="À l'atelier" ${p.statut==="À l'atelier"?'selected':''}>À l'atelier</option>
           <option value="Réparé"     ${p.statut==='Réparé'    ?'selected':''}>Réparé</option>
         </select>
       </td>
