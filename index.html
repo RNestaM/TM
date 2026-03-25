@@ -847,7 +847,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.203</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.206</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -1168,6 +1168,9 @@
 
     <!-- ═══════════════════════════════════════════ MAINTENANCE ═══ -->
     <div id="page-maintenance" class="page">
+
+      <!-- ── Alertes conflits type ─────────────────────── -->
+      <div id="ct-conflits-card" style="display:none;margin-bottom:14px"></div>
 
       <!-- ── VOLET 1 : Planning CT sur 2 mois ─────────── -->
       <div class="card" style="margin-bottom:14px">
@@ -5279,7 +5282,7 @@ function setAffStatut(busNom, newStatut) {
   b.statut = mapStatut[newStatut] || newStatut;
   saveStateWithSync();
   renderAffectations();
-  if (document.getElementById('page-maintenance')?.classList.contains('active')) renderMaintenance();
+  if (document.getElementById('page-maintenance')?.classList.contains('active')) { renderMaintenance(); }
   if (document.getElementById('page-frequentation')?.classList.contains('active')) renderFrequentation();
 }
 
@@ -5357,7 +5360,77 @@ function addDays(dateISO, n) {
   return d.toISOString().slice(0, 10);
 }
 
+
+function detecterConflitsCT() {
+  const card = document.getElementById('ct-conflits-card');
+  if (!card) return;
+
+  // Seuil : 3 bus ou plus du même type le même jour = conflit
+  const SEUIL = 3;
+  const todayISO = today();
+
+  // Construire un map : date → { type → [bus] }
+  const parDateType = {};
+  state.bus.forEach(b => {
+    if (!b.ct) return;
+    const plan = state.planningCT?.[b.nom] || {};
+    const ctDate  = plan.ctDate  === 'DONE' ? null : (plan.ctDate  || null);
+    const revDate = plan.revDate === 'DONE' ? null : (plan.revDate || null);
+
+    [ctDate, revDate].forEach((date, idx) => {
+      if (!date || date < todayISO) return;
+      // Extraire le type depuis le nom du bus (préfixe avant le numéro)
+      const typeM = b.nom.match(/^([A-Z]+-(?:[A-Z]-)?)/);
+      const type = typeM ? typeM[1] : b.nom.split('-')[0];
+      if (!parDateType[date]) parDateType[date] = {};
+      if (!parDateType[date][type]) parDateType[date][type] = [];
+      if (!parDateType[date][type].find(x => x.nom === b.nom)) {
+        parDateType[date][type].push({ nom: b.nom, action: idx === 0 ? 'CT' : 'Révision' });
+      }
+    });
+  });
+
+  // Trouver les conflits (≥ SEUIL bus du même type le même jour)
+  const conflits = [];
+  Object.entries(parDateType).sort().forEach(([date, types]) => {
+    Object.entries(types).forEach(([type, buses]) => {
+      if (buses.length >= SEUIL) {
+        conflits.push({ date, type, buses });
+      }
+    });
+  });
+
+  if (!conflits.length) {
+    card.style.display = 'none';
+    return;
+  }
+
+  card.style.display = 'block';
+  card.innerHTML = '<div class="card" style="border-color:rgba(245,158,11,0.5)">'
+    + '<div class="card-header" style="border-bottom-color:rgba(245,158,11,0.3)">'
+    + '<div class="card-title" style="color:var(--yellow)">⚠️ Conflits potentiels — ' + conflits.length + ' jour(s) à risque</div>'
+    + '<span style="font-size:11px;color:var(--text3)">' + SEUIL + ' bus ou plus du même type le même jour</span>'
+    + '</div>'
+    + '<div class="card-body" style="padding:8px 12px">'
+    + conflits.map(cf => {
+        const urgent = cf.date === today();
+        const diff = Math.round((new Date(cf.date) - new Date()) / (1000*60*60*24));
+        const quand = diff === 0 ? '<b style="color:var(--red)">AUJOURD&#39;HUI</b>'
+          : diff === 1 ? '<b>Demain</b>'
+          : 'Dans <b>' + diff + ' j</b>';
+        return '<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border)">'
+          + '<span style="font-size:12px;color:var(--yellow);font-weight:700;min-width:90px">' + fmtDateFR(cf.date) + '</span>'
+          + '<span style="font-size:12px;color:var(--text2)">' + quand + '</span>'
+          + '<span style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);border-radius:4px;padding:2px 8px;font-size:11px;color:var(--yellow)">'
+          + cf.type + ' × ' + cf.buses.length + '</span>'
+          + '<span style="font-size:11px;color:var(--text3)">' + cf.buses.map(b => b.nom + ' (' + b.action + ')').join(' · ') + '</span>'
+          + '</div>';
+      }).join('')
+    + '</div></div>';
+}
+
 function renderMaintenance() {
+  detecterConflitsCT();
   const now = new Date();
   const todayISO = today();
 
