@@ -847,7 +847,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="game-day">TM</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.200</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="game-day">TM</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.202</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -7611,16 +7611,16 @@ function calcArgus() {
   let html = '<table style="width:100%;border-collapse:collapse;font-size:12px">'
     + '<thead><tr><th colspan="2" style="text-align:center;padding:4px 8px;background:var(--surface2);border:1px solid var(--border)">Vente</th></tr>'
     + '<tr><th style="padding:4px 8px;border:1px solid var(--border);text-align:center">Argus</th>'
-    + '<th style="padding:4px 8px;border:1px solid var(--border);text-align:center">Variation</th></tr></thead><tbody>'
-    + '<tr><td style="padding:5px 8px;border:1px solid var(--border);color:var(--text2)">' + fmtE(argus) + '</td>'
-    + '<td style="padding:5px 8px;border:1px solid var(--border);text-align:center;font-weight:700;color:' + pctColor + '">' + varLabel + '</td></tr>';
+    + '<th style="padding:4px 8px;border:1px solid var(--border);text-align:center">Variation</th></tr></thead><tbody>';
 
   if (prix) {
     html += '<tr>'
-      + '<td style="padding:5px 8px;border:1px solid var(--border);color:var(--text2)">Prix : <b>' + fmtE(prix) + '</b></td>'
-      + '<td style="padding:5px 8px;border:1px solid var(--border);text-align:center;font-size:11px;color:' + (inZone ? 'var(--green)' : 'var(--red)') + '">'
-      + (inZone ? '\u2705 Dans la zone' : '\u274c Hors zone')
-      + '<br><span style="font-size:10px;color:var(--text3)">\u221215% \u00e0 +10%</span></td></tr>';
+      + '<td style="padding:5px 8px;border:1px solid var(--border);color:var(--text2)">' + fmtE(argus) + '</td>'
+      + '<td rowspan="2" style="padding:5px 8px;border:1px solid var(--border);text-align:center;font-weight:700;font-size:14px;color:' + pctColor + '">' + varLabel + '</td></tr>'
+      + '<tr><td style="padding:5px 8px;border:1px solid var(--border);color:var(--text2)">Prix : <b>' + fmtE(prix) + '</b></td></tr>';
+  } else {
+    html += '<tr><td style="padding:5px 8px;border:1px solid var(--border);color:var(--text2)">' + fmtE(argus) + '</td>'
+      + '<td style="padding:5px 8px;border:1px solid var(--border);text-align:center;color:var(--text3)">—</td></tr>';
   }
 
   html += '</tbody></table>'
