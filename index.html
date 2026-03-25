@@ -731,6 +731,9 @@
       <div class="nav-item" data-page="abribus" onclick="nav(this)">
         <span class="icon">🏠</span> Abribus
       </div>
+      <div class="nav-item" data-page="panne" onclick="nav(this)">
+        <span class="icon">🛠️</span> Pannes
+      </div>
       <div class="nav-item" data-page="renovation" onclick="nav(this)">
         <span class="icon">🔨</span> Rénovation
       </div>
@@ -854,7 +857,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="game-day">TM</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.183</span>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="game-day">TM</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.186</span>
   </div>
 </div>
 
@@ -1382,6 +1385,103 @@
               <tbody id="renov-int-tbody"></tbody>
             </table>
           </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════ PANNES ═══ -->
+    <div id="page-panne" class="page">
+
+      <div class="grid-2" style="margin-bottom:14px;align-items:start">
+
+        <!-- Import texte brut -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🛠️ Importer des pannes</div>
+            <button class="btn btn-primary btn-sm" onclick="importerPannes()">✓ Importer</button>
+          </div>
+          <div class="card-body">
+            <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Colle ici le texte brut copié depuis le jeu.</p>
+            <textarea id="panne-import-texte" rows="6"
+              placeholder="24/03/2026 Pneu crevé 1 jour 750 € STD-37-112 - Irisbus Citelis..."
+              style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;padding:8px;resize:vertical;outline:none;box-sizing:border-box;font-family:monospace"></textarea>
+          </div>
+        </div>
+
+        <!-- Générer message forum -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📋 Message forum</div>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-sm" style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);color:var(--accent)" onclick="genererMessageForum()">⚙️ Générer</button>
+              <a href="https://forum.transport-manager.net/thread-22831-post-311297.html#pid311297" target="_blank"
+                class="btn btn-primary btn-sm">🌐 Faire la demande</a>
+            </div>
+          </div>
+          <div class="card-body">
+            <textarea id="panne-forum-texte" rows="8" readonly
+              placeholder="Sélectionnez des pannes 'En attente' puis cliquez sur Générer..."
+              style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;padding:8px;resize:vertical;outline:none;box-sizing:border-box;font-family:monospace"></textarea>
+            <button class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="copierMessageForum()">📋 Copier</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Paramètre remplacement par défaut -->
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-header">
+          <div class="card-title">⚙️ Paramètre par défaut</div>
+        </div>
+        <div class="card-body" style="display:flex;align-items:center;gap:16px">
+          <span style="font-size:12px;color:var(--text2)">Véhicule de remplacement si panne ≥ 3 jours :</span>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px">
+            <input type="radio" name="panne-remp-defaut" value="Oui"
+              onchange="state.config.panneRemplacement='Oui';saveStateWithSync()"
+              style="accent-color:var(--green)">
+            <span style="color:var(--green);font-weight:600">Oui</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px">
+            <input type="radio" name="panne-remp-defaut" value="Non"
+              onchange="state.config.panneRemplacement='Non';saveStateWithSync()"
+              style="accent-color:var(--red)">
+            <span style="color:var(--red);font-weight:600">Non</span>
+          </label>
+          <span style="font-size:11px;color:var(--text3)">(utilisé dans le message forum)</span>
+        </div>
+      </div>
+
+      <!-- Liste des pannes -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📋 Pannes enregistrées</div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <select id="panne-filtre-statut" onchange="renderPannes()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:3px 8px;font-size:12px">
+              <option value="">Tous</option>
+              <option value="En attente">En attente</option>
+              <option value="En cours">En cours</option>
+              <option value="Réparé">Réparé</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" onclick="if(confirm('Supprimer toutes les pannes ?')){state.pannes=[];saveStateWithSync();renderPannes();}">🗑 Tout vider</button>
+          </div>
+        </div>
+        <div class="card-body" style="padding:0">
+          <table class="data-table">
+            <thead style="position:sticky;top:0;z-index:2;background:var(--surface2)">
+              <tr>
+                <th><input type="checkbox" id="panne-check-all" onchange="toggleAllPannes(this.checked)" title="Tout sélectionner"></th>
+                <th>Date</th>
+                <th>Bus</th>
+                <th>Motif</th>
+                <th>Jours</th>
+                <th>Coût</th>
+                <th>Statut</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="panne-tbody"></tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -3134,7 +3234,7 @@ function resetTotal() {
   // Remettre l'état à zéro sans recharger la page
   state.bus = []; state.affectations = []; state.maintenance = []; state.ct = [];
   state.personnel = []; state.lignes = []; state.statsLignes = []; state.achats = []; state.tourisme = state.tourisme || [];
-  state.abribus = []; state.contratsPub = []; state.compta = []; state.comptaMois = {};
+  state.abribus = []; state.pannes = []; state.contratsPub = []; state.compta = []; state.comptaMois = {};
   state.gasoil = []; state.journal = []; state.carburant = []; state.pubDispo = [];
   state.conso = { niveau: 5000, moy: 0 };
   state.config = { argentDepart: 0 };
@@ -3178,7 +3278,7 @@ function nav(el) {
 
 function renderPage(page) {
   const r = { dashboard: renderDashboard, alertes: renderAlertes, parc: () => { renderParc(); renderRepartitionParc(); },
-    affectations: renderAffectations, frequentation: renderFrequentation, maintenance: renderMaintenance, abribus: renderAbribus, renovation: renderRenovation,
+    affectations: renderAffectations, frequentation: renderFrequentation, maintenance: renderMaintenance, abribus: renderAbribus, panne: renderPannes, renovation: renderRenovation,
     personnel: renderPersonnel, lignes: renderLignes, compta: renderCompta, bilan: renderBilan,
     pub: renderPub, achats: renderAchats, gasoil: renderGasoil, tourisme: renderTourisme, 'aide-affectation': () => { initAideAffectation(); renderAideAffectation(); }, 'aide-planning': () => {}, config: renderConfig, pubdispo: renderPubDispo, historique: renderHistoriqueBase };
   if (r[page]) r[page]();
@@ -4401,6 +4501,7 @@ if (state.compta && state.compta.length > 0 && (!state.comptaMois || Object.keys
   saveStateWithSync();
 }
 if (!state.comptaMois) state.comptaMois = {};
+if (!state.pannes) state.pannes = [];
 
 // Pré-charger les données prix/km dans le state si premier lancement
 if (!state.prixKm || Object.keys(state.prixKm).length === 0) {
@@ -5790,6 +5891,166 @@ function renderAllianceTable() {
     + `<tr><td colspan="3" style="text-align:right;padding:4px 8px">
         <button class="btn btn-ghost btn-xs" onclick="showRenoAllianceForm()">✏️ Modifier</button>
       </td></tr>`;
+}
+
+
+// ═══════════════════════════════════════════════════════
+//  PANNES
+// ═══════════════════════════════════════════════════════
+
+function parsePanneLigne(ligne) {
+  // Format : DD/MM/YYYY Motif X jour(s) PRIX € NOM_PARC - reste ignoré
+  ligne = ligne.trim();
+  if (!ligne) return null;
+
+  // Date : DD/MM/YYYY
+  const dateM = ligne.match(/^(\d{2}\/\d{2}\/\d{4})\s+/);
+  if (!dateM) return null;
+  const dateRaw = dateM[1];
+  const [d, mo, y] = dateRaw.split('/');
+  const dateISO = `${y}-${mo}-${d}`;
+  const reste = ligne.slice(dateM[0].length);
+
+  // Jours : N jour ou N jours
+  const joursM = reste.match(/(\d+)\s+jours?\s+/i);
+  if (!joursM) return null;
+  const jours = parseInt(joursM[1]);
+
+  // Prix : avant le € (nombre avec espaces éventuels)
+  const prixM = reste.match(/([\d\s ]+)\s*€\s+/);
+  const prix = prixM ? parseInt(prixM[1].replace(/[\s ]/g, '')) : 0;
+
+  // Motif : entre la date et le nombre de jours
+  const joursIdx = reste.indexOf(joursM[0]);
+  const motif = reste.slice(0, joursIdx).trim();
+
+  // Numéro de parc : après le €, premier mot qui ressemble à un parc (contient -)
+  const afterEur = prixM ? reste.slice(reste.indexOf(prixM[0]) + prixM[0].length) : '';
+  const parcM = afterEur.match(/([A-Z0-9]+-[A-Z0-9-]+)/);
+  const nomParc = parcM ? parcM[1] : '';
+
+  return { id: Date.now() + Math.random()*1000|0, date: dateISO, motif, jours, prix, nomParc, statut: 'En attente' };
+}
+
+function importerPannes() {
+  const texte = document.getElementById('panne-import-texte')?.value || '';
+  if (!texte.trim()) { toastMsg('Texte vide', 'error'); return; }
+
+  // Découper sur les dates (DD/MM/YYYY en début de segment)
+  const segments = texte.split(/(?=\d{2}\/\d{2}\/\d{4})/g).filter(s => s.trim());
+  const nouvelles = [];
+  const erreurs = [];
+
+  segments.forEach(seg => {
+    const p = parsePanneLigne(seg);
+    if (p) nouvelles.push(p);
+    else if (seg.trim()) erreurs.push(seg.trim().slice(0,40));
+  });
+
+  if (!nouvelles.length) { toastMsg('Aucune panne reconnue', 'error'); return; }
+  if (!state.pannes) state.pannes = [];
+  state.pannes = [...nouvelles, ...state.pannes]; // plus récentes en premier
+  saveStateWithSync();
+  document.getElementById('panne-import-texte').value = '';
+  renderPannes();
+  toastMsg(`✅ ${nouvelles.length} panne(s) importée(s)${erreurs.length?' · '+erreurs.length+' ligne(s) ignorée(s)':''}`, 'success');
+}
+
+function supprimerPanne(id) {
+  state.pannes = (state.pannes || []).filter(p => p.id !== id);
+  saveStateWithSync();
+  renderPannes();
+}
+
+function setPanneStatut(id, statut) {
+  const p = (state.pannes || []).find(x => x.id === id);
+  if (p) { p.statut = statut; saveStateWithSync(); renderPannes(); }
+}
+
+function toggleAllPannes(checked) {
+  document.querySelectorAll('.panne-check').forEach(cb => cb.checked = checked);
+}
+
+function genererMessageForum() {
+  const selected = [...document.querySelectorAll('.panne-check:checked')].map(cb => parseInt(cb.dataset.id));
+  const pannes = selected.length
+    ? (state.pannes || []).filter(p => selected.includes(p.id))
+    : (state.pannes || []).filter(p => p.statut === 'En attente');
+
+  if (!pannes.length) {
+    toastMsg('Sélectionnez au moins une panne (ou laissez vides pour prendre les "En attente")', 'error');
+    return;
+  }
+
+  const lignes = pannes.map(p => {
+    const bus = (state.bus || []).find(b => b.nom === p.nomParc);
+    const idJeu = bus?.idJeu || '?';
+    const rempDefaut = state.config?.panneRemplacement || 'Non';
+    const pret = p.jours >= 3 ? rempDefaut : 'Non';
+    const l1 = '[b]- Immatriculation v\u00e9hicule :[/b] [img=100x22]https://transport-manager.net/assets/immat/plaque.php?id=' + idJeu + '[/img]';
+    const l2 = '[b]- Probl\u00e8me rencontr\u00e9 : [/b] ' + p.motif;
+    const l3 = '[b]- Je souhaite un v\u00e9hicule de pr\u00eat durant la dur\u00e9e des r\u00e9parations si panne 3 jours ou plus :[/b] ' + pret;
+    return l1 + '\n' + l2 + '\n' + l3;
+  }).join('\n\n');
+
+  const msg = 'Bonjour,\n' + lignes + '\nMerci';
+  const ta = document.getElementById('panne-forum-texte');
+  if (ta) ta.value = msg;
+  toastMsg('Message généré ✅', 'success');
+}
+
+function copierMessageForum() {
+  const ta = document.getElementById('panne-forum-texte');
+  if (!ta?.value) { toastMsg('Rien à copier', 'error'); return; }
+  navigator.clipboard.writeText(ta.value).then(() => toastMsg('✅ Copié !', 'success'));
+}
+
+function renderPannes() {
+  // Sync radio bouton remplacement
+  const remp = state.config?.panneRemplacement || 'Non';
+  document.querySelectorAll('input[name="panne-remp-defaut"]').forEach(r => { r.checked = r.value === remp; });
+  const tbody = document.getElementById('panne-tbody');
+  if (!tbody) return;
+  const filtre = document.getElementById('panne-filtre-statut')?.value || '';
+  const pannes = (state.pannes || []).filter(p => !filtre || p.statut === filtre);
+
+  const statutColors = {
+    'En attente': 'var(--yellow)',
+    'En cours':   'var(--accent)',
+    'Réparé':     'var(--green)'
+  };
+
+  if (!pannes.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="color:var(--text3);text-align:center;padding:16px">Aucune panne enregistrée</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = pannes.map(p => {
+    const bus = (state.bus || []).find(b => b.nom === p.nomParc);
+    const busLink = bus?.idJeu
+      ? `<a href="https://transport-manager.net/jeu/vehicle.php?id=${bus.idJeu}" target="_blank" style="color:var(--accent);text-decoration:none;font-weight:700;cursor:alias" title="Voir le véhicule">${p.nomParc}</a>`
+      : `<b>${p.nomParc||'—'}</b>`;
+    const couleur = statutColors[p.statut] || 'var(--text3)';
+    return `<tr>
+      <td style="text-align:center"><input type="checkbox" class="panne-check" data-id="${p.id}"></td>
+      <td class="mono" style="font-size:11px">${fmtDateFR(p.date)}</td>
+      <td>${busLink}</td>
+      <td style="font-size:12px">${p.motif||'—'}</td>
+      <td class="mono" style="text-align:center;color:${p.jours>=3?'var(--red)':'var(--text2)'}">${p.jours} j</td>
+      <td class="mono" style="color:var(--text2)">${p.prix ? fmt(p.prix) : '—'}</td>
+      <td>
+        <select onchange="setPanneStatut(${p.id},this.value)"
+          style="background:transparent;border:1px solid ${couleur}33;border-radius:4px;color:${couleur};font-size:11px;padding:2px 6px;cursor:pointer">
+          <option value="En attente" ${p.statut==='En attente'?'selected':''}>En attente</option>
+          <option value="En cours"   ${p.statut==='En cours'  ?'selected':''}>En cours</option>
+          <option value="Réparé"     ${p.statut==='Réparé'    ?'selected':''}>Réparé</option>
+        </select>
+      </td>
+      <td>
+        <button class="btn btn-ghost btn-xs" onclick="supprimerPanne(${p.id})" title="Supprimer">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
 }
 
 function renderRenovation() {
@@ -8702,7 +8963,7 @@ function renderGasoilGraphique() {
 
   const vmin   = Math.min(...allVals) * 0.995;
   const vmax   = Math.max(...allVals) * 1.005;
-  const pad    = { top:20, right:20, bottom:40, left:55 };
+  const pad    = { top:36, right:20, bottom:40, left:55 }; // top agrandi pour légende
   const cw     = W - pad.left - pad.right;
   const ch     = H - pad.top  - pad.bottom;
   const xStep  = data.length > 1 ? cw / (data.length - 1) : cw;
@@ -8818,10 +9079,20 @@ function renderGasoilGraphique() {
   drawMinMax(diesel, '#EFAC19', 'left');
   drawMinMax(gnv,    '#99B900', 'right');
 
-  // Légende (deux lignes pour éviter chevauchement)
-  ctx.font = '11px monospace';
-  ctx.fillStyle = '#EFAC19'; ctx.fillRect(pad.left, 4, 14, 10); ctx.fillStyle='#e2e8f0'; ctx.textAlign='left'; ctx.fillText('Diesel', pad.left+18, 13);
-  ctx.fillStyle = '#99B900'; ctx.fillRect(pad.left, 20, 14, 10); ctx.fillStyle='#e2e8f0'; ctx.fillText('GNV', pad.left+18, 29);
+  // Légende : une ligne, Diesel à gauche, GNV à droite
+  ctx.font = 'bold 11px Inter, sans-serif';
+  // Diesel (gauche)
+  ctx.fillStyle = '#EFAC19';
+  ctx.fillRect(pad.left, 8, 14, 10);
+  ctx.fillStyle = '#e2e8f0';
+  ctx.textAlign = 'left';
+  ctx.fillText('Diesel', pad.left + 18, 18);
+  // GNV (droite)
+  ctx.fillStyle = '#99B900';
+  ctx.fillRect(W - pad.right - 42, 8, 14, 10);
+  ctx.fillStyle = '#e2e8f0';
+  ctx.textAlign = 'left';
+  ctx.fillText('GNV', W - pad.right - 42 + 18, 18);
 }
 
 
