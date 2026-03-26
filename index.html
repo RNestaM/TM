@@ -847,7 +847,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.211</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.214</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -3706,7 +3706,9 @@ function renderDashboard() {
         <td class="mono" style="color:${dsp?'var(--green)':'var(--text3)'};font-weight:600">${dsp}</td></tr>`;
     };
     dashRhTbody.innerHTML = postes.map(po => {
-      const sub = pers.filter(p => (p.poste||p.permis||'').toLowerCase() === po.toLowerCase());
+      const sub = po === 'Intérimaires'
+        ? pers.filter(p => (p.contrat||'').toUpperCase() === 'INTERIM')
+        : pers.filter(p => (p.poste||p.permis||'').toLowerCase() === po.toLowerCase());
       return mkRow(po, sub, false);
     }).join('') + mkRow('Total', pers, true);
   }
@@ -6272,7 +6274,9 @@ function renderPersonnel() {
     </tr>`;
   };
 
-  const getSubset = po => pers.filter(p => (p.poste||p.permis||'') === po || (p.poste||p.permis||'').toLowerCase() === po.toLowerCase());
+  const getSubset = po => po === 'Intérimaires'
+    ? pers.filter(p => (p.contrat||'').toUpperCase() === 'INTERIM')
+    : pers.filter(p => (p.poste||p.permis||'') === po || (p.poste||p.permis||'').toLowerCase() === po.toLowerCase());
 
   const statsGrid = document.getElementById('rh-stats-grid');
   if (statsGrid) statsGrid.innerHTML = `
@@ -6294,7 +6298,17 @@ function renderPersonnel() {
             ${mkRow('Conducteur Temps Complet', getSubset('Conducteur Temps Complet'), false)}
             ${mkRow('Conducteur Temps Partiel', getSubset('Conducteur Temps Partiel'), false)}
             ${postes.filter(po=>po!=='Conducteur Temps Complet'&&po!=='Conducteur Temps Partiel').map(po=>mkRow(po,getSubset(po),false)).join('')}
-            ${mkRow('Total', pers, true)}
+            \${mkRow('Total', pers, true)}
+            \${(() => {
+              const inter = state.config?.interimaires || 0;
+              return '<tr><td style="font-size:11px;color:var(--text3);font-style:italic">Intérimaires</td>'
+                + '<td class="mono">'
+                + '<input type="number" value="' + inter + '" min="0"'
+                + ' onchange="state.config.interimaires=parseInt(this.value)||0;saveStateWithSync()"'
+                + ' style="width:50px;background:transparent;border:none;border-bottom:1px dashed var(--border);color:var(--text3);font-size:11px;text-align:center;outline:none">'
+                + '</td>'
+                + '<td colspan="7" style="color:var(--text3);font-size:10px;text-align:center;font-style:italic">—</td></tr>';
+            })()}
           </tbody>
         </table>
       </div>
