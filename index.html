@@ -852,7 +852,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.221</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.223</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -3740,7 +3740,14 @@ function renderDashboard() {
       return (fm >= dm && fm <= new Date(mois+'-28')) ? s+c.gains : s;
     }, 0);
     const total = pubs.reduce((s,c)=>s+(c.gains||0),0);
-    const prochains5 = [...pubs].filter(c=>c.fin && c.fin >= todayISO).sort((a,b)=>a.fin.localeCompare(b.fin)).slice(0,5);
+    const pubCutoff = new Date(todayISO + 'T16:30:00');
+    const pubIsActive = (c) => {
+      if (!c.fin) return false;
+      if (c.fin > todayISO) return true;
+      if (c.fin === todayISO) return new Date() < pubCutoff;
+      return false;
+    };
+    const prochains5 = [...pubs].filter(pubIsActive).sort((a,b)=>a.fin.localeCompare(b.fin)).slice(0,5);
     elPub.innerHTML = `
       <table style="width:100%;border-collapse:collapse;font-size:11px">
         <tr style="background:rgba(249,115,22,0.1)"><td style="padding:4px 8px;color:var(--text3)">Mois en cours</td><td style="padding:4px 8px;text-align:right;color:var(--green);font-weight:600">${fmt(gainsMois(moisCourant))}</td></tr>
@@ -7661,6 +7668,22 @@ function viderEvaluation() {
 }
 
 function renderPub() {
+  // Suppression automatique des contrats dont la date de fin est passée après 16h30
+  const nowPurge   = new Date();
+  const todayPurge = nowPurge.toISOString().slice(0,10);
+  const cutoffPurge = new Date(todayPurge + 'T16:30:00');
+  const avant = (state.contratsPub || []).length;
+  state.contratsPub = (state.contratsPub || []).filter(c => {
+    if (!c.fin) return true;
+    if (c.fin > todayPurge) return true;               // date future → garder
+    if (c.fin === todayPurge) return nowPurge < cutoffPurge; // aujourd'hui → garder avant 16h30
+    return false;                                       // date passée → supprimer
+  });
+  if (state.contratsPub.length < avant) {
+    saveStateWithSync();
+    const nb = avant - state.contratsPub.length;
+    journalLog(`${nb} contrat(s) pub expiré(s) supprimé(s) automatiquement`, 'info');
+  }
   renderPubStatCards();
   renderPubGainsMois();
   renderPubTableau();
@@ -7716,16 +7739,33 @@ function renderPubGainsMois() {
 }
 
 function renderPubTableau() {
-  const now = new Date().toISOString().slice(0,10);
+  const now      = new Date();
+  const nowISO   = now.toISOString().slice(0,10);
+  const cutoff   = new Date(nowISO + 'T16:30:00');
+  // Après purge dans renderPub, tous les contrats restants sont actifs ou futurs
+  const isEncours = (c) => (c.debut||'') <= nowISO && (c.fin > nowISO || (c.fin === nowISO && now < cutoff));
+  const isAvenir  = (c) => (c.debut||'') > nowISO;
+
   let contrats = [...state.contratsPub];
-  if (pubFiltre === 'encours') contrats = contrats.filter(c => (c.debut||'') <= now && c.fin >= now);
-  else if (pubFiltre === 'avenir') contrats = contrats.filter(c => (c.debut||'') > now);
+  if (pubFiltre === 'encours') contrats = contrats.filter(isEncours);
+  else if (pubFiltre === 'avenir') contrats = contrats.filter(isAvenir);
   contrats = sortData(contrats, 'pub', 'fin');
   const tbody = document.getElementById('pub-tbody');
   tbody.innerHTML = contrats.map(c => {
-    const todayStr = today();
+    const todayStr = nowISO;
     const diff = c.fin === todayStr ? 0 : Math.round((new Date(c.fin) - new Date(todayStr)) / (1000*60*60*24));
-    const finColor = diff < 0 ? '' : diff === 0 ? 'color:var(--red);font-weight:700' : diff <= 1 ? 'color:var(--red)' : diff <= 5 ? 'color:var(--orange)' : '';
+    let finColor = '';
+    if (c.fin === todayStr) finColor = now < cutoff ? 'color:var(--orange);font-weight:700' : 'color:var(--red);font-weight:700';
+    else if (diff <= 1) finColor = 'color:var(--red)';
+    else if (diff <= 5) finColor = 'color:var(--orange)';
+
+    let finLabel = '';
+    if (c.fin === todayStr) {
+      finLabel = ` <span style="font-size:9px;color:var(--orange)">⏳ se termine à 16h30</span>`;
+    } else if (diff > 0 && diff <= 7) {
+      finLabel = ` <span style="font-size:9px;color:var(--orange)">(J-${diff})</span>`;
+    }
+
     const finDate = new Date(c.fin);
     const moisFin = finDate.toLocaleDateString('fr-FR', { month:'short', year:'2-digit' });
     return '<tr>' +
@@ -7734,7 +7774,7 @@ function renderPubTableau() {
       '<td style="font-size:11px">' + (c.support||'—') + '</td>' +
       '<td class="mono">' + (c.nb||'—') + '</td>' +
       '<td class="mono" style="font-size:11px">' + fmtDateFR(c.debut||'') + '</td>' +
-      '<td class="mono" style="font-size:11px;' + finColor + '">' + fmtDateFR(c.fin||'') + (diff===0?' <span style="font-size:9px;color:var(--red)">(aujourd\'hui !)</span>':diff>0&&diff<=7?' <span style="font-size:9px;color:var(--orange)">(J-'+diff+')</span>':'') + '</td>' +
+      '<td class="mono" style="font-size:11px;' + finColor + '">' + fmtDateFR(c.fin||'') + finLabel + '</td>' +
       '<td class="mono" style="color:var(--green);font-weight:600">' + fmt(c.gains) + '</td>' +
       '<td class="mono" style="font-size:11px">' + (c.taux ? c.taux.toFixed(1)+'%' : '—') + '</td>' +
       '<td style="font-size:10px;color:var(--text3)">' + moisFin + '</td>' +
