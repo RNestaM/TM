@@ -847,7 +847,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.214</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.216</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -5060,6 +5060,14 @@ function getAffCategorie(busNom) {
   return { label:'Autres', prefixes:[], color:'#6b7280' };
 }
 
+// Retourne la couleur d'une ligne à partir de son numéro
+function getLigneColor(ligneNum) {
+  if (!ligneNum) return null;
+  const lignes = state.cfgLignesParNiveau?.[state.niveauJeu] || state.lignes || [];
+  const l = lignes.find(x => String(x.num) === String(ligneNum).trim());
+  return l?.couleur || null;
+}
+
 function renderAffectations() {
   if (!state.affCreneaux) state.affCreneaux = {};
 
@@ -5202,8 +5210,11 @@ function renderAffectations() {
               ? `<span style="color:var(--accent3);font-size:9px;font-weight:600">${compactLabel}</span>`
               : (val || '');
           const grpBg = AFF_GROUPE_COLORS[c.groupe]?.bg || '#000';
-          const cellBg = isAtelier ? 'transparent' : (AFF_GROUPE_COLORS[c.groupe]?.bgCell || 'transparent');
-          return `<td class="aff-cell" style="text-align:center;cursor:${isAtelier?'default':'pointer'};font-size:12px;font-weight:600;color:${val?'var(--text)':'var(--text3)'};${leftBorder};padding:3px 4px;background:${cellBg}"
+          const lignCol = (!isAtelier && val && !compactLabel) ? getLigneColor(val) : null;
+          const cellBg = isAtelier ? 'transparent' : (lignCol ? lignCol : (AFF_GROUPE_COLORS[c.groupe]?.bgCell || 'transparent'));
+          const cellBorder = lignCol ? `${leftBorder};border-bottom:3px solid ${lignCol}` : leftBorder;
+          const textColor = lignCol ? '#fff' : (val ? 'var(--text)' : 'var(--text3)');
+          return `<td class="aff-cell" style="text-align:center;cursor:${isAtelier?'default':'pointer'};font-size:12px;font-weight:700;color:${textColor};${cellBorder};padding:3px 4px;background:${cellBg}"
             onclick="${isAtelier?'':'editAffCell(this,\''+b.nom+'\',\''+c.id+'\')'}">${disp}</td>`;
         }).join('')}
         <td class="mono" style="text-align:center;font-size:11px;font-weight:700;border-left:3px solid var(--border);color:${totalC>=8?'var(--red)':totalC>=6?'var(--yellow)':'var(--text2)'}">${totalC}</td>
@@ -5250,7 +5261,9 @@ function saveAffCell(input, busNom, creneauId) {
   const td  = input.parentElement;
   const val = (state.affCreneaux[busNom]?.[creneauId] || '');
   td.innerHTML   = val || '';
-  td.style.color = val ? 'var(--text)' : 'var(--text3)';
+  const lignCol = val ? getLigneColor(val) : null;
+  td.style.color = lignCol ? '#fff' : (val ? 'var(--text)' : 'var(--text3)');
+  td.style.background = lignCol ? lignCol : '';
 
   const creneaux = getAffCreneaux(busNom);
   const totalC   = AFF_CRENEAUX.filter(c => creneaux[c.id] && creneaux[c.id] !== '').length;
@@ -8846,13 +8859,14 @@ function renderPrepaAideAff() {
       const bus = busParCreneau[cr.id][row];
       const statut = bus?.statut || '';
       const isIndispo = ['Indispo','ATELIER','En révision','CT','Révision puis CT','CT puis Révision'].includes(statut);
-      const cellBg  = bus ? (isIndispo ? 'rgba(239,68,68,0.18)' : gc.bgCell) : gc.bgCell;
+      const cellBg  = bus ? (isIndispo ? 'rgba(239,68,68,0.18)' : ligneCouleur) : gc.bgCell;
+      const cellBorder = bus && !isIndispo ? `1px solid ${ligneCouleur}` : '1px solid rgba(255,255,255,0.06)';
       const cellTxt = bus
         ? (isIndispo
             ? `<span style="color:var(--red);font-weight:700">${bus.nom}</span><br><span style="font-size:9px;color:var(--red)">${statut}</span>`
-            : `<span style="font-weight:600">${bus.nom}</span>`)
+            : `<span style="font-weight:700;color:#fff">${bus.nom}</span>`)
         : '';
-      html += `<td style="padding:6px 8px;text-align:center;font-size:12px;background:${cellBg};border:1px solid rgba(255,255,255,0.06)">${cellTxt}</td>`;
+      html += `<td style="padding:6px 8px;text-align:center;font-size:12px;background:${cellBg};border:${cellBorder}">${cellTxt}</td>`;
     });
     html += '</tr>';
   }
@@ -8942,14 +8956,15 @@ function renderAideAffectation() {
       const statut = bus?.statut || '';
       const isIndispo = ['Indispo','ATELIER','En révision','CT','Révision puis CT','CT puis Révision'].includes(statut);
       const cellBg  = bus
-        ? (isIndispo ? 'rgba(239,68,68,0.18)' : gc.bgCell)
+        ? (isIndispo ? 'rgba(239,68,68,0.18)' : ligneCouleur)
         : gc.bgCell + ''; // empty cell, pale bg
+      const cellBorder = bus && !isIndispo ? `1px solid ${ligneCouleur}` : '1px solid rgba(255,255,255,0.06)';
       const cellTxt = bus
         ? (isIndispo
             ? `<span style="color:var(--red);font-weight:700">${bus.nom}</span><br><span style="font-size:9px;color:var(--red)">${statut}</span>`
-            : `<span style="font-weight:600">${bus.nom}</span>`)
+            : `<span style="font-weight:700;color:#fff">${bus.nom}</span>`)
         : '';
-      html += `<td style="padding:6px 8px;text-align:center;font-size:12px;background:${cellBg};border:1px solid rgba(255,255,255,0.06)">${cellTxt}</td>`;
+      html += `<td style="padding:6px 8px;text-align:center;font-size:12px;background:${cellBg};border:${cellBorder}">${cellTxt}</td>`;
     });
     html += '</tr>';
   }
