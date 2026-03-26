@@ -847,7 +847,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.206</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.211</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -865,16 +865,31 @@
     <div class="topbar-right">
       <!-- Boutons MAJ Extension -->
       <div style="display:flex;align-items:center;gap:6px;padding:0 8px;border-right:1px solid var(--border)">
-        <button onclick="quickFetchExt(['stats','bus'])" title="MAJ Matin : Stats Lignes + Parc Bus via Extension"
-          style="font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">📊 Matin</button>
-        <button onclick="quickFetchExt('bus')" title="MAJ Parc Bus via Extension"
-          style="font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">🚍 Parc</button>
-        <button onclick="quickFetchExt('affects')" title="MAJ Affectations via Extension"
-          style="font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">📋 Aff.</button>
-        <button onclick="quickFetchExt('salaries')" title="MAJ Personnels via Extension"
-          style="font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">👤 Pers.</button>
-        <button onclick="quickFetchExt('compta')" title="MAJ Compta via Extension"
-          style="font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">💰 Compta</button>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:1px">
+          <button onclick="quickFetchExt(['stats','bus'])" title="MAJ Matin : Stats Lignes + Parc Bus via Extension"
+            style="font-size:11px;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">📊 Matin</button>
+          <span id="maj-badge-stats" style="font-size:9px;color:var(--text3)">—</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:1px">
+          <button onclick="quickFetchExt('bus')" title="MAJ Parc Bus via Extension"
+            style="font-size:11px;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">🚍 Parc</button>
+          <span id="maj-badge-bus" style="font-size:9px;color:var(--text3)">—</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:1px">
+          <button onclick="quickFetchExt('affects')" title="MAJ Affectations via Extension"
+            style="font-size:11px;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">📋 Aff.</button>
+          <span id="maj-badge-affects" style="font-size:9px;color:var(--text3)">—</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:1px">
+          <button onclick="quickFetchExt('salaries')" title="MAJ Personnels via Extension"
+            style="font-size:11px;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">👤 Pers.</button>
+          <span id="maj-badge-salaries" style="font-size:9px;color:var(--text3)">—</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:1px">
+          <button onclick="quickFetchExt('compta')" title="MAJ Compta via Extension"
+            style="font-size:11px;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap">💰 Compta</button>
+          <span id="maj-badge-compta" style="font-size:9px;color:var(--text3)">—</span>
+        </div>
       </div>
       <button id="sync-status" onclick="syncPush(true)" title="Cliquer pour synchroniser maintenant" style="font-size:11px;font-family:Inter, var(--font-sans, sans-serif);padding:3px 8px;border-radius:4px;display:none;cursor:pointer;border:none"></button>
       <span id="ext-status" style="font-size:11px;font-family:Inter, var(--font-sans, sans-serif);padding:3px 10px;border-radius:6px;display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(100,100,100,0.3);background:rgba(100,100,100,0.08);color:var(--text3)" title="Extension Firefox">🦊 Extension inactive</span>
@@ -1170,7 +1185,7 @@
     <div id="page-maintenance" class="page">
 
       <!-- ── Alertes conflits type ─────────────────────── -->
-      <div id="ct-conflits-card" style="display:none;margin-bottom:14px"></div>
+      <div id="ct-conflits-card" style="display:none;margin-bottom:14px;max-height:200px;overflow-y:auto"></div>
 
       <!-- ── VOLET 1 : Planning CT sur 2 mois ─────────── -->
       <div class="card" style="margin-bottom:14px">
@@ -1183,7 +1198,7 @@
             <button class="btn btn-primary btn-sm" onclick="validerPlanningCT()">✓ Valider le planning</button>
           </div>
         </div>
-        <div class="card-body" style="padding:0;overflow-x:auto;overflow-y:auto;max-height:720px">
+        <div class="card-body" style="padding:0;overflow-x:auto;overflow-y:auto;max-height:400px">
           <table class="data-table" id="planning-ct-table">
             <thead><tr>
               <th>ID</th>
@@ -5177,7 +5192,13 @@ function renderAffectations() {
           const leftBorder = isFirstGrp
             ? `border-left:3px solid ${AFF_GROUPE_COLORS[c.groupe].color}55`
             : 'border-left:1px solid var(--border)';
-          const disp = isAtelier ? `<span style="color:var(--text3);font-size:9px">ATELIER</span>` : (val || '');
+          const COMPACT_VALS = {'service touristique':'Tourisme','service spécial':'Spécial','service special':'Spécial'};
+          const compactLabel = COMPACT_VALS[(val||'').toLowerCase().trim()];
+          const disp = isAtelier
+            ? `<span style="color:var(--text3);font-size:9px">ATELIER</span>`
+            : compactLabel
+              ? `<span style="color:var(--accent3);font-size:9px;font-weight:600">${compactLabel}</span>`
+              : (val || '');
           const grpBg = AFF_GROUPE_COLORS[c.groupe]?.bg || '#000';
           const cellBg = isAtelier ? 'transparent' : (AFF_GROUPE_COLORS[c.groupe]?.bgCell || 'transparent');
           return `<td class="aff-cell" style="text-align:center;cursor:${isAtelier?'default':'pointer'};font-size:12px;font-weight:600;color:${val?'var(--text)':'var(--text3)'};${leftBorder};padding:3px 4px;background:${cellBg}"
@@ -5374,20 +5395,20 @@ function detecterConflitsCT() {
   state.bus.forEach(b => {
     if (!b.ct) return;
     const plan = state.planningCT?.[b.nom] || {};
-    const ctDate  = plan.ctDate  === 'DONE' ? null : (plan.ctDate  || null);
-    const revDate = plan.revDate === 'DONE' ? null : (plan.revDate || null);
+    const ctDate  = plan.ctDate  === 'DONE' ? null : (plan.ctDate  || ctPrevu(b.ct) || null);
+    const revDate = plan.revDate === 'DONE' ? null : (plan.revDate || (ctDate ? revisionPrevue(ctDate) : null));
 
-    [ctDate, revDate].forEach((date, idx) => {
-      if (!date || date < todayISO) return;
-      // Extraire le type depuis le nom du bus (préfixe avant le numéro)
-      const typeM = b.nom.match(/^([A-Z]+-(?:[A-Z]-)?)/);
-      const type = typeM ? typeM[1] : b.nom.split('-')[0];
-      if (!parDateType[date]) parDateType[date] = {};
-      if (!parDateType[date][type]) parDateType[date][type] = [];
-      if (!parDateType[date][type].find(x => x.nom === b.nom)) {
-        parDateType[date][type].push({ nom: b.nom, action: idx === 0 ? 'CT' : 'Révision' });
-      }
-    });
+    // CT uniquement
+    if (!ctDate || ctDate < todayISO) return;
+    const lim60 = new Date(); lim60.setDate(lim60.getDate() + 60);
+    if (ctDate > lim60.toISOString().slice(0,10)) return;
+    const typeM = b.nom.match(/^([A-Z]+-(?:[A-Z]-)?)/);
+    const type = typeM ? typeM[1] : b.nom.split('-')[0];
+    if (!parDateType[ctDate]) parDateType[ctDate] = {};
+    if (!parDateType[ctDate][type]) parDateType[ctDate][type] = [];
+    if (!parDateType[ctDate][type].find(x => x.nom === b.nom)) {
+      parDateType[ctDate][type].push({ nom: b.nom });
+    }
   });
 
   // Trouver les conflits (≥ SEUIL bus du même type le même jour)
@@ -5409,7 +5430,7 @@ function detecterConflitsCT() {
   card.innerHTML = '<div class="card" style="border-color:rgba(245,158,11,0.5)">'
     + '<div class="card-header" style="border-bottom-color:rgba(245,158,11,0.3)">'
     + '<div class="card-title" style="color:var(--yellow)">⚠️ Conflits potentiels — ' + conflits.length + ' jour(s) à risque</div>'
-    + '<span style="font-size:11px;color:var(--text3)">' + SEUIL + ' bus ou plus du même type le même jour</span>'
+    + '<span style="font-size:11px;color:var(--text3)">≥ ' + SEUIL + ' bus du même type en CT le même jour</span>'
     + '</div>'
     + '<div class="card-body" style="padding:8px 12px">'
     + conflits.map(cf => {
@@ -5423,7 +5444,7 @@ function detecterConflitsCT() {
           + '<span style="font-size:12px;color:var(--text2)">' + quand + '</span>'
           + '<span style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);border-radius:4px;padding:2px 8px;font-size:11px;color:var(--yellow)">'
           + cf.type + ' × ' + cf.buses.length + '</span>'
-          + '<span style="font-size:11px;color:var(--text3)">' + cf.buses.map(b => b.nom + ' (' + b.action + ')').join(' · ') + '</span>'
+          + '<span style="font-size:11px;color:var(--text3)">' + cf.buses.map(b => b.nom).join(' · ') + '</span>'
           + '</div>';
       }).join('')
     + '</div></div>';
@@ -9419,6 +9440,7 @@ function demarrerPollingExtension() {
         // Signaler la fin pour fetchViaExtension
         window._extFetchDone = true;
         window._extFetchDoneType = type;
+        updateMajBadges();
       } catch(err) {
         console.error('TM import error:', err);
         window._extFetchDone = true; // reset quand même le bouton
@@ -11304,6 +11326,40 @@ function updateBusSelects() {
 // ═══════════════════════════════════════════════════════
 //  CLOCK
 // ═══════════════════════════════════════════════════════
+
+function updateMajBadges() {
+  const todayStr = today();
+  const map = {
+    'maj-badge-stats':    ['stats'],
+    'maj-badge-bus':      ['bus'],
+    'maj-badge-affects':  ['affects'],
+    'maj-badge-salaries': ['salaries'],
+    'maj-badge-compta':   ['compta', 'lastmonth'],
+  };
+  // Matin = plus récente de stats et bus
+  const matinDate = [state.lastImport?.stats, state.lastImport?.bus]
+    .filter(Boolean).sort().pop() || null;
+  document.getElementById('maj-badge-stats')?.setAttribute('data-matin', matinDate || '');
+
+  Object.entries(map).forEach(([id, types]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const dates = types.map(t => state.lastImport?.[t]).filter(Boolean).sort();
+    const last = dates.pop() || null;
+    if (!last) { el.textContent = '—'; el.style.color = 'var(--text3)'; return; }
+    // Extraire la date (format jj/mm/aaaa hh:mm:ss)
+    const parts = last.split(' ');
+    const datePart = parts[0]; // jj/mm/aaaa
+    const timePart = parts[1] ? parts[1].slice(0,5) : ''; // hh:mm
+    // Convertir en ISO pour comparer
+    const [d,m,y] = datePart.split('/');
+    const iso = y + '-' + m + '-' + d;
+    const isToday = iso === todayStr;
+    el.textContent = isToday ? timePart : datePart;
+    el.style.color = isToday ? 'var(--green)' : 'var(--red)';
+    el.title = 'Dernière MAJ : ' + last;
+  });
+}
 function syncSidebarVersion() {
   const gh = document.getElementById('github-version');
   const sv = document.getElementById('sidebar-version');
@@ -11351,6 +11407,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setInterval(updateClock, 1000);
   syncSidebarVersion();
   mettreAJourEmprunts();
+  updateMajBadges();
   // Backup pour GitHub Pages où DOMContentLoaded peut être raté
   window.addEventListener('load', updateClock);
 
