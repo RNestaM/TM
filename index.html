@@ -852,7 +852,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.219</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.221</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -2035,7 +2035,7 @@
               <th onclick="setVenteCatSort('type')"  style="cursor:pointer;user-select:none">Type <span id="vcat-sort-type"></span></th>
               <th onclick="setVenteCatSort('capa')"  style="cursor:pointer;user-select:none">Places <span id="vcat-sort-capa"></span></th>
               <th onclick="setVenteCatSort('km')"    style="cursor:pointer;user-select:none">KM <span id="vcat-sort-km"></span></th>
-              <th onclick="setVenteCatSort('etatTech')" style="cursor:pointer;user-select:none">État Tech. <span id="vcat-sort-etatTech"></span></th>
+              <th onclick="setVenteCatSort('prixAchat')" style="cursor:pointer;user-select:none">Prix d'achat <span id="vcat-sort-prixAchat"></span></th>
               <th onclick="setVenteCatSort('argus')" style="cursor:pointer;user-select:none">Argus <span id="vcat-sort-argus"></span></th>
               <th>Prix max (+10%)</th>
               <th>Action</th>
@@ -2069,11 +2069,13 @@
               <th>Bus</th>
               <th>Type</th>
               <th>Argus</th>
+              <th>Prix d'achat</th>
               <th>Prix mise en vente</th>
               <th>Type de vente</th>
               <th>Statut</th>
               <th>Prix de vente final</th>
               <th>vs Argus</th>
+              <th>vs Prix d'achat</th>
               <th></th>
             </tr></thead>
             <tbody id="vente-encours-tbody"></tbody>
@@ -11813,7 +11815,7 @@ function setVenteCatSort(key) {
 }
 
 function updateVenteCatSortIcons() {
-  ['nom','type','capa','km','etatTech','argus'].forEach(k => {
+  ['nom','type','capa','km','prixAchat','argus'].forEach(k => {
     const el = document.getElementById('vcat-sort-' + k);
     if (!el) return;
     el.textContent = venteCatSortKey === k ? (venteCatSortAsc ? '↑' : '↓') : '↕';
@@ -11850,7 +11852,6 @@ function renderVenteCatalogue() {
   tbody.innerHTML = buses.map(b => {
     const argus   = b.argus || 0;
     const prixMax = argus ? Math.round(argus * 1.10) : null;
-    const etatCol = (b.etatTech||0) >= 80 ? 'var(--green)' : (b.etatTech||0) >= 60 ? 'var(--yellow)' : 'var(--red)';
     const urlBus  = b.idJeu ? `https://transport-manager.net/jeu/vehicle.php?id=${b.idJeu}` : '';
     const nomCell = urlBus
       ? `<a href="${urlBus}" target="_blank" style="color:var(--accent);text-decoration:none;font-weight:700;cursor:alias" title="Ouvrir le véhicule sur le jeu">${b.nom} ↗</a>`
@@ -11862,7 +11863,7 @@ function renderVenteCatalogue() {
       <td><span style="background:${typeColor}22;color:${typeColor};border:1px solid ${typeColor}55;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700">${b.type||'—'}</span></td>
       <td class="mono">${b.capa||'—'}</td>
       <td class="mono" style="color:var(--text2)">${fmtNum(b.km||0)} km</td>
-      <td class="mono" style="color:${etatCol}">${b.etatTech||'—'}/100</td>
+      <td class="mono" style="color:var(--text2)">${b.prixAchat ? fmt(b.prixAchat) : '<span style="color:var(--text3)">—</span>'}</td>
       <td class="mono" style="color:var(--yellow)">${argus ? fmt(argus) : '<span style="color:var(--text3)">—</span>'}</td>
       <td class="mono" style="color:var(--green);font-weight:700">${prixMax ? fmt(prixMax) : '<span style="color:var(--text3)">—</span>'}</td>
       <td><button class="btn btn-primary btn-xs" onclick="mettreEnVente('${b.nom}')">🏷️ Mettre en vente</button></td>
@@ -11947,9 +11948,12 @@ function renderVentesEnCours() {
     const prixV   = parseFloat(v.prixVente) || 0;
     const ratio   = argus > 0 && prixV > 0 ? ((prixV / argus - 1) * 100).toFixed(1) : null;
     const ratioColor = ratio === null ? 'var(--text3)' : parseFloat(ratio) >= 0 ? 'var(--green)' : 'var(--red)';
+    const b          = state.bus.find(x => x.nom === v.busNom);
+    const prixAchat  = parseFloat(b?.prixAchat) || 0;
+    const ratioAchat = prixAchat > 0 && prixV > 0 ? ((prixV / prixAchat - 1) * 100).toFixed(1) : null;
+    const ratioAchatColor = ratioAchat === null ? 'var(--text3)' : parseFloat(ratioAchat) >= 0 ? 'var(--green)' : 'var(--red)';
     const typeColor  = TYPE_COLORS_VENTE[v.type] || 'var(--text3)';
     const sColor     = statutColors[v.statut] || 'var(--text3)';
-    const b          = state.bus.find(x => x.nom === v.busNom);
     const urlBus     = b?.idJeu ? `https://transport-manager.net/jeu/vehicle.php?id=${b.idJeu}` : '';
     const nomCell    = urlBus
       ? `<a href="${urlBus}" target="_blank" style="color:var(--accent);text-decoration:none;font-weight:700;cursor:alias" title="Ouvrir sur le jeu">${v.busNom} ↗</a>`
@@ -11959,6 +11963,7 @@ function renderVentesEnCours() {
       <td style="font-size:12px">${nomCell}</td>
       <td><span style="background:${typeColor}22;color:${typeColor};border:1px solid ${typeColor}55;padding:2px 7px;border-radius:3px;font-size:10px;font-weight:700">${v.type||'—'}</span></td>
       <td class="mono" style="color:var(--yellow)">${argus ? fmt(argus) : '—'}</td>
+      <td class="mono" style="color:var(--text2)">${prixAchat ? fmt(prixAchat) : '—'}</td>
       <td class="mono">
         <input type="number" value="${v.prixMiseEnVente||''}" placeholder="0"
           onchange="setVenteField(${realIdx},'prixMiseEnVente',this.value)"
@@ -11986,6 +11991,9 @@ function renderVentesEnCours() {
       </td>
       <td class="mono" style="color:${ratioColor};font-weight:700;text-align:center">
         ${ratio !== null ? (parseFloat(ratio)>=0?'+':'')+ratio+' %' : '—'}
+      </td>
+      <td class="mono" style="color:${ratioAchatColor};font-weight:700;text-align:center">
+        ${ratioAchat !== null ? (parseFloat(ratioAchat)>=0?'+':'')+ratioAchat+' %' : '<span style="color:var(--text3)">—</span>'}
       </td>
       <td>
         <button class="btn btn-danger btn-xs" onclick="supprimerVente(${realIdx})" title="Retirer de la liste">✕</button>
