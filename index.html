@@ -852,7 +852,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.223</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.224</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -1909,25 +1909,27 @@
       <div class="card" style="margin-top:14px">
         <div class="card-header">
           <div class="card-title">Tableau complet disponibilités</div>
-          <div style="display:flex;gap:6px">
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <input type="text" id="pubdispo-search" placeholder="🔍 Filtrer véhicule..." oninput="renderPubDispoTableau()"
+              style="background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:11px;padding:4px 8px;width:160px;outline:none">
             <button class="btn btn-ghost btn-sm" onclick="setPubDispoFiltre('tous')" id="pdf-f-tous">Tous</button>
             <button class="btn btn-ghost btn-sm" onclick="setPubDispoFiltre('avecpub')" id="pdf-f-avecpub">Avec pub</button>
             <button class="btn btn-ghost btn-sm" onclick="setPubDispoFiltre('sanspub')" id="pdf-f-sanspub">Tout libre</button>
             <button class="btn btn-ghost btn-sm" onclick="setPubDispoFiltre('sansaff')" id="pdf-f-sansaff">Sans affectation</button>
           </div>
         </div>
-        <div class="card-body" style="padding:0;overflow-x:auto">
+        <div class="card-body" style="padding:0;overflow-x:auto;max-height:600px;overflow-y:auto">
           <table class="data-table">
-            <thead><tr>
-              <th>Véhicule</th>
-              <th>Places</th>
-              <th>Affectation</th>
-              <th>Pan. Avant</th>
-              <th>Pan. Latéral</th>
-              <th>Livrée Lat.</th>
-              <th>Pan. Arrière</th>
-              <th>Livrée Arr.</th>
-              <th>Écran TFT</th>
+            <thead style="position:sticky;top:0;z-index:3;background:var(--surface2)"><tr>
+              <th style="background:var(--surface2)">Véhicule</th>
+              <th style="background:var(--surface2)">Places</th>
+              <th style="background:var(--surface2)">Affectation</th>
+              <th style="background:var(--surface2)">Pan. Avant</th>
+              <th style="background:var(--surface2)">Pan. Latéral</th>
+              <th style="background:var(--surface2)">Livrée Lat.</th>
+              <th style="background:var(--surface2)">Pan. Arrière</th>
+              <th style="background:var(--surface2)">Livrée Arr.</th>
+              <th style="background:var(--surface2)">Écran TFT</th>
             </tr></thead>
             <tbody id="pubdispo-tbody"></tbody>
           </table>
@@ -2148,7 +2150,7 @@
     </div>
 
     <!-- ═══════════════════════════════════════════ GASOIL ═══ -->
-    <div id="page-gasoil" class="page">
+    <div id="page-gasoil" class="page" style="padding:0 8px">
 
       <!-- Stats cards : Diesel à gauche, GNV à droite -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
@@ -3437,7 +3439,9 @@ function toastMsg(msg, type='info') {
   setTimeout(() => d.remove(), 3000);
 }
 function journalLog(text, type='info') {
-  state.journal.unshift({ date: today(), text, type });
+  const now = new Date();
+  const heure = now.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+  state.journal.unshift({ date: today(), heure, text, type });
   if (state.journal.length > 50) state.journal.pop();
   saveStateWithSync();
 }
@@ -3822,7 +3826,7 @@ function renderDashboard() {
   // ── Journal ───────────────────────────────────────────────
   const tl = document.getElementById('journal-timeline');
   if (tl) tl.innerHTML = state.journal.slice(0,8).map(j => `<div class="timeline-item ${j.type}">
-    <div class="timeline-date">${fmtDateFR(j.date)}</div>
+    <div class="timeline-date" style="display:flex;justify-content:space-between;align-items:center">${fmtDateFR(j.date)}${j.heure ? `<span style="color:var(--text3);font-family:Inter,sans-serif;font-size:10px;margin-left:8px">${j.heure}</span>` : ''}</div>
     <div class="timeline-text">${j.text}</div>
   </div>`).join('') || '<div style="color:var(--text3)">Aucune activité.</div>';
 
@@ -11760,12 +11764,23 @@ function renderPubDispoAlertes() {
 
     const best = candidats.slice(0, 3); // jusqu'à 3 suggestions
 
+    const bState = state.bus.find(x => x.nom === b.nom);
+    const nomCell = bState?.idJeu
+      ? `<a href="https://transport-manager.net/jeu/vehicle.php?id=${bState.idJeu}" target="_blank" style="color:var(--red);text-decoration:none;font-weight:700;cursor:alias" title="Ouvrir sur le jeu">${b.nom} ↗</a>`
+      : `<b style="color:var(--red)">${b.nom}</b>`;
+
     const suggCol = best.length
-      ? best.map(c => `<div style="margin-bottom:2px"><b style="color:var(--green)">${c.nom}</b> <span style="color:var(--text3);font-size:10px">(${c.places} pl.)</span></div>`).join('')
+      ? best.map(c => {
+          const cs = state.bus.find(x => x.nom === c.nom);
+          const cLink = cs?.idJeu
+            ? `<a href="https://transport-manager.net/jeu/vehicle.php?id=${cs.idJeu}" target="_blank" style="color:var(--green);text-decoration:none;font-weight:700;cursor:alias">${c.nom} ↗</a>`
+            : `<b style="color:var(--green)">${c.nom}</b>`;
+          return `<div style="margin-bottom:2px">${cLink} <span style="color:var(--text3);font-size:10px">(${c.places} pl.)</span></div>`;
+        }).join('')
       : '<span style="color:var(--text3)">Aucun disponible</span>';
 
     return `<tr style="background:rgba(239,68,68,0.04)">
-      <td><b style="color:var(--red)">${b.nom}</b></td>
+      <td>${nomCell}</td>
       <td class="mono">${b.places}</td>
       <td style="line-height:1.8">${pubsActives.join(' ') || '—'}</td>
       <td><span class="badge badge-red">Non</span></td>
@@ -11788,11 +11803,21 @@ function renderPubDispoTableau() {
   else if (pubDispoFiltre === 'sanspub')  data = data.filter(b => b.toutLibre);
   else if (pubDispoFiltre === 'sansaff') data = data.filter(b => !b.aAffectation);
 
+  const search = (document.getElementById('pubdispo-search')?.value || '').toLowerCase();
+  if (search) data = data.filter(b => b.nom.toLowerCase().includes(search));
+
+  const busLink = (nom) => {
+    const b = state.bus.find(x => x.nom === nom);
+    return b?.idJeu
+      ? `<a href="https://transport-manager.net/jeu/vehicle.php?id=${b.idJeu}" target="_blank" style="color:var(--accent);text-decoration:none;font-weight:700;cursor:alias" title="Ouvrir sur le jeu">${nom} ↗</a>`
+      : `<b>${nom}</b>`;
+  };
+
   const tbody = document.getElementById('pubdispo-tbody');
   tbody.innerHTML = data.map(b => {
     const rowBg = b.aPub && !b.aAffectation ? 'background:rgba(239,68,68,0.05)' : '';
     return `<tr style="${rowBg}">
-      <td style="font-size:11px"><b>${b.nom}</b></td>
+      <td style="font-size:11px">${busLink(b.nom)}</td>
       <td class="mono">${b.places}</td>
       <td>${b.aAffectation
         ? `<span class="badge badge-green">✓ ${b.affectation}</span>`
