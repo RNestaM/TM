@@ -852,7 +852,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.230</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.232</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -2366,6 +2366,14 @@
           <button class="btn btn-primary" onclick="openModal('modal-maj-csv')" style="background:var(--accent3)">📥 Ouvrir l'import CSV</button>
         </div>
       </div>
+
+      <div class="card" style="margin-top:14px">
+        <div class="card-header">
+          <div class="card-title">↩ Historique annulable</div>
+        </div>
+        <div class="card-body" id="cfg-undo-list" style="padding:0"></div>
+      </div>
+
     </div>
 
     <div id="page-config" class="page">
@@ -2418,13 +2426,6 @@
             onblur="saveMoisConges(this.value)"
             style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 10px;font-size:12px;outline:none;box-sizing:border-box">
         </div>
-      </div>
-
-      <div class="card" style="margin-top:14px">
-        <div class="card-header">
-          <div class="card-title">↩ Historique annulable</div>
-        </div>
-        <div class="card-body" id="cfg-undo-list" style="padding:0"></div>
       </div>
 
       <div class="grid-2" style="margin-top:14px;align-items:start">
@@ -8234,6 +8235,8 @@ function supprimerContratTourisme(idx) {
   if (!state.tourisme || !state.tourisme.length) { toastMsg('Aucun contrat', 'error'); return; }
   const i = parseInt(idx);
   if (isNaN(i) || i < 0 || i >= state.tourisme.length) { toastMsg('Index invalide : ' + idx, 'error'); return; }
+  const t = state.tourisme[i];
+  pushUndo('Suppression contrat tourisme' + (t && t.client ? ' : ' + t.client : ''));
   state.tourisme.splice(i, 1);
   saveStateWithSync();
   renderTourisme();
@@ -9843,7 +9846,6 @@ function renderConfig() {
         <div style="font-size:10px;color:var(--text3);margin-top:4px">${fmt(argentDepart)} départ + ${fmt(mouvements)} mouvements${ecart!==0?' + <span style="color:'+(ecart>0?'var(--green)':'var(--red)')+'">'+fmt(ecart)+' correction</span>':''}</div>
       </div>`;
   renderEmprunts();
-  renderUndoList();
 }
 
 function renderUndoList() {
@@ -10828,6 +10830,7 @@ function setModeJeu(vacances) {
 }
 
 function renderCfgJeu() {
+  renderUndoList();
   const n   = state.niveauJeu || 4;
   const vac = state.modeVacances || false;
 
