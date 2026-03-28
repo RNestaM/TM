@@ -852,7 +852,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.232</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.233</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -9193,16 +9193,17 @@ function renderTourisme() {
   const in3days  = new Date(); in3days.setDate(in3days.getDate() + 3);
   const in3ISO   = in3days.toISOString().slice(0,10);
 
-  tbody.innerHTML = sortedIdx.map(origIdx => {
+  const makeRow = (origIdx, estEffectue) => {
     const t = tous[origIdx];
     const color = (t.pctBenef||0) >= 90 ? 'var(--green)' : (t.pctBenef||0) >= 80 ? 'var(--yellow)' : 'var(--red)';
     const dateISO = (t.dateTransport||'').replace(/(\d{2})\/(\d{2})\/(\d{4})/,'$3-$2-$1');
-    const proche  = dateISO >= todayISO && dateISO <= in3ISO;
-    const rowBg   = proche ? 'background:rgba(245,158,11,0.08)' : '';
-    return `<tr style="${rowBg}">
+    const proche  = !estEffectue && dateISO >= todayISO && dateISO <= in3ISO;
+    const rowBg   = estEffectue ? 'background:rgba(255,255,255,0.02)' : proche ? 'background:rgba(245,158,11,0.08)' : '';
+    const opacity = estEffectue ? 'opacity:0.6' : '';
+    return `<tr style="${rowBg};${opacity}">
       <td class="mono" style="font-weight:700">${proche?'⚡ ':''}<span style="color:${proche?'var(--yellow)':'inherit'}">${t.num||'—'}</span></td>
       <td style="font-size:11px">${t.demandeur||'—'}</td>
-      <td class="mono" style="font-size:11px;color:${proche?'var(--yellow)':'inherit'};font-weight:${proche?700:400}">${t.dateTransport||'—'}</td>
+      <td class="mono" style="font-size:11px;color:${proche?'var(--yellow)':estEffectue?'var(--text3)':'inherit'};font-weight:${proche?700:400}">${t.dateTransport||'—'}</td>
       <td class="mono">${fmtNum(t.km||0)} km</td>
       <td class="mono" style="color:var(--green)">${fmt(t.montant||0)}</td>
       <td class="mono" style="color:var(--red)">${fmt(t.coutCarbu||0)}</td>
@@ -9221,7 +9222,24 @@ function renderTourisme() {
       </td>
       <td><button class="btn btn-danger btn-xs" onclick="supprimerContratTourisme(${origIdx})">✕</button></td>
     </tr>`;
-  }).join('');
+  };
+
+  // Séparer en cours / effectués
+  const enCours    = sortedIdx.filter(i => toISO(tous[i].dateTransport) >= todayISO);
+  const effectues  = sortedIdx.filter(i => toISO(tous[i].dateTransport) <  todayISO)
+                              .sort((a,b) => toISO(tous[b].dateTransport).localeCompare(toISO(tous[a].dateTransport))); // plus récent en premier
+
+  const rowsEnCours   = enCours.map(i => makeRow(i, false)).join('');
+  const rowsEffectues = effectues.map(i => makeRow(i, true)).join('');
+
+  const separateur = effectues.length ? `
+    <tr>
+      <td colspan="12" style="padding:6px 10px;background:rgba(255,255,255,0.04);border-top:2px solid var(--border);border-bottom:1px solid var(--border)">
+        <span style="font-size:11px;font-weight:600;color:var(--text3);letter-spacing:0.5px">✓ EFFECTUÉS (${effectues.length})</span>
+      </td>
+    </tr>` : '';
+
+  tbody.innerHTML = rowsEnCours + separateur + rowsEffectues;
 
   // Stats dans le footer sous le tableau (pas dans tbody)
   const footer = document.getElementById('tourisme-stats-footer');
