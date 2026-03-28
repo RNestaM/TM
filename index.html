@@ -852,7 +852,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.226</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.227</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -9837,17 +9837,18 @@ function renderConfig() {
 function renderUndoList() {
   const el = document.getElementById('cfg-undo-list');
   if (!el) return;
-  if (!undoStack.length) {
+  if (!undoStack || !undoStack.length) {
     el.innerHTML = '<div style="padding:14px 16px;font-size:12px;color:var(--text3)">Aucune action annulable pour le moment.</div>';
     return;
   }
-  // Affiche du plus récent au plus ancien
   el.innerHTML = [...undoStack].reverse().map((entry, ri) => {
     const realIdx = undoStack.length - 1 - ri;
+    const label = entry.label || '(action)';
+    const ts = entry.ts || '';
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border)">
       <div>
-        <span style="font-size:12px;color:var(--text)">${entry.label}</span>
-        <span style="font-size:10px;color:var(--text3);margin-left:8px">${entry.ts}</span>
+        <span style="font-size:12px;color:var(--text)">${label}</span>
+        <span style="font-size:10px;color:var(--text3);margin-left:8px">${ts}</span>
       </div>
       <button class="btn btn-ghost btn-xs" onclick="undoLast(${realIdx})" style="color:var(--accent);font-size:11px">↩ Annuler</button>
     </div>`;
@@ -10099,11 +10100,24 @@ function setSyncStatus(status, msg) {
 }
 
 function pushUndo(label) {
+  // Snapshot complet en RAM, version allégée en localStorage (sans gros tableaux)
   const snapshot = JSON.parse(JSON.stringify(state));
-  const ts = new Date().toLocaleTimeString("fr-FR", { hour:"2-digit", minute:"2-digit" });
+  const ts = new Date().toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
   undoStack.push({ label, ts, snapshot });
   if (undoStack.length > 5) undoStack.shift();
-  try { localStorage.setItem("tm_undo_stack", JSON.stringify(undoStack)); } catch(e) {}
+  // Persistance localStorage : snapshot sans les gros tableaux (compta, statsLignes)
+  try {
+    const lite = undoStack.map(e => ({
+      label: e.label, ts: e.ts,
+      snapshot: Object.fromEntries(
+        Object.entries(e.snapshot).filter(([k]) =>
+          !['compta','statsLignes','carburant','gasoil','journal'].includes(k)
+        )
+      )
+    }));
+    localStorage.setItem('tm_undo_stack', JSON.stringify(lite));
+  } catch(e) {}
+  renderUndoList();
 }
 function undoLast(i) {
   const idx = (i !== undefined) ? i : undoStack.length - 1;
@@ -10111,27 +10125,27 @@ function undoLast(i) {
   const entry = undoStack[idx];
   Object.keys(entry.snapshot).forEach(k => { state[k] = entry.snapshot[k]; });
   undoStack.splice(idx);
-  try { localStorage.setItem("tm_undo_stack", JSON.stringify(undoStack)); } catch(e) {}
+  try { localStorage.setItem('tm_undo_stack', JSON.stringify(undoStack)); } catch(e) {}
   saveState();
-  setSyncStatus("pending", "Sauvegarde en coursu2026");
+  setSyncStatus('pending', 'Sauvegarde en cours…');
   clearTimeout(syncDebounceTimer);
   syncDebounceTimer = setTimeout(() => syncPush(false), 3000);
-  toastMsg("u21a9 Annulu00e9 : " + entry.label, "info");
-  const activePage = document.querySelector(".page.active");
+  toastMsg('↩ Annulé : ' + entry.label, 'info');
+  const activePage = document.querySelector('.page.active');
   if (activePage) {
-    const pid = activePage.id.replace("page-","");
+    const pid = activePage.id.replace('page-', '');
     const renders = { dashboard: renderDashboard, parc: renderParc, affectations: renderAffectations,
       pub: renderPub, tourisme: renderTourisme, maintenance: renderMaintenance,
       lignes: renderLignes, personnel: renderPersonnel, compta: renderCompta,
       gasoil: renderGasoil, vente: renderVente, config: renderConfig };
     if (renders[pid]) renders[pid]();
   }
-  renderConfig();
+  renderUndoList();
 }
 function saveStateWithSync(undoLabel = null) {
   if (undoLabel) pushUndo(undoLabel);
   saveState();
-  setSyncStatus("pending", "Sauvegarde en coursu2026");
+  setSyncStatus('pending', 'Sauvegarde en cours…');
   clearTimeout(syncDebounceTimer);
   syncDebounceTimer = setTimeout(() => syncPush(false), 3000);
 }
