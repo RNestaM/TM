@@ -1481,7 +1481,7 @@
               <option value="À l'atelier">À l'atelier</option>
               <option value="Réparé">Réparé</option>
             </select>
-            <button class="btn btn-ghost btn-sm" onclick="if(confirm('Supprimer toutes les pannes ?')){state.pannes=[];saveStateWithSync();renderPannes();}">🗑 Tout vider</button>
+            <button class="btn btn-ghost btn-sm" onclick="if(confirm('Supprimer toutes les pannes ?')){saveStateWithSync('Suppression toutes pannes');state.pannes=[];saveState();renderPannes();}">🗑 Tout vider</button>
           </div>
         </div>
         <div class="card-body" style="padding:0">
@@ -1585,7 +1585,7 @@
           <div class="card-title">Stats par ligne (depuis CSV)</div>
           <div style="display:flex;gap:6px">
             <button class="btn btn-sm" style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.4);color:var(--yellow)" onclick="supprimerStatsJour()">🗑 Supprimer hier</button>
-            <button class="btn btn-ghost btn-sm" onclick="if(confirm('Effacer tout l\'historique stats ?')){state.statsLignes=[];saveStateWithSync();renderLignes();}">🗑 Tout effacer</button>
+            <button class="btn btn-ghost btn-sm" onclick="if(confirm('Effacer tout l\'historique stats ?')){saveStateWithSync('Effacement historique stats lignes');state.statsLignes=[];saveState();renderLignes();}">🗑 Tout effacer</button>
           </div>
         </div>
         <div class="card-body" style="padding:0;overflow-y:auto;max-height:360px">
@@ -1818,7 +1818,7 @@
           <div class="card-body" style="padding:8px 12px">
             <textarea id="pub-texte-brut" rows="4" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:Inter, var(--font-sans, sans-serif);font-size:10px;padding:6px;resize:vertical;outline:none;box-sizing:border-box" placeholder="1618551  Super R  53  Abribus  05/03/2026  19/03/2026  222 600 € (100.0%)  Voir&#10;..."></textarea>
             <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
-              <button class="btn btn-ghost btn-sm" onclick="if(confirm('Remplacer tous les contrats ?')){state.contratsPub=[];saveStateWithSync();renderPub();}">🗑 Vider</button>
+              <button class="btn btn-ghost btn-sm" onclick="if(confirm('Remplacer tous les contrats ?')){saveStateWithSync('Vidage contrats pub');state.contratsPub=[];saveState();renderPub();}">🗑 Vider</button>
               <span id="pub-import-status" style="font-size:11px;color:var(--text3)"></span>
             </div>
           </div>
@@ -1870,7 +1870,7 @@
               placeholder="Scania Omnicity G II n°ART-08-186&#9;&#9;Non&#9;Non équipé&#9;Libre&#9;Libre&#9;Libre&#9;Libre&#9;Libre&#10;..."></textarea>
             <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
               <button class="btn btn-primary" onclick="importerDispoPub()">✓ Analyser</button>
-              <button class="btn btn-ghost btn-sm" onclick="if(confirm('Vider ?')){state.pubDispo=[];saveStateWithSync();renderPubDispo();}">🗑 Vider</button>
+              <button class="btn btn-ghost btn-sm" onclick="if(confirm('Vider ?')){saveStateWithSync('Vidage pub disponible');state.pubDispo=[];saveState();renderPubDispo();}">🗑 Vider</button>
               <span id="pubdispo-status" style="font-size:11px;color:var(--text3)"></span>
             </div>
           </div>
@@ -2062,7 +2062,7 @@
               <option value="En vente">En vente</option>
               <option value="Vendu">Vendu</option>
             </select>
-            <button class="btn btn-ghost btn-sm" onclick="if(confirm('Effacer les ventes terminées (Vendu) ?')){state.ventesBus=state.ventesBus.filter(v=>v.statut!==\'Vendu\');saveStateWithSync();renderVente();}">🗑 Effacer vendus</button>
+            <button class="btn btn-ghost btn-sm" onclick="if(confirm('Effacer les ventes terminées (Vendu) ?')){saveStateWithSync('Effacement ventes terminées');state.ventesBus=state.ventesBus.filter(v=>v.statut!=='Vendu');saveState();renderVente();}">🗑 Effacer vendus</button>
           </div>
         </div>
         <div class="card-body" style="padding:0;overflow-x:auto">
@@ -2124,7 +2124,7 @@
           <div class="card-title">📁 Contrats
             <span id="tourisme-count" class="badge badge-blue" style="margin-left:8px">0</span>
           </div>
-          <button class="btn btn-ghost btn-sm" onclick="if(confirm('Effacer tout l\'historique tourisme ?')){state.tourisme=[];saveStateWithSync();renderTourisme();}">🗑 Effacer</button>
+          <button class="btn btn-ghost btn-sm" onclick="if(confirm('Effacer tout l\'historique tourisme ?')){saveStateWithSync('Effacement historique tourisme');state.tourisme=[];saveState();renderTourisme();}">🗑 Effacer</button>
         </div>
         <div class="card-body" style="padding:0;overflow-x:auto;overflow-y:auto;max-height:330px">
           <table class="data-table" id="tourisme-table" style="min-width:900px;border-collapse:collapse"><colgroup></colgroup>
@@ -2234,7 +2234,7 @@
       <div class="card" style="margin-top:14px">
         <div class="card-header">
           <div class="card-title">Historique des prix</div>
-          <button class="btn btn-ghost btn-sm" onclick="if(confirm('Vider tout l\'historique ?')){state.carburant=[];saveStateWithSync();renderGasoil();}">🗑 Vider</button>
+          <button class="btn btn-ghost btn-sm" onclick="if(confirm('Vider tout l\'historique ?')){saveStateWithSync('Vidage historique carburant');state.carburant=[];saveState();renderGasoil();}">🗑 Vider</button>
         </div>
         <div class="card-body" style="padding:0">
           <table class="data-table">
@@ -2418,6 +2418,13 @@
             onblur="saveMoisConges(this.value)"
             style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 10px;font-size:12px;outline:none;box-sizing:border-box">
         </div>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <div class="card-header">
+          <div class="card-title">↩ Historique annulable</div>
+        </div>
+        <div class="card-body" id="cfg-undo-list" style="padding:0"></div>
       </div>
 
       <div class="grid-2" style="margin-top:14px;align-items:start">
@@ -3219,6 +3226,7 @@
 //  DÉCLARATIONS GLOBALES (doivent être en premier)
 // ═══════════════════════════════════════════════════════
 let syncDebounceTimer = null;
+let undoStack = (() => { try { return JSON.parse(localStorage.getItem('tm_undo_stack') || '[]'); } catch(e) { return []; } })();
 let modeConfig        = false;
 let currentParcTypeFilter = 'all';
 let editBusId         = null;
@@ -4399,7 +4407,7 @@ function saveEditBus() {
   b.revision = document.getElementById('eb-rev').value.trim() || null;
   b.motorisation = document.getElementById('eb-motor').value;
   journalLog(`Bus ${b.nom} mis à jour`, 'info');
-  saveStateWithSync(); updateBusSelects();
+  saveStateWithSync('Modif bus : ' + b.nom); updateBusSelects();
   closeModal('modal-edit-bus');
   renderParc();
   toastMsg(`${b.nom} mis à jour ✓`, 'success');
@@ -4411,7 +4419,7 @@ function retirerBus(id) {
   if (!confirm(`Retirer définitivement ${b.nom} du parc ?`)) return;
   state.bus = state.bus.filter(x => x.id !== id);
   journalLog(`Bus ${b.nom} retiré du parc`, 'warn');
-  saveStateWithSync(); updateBusSelects(); renderParc(); renderDashboard();
+  saveStateWithSync('Retrait bus : ' + b.nom); updateBusSelects(); renderParc(); renderDashboard();
   toastMsg(`${b.nom} retiré`, 'info');
 }
 
@@ -5896,7 +5904,7 @@ function terminerMaintenance(i) {
   journalLog(`${m.bus} — ${m.type} terminée`, 'ok');
   saveStateWithSync(); renderMaintenance();
 }
-function supprimerMaintenance(i) { state.maintenance.splice(i, 1); saveStateWithSync(); renderMaintenance(); }
+function supprimerMaintenance(i) { const m = state.maintenance[i]; saveStateWithSync(m ? 'Suppression maintenance : ' + (m.type||m.bus||'') : 'Suppression maintenance'); state.maintenance.splice(i, 1); saveState(); renderMaintenance(); }
 
 // ═══════════════════════════════════════════════════════
 //  ABRIBUS
@@ -5975,7 +5983,7 @@ function importerAbribus() {
   saveStateWithSync(); renderAbribus();
   toastMsg(`${resultats.length} abribus importés ✓`, 'success');
 }
-function clearAbribus() { state.abribus = []; saveStateWithSync(); renderAbribus(); }
+function clearAbribus() { saveStateWithSync('Effacement abribus'); state.abribus = []; saveState(); renderAbribus(); }
 
 // ═══════════════════════════════════════════════════════
 //  PERSONNEL / FCO
@@ -6553,8 +6561,8 @@ function marquerFCO(id) {
   toastMsg(`FCO de ${p.nom} mise à jour ✓`, 'success');
 }
 function supprimerPersonnel(id) {
-  state.personnel = state.personnel.filter(x => x.id !== id);
-  saveStateWithSync(); renderPersonnel();
+  const _p = state.personnel.find(x => x.id === id); state.personnel = state.personnel.filter(x => x.id !== id);
+  saveStateWithSync(_p ? 'Suppression personnel : ' + _p.nom : 'Suppression personnel'); renderPersonnel();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -6652,7 +6660,7 @@ function renderLignes() {
 }
 
 
-function supprimerLigne(i) { state.lignes.splice(i, 1); saveStateWithSync(); renderLignes(); }
+function supprimerLigne(i) { const l = state.lignes[i]; saveStateWithSync(l ? 'Suppression ligne : ' + (l.nom||l.numero||'') : 'Suppression ligne'); state.lignes.splice(i, 1); saveState(); renderLignes(); }
 
 // ═══════════════════════════════════════════════════════
 //  COMPTA
@@ -7119,7 +7127,7 @@ function renderCompta() {
         <td class="mono" style="color:var(--red)">${fmt(dep)}</td>
         <td class="mono" style="color:${sol>=0?'var(--green)':'var(--red)'};font-weight:700">${sol>=0?'+':''}${fmt(sol)}</td>
         <td class="mono" style="color:var(--text3)">${ops.length}</td>
-        <td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();if(confirm('Supprimer tout le mois ${m} ?')){delete state.comptaMois['${m}'];saveStateWithSync();renderCompta();}">🗑</button></td>
+        <td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();if(confirm('Supprimer tout le mois ${m} ?')){saveStateWithSync('Suppression compta mois : ${m}');delete state.comptaMois['${m}'];saveState();renderCompta();}">🗑</button></td>
       </tr>`;
     }).join('') || '<tr><td colspan="6" style="color:var(--text3);text-align:center;padding:16px">Aucune donnée pour cette année</td></tr>';
 
@@ -7791,10 +7799,10 @@ function renderPubTableau() {
   }).join('') || '<tr><td colspan="10" style="color:var(--text3);text-align:center;padding:20px">Aucun contrat — colle les données depuis le jeu</td></tr>';
 }
 
-function supprimerContratPub(id) { state.contratsPub = state.contratsPub.filter(c => c.id !== id); saveStateWithSync(); renderPub(); }
-function supprimerTousContracts() { if (confirm('Supprimer tous les contrats ?')) { state.contratsPub = []; saveStateWithSync(); renderPub(); } }
+function supprimerContratPub(id) { const c = state.contratsPub.find(x => x.id === id); state.contratsPub = state.contratsPub.filter(c => c.id !== id); saveStateWithSync(c ? 'Suppression contrat pub : ' + c.annonceur : 'Suppression contrat pub'); renderPub(); }
+function supprimerTousContracts() { if (confirm('Supprimer tous les contrats ?')) { saveStateWithSync('Suppression de tous les contrats pub'); state.contratsPub = []; saveState(); renderPub(); } }
 
-function supprimerContrat(i) { state.contratsPub.splice(i,1); saveStateWithSync(); renderPub(); }
+function supprimerContrat(i) { const _c = state.contratsPub[i]; saveStateWithSync(_c ? 'Suppression contrat : ' + (_c.annonceur||'') : 'Suppression contrat'); state.contratsPub.splice(i,1); saveState(); renderPub(); }
 
 
 // ═══════════════════════════════════════════════════════
@@ -9823,6 +9831,27 @@ function renderConfig() {
         <div style="font-size:10px;color:var(--text3);margin-top:4px">${fmt(argentDepart)} départ + ${fmt(mouvements)} mouvements${ecart!==0?' + <span style="color:'+(ecart>0?'var(--green)':'var(--red)')+'">'+fmt(ecart)+' correction</span>':''}</div>
       </div>`;
   renderEmprunts();
+  renderUndoList();
+}
+
+function renderUndoList() {
+  const el = document.getElementById('cfg-undo-list');
+  if (!el) return;
+  if (!undoStack.length) {
+    el.innerHTML = '<div style="padding:14px 16px;font-size:12px;color:var(--text3)">Aucune action annulable pour le moment.</div>';
+    return;
+  }
+  // Affiche du plus récent au plus ancien
+  el.innerHTML = [...undoStack].reverse().map((entry, ri) => {
+    const realIdx = undoStack.length - 1 - ri;
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border)">
+      <div>
+        <span style="font-size:12px;color:var(--text)">${entry.label}</span>
+        <span style="font-size:10px;color:var(--text3);margin-left:8px">${entry.ts}</span>
+      </div>
+      <button class="btn btn-ghost btn-xs" onclick="undoLast(${realIdx})" style="color:var(--accent);font-size:11px">↩ Annuler</button>
+    </div>`;
+  }).join('');
 }
 
 
@@ -10069,12 +10098,49 @@ function setSyncStatus(status, msg) {
   }
 }
 
-function saveStateWithSync() {
+function pushUndo(label) {
+  const snapshot = JSON.parse(JSON.stringify(state));
+  const ts = new Date().toLocaleTimeString("fr-FR", { hour:"2-digit", minute:"2-digit" });
+  undoStack.push({ label, ts, snapshot });
+  if (undoStack.length > 5) undoStack.shift();
+  try { localStorage.setItem("tm_undo_stack", JSON.stringify(undoStack)); } catch(e) {}
+}
+function undoLast(i) {
+  const idx = (i !== undefined) ? i : undoStack.length - 1;
+  if (idx < 0 || idx >= undoStack.length) return;
+  const entry = undoStack[idx];
+  Object.keys(entry.snapshot).forEach(k => { state[k] = entry.snapshot[k]; });
+  undoStack.splice(idx);
+  try { localStorage.setItem("tm_undo_stack", JSON.stringify(undoStack)); } catch(e) {}
   saveState();
-  setSyncStatus('pending', 'Sauvegarde en cours…');
+  setSyncStatus("pending", "Sauvegarde en coursu2026");
+  clearTimeout(syncDebounceTimer);
+  syncDebounceTimer = setTimeout(() => syncPush(false), 3000);
+  toastMsg("u21a9 Annulu00e9 : " + entry.label, "info");
+  const activePage = document.querySelector(".page.active");
+  if (activePage) {
+    const pid = activePage.id.replace("page-","");
+    const renders = { dashboard: renderDashboard, parc: renderParc, affectations: renderAffectations,
+      pub: renderPub, tourisme: renderTourisme, maintenance: renderMaintenance,
+      lignes: renderLignes, personnel: renderPersonnel, compta: renderCompta,
+      gasoil: renderGasoil, vente: renderVente, config: renderConfig };
+    if (renders[pid]) renders[pid]();
+  }
+  renderConfig();
+}
+function saveStateWithSync(undoLabel = null) {
+  if (undoLabel) pushUndo(undoLabel);
+  saveState();
+  setSyncStatus("pending", "Sauvegarde en coursu2026");
   clearTimeout(syncDebounceTimer);
   syncDebounceTimer = setTimeout(() => syncPush(false), 3000);
 }
+
+
+
+
+
+
 
 function exporterSauvegarde() {
   const data = JSON.stringify(state, null, 2);
