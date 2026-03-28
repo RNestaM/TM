@@ -287,8 +287,6 @@
   .badge-blue { background: rgba(0,212,255,0.1); color: var(--accent); border: 1px solid rgba(0,212,255,0.3); }
   
   .badge-gray { background: rgba(100,116,139,0.15); color: var(--text3); border: 1px solid rgba(100,116,139,0.3); }
-  .badge-orange { background: rgba(249,115,22,0.15); color: var(--orange); border: 1px solid rgba(249,115,22,0.3); }
-  .badge-purple { background: rgba(124,58,237,0.15); color: var(--accent3); border: 1px solid rgba(124,58,237,0.3); }
 
   /* BUTTONS */
   .btn {
@@ -762,9 +760,6 @@
       <div class="nav-item" data-page="achats" onclick="nav(this)">
         <span class="icon">🛒</span> Achats de bus
       </div>
-      <div class="nav-item" data-page="vente" onclick="nav(this)">
-        <span class="icon">🏷️</span> Vente de bus
-      </div>
     </div>
 
     <div class="sidebar-section">
@@ -852,7 +847,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.224</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.218</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -1909,27 +1904,25 @@
       <div class="card" style="margin-top:14px">
         <div class="card-header">
           <div class="card-title">Tableau complet disponibilités</div>
-          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-            <input type="text" id="pubdispo-search" placeholder="🔍 Filtrer véhicule..." oninput="renderPubDispoTableau()"
-              style="background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:11px;padding:4px 8px;width:160px;outline:none">
+          <div style="display:flex;gap:6px">
             <button class="btn btn-ghost btn-sm" onclick="setPubDispoFiltre('tous')" id="pdf-f-tous">Tous</button>
             <button class="btn btn-ghost btn-sm" onclick="setPubDispoFiltre('avecpub')" id="pdf-f-avecpub">Avec pub</button>
             <button class="btn btn-ghost btn-sm" onclick="setPubDispoFiltre('sanspub')" id="pdf-f-sanspub">Tout libre</button>
             <button class="btn btn-ghost btn-sm" onclick="setPubDispoFiltre('sansaff')" id="pdf-f-sansaff">Sans affectation</button>
           </div>
         </div>
-        <div class="card-body" style="padding:0;overflow-x:auto;max-height:600px;overflow-y:auto">
+        <div class="card-body" style="padding:0;overflow-x:auto">
           <table class="data-table">
-            <thead style="position:sticky;top:0;z-index:3;background:var(--surface2)"><tr>
-              <th style="background:var(--surface2)">Véhicule</th>
-              <th style="background:var(--surface2)">Places</th>
-              <th style="background:var(--surface2)">Affectation</th>
-              <th style="background:var(--surface2)">Pan. Avant</th>
-              <th style="background:var(--surface2)">Pan. Latéral</th>
-              <th style="background:var(--surface2)">Livrée Lat.</th>
-              <th style="background:var(--surface2)">Pan. Arrière</th>
-              <th style="background:var(--surface2)">Livrée Arr.</th>
-              <th style="background:var(--surface2)">Écran TFT</th>
+            <thead><tr>
+              <th>Véhicule</th>
+              <th>Places</th>
+              <th>Affectation</th>
+              <th>Pan. Avant</th>
+              <th>Pan. Latéral</th>
+              <th>Livrée Lat.</th>
+              <th>Pan. Arrière</th>
+              <th>Livrée Arr.</th>
+              <th>Écran TFT</th>
             </tr></thead>
             <tbody id="pubdispo-tbody"></tbody>
           </table>
@@ -1987,100 +1980,6 @@
           <table class="data-table">
             <thead><tr><th>ID jeu</th><th>Prix</th><th>KM départ</th><th>Date</th><th></th></tr></thead>
             <tbody id="achats-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    </div>
-
-    <!-- ═══════════════════════════════════════════ VENTE DE BUS ═══ -->
-    <div id="page-vente" class="page">
-
-      <!-- Stats ventes -->
-      <div class="stat-cards" style="margin-bottom:16px" id="vente-stat-cards">
-        <div class="stat-card blue">
-          <div class="stat-label">Bus au catalogue</div>
-          <div class="stat-value" id="vente-stat-catalogue">0</div>
-        </div>
-        <div class="stat-card yellow">
-          <div class="stat-label">En attente / En vente</div>
-          <div class="stat-value" id="vente-stat-encours">0</div>
-        </div>
-        <div class="stat-card green">
-          <div class="stat-label">Vendus</div>
-          <div class="stat-value" id="vente-stat-vendus">0</div>
-        </div>
-        <div class="stat-card orange">
-          <div class="stat-label">Recettes ventes</div>
-          <div class="stat-value" style="font-size:18px" id="vente-stat-recettes">0 €</div>
-        </div>
-        <div class="stat-card purple">
-          <div class="stat-label">Moy. vs Argus</div>
-          <div class="stat-value" id="vente-stat-pct">— %</div>
-        </div>
-      </div>
-
-      <!-- Tableau 1 : catalogue parc -->
-      <div class="card" style="margin-bottom:16px">
-        <div class="card-header">
-          <div class="card-title">🚍 Parc — Mettre un bus en vente</div>
-          <div style="display:flex;gap:8px;align-items:center">
-            <input class="search-input" type="text" id="vente-search" placeholder="🔍 Filtrer..." oninput="renderVenteCatalogue()" style="width:180px">
-          </div>
-        </div>
-        <div class="card-body" style="padding:0;overflow-x:auto;max-height:340px;overflow-y:auto">
-          <table class="data-table" id="vente-catalogue-table">
-            <thead style="position:sticky;top:0;z-index:2;background:var(--surface2)"><tr>
-              <th style="width:36px"><input type="checkbox" id="vente-check-all" onchange="venteToggleAll(this.checked)" style="accent-color:var(--accent)"></th>
-              <th onclick="setVenteCatSort('nom')"   style="cursor:pointer;user-select:none">Nom <span id="vcat-sort-nom"></span></th>
-              <th onclick="setVenteCatSort('type')"  style="cursor:pointer;user-select:none">Type <span id="vcat-sort-type"></span></th>
-              <th onclick="setVenteCatSort('capa')"  style="cursor:pointer;user-select:none">Places <span id="vcat-sort-capa"></span></th>
-              <th onclick="setVenteCatSort('km')"    style="cursor:pointer;user-select:none">KM <span id="vcat-sort-km"></span></th>
-              <th onclick="setVenteCatSort('prixAchat')" style="cursor:pointer;user-select:none">Prix d'achat <span id="vcat-sort-prixAchat"></span></th>
-              <th onclick="setVenteCatSort('argus')" style="cursor:pointer;user-select:none">Argus <span id="vcat-sort-argus"></span></th>
-              <th>Prix max (+10%)</th>
-              <th>Action</th>
-            </tr></thead>
-            <tbody id="vente-catalogue-tbody"></tbody>
-          </table>
-        </div>
-        <div style="padding:8px 16px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:center">
-          <button class="btn btn-primary btn-sm" onclick="mettreEnVenteSelection()">🏷️ Mettre en vente la sélection</button>
-          <span id="vente-selection-label" style="font-size:11px;color:var(--text3)"></span>
-        </div>
-      </div>
-
-      <!-- Tableau 2 : bus en vente -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">🏷️ Ventes en cours & historique</div>
-          <div style="display:flex;gap:8px">
-            <select id="vente-filtre-statut" onchange="renderVentesEnCours()" style="background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:4px 8px;font-size:11px">
-              <option value="">Tous statuts</option>
-              <option value="En attente">En attente</option>
-              <option value="En vente">En vente</option>
-              <option value="Vendu">Vendu</option>
-            </select>
-            <button class="btn btn-ghost btn-sm" onclick="if(confirm('Effacer les ventes terminées (Vendu) ?')){state.ventesBus=state.ventesBus.filter(v=>v.statut!==\'Vendu\');saveStateWithSync();renderVente();}">🗑 Effacer vendus</button>
-          </div>
-        </div>
-        <div class="card-body" style="padding:0;overflow-x:auto">
-          <table class="data-table" id="vente-encours-table">
-            <thead style="position:sticky;top:0;z-index:2;background:var(--surface2)"><tr>
-              <th>Bus</th>
-              <th>Type</th>
-              <th>Argus</th>
-              <th>Prix d'achat</th>
-              <th>Prix mise en vente</th>
-              <th>Type de vente</th>
-              <th>Statut</th>
-              <th>Prix de vente final</th>
-              <th>vs Argus</th>
-              <th>vs Prix d'achat</th>
-              <th></th>
-            </tr></thead>
-            <tbody id="vente-encours-tbody"></tbody>
           </table>
         </div>
       </div>
@@ -2150,7 +2049,7 @@
     </div>
 
     <!-- ═══════════════════════════════════════════ GASOIL ═══ -->
-    <div id="page-gasoil" class="page" style="padding:0 8px">
+    <div id="page-gasoil" class="page">
 
       <!-- Stats cards : Diesel à gauche, GNV à droite -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
@@ -3343,7 +3242,7 @@ function normaliserState() {
   while (state.todo.length < 10) state.todo.push('');
   const arrayFields = ['bus','affectations','maintenance','ct','personnel','lignes',
     'statsLignes','achats','tourisme','abribus','contratsPub','compta','gasoil',
-    'carburant','pubDispo','journal','themes','ventesBus'];
+    'carburant','pubDispo','journal','themes'];
   arrayFields.forEach(k => {
     if (!state[k]) { state[k] = []; }
     else if (!Array.isArray(state[k])) {
@@ -3394,7 +3293,7 @@ function nav(el) {
     affectations:'Affectations', frequentation:'Fréquentation', maintenance:'Révision / CT', abribus:'Équipement Abribus',
     personnel:'Personnel & FCO', lignes:'Stats de lignes', compta:'Comptabilité',
     bilan:'Tableau financier',
-    pub:'Contrats Publicitaires', achats:'Achats de bus', vente:'Vente de bus', gasoil:'Conso', config:'Configuration',
+    pub:'Contrats Publicitaires', achats:'Achats de bus', gasoil:'Conso', config:'Configuration',
     pubdispo:'Optimisation Bus Pub' };
   document.getElementById('topbar-title').textContent = titles[page] || page;
   renderPage(page);
@@ -3404,7 +3303,7 @@ function renderPage(page) {
   const r = { dashboard: renderDashboard, alertes: renderAlertes, parc: () => { renderParc(); renderRepartitionParc(); },
     affectations: renderAffectations, frequentation: renderFrequentation, maintenance: renderMaintenance, abribus: renderAbribus, panne: renderPannes, renovation: renderRenovation,
     personnel: renderPersonnel, lignes: renderLignes, compta: renderCompta, bilan: renderBilan,
-    pub: renderPub, achats: renderAchats, vente: renderVente, gasoil: renderGasoil, tourisme: renderTourisme, 'aide-affectation': () => { initAideAffectation(); renderAideAffectation(); }, 'aide-planning': () => {}, config: renderConfig, pubdispo: renderPubDispo, historique: renderHistoriqueBase };
+    pub: renderPub, achats: renderAchats, gasoil: renderGasoil, tourisme: renderTourisme, 'aide-affectation': () => { initAideAffectation(); renderAideAffectation(); }, 'aide-planning': () => {}, config: renderConfig, pubdispo: renderPubDispo, historique: renderHistoriqueBase };
   if (r[page]) r[page]();
 }
 
@@ -3439,9 +3338,7 @@ function toastMsg(msg, type='info') {
   setTimeout(() => d.remove(), 3000);
 }
 function journalLog(text, type='info') {
-  const now = new Date();
-  const heure = now.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
-  state.journal.unshift({ date: today(), heure, text, type });
+  state.journal.unshift({ date: today(), text, type });
   if (state.journal.length > 50) state.journal.pop();
   saveStateWithSync();
 }
@@ -3744,14 +3641,7 @@ function renderDashboard() {
       return (fm >= dm && fm <= new Date(mois+'-28')) ? s+c.gains : s;
     }, 0);
     const total = pubs.reduce((s,c)=>s+(c.gains||0),0);
-    const pubCutoff = new Date(todayISO + 'T16:30:00');
-    const pubIsActive = (c) => {
-      if (!c.fin) return false;
-      if (c.fin > todayISO) return true;
-      if (c.fin === todayISO) return new Date() < pubCutoff;
-      return false;
-    };
-    const prochains5 = [...pubs].filter(pubIsActive).sort((a,b)=>a.fin.localeCompare(b.fin)).slice(0,5);
+    const prochains5 = [...pubs].filter(c=>c.fin && c.fin >= todayISO).sort((a,b)=>a.fin.localeCompare(b.fin)).slice(0,5);
     elPub.innerHTML = `
       <table style="width:100%;border-collapse:collapse;font-size:11px">
         <tr style="background:rgba(249,115,22,0.1)"><td style="padding:4px 8px;color:var(--text3)">Mois en cours</td><td style="padding:4px 8px;text-align:right;color:var(--green);font-weight:600">${fmt(gainsMois(moisCourant))}</td></tr>
@@ -3826,7 +3716,7 @@ function renderDashboard() {
   // ── Journal ───────────────────────────────────────────────
   const tl = document.getElementById('journal-timeline');
   if (tl) tl.innerHTML = state.journal.slice(0,8).map(j => `<div class="timeline-item ${j.type}">
-    <div class="timeline-date" style="display:flex;justify-content:space-between;align-items:center">${fmtDateFR(j.date)}${j.heure ? `<span style="color:var(--text3);font-family:Inter,sans-serif;font-size:10px;margin-left:8px">${j.heure}</span>` : ''}</div>
+    <div class="timeline-date">${fmtDateFR(j.date)}</div>
     <div class="timeline-text">${j.text}</div>
   </div>`).join('') || '<div style="color:var(--text3)">Aucune activité.</div>';
 
@@ -5338,6 +5228,7 @@ function renderAffectations() {
           </datalist>
         </td>
         <td style="border-left:2px solid var(--border);padding:3px 6px;background:${rowBg||'var(--surface)'}">
+          <div style="display:flex;align-items:center;gap:3px">
           <select onchange="setRaisonAtelier('${b.nom}',this.value)"
             style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:${raisonAtelier?'var(--text)':'var(--text3)'};font-size:11px;padding:2px 4px;width:125px">
             <option value="">—</option>
@@ -5345,6 +5236,8 @@ function renderAffectations() {
               `<option value="${r}" ${raisonAtelier===r?'selected':''}>${r}</option>`
             ).join('')}
           </select>
+          ${raisonAtelier ? `<span onclick="setRaisonAtelier('${b.nom}','')" title="Effacer" style="cursor:pointer;color:var(--text3);font-size:13px;line-height:1;user-select:none" onmouseover="this.style.color='var(--danger,#e55)'" onmouseout="this.style.color='var(--text3)'">✕</span>` : ''}
+          </div>
         </td>
       </tr>`;
     });
@@ -7672,22 +7565,6 @@ function viderEvaluation() {
 }
 
 function renderPub() {
-  // Suppression automatique des contrats dont la date de fin est passée après 16h30
-  const nowPurge   = new Date();
-  const todayPurge = nowPurge.toISOString().slice(0,10);
-  const cutoffPurge = new Date(todayPurge + 'T16:30:00');
-  const avant = (state.contratsPub || []).length;
-  state.contratsPub = (state.contratsPub || []).filter(c => {
-    if (!c.fin) return true;
-    if (c.fin > todayPurge) return true;               // date future → garder
-    if (c.fin === todayPurge) return nowPurge < cutoffPurge; // aujourd'hui → garder avant 16h30
-    return false;                                       // date passée → supprimer
-  });
-  if (state.contratsPub.length < avant) {
-    saveStateWithSync();
-    const nb = avant - state.contratsPub.length;
-    journalLog(`${nb} contrat(s) pub expiré(s) supprimé(s) automatiquement`, 'info');
-  }
   renderPubStatCards();
   renderPubGainsMois();
   renderPubTableau();
@@ -7743,33 +7620,16 @@ function renderPubGainsMois() {
 }
 
 function renderPubTableau() {
-  const now      = new Date();
-  const nowISO   = now.toISOString().slice(0,10);
-  const cutoff   = new Date(nowISO + 'T16:30:00');
-  // Après purge dans renderPub, tous les contrats restants sont actifs ou futurs
-  const isEncours = (c) => (c.debut||'') <= nowISO && (c.fin > nowISO || (c.fin === nowISO && now < cutoff));
-  const isAvenir  = (c) => (c.debut||'') > nowISO;
-
+  const now = new Date().toISOString().slice(0,10);
   let contrats = [...state.contratsPub];
-  if (pubFiltre === 'encours') contrats = contrats.filter(isEncours);
-  else if (pubFiltre === 'avenir') contrats = contrats.filter(isAvenir);
+  if (pubFiltre === 'encours') contrats = contrats.filter(c => (c.debut||'') <= now && c.fin >= now);
+  else if (pubFiltre === 'avenir') contrats = contrats.filter(c => (c.debut||'') > now);
   contrats = sortData(contrats, 'pub', 'fin');
   const tbody = document.getElementById('pub-tbody');
   tbody.innerHTML = contrats.map(c => {
-    const todayStr = nowISO;
+    const todayStr = today();
     const diff = c.fin === todayStr ? 0 : Math.round((new Date(c.fin) - new Date(todayStr)) / (1000*60*60*24));
-    let finColor = '';
-    if (c.fin === todayStr) finColor = now < cutoff ? 'color:var(--orange);font-weight:700' : 'color:var(--red);font-weight:700';
-    else if (diff <= 1) finColor = 'color:var(--red)';
-    else if (diff <= 5) finColor = 'color:var(--orange)';
-
-    let finLabel = '';
-    if (c.fin === todayStr) {
-      finLabel = ` <span style="font-size:9px;color:var(--orange)">⏳ se termine à 16h30</span>`;
-    } else if (diff > 0 && diff <= 7) {
-      finLabel = ` <span style="font-size:9px;color:var(--orange)">(J-${diff})</span>`;
-    }
-
+    const finColor = diff < 0 ? '' : diff === 0 ? 'color:var(--red);font-weight:700' : diff <= 1 ? 'color:var(--red)' : diff <= 5 ? 'color:var(--orange)' : '';
     const finDate = new Date(c.fin);
     const moisFin = finDate.toLocaleDateString('fr-FR', { month:'short', year:'2-digit' });
     return '<tr>' +
@@ -7778,7 +7638,7 @@ function renderPubTableau() {
       '<td style="font-size:11px">' + (c.support||'—') + '</td>' +
       '<td class="mono">' + (c.nb||'—') + '</td>' +
       '<td class="mono" style="font-size:11px">' + fmtDateFR(c.debut||'') + '</td>' +
-      '<td class="mono" style="font-size:11px;' + finColor + '">' + fmtDateFR(c.fin||'') + finLabel + '</td>' +
+      '<td class="mono" style="font-size:11px;' + finColor + '">' + fmtDateFR(c.fin||'') + (diff===0?' <span style="font-size:9px;color:var(--red)">(aujourd\'hui !)</span>':diff>0&&diff<=7?' <span style="font-size:9px;color:var(--orange)">(J-'+diff+')</span>':'') + '</td>' +
       '<td class="mono" style="color:var(--green);font-weight:600">' + fmt(c.gains) + '</td>' +
       '<td class="mono" style="font-size:11px">' + (c.taux ? c.taux.toFixed(1)+'%' : '—') + '</td>' +
       '<td style="font-size:10px;color:var(--text3)">' + moisFin + '</td>' +
@@ -11764,23 +11624,12 @@ function renderPubDispoAlertes() {
 
     const best = candidats.slice(0, 3); // jusqu'à 3 suggestions
 
-    const bState = state.bus.find(x => x.nom === b.nom);
-    const nomCell = bState?.idJeu
-      ? `<a href="https://transport-manager.net/jeu/vehicle.php?id=${bState.idJeu}" target="_blank" style="color:var(--red);text-decoration:none;font-weight:700;cursor:alias" title="Ouvrir sur le jeu">${b.nom} ↗</a>`
-      : `<b style="color:var(--red)">${b.nom}</b>`;
-
     const suggCol = best.length
-      ? best.map(c => {
-          const cs = state.bus.find(x => x.nom === c.nom);
-          const cLink = cs?.idJeu
-            ? `<a href="https://transport-manager.net/jeu/vehicle.php?id=${cs.idJeu}" target="_blank" style="color:var(--green);text-decoration:none;font-weight:700;cursor:alias">${c.nom} ↗</a>`
-            : `<b style="color:var(--green)">${c.nom}</b>`;
-          return `<div style="margin-bottom:2px">${cLink} <span style="color:var(--text3);font-size:10px">(${c.places} pl.)</span></div>`;
-        }).join('')
+      ? best.map(c => `<div style="margin-bottom:2px"><b style="color:var(--green)">${c.nom}</b> <span style="color:var(--text3);font-size:10px">(${c.places} pl.)</span></div>`).join('')
       : '<span style="color:var(--text3)">Aucun disponible</span>';
 
     return `<tr style="background:rgba(239,68,68,0.04)">
-      <td>${nomCell}</td>
+      <td><b style="color:var(--red)">${b.nom}</b></td>
       <td class="mono">${b.places}</td>
       <td style="line-height:1.8">${pubsActives.join(' ') || '—'}</td>
       <td><span class="badge badge-red">Non</span></td>
@@ -11803,21 +11652,11 @@ function renderPubDispoTableau() {
   else if (pubDispoFiltre === 'sanspub')  data = data.filter(b => b.toutLibre);
   else if (pubDispoFiltre === 'sansaff') data = data.filter(b => !b.aAffectation);
 
-  const search = (document.getElementById('pubdispo-search')?.value || '').toLowerCase();
-  if (search) data = data.filter(b => b.nom.toLowerCase().includes(search));
-
-  const busLink = (nom) => {
-    const b = state.bus.find(x => x.nom === nom);
-    return b?.idJeu
-      ? `<a href="https://transport-manager.net/jeu/vehicle.php?id=${b.idJeu}" target="_blank" style="color:var(--accent);text-decoration:none;font-weight:700;cursor:alias" title="Ouvrir sur le jeu">${nom} ↗</a>`
-      : `<b>${nom}</b>`;
-  };
-
   const tbody = document.getElementById('pubdispo-tbody');
   tbody.innerHTML = data.map(b => {
     const rowBg = b.aPub && !b.aAffectation ? 'background:rgba(239,68,68,0.05)' : '';
     return `<tr style="${rowBg}">
-      <td style="font-size:11px">${busLink(b.nom)}</td>
+      <td style="font-size:11px"><b>${b.nom}</b></td>
       <td class="mono">${b.places}</td>
       <td>${b.aAffectation
         ? `<span class="badge badge-green">✓ ${b.affectation}</span>`
@@ -11832,259 +11671,6 @@ function renderPubDispoTableau() {
   }).join('') || '<tr><td colspan="10" style="color:var(--text3);text-align:center;padding:20px">Aucune donnée — importe le tableau disponibilité pub</td></tr>';
 }
 
-
-// ═══════════════════════════════════════════════════════
-//  VENTE DE BUS
-// ═══════════════════════════════════════════════════════
-
-const TYPE_COLORS_VENTE = { MIN:'var(--accent)', MID:'var(--accent3)', STD:'var(--green)', ART:'var(--yellow)', CAR:'var(--orange)', TRAM:'var(--red)' };
-let venteCatSortKey = 'nom';
-let venteCatSortAsc = true;
-
-function renderVente() {
-  if (!state.ventesBus) state.ventesBus = [];
-  renderVenteCatalogue();
-  renderVentesEnCours();
-  renderVenteStats();
-}
-
-function renderVenteStats() {
-  const v = state.ventesBus || [];
-  const vendus  = v.filter(x => x.statut === 'Vendu');
-  const encours = v.filter(x => x.statut !== 'Vendu');
-  const recettes = vendus.reduce((s, x) => s + (parseFloat(x.prixVente) || 0), 0);
-
-  const ratios = vendus
-    .filter(x => x.argus > 0 && x.prixVente > 0)
-    .map(x => (x.prixVente / x.argus - 1) * 100);
-  const moyPct = ratios.length ? (ratios.reduce((a,b) => a+b, 0) / ratios.length).toFixed(1) : null;
-
-  const enVenteBus = v.filter(x => ['En attente','En vente'].includes(x.statut));
-
-  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-  set('vente-stat-catalogue', state.bus.length);
-  set('vente-stat-encours', enVenteBus.length);
-  set('vente-stat-vendus', vendus.length);
-  set('vente-stat-recettes', fmt(recettes));
-  set('vente-stat-pct', moyPct !== null
-    ? (parseFloat(moyPct) >= 0 ? '+' : '') + moyPct + ' %'
-    : '— %');
-  const pctEl = document.getElementById('vente-stat-pct');
-  if (pctEl && moyPct !== null) pctEl.style.color = parseFloat(moyPct) >= 0 ? 'var(--green)' : 'var(--red)';
-}
-
-function setVenteCatSort(key) {
-  if (venteCatSortKey === key) venteCatSortAsc = !venteCatSortAsc;
-  else { venteCatSortKey = key; venteCatSortAsc = true; }
-  renderVenteCatalogue();
-}
-
-function updateVenteCatSortIcons() {
-  ['nom','type','capa','km','prixAchat','argus'].forEach(k => {
-    const el = document.getElementById('vcat-sort-' + k);
-    if (!el) return;
-    el.textContent = venteCatSortKey === k ? (venteCatSortAsc ? '↑' : '↓') : '↕';
-    el.style.color  = venteCatSortKey === k ? 'var(--accent)' : 'var(--text3)';
-    el.style.fontSize = '10px';
-  });
-}
-
-function renderVenteCatalogue() {
-  const search = (document.getElementById('vente-search')?.value || '').toLowerCase();
-  const dejaMisEnVente = new Set((state.ventesBus || []).map(v => v.busNom));
-  let buses = [...state.bus]
-    .filter(b => !dejaMisEnVente.has(b.nom))
-    .filter(b => !search || b.nom.toLowerCase().includes(search) || (b.marque||'').toLowerCase().includes(search));
-
-  // Tri
-  buses.sort((a, b) => {
-    let va = a[venteCatSortKey] ?? '', vb = b[venteCatSortKey] ?? '';
-    if (typeof va === 'number' && typeof vb === 'number') return venteCatSortAsc ? va - vb : vb - va;
-    va = String(va); vb = String(vb);
-    return venteCatSortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
-  });
-
-  updateVenteCatSortIcons();
-
-  const tbody = document.getElementById('vente-catalogue-tbody');
-  if (!tbody) return;
-
-  if (!buses.length) {
-    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--text3)">Tous les bus sont déjà dans la liste de vente, ou aucun bus importé.</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = buses.map(b => {
-    const argus   = b.argus || 0;
-    const prixMax = argus ? Math.round(argus * 1.10) : null;
-    const urlBus  = b.idJeu ? `https://transport-manager.net/jeu/vehicle.php?id=${b.idJeu}` : '';
-    const nomCell = urlBus
-      ? `<a href="${urlBus}" target="_blank" style="color:var(--accent);text-decoration:none;font-weight:700;cursor:alias" title="Ouvrir le véhicule sur le jeu">${b.nom} ↗</a>`
-      : `<b>${b.nom}</b>`;
-    const typeColor = TYPE_COLORS_VENTE[b.type] || 'var(--text3)';
-    return `<tr>
-      <td style="text-align:center"><input type="checkbox" class="vente-check" data-nom="${b.nom}" style="accent-color:var(--accent)"></td>
-      <td>${nomCell}</td>
-      <td><span style="background:${typeColor}22;color:${typeColor};border:1px solid ${typeColor}55;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700">${b.type||'—'}</span></td>
-      <td class="mono">${b.capa||'—'}</td>
-      <td class="mono" style="color:var(--text2)">${fmtNum(b.km||0)} km</td>
-      <td class="mono" style="color:var(--text2)">${b.prixAchat ? fmt(b.prixAchat) : '<span style="color:var(--text3)">—</span>'}</td>
-      <td class="mono" style="color:var(--yellow)">${argus ? fmt(argus) : '<span style="color:var(--text3)">—</span>'}</td>
-      <td class="mono" style="color:var(--green);font-weight:700">${prixMax ? fmt(prixMax) : '<span style="color:var(--text3)">—</span>'}</td>
-      <td><button class="btn btn-primary btn-xs" onclick="mettreEnVente('${b.nom}')">🏷️ Mettre en vente</button></td>
-    </tr>`;
-  }).join('');
-
-  // Mise à jour label sélection
-  updateVenteSelectionLabel();
-}
-
-function updateVenteSelectionLabel() {
-  const checked = document.querySelectorAll('.vente-check:checked').length;
-  const lbl = document.getElementById('vente-selection-label');
-  if (lbl) lbl.textContent = checked ? `${checked} bus sélectionné(s)` : '';
-  // Sync checkbox "tout"
-  const all = document.querySelectorAll('.vente-check').length;
-  const chkAll = document.getElementById('vente-check-all');
-  if (chkAll) chkAll.checked = all > 0 && checked === all;
-}
-
-function venteToggleAll(checked) {
-  document.querySelectorAll('.vente-check').forEach(c => c.checked = checked);
-  updateVenteSelectionLabel();
-}
-
-function mettreEnVente(busNom) {
-  const b = state.bus.find(x => x.nom === busNom);
-  if (!b) return;
-  if (!state.ventesBus) state.ventesBus = [];
-  const argus   = b.argus || 0;
-  const prixMax = argus ? Math.round(argus * 1.10) : 0;
-  state.ventesBus.push({
-    busNom: b.nom, type: b.type, argus, prixMiseEnVente: prixMax,
-    typeVente: 'Directe', statut: 'En attente', prixVente: '', dateAjout: today()
-  });
-  saveStateWithSync();
-  toastMsg(`${b.nom} ajouté à la liste de vente`, 'success');
-  renderVente();
-}
-
-function mettreEnVenteSelection() {
-  const checked = [...document.querySelectorAll('.vente-check:checked')].map(c => c.dataset.nom);
-  if (!checked.length) { toastMsg('Aucun bus sélectionné', 'error'); return; }
-  if (!state.ventesBus) state.ventesBus = [];
-  const dejaMisEnVente = new Set(state.ventesBus.map(v => v.busNom));
-  let added = 0;
-  checked.forEach(nom => {
-    if (dejaMisEnVente.has(nom)) return;
-    const b = state.bus.find(x => x.nom === nom);
-    if (!b) return;
-    const argus   = b.argus || 0;
-    const prixMax = argus ? Math.round(argus * 1.10) : 0;
-    state.ventesBus.push({
-      busNom: b.nom, type: b.type, argus, prixMiseEnVente: prixMax,
-      typeVente: 'Directe', statut: 'En attente', prixVente: '', dateAjout: today()
-    });
-    added++;
-  });
-  saveStateWithSync();
-  toastMsg(`${added} bus ajouté(s) à la liste de vente`, 'success');
-  renderVente();
-}
-
-function renderVentesEnCours() {
-  const filtreStatut = document.getElementById('vente-filtre-statut')?.value || '';
-  let ventes = [...(state.ventesBus || [])];
-  if (filtreStatut) ventes = ventes.filter(v => v.statut === filtreStatut);
-
-  const tbody = document.getElementById('vente-encours-tbody');
-  if (!tbody) return;
-
-  if (!ventes.length) {
-    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--text3)">Aucune vente enregistrée — utilise le tableau ci-dessus pour mettre des bus en vente.</td></tr>`;
-    return;
-  }
-
-  const statutColors = { 'En attente':'var(--yellow)', 'En vente':'var(--accent)', 'Vendu':'var(--green)' };
-
-  tbody.innerHTML = ventes.map((v, idx) => {
-    const realIdx = state.ventesBus.indexOf(v);
-    const argus   = parseFloat(v.argus) || 0;
-    const prixV   = parseFloat(v.prixVente) || 0;
-    const ratio   = argus > 0 && prixV > 0 ? ((prixV / argus - 1) * 100).toFixed(1) : null;
-    const ratioColor = ratio === null ? 'var(--text3)' : parseFloat(ratio) >= 0 ? 'var(--green)' : 'var(--red)';
-    const b          = state.bus.find(x => x.nom === v.busNom);
-    const prixAchat  = parseFloat(b?.prixAchat) || 0;
-    const ratioAchat = prixAchat > 0 && prixV > 0 ? ((prixV / prixAchat - 1) * 100).toFixed(1) : null;
-    const ratioAchatColor = ratioAchat === null ? 'var(--text3)' : parseFloat(ratioAchat) >= 0 ? 'var(--green)' : 'var(--red)';
-    const typeColor  = TYPE_COLORS_VENTE[v.type] || 'var(--text3)';
-    const sColor     = statutColors[v.statut] || 'var(--text3)';
-    const urlBus     = b?.idJeu ? `https://transport-manager.net/jeu/vehicle.php?id=${b.idJeu}` : '';
-    const nomCell    = urlBus
-      ? `<a href="${urlBus}" target="_blank" style="color:var(--accent);text-decoration:none;font-weight:700;cursor:alias" title="Ouvrir sur le jeu">${v.busNom} ↗</a>`
-      : `<b>${v.busNom}</b>`;
-
-    return `<tr style="${v.statut==='Vendu'?'opacity:.7':''}">
-      <td style="font-size:12px">${nomCell}</td>
-      <td><span style="background:${typeColor}22;color:${typeColor};border:1px solid ${typeColor}55;padding:2px 7px;border-radius:3px;font-size:10px;font-weight:700">${v.type||'—'}</span></td>
-      <td class="mono" style="color:var(--yellow)">${argus ? fmt(argus) : '—'}</td>
-      <td class="mono" style="color:var(--text2)">${prixAchat ? fmt(prixAchat) : '—'}</td>
-      <td class="mono">
-        <input type="number" value="${v.prixMiseEnVente||''}" placeholder="0"
-          onchange="setVenteField(${realIdx},'prixMiseEnVente',this.value)"
-          style="width:110px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:11px;padding:3px 6px;font-family:Inter,sans-serif">
-      </td>
-      <td>
-        <select onchange="setVenteField(${realIdx},'typeVente',this.value)"
-          style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:11px;padding:3px 6px">
-          <option value="Directe"  ${v.typeVente==='Directe' ?'selected':''}>Directe</option>
-          <option value="Enchère"  ${v.typeVente==='Enchère' ?'selected':''}>Enchère</option>
-        </select>
-      </td>
-      <td>
-        <select onchange="setVenteField(${realIdx},'statut',this.value)"
-          style="background:${sColor}22;border:1px solid ${sColor}66;border-radius:4px;color:${sColor};font-size:11px;padding:3px 6px;font-weight:700">
-          <option value="En attente" ${v.statut==='En attente'?'selected':''}>⏳ En attente</option>
-          <option value="En vente"   ${v.statut==='En vente'  ?'selected':''}>🏷️ En vente</option>
-          <option value="Vendu"      ${v.statut==='Vendu'     ?'selected':''}>✅ Vendu</option>
-        </select>
-      </td>
-      <td class="mono">
-        <input type="number" value="${v.prixVente||''}" placeholder="—"
-          onchange="setVenteField(${realIdx},'prixVente',this.value)"
-          style="width:110px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:${v.prixVente?'var(--green)':'var(--text3)'};font-size:11px;padding:3px 6px;font-family:Inter,sans-serif">
-      </td>
-      <td class="mono" style="color:${ratioColor};font-weight:700;text-align:center">
-        ${ratio !== null ? (parseFloat(ratio)>=0?'+':'')+ratio+' %' : '—'}
-      </td>
-      <td class="mono" style="color:${ratioAchatColor};font-weight:700;text-align:center">
-        ${ratioAchat !== null ? (parseFloat(ratioAchat)>=0?'+':'')+ratioAchat+' %' : '<span style="color:var(--text3)">—</span>'}
-      </td>
-      <td>
-        <button class="btn btn-danger btn-xs" onclick="supprimerVente(${realIdx})" title="Retirer de la liste">✕</button>
-      </td>
-    </tr>`;
-  }).join('');
-}
-
-function setVenteField(idx, field, value) {
-  if (!state.ventesBus || !state.ventesBus[idx]) return;
-  state.ventesBus[idx][field] = field === 'prixMiseEnVente' || field === 'prixVente'
-    ? (parseFloat(value) || '')
-    : value;
-  saveStateWithSync();
-  renderVenteStats();
-  // Re-render ligne prix vente pour couleur dynamique
-  if (field === 'prixVente' || field === 'statut') renderVentesEnCours();
-}
-
-function supprimerVente(idx) {
-  if (!confirm('Retirer ce bus de la liste de vente ?')) return;
-  state.ventesBus.splice(idx, 1);
-  saveStateWithSync();
-  renderVente();
-  toastMsg('Bus retiré de la liste', 'info');
-}
 
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
