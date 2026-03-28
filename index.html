@@ -852,7 +852,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.228</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.229</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -2684,6 +2684,18 @@
         </div>
       </div>
 
+      <!-- Pause synchro -->
+      <div class="card" style="border-color:rgba(245,158,11,0.4);margin-bottom:14px" id="card-sync-pause">
+        <div class="card-header" style="border-bottom-color:rgba(245,158,11,0.2)">
+          <div class="card-title" style="color:var(--yellow)">⏸ Mode test — pause de la synchronisation</div>
+          <div id="sync-pause-badge" style="font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600"></div>
+        </div>
+        <div class="card-body">
+          <p style="font-size:11px;color:var(--text3);margin-bottom:12px">Suspend l'envoi automatique vers Supabase. Les modifications sont sauvegardées localement mais ne sont pas envoyées. Utile pour tester sans polluer la base.</p>
+          <button id="btn-toggle-pause" class="btn" style="width:100%" onclick="toggleSyncPause()"></button>
+        </div>
+      </div>
+
       <!-- Sauvegarde locale -->
       <div class="grid-2" style="margin-bottom:14px">
         <div class="card" style="border-color:rgba(0,212,255,0.3)">
@@ -3227,6 +3239,7 @@
 // ═══════════════════════════════════════════════════════
 let syncDebounceTimer = null;
 let undoStack = (() => { try { return JSON.parse(localStorage.getItem('tm_undo_stack') || '[]'); } catch(e) { return []; } })();
+let syncPaused = localStorage.getItem('tm_sync_paused') === '1';
 let modeConfig        = false;
 let currentParcTypeFilter = 'all';
 let editBusId         = null;
@@ -10099,24 +10112,24 @@ function setSyncStatus(status, msg) {
 }
 
 function pushUndo(label) {
-  // Snapshot complet en RAM, version allégée en localStorage (sans gros tableaux)
-  const snapshot = JSON.parse(JSON.stringify(state));
-  const ts = new Date().toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
-  undoStack.push({ label, ts, snapshot });
-  if (undoStack.length > 5) undoStack.shift();
-  // Persistance localStorage : snapshot sans les gros tableaux (compta, statsLignes)
   try {
-    const lite = undoStack.map(e => ({
-      label: e.label, ts: e.ts,
-      snapshot: Object.fromEntries(
-        Object.entries(e.snapshot).filter(([k]) =>
-          !['compta','statsLignes','carburant','gasoil','journal'].includes(k)
+    const snapshot = JSON.parse(JSON.stringify(state));
+    const ts = new Date().toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+    undoStack.push({ label, ts, snapshot });
+    if (undoStack.length > 5) undoStack.shift();
+    try {
+      const lite = undoStack.map(e => ({
+        label: e.label, ts: e.ts,
+        snapshot: Object.fromEntries(
+          Object.entries(e.snapshot).filter(([k]) =>
+            !['compta','statsLignes','carburant','gasoil','journal'].includes(k)
+          )
         )
-      )
-    }));
-    localStorage.setItem('tm_undo_stack', JSON.stringify(lite));
-  } catch(e) {}
-  renderUndoList();
+      }));
+      localStorage.setItem('tm_undo_stack', JSON.stringify(lite));
+    } catch(e) { console.warn('[undo] localStorage échec:', e); }
+    renderUndoList();
+  } catch(e) { console.error('[undo] pushUndo échec:', e); }
 }
 function undoLast(i) {
   const idx = (i !== undefined) ? i : undoStack.length - 1;
@@ -10219,7 +10232,35 @@ function importerSauvegarde(input) {
   reader.readAsText(file);
 }
 
+function toggleSyncPause() {
+  syncPaused = !syncPaused;
+  localStorage.setItem('tm_sync_paused', syncPaused ? '1' : '0');
+  updateSyncPauseUI();
+  toastMsg(syncPaused ? '⏸ Synchro suspendue — les données restent locales' : '▶ Synchro réactivée', syncPaused ? 'info' : 'success');
+  if (!syncPaused) saveStateWithSync(); // push immédiat à la reprise
+}
+
+function updateSyncPauseUI() {
+  const btn   = document.getElementById('btn-toggle-pause');
+  const badge = document.getElementById('sync-pause-badge');
+  const card  = document.getElementById('card-sync-pause');
+  if (!btn) return;
+  if (syncPaused) {
+    btn.textContent = '▶ Reprendre la synchronisation';
+    btn.style.cssText = 'width:100%;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.4);color:var(--green)';
+    if (badge) { badge.textContent = '⏸ EN PAUSE'; badge.style.cssText = 'font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;background:rgba(245,158,11,0.15);color:var(--yellow)'; }
+    if (card)  card.style.borderColor = 'rgba(245,158,11,0.6)';
+  } else {
+    btn.textContent = '⏸ Mettre en pause';
+    btn.style.cssText = 'width:100%;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);color:var(--yellow)';
+    if (badge) { badge.textContent = '▶ ACTIVE'; badge.style.cssText = 'font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;background:rgba(34,197,94,0.1);color:var(--green)'; }
+    if (card)  card.style.borderColor = 'rgba(245,158,11,0.2)';
+  }
+}
+
 async function syncPush(manual = false) {
+  if (syncPaused && !manual) return;
+  if (syncPaused && manual) { toastMsg('⏸ Synchro en pause — désactive la pause pour envoyer.', 'info'); return; }
   setSyncStatus('pending', 'Envoi vers Supabase…');
   try {
     const dataStr = JSON.stringify(state);
@@ -10304,6 +10345,7 @@ function supprimerConfigSync()   { toastMsg('La configuration est intégrée dan
 
 
 function renderSyncPage() {
+  updateSyncPauseUI();
   const lastSync = localStorage.getItem('tm_last_sync') || '—';
   const dataSize = (new Blob([JSON.stringify(state)]).size / 1024).toFixed(1) + ' Ko';
   const el = id => document.getElementById(id);
