@@ -852,7 +852,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.229</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.230</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -3238,7 +3238,7 @@
 //  DÉCLARATIONS GLOBALES (doivent être en premier)
 // ═══════════════════════════════════════════════════════
 let syncDebounceTimer = null;
-let undoStack = (() => { try { return JSON.parse(localStorage.getItem('tm_undo_stack') || '[]'); } catch(e) { return []; } })();
+let undoStack = []; // RAM uniquement, pas de persistance localStorage (state trop lourd)
 let syncPaused = localStorage.getItem('tm_sync_paused') === '1';
 let modeConfig        = false;
 let currentParcTypeFilter = 'all';
@@ -10117,17 +10117,7 @@ function pushUndo(label) {
     const ts = new Date().toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
     undoStack.push({ label, ts, snapshot });
     if (undoStack.length > 5) undoStack.shift();
-    try {
-      const lite = undoStack.map(e => ({
-        label: e.label, ts: e.ts,
-        snapshot: Object.fromEntries(
-          Object.entries(e.snapshot).filter(([k]) =>
-            !['compta','statsLignes','carburant','gasoil','journal'].includes(k)
-          )
-        )
-      }));
-      localStorage.setItem('tm_undo_stack', JSON.stringify(lite));
-    } catch(e) { console.warn('[undo] localStorage échec:', e); }
+    // Pas de persistance localStorage (state trop lourd) — RAM uniquement
     renderUndoList();
   } catch(e) { console.error('[undo] pushUndo échec:', e); }
 }
@@ -10137,7 +10127,6 @@ function undoLast(i) {
   const entry = undoStack[idx];
   Object.keys(entry.snapshot).forEach(k => { state[k] = entry.snapshot[k]; });
   undoStack.splice(idx);
-  try { localStorage.setItem('tm_undo_stack', JSON.stringify(undoStack)); } catch(e) {}
   saveState();
   setSyncStatus('pending', 'Sauvegarde en cours…');
   clearTimeout(syncDebounceTimer);
