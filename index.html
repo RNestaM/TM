@@ -852,7 +852,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.233</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.235</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -5461,6 +5461,7 @@ function setRaisonAtelier(busNom, raison) {
   if (!state.planningCT) state.planningCT = {};
   if (!state.planningCT[busNom]) state.planningCT[busNom] = {};
   state.planningCT[busNom].raisonAtelier = raison;
+  if (!raison) state.planningCT[busNom].remplacement = '';
   saveStateWithSync();
   renderAffectations();
 }
@@ -6156,11 +6157,10 @@ function renderAllianceTable() {
 // ═══════════════════════════════════════════════════════
 
 function parsePanneLigne(ligne) {
-  // Format : DD/MM/YYYY Motif X jour(s) PRIX € NOM_PARC - reste ignoré
+  // Format ancien : DD/MM/YYYY Motif X jour(s) PRIX € NOM_PARC - reste ignoré
   ligne = ligne.trim();
   if (!ligne) return null;
 
-  // Date : DD/MM/YYYY
   const dateM = ligne.match(/^(\d{2}\/\d{2}\/\d{4})\s+/);
   if (!dateM) return null;
   const dateRaw = dateM[1];
@@ -6168,20 +6168,16 @@ function parsePanneLigne(ligne) {
   const dateISO = `${y}-${mo}-${d}`;
   const reste = ligne.slice(dateM[0].length);
 
-  // Jours : N jour ou N jours
   const joursM = reste.match(/(\d+)\s+jours?\s+/i);
   if (!joursM) return null;
   const jours = parseInt(joursM[1]);
 
-  // Prix : avant le € (nombre avec espaces éventuels)
   const prixM = reste.match(/([\d\s ]+)\s*€\s+/);
   const prix = prixM ? parseInt(prixM[1].replace(/[\s ]/g, '')) : 0;
 
-  // Motif : entre la date et le nombre de jours
   const joursIdx = reste.indexOf(joursM[0]);
   const motif = reste.slice(0, joursIdx).trim();
 
-  // Numéro de parc : après le €, premier mot qui ressemble à un parc (contient -)
   const afterEur = prixM ? reste.slice(reste.indexOf(prixM[0]) + prixM[0].length) : '';
   const parcM = afterEur.match(/([A-Z0-9]+-[A-Z0-9-]+)/);
   const nomParc = parcM ? parcM[1] : '';
@@ -6189,26 +6185,81 @@ function parsePanneLigne(ligne) {
   return { id: Date.now() + Math.random()*1000|0, date: dateISO, motif, jours, prix, nomParc, statut: 'En attente' };
 }
 
+function parsePanneJeu(texte) {
+  // Format long copié depuis le jeu :
+  // "Votre ... n°NOM_BUS nécessite un passage en atelier"
+  // "* Motif : ..."
+  // "* Temps de réparation : X jour(s)"
+  // "* Prix de la réparation : PRIX €"
+  // "Affectations reprises par ... n°NOM_REMPLACANT"
+  const result = { motif: '', jours: 0, prix: 0, nomParc: '', remplacant: '', statut: 'En attente' };
+
+  // Date du jour (pas fournie dans le texte)
+  result.date = today();
+
+  // Nom du bus en panne : "n°NOM" avant "nécessite"
+  const busM = texte.match(/n°([A-Z0-9][A-Z0-9\-]+)\s+n[ée]cessite/i)
+            || texte.match(/v[ée]hicule\s+n°([A-Z0-9][A-Z0-9\-]+)/i)
+            || texte.match(/Immobilisation du v[ée]hicule n°([A-Z0-9][A-Z0-9\-]+)/i);
+  if (busM) result.nomParc = busM[1];
+
+  // Motif
+  const motifM = texte.match(/Motif\s*:\s*(.+)/i);
+  if (motifM) result.motif = motifM[1].trim();
+
+  // Jours
+  const joursM = texte.match(/Temps de r[ée]paration\s*:\s*(\d+)\s*jour/i);
+  if (joursM) result.jours = parseInt(joursM[1]);
+
+  // Prix
+  const prixM = texte.match(/Prix de la r[ée]paration\s*:\s*([\d\s ]+)\s*€/i);
+  if (prixM) result.prix = parseInt(prixM[1].replace(/[\s ]/g, ''));
+
+  // Remplaçant : "Affectations reprises par ... n°NOM_REMPLACANT"
+  const rempM = texte.match(/Affectations reprises par[^n]*n°([A-Z0-9][A-Z0-9\-]+)/i);
+  if (rempM) result.remplacant = rempM[1];
+
+  if (!result.nomParc || !result.motif || !result.jours) return null;
+  result.id = Date.now() + Math.random()*1000|0;
+  return result;
+}
+
 function importerPannes() {
   const texte = document.getElementById('panne-import-texte')?.value || '';
   if (!texte.trim()) { toastMsg('Texte vide', 'error'); return; }
 
-  // Découper sur les dates (DD/MM/YYYY en début de segment)
-  const segments = texte.split(/(?=\d{2}\/\d{2}\/\d{4})/g).filter(s => s.trim());
   const nouvelles = [];
-  const erreurs = [];
+  const erreurs   = [];
 
-  segments.forEach(seg => {
-    const p = parsePanneLigne(seg);
-    if (p) nouvelles.push(p);
-    else if (seg.trim()) erreurs.push(seg.trim().slice(0,40));
-  });
+  // Détecter format jeu long (contient "nécessite un passage")
+  if (/n[ée]cessite un passage/i.test(texte) || /Immobilisation du v[ée]hicule/i.test(texte)) {
+    // Peut contenir plusieurs blocs séparés par "Immobilisation"
+    const blocs = texte.split(/(?=Immobilisation du v[ée]hicule)/i).filter(s => s.trim());
+    blocs.forEach(bloc => {
+      const p = parsePanneJeu(bloc);
+      if (p) nouvelles.push(p);
+      else erreurs.push(bloc.trim().slice(0, 40));
+    });
+    // Si pas de séparateur "Immobilisation", tenter directement
+    if (!nouvelles.length) {
+      const p = parsePanneJeu(texte);
+      if (p) nouvelles.push(p);
+    }
+  } else {
+    // Format court ligne par ligne
+    const segments = texte.split(/(?=\d{2}\/\d{2}\/\d{4})/g).filter(s => s.trim());
+    segments.forEach(seg => {
+      const p = parsePanneLigne(seg);
+      if (p) nouvelles.push(p);
+      else if (seg.trim()) erreurs.push(seg.trim().slice(0, 40));
+    });
+  }
 
   if (!nouvelles.length) { toastMsg('Aucune panne reconnue', 'error'); return; }
   if (!state.pannes) state.pannes = [];
-  state.pannes = [...nouvelles, ...state.pannes]; // plus récentes en premier
+  state.pannes = [...nouvelles, ...state.pannes];
 
-  // Mettre les bus concernés en Indispo + raisonAtelier = 'Panne'
+  // Mettre les bus concernés en Indispo + raisonAtelier = 'Panne' + remplacant si présent
   nouvelles.forEach(p => {
     if (!p.nomParc) return;
     const b = (state.bus || []).find(x => x.nom === p.nomParc);
@@ -6217,15 +6268,16 @@ function importerPannes() {
       if (!state.planningCT) state.planningCT = {};
       if (!state.planningCT[b.nom]) state.planningCT[b.nom] = {};
       state.planningCT[b.nom].raisonAtelier = 'Panne';
+      if (p.remplacant) state.planningCT[b.nom].remplacement = p.remplacant;
     }
   });
 
   saveStateWithSync();
   document.getElementById('panne-import-texte').value = '';
   renderPannes();
-  toastMsg(`✅ ${nouvelles.length} panne(s) importée(s)${erreurs.length?' · '+erreurs.length+' ligne(s) ignorée(s)':''}`, 'success');
-  const busList = nouvelles.map(p=>p.nomParc).filter(Boolean).join(', ') || 'sans bus identifié';
-  journalLog(`Import ${nouvelles.length} panne(s) : ${busList}`, 'info');
+  const details = nouvelles.map(p => p.nomParc + (p.remplacant ? ' → ' + p.remplacant : '')).filter(Boolean).join(', ') || 'sans bus identifié';
+  toastMsg(`✅ ${nouvelles.length} panne(s) importée(s)${erreurs.length ? ' · ' + erreurs.length + ' ignorée(s)' : ''}`, 'success');
+  journalLog(`Import ${nouvelles.length} panne(s) : ${details}`, 'info');
 }
 
 function supprimerPanne(id) {
