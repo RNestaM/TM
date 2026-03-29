@@ -852,7 +852,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.235</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.237</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -940,6 +940,10 @@
             <div style="flex:1;display:flex;align-items:center;background:rgba(124,58,237,0.10);padding:0 8px;justify-content:space-between;min-height:0">
               <span style="color:var(--text2);font-size:11px">FCO</span>
               <span style="font-weight:600;font-size:11px" id="dash-ech-fco">—</span>
+            </div>
+            <div style="flex:1;display:flex;align-items:center;background:rgba(251,146,60,0.10);padding:0 8px;justify-content:space-between;min-height:0">
+              <span style="color:var(--text2);font-size:11px">Service touristique</span>
+              <span style="font-weight:600;font-size:11px" id="dash-ech-tourisme">—</span>
             </div>
             <div style="flex:1;display:flex;align-items:center;background:rgba(0,212,255,0.08);padding:0 8px;justify-content:space-between;min-height:0">
               <span style="color:var(--text2);font-size:11px">Fin de location</span>
@@ -3662,6 +3666,25 @@ function renderDashboard() {
   const nextFCO = fcoDiffs.length ? fcoDiffs[0] : null;
   const elFCO = document.getElementById('dash-ech-fco');
   if (elFCO) elFCO.innerHTML = fmtEch(nextFCO);
+  // Service touristique
+  const todayISO2 = today();
+  const tourDiffs = (state.tourisme||[])
+    .filter(t => t.dateTransport)
+    .map(t => ({ diff: diffD(t.dateTransport.replace(/(\d{2})\/(\d{2})\/(\d{4})/,'$3-$2-$1')), t }))
+    .filter(x => x.diff !== null && x.diff >= 0)
+    .sort((a,b) => a.diff - b.diff);
+  const elTourisme = document.getElementById('dash-ech-tourisme');
+  if (elTourisme) {
+    if (!tourDiffs.length) {
+      elTourisme.innerHTML = '<span style="color:var(--text3)">Pas de service</span>';
+    } else {
+      const { diff, t } = tourDiffs[0];
+      const label = diff === 0 ? `<span style="color:var(--yellow);font-weight:700">Aujourd'hui</span>`
+                  : diff === 1 ? `<span style="color:var(--yellow)">Demain</span>`
+                  : fmtEch(diff);
+      elTourisme.innerHTML = label;
+    }
+  }
   // Fin de location — seulement les dates futures (évite "Expiré depuis 2401j")
   const locDiffs = state.bus
     .filter(b => b.finLocation && b.finLocation > todayISO)
