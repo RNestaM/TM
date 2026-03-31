@@ -852,7 +852,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.237</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.240</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -1248,7 +1248,7 @@
         </div>
         <div class="card-body" style="padding:0">
           <table class="data-table">
-            <thead><tr><th>Bus</th><th>Date CT</th><th>KM</th><th>Résultat</th><th style="text-align:center">Demande Alliance</th><th></th></tr></thead>
+            <thead><tr><th>Bus</th><th>Date réelle</th><th>KM</th><th>Résultat</th><th style="text-align:center">Demande Alliance</th><th></th></tr></thead>
             <tbody id="ct-tbody"></tbody>
           </table>
         </div>
@@ -1901,8 +1901,9 @@
               <th>Bus (avec pub)</th>
               <th>Places</th>
               <th>Pub(s) active(s) — date fin contrat</th>
-              <th>Affectation</th>
-              <th>→ Remplaçant(s) suggéré(s) (même type, tout libre, affecté, places ≥)</th>
+              <th>Statut</th>
+              <th>Raison atelier</th>
+              <th>→ Remplaçant(s) suggéré(s) (même type, tout libre, affecté, places ≤)</th>
             </tr></thead>
             <tbody id="pubdispo-alerte-tbody"></tbody>
           </table>
@@ -5054,7 +5055,7 @@ function csvImporter() {
             if (!state.ct) state.ct = [];
             // Éviter doublon
             if (!state.ct.find(c => c.bus === exist.nom && c.date === exist.ct)) {
-              state.ct.push({ id: Date.now() + Math.random()*1000|0, bus: exist.nom, date: exist.ct, km: exist.km || 0, resultat: 'Favorable' });
+              state.ct.push({ id: Date.now() + Math.random()*1000|0, bus: exist.nom, date: exist.ct, dateReelle: (() => { try { const d = new Date(exist.ct); d.setDate(d.getDate() - 185); return d.toISOString().slice(0,10); } catch(e) { return today(); } })(), km: exist.km || 0, resultat: 'Favorable' });
             }
           }
         }
@@ -5746,8 +5747,8 @@ function renderMaintenance() {
     const realIdx = state.ct.length - 1 - i;
     const demandeOk = c.demandeAlliance || false;
     return `<tr style="${demandeOk?'opacity:0.5':''}">
-      <td>${c.bus}</td>
-      <td class="mono">${fmtDateFR(c.date)}</td>
+      <td>${(() => { const b = (state.bus||[]).find(x => x.nom === c.bus); return b?.idJeu ? `<a href="https://transport-manager.net/jeu/vehicle.php?id=${b.idJeu}" target="_blank" style="color:inherit;text-decoration:none;font-weight:700;cursor:alias" title="Ouvrir sur le jeu">${c.bus} ↗</a>` : `<b>${c.bus}</b>`; })()}</td>
+      <td class="mono" title="Date limite CT : ${fmtDateFR(c.date)}">${fmtDateFR(c.dateReelle || c.date)}</td>
       <td class="mono">${fmtNum(c.km)} km</td>
       <td>${c.resultat ? getStatusBadge(c.resultat) : ctStatus(c.date)}</td>
       <td style="text-align:center">
@@ -9634,7 +9635,7 @@ function importerCSVDirect(type, contenu) {
           if (diffJours >= 30) {
             if (!state.ct) state.ct = [];
             if (!state.ct.find(c => c.bus === exist.nom && c.date === exist.ct)) {
-              state.ct.push({ id: Date.now() + Math.random()*1000|0, bus: exist.nom, date: exist.ct, km: exist.km || 0, resultat: 'Favorable' });
+              state.ct.push({ id: Date.now() + Math.random()*1000|0, bus: exist.nom, date: exist.ct, dateReelle: (() => { try { const d = new Date(exist.ct); d.setDate(d.getDate() - 185); return d.toISOString().slice(0,10); } catch(e) { return today(); } })(), km: exist.km || 0, resultat: 'Favorable' });
             }
           }
         }
@@ -11967,7 +11968,7 @@ function renderPubDispoAlertes() {
       !c.nom.startsWith('00-') &&
       c.toutLibre &&
       c.aAffectation &&
-      c.places >= b.places &&
+      c.places <= b.places &&
       c.nom !== b.nom
     ).sort((a, c2) => a.places - c2.places); // le plus proche en nb de places
 
@@ -11988,11 +11989,18 @@ function renderPubDispoAlertes() {
         }).join('')
       : '<span style="color:var(--text3)">Aucun disponible</span>';
 
+    const bStatut     = bState?.statut || '—';
+    const raisonAtelier = state.planningCT?.[b.nom]?.raisonAtelier || '—';
+    const statutBadge = bStatut === 'En service' ? `<span class="badge badge-green">${bStatut}</span>`
+                      : bStatut === 'Indispo'    ? `<span class="badge badge-red">${bStatut}</span>`
+                      : bStatut === 'Réserve'    ? `<span class="badge badge-gray">${bStatut}</span>`
+                      : `<span class="badge badge-yellow">${bStatut}</span>`;
     return `<tr style="background:rgba(239,68,68,0.04)">
       <td>${nomCell}</td>
       <td class="mono">${b.places}</td>
       <td style="line-height:1.8">${pubsActives.join(' ') || '—'}</td>
-      <td><span class="badge badge-red">Non</span></td>
+      <td>${statutBadge}</td>
+      <td style="font-size:11px;color:var(--text2)">${raisonAtelier}</td>
       <td>${suggCol}</td>
     </tr>`;
   }).join('');
