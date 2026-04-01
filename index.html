@@ -852,7 +852,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.241</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.242</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -5085,7 +5085,7 @@ function csvImporter() {
       const b = state.bus.find(x => x.nom === nom);
       if (b) { b.statut = statut; } // Raison atelier non modifiée par CSV
     });
-    state.lastImport.affects = nowStr;
+    state.lastImport.affects = nowStr; updateMajBadges();
     const nbBus = Object.keys(state.affCreneaux || {}).length;
     journalLog(`MAJ CSV affectations : ${nbBus} bus · ${aff.length} créneaux`, 'ok');
     saveStateWithSync();
@@ -5132,7 +5132,7 @@ function csvImporter() {
     state.lastImport[currentCsvType] = nowStr;
     mettreAJourEmprunts();
     journalLog(`MAJ compta ${fmtMois(mois)} : ${nb} opérations`, 'ok');
-    saveStateWithSync(); renderDashboard();
+    saveStateWithSync(); renderDashboard(); updateMajBadges();
     if (document.getElementById('page-compta').classList.contains('active')) renderCompta();
     toastMsg(`✅ ${nb} opérations importées (${mois})`, 'success');
   }
@@ -9647,7 +9647,7 @@ function importerCSVDirect(type, contenu) {
         ajouts++;
       }
     });
-    state.lastImport.bus = nowStr;
+    state.lastImport.bus = nowStr; updateMajBadges();
     journalLog(`MAJ bus.csv : ${maj} MàJ · ${ajouts} nouveaux`, 'ok');
     saveStateWithSync(); renderParc(); renderDashboard(); updateBusSelects();
     toastMsg(`🚍 ${maj} bus mis à jour · ${ajouts} ajoutés`, 'success');
@@ -9677,7 +9677,7 @@ function importerCSVDirect(type, contenu) {
     const existKeys = new Set(state.statsLignes.map(s=>`${s.date}_${s.ligne}_${s.creneau}`));
     const nouvelles = stats.filter(s => !existKeys.has(`${s.date}_${s.ligne}_${s.creneau}`));
     state.statsLignes = [...state.statsLignes, ...nouvelles];
-    state.lastImport.stats = nowStr;
+    state.lastImport.stats = nowStr; updateMajBadges();
     journalLog(`MAJ statslignes.csv : ${nouvelles.length} nouvelles entrées`, 'ok');
     saveStateWithSync();
     setTimeout(() => { if (document.getElementById('page-lignes').classList.contains('active')) renderLignes(); closeModal('modal-maj-csv'); }, 50);
@@ -9687,7 +9687,7 @@ function importerCSVDirect(type, contenu) {
     const pers = parserSalaries(rows);
     if (!pers.length) { toastMsg('salaries.csv : aucun personnel', 'error'); return; }
     state.personnel = pers;
-    state.lastImport.salaries = nowStr;
+    state.lastImport.salaries = nowStr; updateMajBadges();
     journalLog(`MAJ salaries.csv : ${pers.length} personnes`, 'ok');
     saveStateWithSync(); renderDashboard();
     if (document.getElementById('page-personnel').classList.contains('active')) renderPersonnel();
