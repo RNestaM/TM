@@ -852,7 +852,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.242</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.243</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -1461,7 +1461,7 @@
             <div style="display:flex;gap:6px">
               <button class="btn btn-sm" style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);color:var(--accent)" onclick="genererMessageForum()">⚙️ Générer</button>
               <a href="https://forum.transport-manager.net/thread-22831-post-311297.html#pid311297" target="_blank"
-                class="btn btn-primary btn-sm">🌐 Faire la demande</a>
+                class="btn btn-primary btn-sm" onclick="copierMessageForum()">🌐 Faire la demande</a>
             </div>
           </div>
           <div class="card-body">
@@ -5708,7 +5708,11 @@ function renderMaintenance() {
     const ctFait  = plan.ctDate  === 'DONE' || plan.envoyeType === 'CT'  || plan.envoyeType === 'Both';
 
     return `<tr style="${ferme?'background:rgba(239,68,68,0.04)':''}">
-      <td class="mono" style="color:var(--text3)">${b.idJeu||'—'}</td>
+      <td>${(() => {
+        const s = b.statut||'—';
+        const m = {'En service':'badge-green','Indispo':'badge-red','Réserve':'badge-gray','En révision':'badge-yellow'};
+        return `<span class="badge ${m[s]||'badge-gray'}">${s}</span>`;
+      })()}</td>
       <td class="mono">${nomBusCT}</td>
       <td class="mono" style="${limColor}">${fmtDateFR(b.ct)}${ferme?' 🚫':''}</td>
       <td>${revValDisplay
@@ -6240,7 +6244,7 @@ function parsePanneJeu(texte) {
   if (prixM) result.prix = parseInt(prixM[1].replace(/[\s ]/g, ''));
 
   // Remplaçant : "Affectations reprises par ... n°NOM_REMPLACANT"
-  const rempM = texte.match(/Affectations reprises par[^n]*n°([A-Z0-9][A-Z0-9\-]+)/i);
+  const rempM = texte.match(/Affectations reprises par[^\n]*n°([A-Z0-9][A-Z0-9\-]+)/i);
   if (rempM) result.remplacant = rempM[1];
 
   if (!result.nomParc || !result.motif || !result.jours) return null;
@@ -6341,7 +6345,7 @@ function genererMessageForum() {
     return l1 + '\n' + l2 + '\n' + l3;
   }).join('\n\n');
 
-  const msg = 'Bonjour,\n' + lignes + '\nMerci';
+  const msg = 'Bonjour,\n\n' + lignes + '\n\nMerci';
   const ta = document.getElementById('panne-forum-texte');
   if (ta) ta.value = msg;
   toastMsg('Message généré ✅', 'success');
