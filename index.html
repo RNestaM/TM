@@ -852,7 +852,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.243</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.244</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -3642,8 +3642,9 @@ function renderDashboard() {
   };
   // CT
   const ctDiffs = state.bus.map(b => {
-    const ctRaw = state.planningCT?.[b.nom]?.ctDate;
-    const ct = ctRaw === 'DONE' ? null : (ctRaw || ctPrevu(b.ct));
+    const plan = state.planningCT?.[b.nom] || {};
+    if (plan.ctDate === 'DONE' || plan.envoyeType === 'CT' || plan.envoyeType === 'Both') return null;
+    const ct = plan.ctDate || ctPrevu(b.ct);
     return ct ? diffD(ct) : null;
   }).filter(d => d !== null).sort((a,b)=>a-b);
   const nextCT = ctDiffs.length ? ctDiffs[0] : null;
@@ -3652,10 +3653,9 @@ function renderDashboard() {
   if (elCT) elCT.innerHTML = nbCTToday > 0 ? `<span style="color:var(--red);font-weight:700">${nbCTToday} CT aujourd'hui</span>` : fmtEch(nextCT);
   // Révision
   const revDiffs = state.bus.map(b => {
-    const rvRaw = state.planningCT?.[b.nom]?.revDate;
-    const ctRaw2 = state.planningCT?.[b.nom]?.ctDate;
-    if (rvRaw === 'DONE' || ctRaw2 === 'DONE') return null;
-    const rv = rvRaw || revisionPrevue(ctPrevu(b.ct)||'');
+    const plan = state.planningCT?.[b.nom] || {};
+    if (plan.revDate === 'DONE' || plan.envoyeType === 'Rev' || plan.envoyeType === 'Both') return null;
+    const rv = plan.revDate || revisionPrevue(ctPrevu(b.ct)||'');
     return rv ? diffD(rv) : null;
   }).filter(d => d !== null).sort((a,b)=>a-b);
   const nextRev = revDiffs.length ? revDiffs[0] : null;
