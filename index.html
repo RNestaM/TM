@@ -852,7 +852,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.245</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.246</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -3640,25 +3640,30 @@ function renderDashboard() {
     if (d === 0) return `<span style="color:var(--red);font-weight:700">Aujourd'hui !</span>`;
     return `<span style="color:${d<=3?'var(--red)':d<=7?'var(--yellow)':'var(--text)'}">Dans ${d} j</span>`;
   };
-  // CT — uniquement les bus avec une date planifiée ET pas encore envoyés
+  // CT — uniquement les bus avec une date planifiée, pas encore envoyés, et pas dépassée depuis > 1j
   const ctDiffs = state.bus.map(b => {
     const plan = state.planningCT?.[b.nom] || {};
-    // Exclure si déjà envoyé (ctDate DONE ou envoyeType CT/Both)
     if (plan.ctDate === 'DONE' || plan.envoyeType === 'CT' || plan.envoyeType === 'Both') return null;
-    // Utiliser uniquement la date planifiée manuellement, pas la date limite du bus
     const ct = plan.ctDate && plan.ctDate !== 'DONE' ? plan.ctDate : null;
-    return ct ? diffD(ct) : null;
+    if (!ct) return null;
+    const d = diffD(ct);
+    // Ignorer si dépassé depuis plus de 1 jour sans envoi (oubli de cliquer Envoyé)
+    if (d < -1) return null;
+    return d;
   }).filter(d => d !== null).sort((a,b)=>a-b);
   const nextCT = ctDiffs.length ? ctDiffs[0] : null;
   const nbCTToday = ctDiffs.filter(d=>d===0).length;
   const elCT = document.getElementById('dash-ech-ct');
   if (elCT) elCT.innerHTML = nbCTToday > 0 ? `<span style="color:var(--red);font-weight:700">${nbCTToday} CT aujourd'hui</span>` : fmtEch(nextCT);
-  // Révision — uniquement les bus avec une date planifiée ET pas encore envoyés
+  // Révision — idem
   const revDiffs = state.bus.map(b => {
     const plan = state.planningCT?.[b.nom] || {};
     if (plan.revDate === 'DONE' || plan.envoyeType === 'Rev' || plan.envoyeType === 'Both') return null;
     const rv = plan.revDate && plan.revDate !== 'DONE' ? plan.revDate : null;
-    return rv ? diffD(rv) : null;
+    if (!rv) return null;
+    const d = diffD(rv);
+    if (d < -1) return null;
+    return d;
   }).filter(d => d !== null).sort((a,b)=>a-b);
   const nextRev = revDiffs.length ? revDiffs[0] : null;
   const nbRevToday = revDiffs.filter(d=>d===0).length;
@@ -5058,6 +5063,14 @@ function csvImporter() {
             // Éviter doublon
             if (!state.ct.find(c => c.bus === exist.nom && c.date === exist.ct)) {
               state.ct.push({ id: Date.now() + Math.random()*1000|0, bus: exist.nom, date: exist.ct, dateReelle: (() => { try { const d = new Date(exist.ct); d.setDate(d.getDate() - 185); return d.toISOString().slice(0,10); } catch(e) { return today(); } })(), km: exist.km || 0, resultat: 'Favorable' });
+            }
+            // Reset planningCT pour ce bus — nouveau cycle CT
+            if (state.planningCT?.[exist.nom]) {
+              const p = state.planningCT[exist.nom];
+              delete p.ctDate;
+              delete p.revDate;
+              delete p.envoyeType;
+              delete p.envoyeDate;
             }
           }
         }
@@ -9642,6 +9655,14 @@ function importerCSVDirect(type, contenu) {
             if (!state.ct) state.ct = [];
             if (!state.ct.find(c => c.bus === exist.nom && c.date === exist.ct)) {
               state.ct.push({ id: Date.now() + Math.random()*1000|0, bus: exist.nom, date: exist.ct, dateReelle: (() => { try { const d = new Date(exist.ct); d.setDate(d.getDate() - 185); return d.toISOString().slice(0,10); } catch(e) { return today(); } })(), km: exist.km || 0, resultat: 'Favorable' });
+            }
+            // Reset planningCT pour ce bus — nouveau cycle CT
+            if (state.planningCT?.[exist.nom]) {
+              const p = state.planningCT[exist.nom];
+              delete p.ctDate;
+              delete p.revDate;
+              delete p.envoyeType;
+              delete p.envoyeDate;
             }
           }
         }
