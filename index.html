@@ -852,7 +852,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.248</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.249</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -2526,6 +2526,7 @@
               <th>Arrêts</th>
               <th>Bornes</th>
               <th>Véhicules autorisés</th>
+              <th>Réseau</th>
             </tr></thead>
             <tbody id="cfg-lignes-tbody"></tbody>
           </table>
@@ -5548,6 +5549,25 @@ function estFerme(dateISO) {
 }
 
 // CT fermé dimanche et jours fériés → recule au dernier jour ouvert
+// Retourne la capacité effective d'un bus pour une ligne donnée
+// Bus double capacité format : "CAR-62-61/110" → interurbain=61, urbain=110
+function getCapaBus(bus, ligneNum) {
+  const nom = bus.nom || '';
+  const capaStr = String(bus.capa || '');
+  const slashIdx = nom.indexOf('/');
+  if (slashIdx === -1) return parseInt(capaStr) || 0; // bus simple capacité
+  // Extraire les deux capacités depuis le nom
+  const nomParts = nom.split('/');
+  const capaInter = parseInt(nomParts[0].match(/(\d+)$/)?.[1]) || parseInt(capaStr) || 0;
+  const capaUrb   = parseInt(nomParts[1]?.match(/^(\d+)/)?.[1]) || parseInt(capaStr) || 0;
+  // Trouver le réseau de la ligne
+  const n = state.niveauJeu || 4;
+  const lignes = getLignesNiveau(n);
+  const ligne = lignes.find(l => String(l.num) === String(ligneNum));
+  if (ligne?.reseau === 'interurbain') return capaInter;
+  return capaUrb; // urbain ou suburbain → capacité urbaine (la plus grande)
+}
+
 function ctPrevu(dateLimiteISO) {
   if (!dateLimiteISO) return '';
   const d = new Date(dateLimiteISO);
@@ -8846,7 +8866,7 @@ function renderPrepaAff() {
     var cible = typeof fv === 'number' ? fv : (fv === 'Active' ? -1 : 0);
     var buses  = getBusAffectesLignePrepa(ligne.num, 'sem_pointe');
     var nbBus  = buses.length;
-    var places = buses.reduce(function(s,b){ return s+(parseInt(b.capa)||0); }, 0);
+    var places = buses.reduce(function(s,b){ return s+getCapaBus(b, ligne.num); }, 0);
     var manque = cible > 0 ? places - cible : null;
     var freq   = nbBus > 0 && dureeAR > 0 ? Math.round(dureeAR / nbBus) : null;
     var pct    = cible > 0 ? Math.round(places / cible * 100) : null;
@@ -8903,7 +8923,7 @@ function renderPrepaAff() {
       var fv = freqData[ligne.num] || [];
       var idx = freqIdxMap['sem_pointe']; if (idx === undefined) return false;
       var cible = typeof fv[idx] === 'number' ? fv[idx] : 0; if (cible <= 0) return false;
-      var places = getBusAffectesLignePrepa(ligne.num, 'sem_pointe').reduce(function(s,b){ return s+(parseInt(b.capa)||0); }, 0);
+      var places = getBusAffectesLignePrepa(ligne.num, 'sem_pointe').reduce(function(s,b){ return s+getCapaBus(b, ligne.num); }, 0);
       return places < cible;
     });
     banner.style.display = sous.length ? 'block' : 'none';
@@ -11416,7 +11436,7 @@ function renderFrequentation() {
         : 0;
       const buses  = getBusAffectesLigne(ligne.num, cid);
       const nbBus  = buses.length;
-      const places = buses.reduce((s, b) => s + (parseInt(b.capa) || 0), 0);
+      const places = buses.reduce((s, b) => s + getCapaBus(b, ligne.num), 0);
       const manque = cible > 0 ? places - cible : null;
       const freq   = nbBus > 0 && dureeAR > 0 ? Math.round(dureeAR / nbBus) : null;
       const pct    = cible > 0 ? Math.round(places / cible * 100) : null;
@@ -11519,7 +11539,7 @@ function renderFrequentation() {
         const cible = typeof fv[idx] === 'number' ? fv[idx] : 0;
         if (cible <= 0) return false;
         const buses = getBusAffectesLigne(ligne.num, cid);
-        const places = buses.reduce((s, b) => s + (parseInt(b.capa)||0), 0);
+        const places = buses.reduce((s, b) => s + getCapaBus(b, ligne.num), 0);
         return places < cible;
       });
     });
@@ -11574,7 +11594,10 @@ const LIGNES_N5_DEFAULT = [
 
 function getLignesNiveau(n) {
   if (!state.cfgLignesParNiveau) state.cfgLignesParNiveau = {};
-  return state.cfgLignesParNiveau[n] || [];
+  const ligs = state.cfgLignesParNiveau[n] || [];
+  // Migration : ajouter reseau par défaut si absent
+  ligs.forEach(l => { if (!l.reseau) l.reseau = 'urbain'; });
+  return ligs;
 }
 
 function changerNiveauLignes(delta) {
@@ -11626,6 +11649,11 @@ function renderCfgLignes() {
     <td class="mono">${l.arrets||'—'}</td>
     <td style="text-align:center">${l.bornes ? '<span style="color:var(--green)">✓</span>' : '<span style="color:var(--text3)">—</span>'}</td>
     <td style="font-size:11px">${l.vehicules||'—'}</td>
+    <td style="font-size:10px;text-align:center">${
+      l.reseau === 'interurbain' ? '<span style="background:rgba(249,115,22,0.15);color:var(--orange);padding:1px 5px;border-radius:3px;font-weight:600">Inter</span>'
+      : l.reseau === 'suburbain' ? '<span style="background:rgba(96,165,250,0.15);color:#60a5fa;padding:1px 5px;border-radius:3px;font-weight:600">Sub</span>'
+      : '<span style="color:var(--text3)">Urb</span>'
+    }</td>
   </tr>`).join('');
 }
 
@@ -11641,7 +11669,7 @@ function ouvrirImportLignes() {
 }
 
 // avecBornes=true pour urbaines (7 cols), false pour sub/inter (6 cols)
-function parseLignesFromTexte(texte, avecBornes) {
+function parseLignesFromTexte(texte, avecBornes, reseau = 'urbain') {
   const lignes = [];
   for (const ligne of texte.split('\n')) {
     const l = ligne.trim();
@@ -11672,7 +11700,7 @@ function parseLignesFromTexte(texte, avecBornes) {
       vehicules = (cols[5]||'').trim();
     }
 
-    lignes.push({ num, couleur, km, duree, arrets, bornes, vehicules });
+    lignes.push({ num, couleur, km, duree, arrets, bornes, vehicules, reseau });
   }
   return lignes;
 }
@@ -11690,9 +11718,9 @@ function importerTableauLignes() {
   }
 
   const nouvelles = [
-    ...parseLignesFromTexte(texteUrb,   true),
-    ...parseLignesFromTexte(texteSub,   false),
-    ...parseLignesFromTexte(texteInter, false),
+    ...parseLignesFromTexte(texteUrb,   true,  'urbain'),
+    ...parseLignesFromTexte(texteSub,   false, 'suburbain'),
+    ...parseLignesFromTexte(texteInter, false, 'interurbain'),
   ];
 
   if (!nouvelles.length) {
