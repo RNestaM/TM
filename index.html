@@ -852,7 +852,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.249</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.253</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -2507,6 +2507,7 @@
           </div>
           <button class="btn btn-sm" style="background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.3);color:var(--accent3)" onclick="ouvrirImportLignes()">📋 Coller un tableau</button>
           <button class="btn btn-sm" style="background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green)" onclick="chargerLignesN5()">📥 Charger N5 par défaut</button>
+          <button class="btn btn-sm btn-primary" onclick="ouvrirAjoutLigne()">+ Ajouter</button>
         </div>
       </div>
 
@@ -2527,6 +2528,8 @@
               <th>Bornes</th>
               <th>Véhicules autorisés</th>
               <th>Réseau</th>
+              <th>Fin</th>
+              <th></th>
             </tr></thead>
             <tbody id="cfg-lignes-tbody"></tbody>
           </table>
@@ -2560,6 +2563,7 @@
 
           <button class="btn btn-sm" style="background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green)" onclick="chargerDonneesNiveau4()">📥 Charger N5 par défaut</button>
           <button class="btn btn-sm" style="background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.3);color:var(--accent3)" onclick="ouvrirImportFreq()">📋 Coller un tableau</button>
+          <button class="btn btn-sm btn-primary" onclick="ouvrirAjoutLigne()">+ Ajouter</button>
         </div>
       </div>
 
@@ -3025,6 +3029,100 @@
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-import-freq')">Annuler</button>
       <button class="btn" style="background:var(--cfg-green-dim);border:1px solid var(--cfg-green-border);color:var(--cfg-green)" onclick="importerTableauFreq()">✓ Importer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal ajout ligne manuelle -->
+<div class="modal-overlay" id="modal-ajout-ligne">
+  <div class="modal" style="max-width:560px;width:95%">
+    <div class="modal-header">
+      <div class="modal-title">➕ Ajouter une ligne manuellement</div>
+      <div class="modal-close" onclick="closeModal('modal-ajout-ligne')">✕</div>
+    </div>
+    <div class="modal-body" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+
+      <div style="grid-column:1/-1">
+        <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px">N° de ligne <span style="color:var(--red)">*</span></label>
+        <input id="ajl-num" type="text" placeholder="Ex: 205, PL3..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:6px 10px;font-size:13px;font-weight:700;box-sizing:border-box">
+      </div>
+
+      <div>
+        <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px">Couleur</label>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input id="ajl-couleur" type="color" value="#888888"
+            style="width:44px;height:34px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;cursor:pointer;padding:2px;flex-shrink:0"
+            oninput="document.getElementById('ajl-couleur-hex').value=this.value">
+          <input id="ajl-couleur-hex" type="text" value="#888888" placeholder="#rrggbb"
+            style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:6px 10px;font-size:12px;font-family:monospace;box-sizing:border-box"
+            oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value))document.getElementById('ajl-couleur').value=this.value">
+        </div>
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px">Réseau</label>
+        <select id="ajl-reseau" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:6px 10px;font-size:12px">
+          <option value="urbain">Urbain</option>
+          <option value="suburbain">Suburbain</option>
+          <option value="interurbain">Interurbain</option>
+        </select>
+      </div>
+
+      <div>
+        <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px">KM (AR)</label>
+        <input id="ajl-km" type="number" step="0.1" placeholder="Ex: 24.6" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:6px 10px;font-size:12px;box-sizing:border-box">
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px">Durée AR (min)</label>
+        <input id="ajl-duree" type="number" placeholder="Ex: 80" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:6px 10px;font-size:12px;box-sizing:border-box">
+      </div>
+
+      <div>
+        <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px">Arrêts</label>
+        <input id="ajl-arrets" type="number" placeholder="Ex: 34" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:6px 10px;font-size:12px;box-sizing:border-box">
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px">Bornes recharge</label>
+        <select id="ajl-bornes" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:6px 10px;font-size:12px">
+          <option value="0">Non</option>
+          <option value="1">Oui ⚡</option>
+        </select>
+      </div>
+
+      <div style="grid-column:1/-1">
+        <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px">Véhicules autorisés</label>
+        <input id="ajl-vehicules" type="text" placeholder="Ex: Autocar, Standard..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:6px 10px;font-size:12px;box-sizing:border-box">
+      </div>
+
+      <div style="grid-column:1/-1">
+        <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px">Niveau de jeu</label>
+        <select id="ajl-niveau" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:6px 10px;font-size:12px">
+          <option value="1">Niveau 1</option>
+          <option value="2">Niveau 2</option>
+          <option value="3">Niveau 3</option>
+          <option value="4" selected>Niveau 4</option>
+          <option value="5">Niveau 5</option>
+        </select>
+      </div>
+
+      <div style="grid-column:1/-1;border-top:1px solid var(--border);padding-top:10px;margin-top:2px">
+        <label style="font-size:11px;color:var(--cfg-green);display:block;margin-bottom:6px;font-weight:600">📈 Fréquentation cible — Réseau normal, Période normale</label>
+        <div id="ajl-freq-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;width:95%;margin:0 auto"></div>
+      </div>
+
+      <div style="grid-column:1/-1;border-top:1px solid var(--border);padding-top:10px;margin-top:2px">
+        <label style="font-size:11px;color:var(--accent3);display:block;margin-bottom:6px;font-weight:600">📈 Fréquentation cible — Réseau normal, Vacances scolaires</label>
+        <div id="ajl-freq-grid-vac" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;width:95%;margin:0 auto"></div>
+      </div>
+
+      <div style="grid-column:1/-1">
+        <label style="font-size:11px;color:var(--yellow);display:block;margin-bottom:3px">📅 Date de fin (ligne temporaire — laisser vide si permanente)</label>
+        <input id="ajl-datefin" type="date" style="background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:6px 10px;font-size:12px">
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-ajout-ligne')">Annuler</button>
+      <button class="btn btn-primary" onclick="validerAjoutLigne()">✓ Ajouter</button>
     </div>
   </div>
 </div>
@@ -8506,7 +8604,7 @@ function renderPrepaFreqTableau() {
   tbody.innerHTML = lignes.map(ligne => {
     const vals = data[ligne] || [];
     return `<tr>
-      <td class="freq-ligne">${ligne}</td>
+      <td class="freq-ligne" style="white-space:nowrap">${ligne} <button class="btn btn-danger btn-xs" style="margin-left:4px;padding:0 4px;font-size:10px" onclick="supprimerLigneFreq('${ligne}')">✕</button></td>
       ${creneaux.map((cr, i) => {
         const v = vals[i];
         const display = v === null || v === undefined ? '—' : v === 'Active' ? '<span style="color:var(--green);font-weight:700">●</span>' : v;
@@ -11095,7 +11193,7 @@ function renderFreqTableau() {
   tbody.innerHTML = lignes.map(ligne => {
     const vals = data[ligne] || [];
     return `<tr>
-      <td class="freq-ligne">${ligne}</td>
+      <td class="freq-ligne" style="white-space:nowrap">${ligne} <button class="btn btn-danger btn-xs" style="margin-left:4px;padding:0 4px;font-size:10px" onclick="supprimerLigneFreq('${ligne}')">✕</button></td>
       ${creneaux.map((c, i) => {
         const v = vals[i];
         const display = v === null || v === undefined ? '—' : v === 'Active' ? '<span style="color:var(--green);font-weight:700">●</span>' : v;
@@ -11104,10 +11202,6 @@ function renderFreqTableau() {
     </tr>`;
   }).join('');
 
-  // Bouton ajouter ligne en bas
-  tbody.innerHTML += `<tr><td colspan="${creneaux.length+1}" style="padding:6px 8px">
-    <button class="btn btn-sm btn-ghost" onclick="ajouterLigneFreq()" style="font-size:11px">+ Ajouter une ligne</button>
-  </td></tr>`;
 }
 
 function editFreqCell(td, ligne, idx) {
@@ -11592,6 +11686,129 @@ const LIGNES_N5_DEFAULT = [
   {num:'PL3', couleur:'#5120C0', km:17.8,  duree:60,  arrets:7,  bornes:false, vehicules:'Tramway'},
 ];
 
+// ── Gestion lignes manuelles ─────────────────────────────
+function ouvrirAjoutLigne() {
+  // Réinitialiser le formulaire
+  ['ajl-num','ajl-km','ajl-duree','ajl-arrets','ajl-vehicules','ajl-datefin'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  const col = document.getElementById('ajl-couleur'); if (col) col.value = '#888888';
+  const hex = document.getElementById('ajl-couleur-hex'); if (hex) hex.value = '#888888';
+  const res = document.getElementById('ajl-reseau'); if (res) res.value = 'urbain';
+  const bor = document.getElementById('ajl-bornes'); if (bor) bor.value = '0';
+  const niv = document.getElementById('ajl-niveau'); if (niv) niv.value = String(state.niveauJeu || 4);
+  // Grilles fréquentation normale + vacances
+  const creneaux = ['LU-VE Creuses','LU-VE Pointes','LU-VE Soir','SA Creuses','SA Pointes','SA Soir','DI&JF Creuses','DI&JF Pointes'];
+  const makeFreqGrid = (prefix) => creneaux.map((c, i) => `
+    <div>
+      <label style="font-size:10px;color:var(--text3);display:block;margin-bottom:2px">${c}</label>
+      <input type="number" id="${prefix}-${i}" placeholder="—"
+        style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:4px 6px;font-size:11px;box-sizing:border-box">
+    </div>`).join('');
+  const grid = document.getElementById('ajl-freq-grid'); if (grid) grid.innerHTML = makeFreqGrid('ajl-freq');
+  const gridV = document.getElementById('ajl-freq-grid-vac'); if (gridV) gridV.innerHTML = makeFreqGrid('ajl-freq-vac');
+  openModal('modal-ajout-ligne');
+}
+
+function validerAjoutLigne() {
+  const num = (document.getElementById('ajl-num')?.value || '').trim();
+  if (!num) { toastMsg('N° de ligne obligatoire', 'error'); return; }
+  const n = parseInt(document.getElementById('ajl-niveau')?.value) || state.niveauJeu || 4;
+
+  // Objet ligne
+  const ligne = {
+    num,
+    couleur:   document.getElementById('ajl-couleur-hex')?.value || document.getElementById('ajl-couleur')?.value || '#888888',
+    reseau:    document.getElementById('ajl-reseau')?.value || 'urbain',
+    km:        parseFloat(document.getElementById('ajl-km')?.value) || null,
+    duree:     parseInt(document.getElementById('ajl-duree')?.value) || null,
+    arrets:    parseInt(document.getElementById('ajl-arrets')?.value) || null,
+    bornes:    document.getElementById('ajl-bornes')?.value === '1',
+    vehicules: (document.getElementById('ajl-vehicules')?.value || '').trim() || null,
+    dateFin:   document.getElementById('ajl-datefin')?.value || null,
+    manuel:    true,
+  };
+
+  // Upsert dans cfgLignesParNiveau
+  if (!state.cfgLignesParNiveau) state.cfgLignesParNiveau = {};
+  if (!state.cfgLignesParNiveau[n]) state.cfgLignesParNiveau[n] = [];
+  const idx = state.cfgLignesParNiveau[n].findIndex(l => l.num === num);
+  if (idx >= 0) state.cfgLignesParNiveau[n][idx] = ligne;
+  else state.cfgLignesParNiveau[n].push(ligne);
+
+  // Fréquentation cible — helper
+  const readFreqGrid = (prefix) => {
+    const vals = [];
+    for (let i = 0; i < 8; i++) {
+      const raw = document.getElementById(`${prefix}-${i}`)?.value;
+      vals.push(raw && raw.trim() !== '' ? parseInt(raw) : null);
+    }
+    return vals;
+  };
+  const setFreq = (periode, vals) => {
+    if (!vals.some(v => v !== null)) return;
+    if (!state.freqCibles) state.freqCibles = {};
+    if (!state.freqCibles[n]) state.freqCibles[n] = {};
+    if (!state.freqCibles[n][periode]) state.freqCibles[n][periode] = {};
+    if (!state.freqCibles[n][periode].normal) state.freqCibles[n][periode].normal = {};
+    state.freqCibles[n][periode].normal[num] = vals;
+  };
+  setFreq('normal',   readFreqGrid('ajl-freq'));
+  setFreq('vacances', readFreqGrid('ajl-freq-vac'));
+
+  saveStateWithSync();
+  closeModal('modal-ajout-ligne');
+  renderCfgLignes();
+  if (document.getElementById('page-cfg-frequentation')?.classList.contains('active')) renderFreqTableau();
+  toastMsg(`✅ Ligne ${num} ajoutée`, 'success');
+}
+
+function supprimerLigneCfg(i) {
+  const n = state.niveauJeu || 4;
+  if (!state.cfgLignesParNiveau?.[n]) return;
+  const ligne = state.cfgLignesParNiveau[n][i];
+  if (!ligne) return;
+  if (!confirm(`Supprimer la ligne ${ligne.num} ?`)) return;
+  state.cfgLignesParNiveau[n].splice(i, 1);
+  // Supprimer aussi les fréquences associées
+  if (state.freqCibles?.[n]) {
+    for (const per of Object.values(state.freqCibles[n])) {
+      for (const res of Object.values(per)) {
+        delete res[ligne.num];
+      }
+    }
+  }
+  saveStateWithSync();
+  renderCfgLignes();
+  toastMsg(`Ligne ${ligne.num} supprimée`, 'info');
+}
+
+function supprimerLigneFreq(num) {
+  if (!confirm(`Supprimer la fréquentation de la ligne ${num} ?`)) return;
+  const n = state.niveauJeu || 4;
+  const vac = state.modeVacances || false;
+  const per = vac ? 'vacances' : 'normal';
+  if (state.freqCibles?.[n]?.[per]?.[freqReseauActif]) {
+    delete state.freqCibles[n][per][freqReseauActif][num];
+  }
+  saveStateWithSync();
+  renderFreqTableau();
+  toastMsg(`Fréquentation ligne ${num} supprimée`, 'info');
+}
+
+// Auto-expiration des lignes temporaires
+function purgerLignesExpirees() {
+  const today = new Date().toISOString().slice(0,10);
+  let purged = 0;
+  if (!state.cfgLignesParNiveau) return;
+  for (const n of Object.keys(state.cfgLignesParNiveau)) {
+    const avant = state.cfgLignesParNiveau[n].length;
+    state.cfgLignesParNiveau[n] = state.cfgLignesParNiveau[n].filter(l => !l.dateFin || l.dateFin >= today);
+    purged += avant - state.cfgLignesParNiveau[n].length;
+  }
+  if (purged > 0) { saveStateWithSync(); journalLog(`${purged} ligne(s) temporaire(s) expirée(s) supprimée(s)`, 'info'); }
+}
+
 function getLignesNiveau(n) {
   if (!state.cfgLignesParNiveau) state.cfgLignesParNiveau = {};
   const ligs = state.cfgLignesParNiveau[n] || [];
@@ -11654,6 +11871,8 @@ function renderCfgLignes() {
       : l.reseau === 'suburbain' ? '<span style="background:rgba(96,165,250,0.15);color:#60a5fa;padding:1px 5px;border-radius:3px;font-weight:600">Sub</span>'
       : '<span style="color:var(--text3)">Urb</span>'
     }</td>
+    <td style="font-size:10px;color:${l.dateFin ? 'var(--yellow)' : 'var(--text3)'};text-align:center">${l.dateFin ? fmtDateFR(l.dateFin) : '—'}</td>
+    <td><button class="btn btn-danger btn-xs" onclick="supprimerLigneCfg(${i})">✕</button></td>
   </tr>`).join('');
 }
 
@@ -11850,6 +12069,7 @@ document.addEventListener('DOMContentLoaded', () => {
   syncSidebarVersion();
   mettreAJourEmprunts();
   updateMajBadges();
+  purgerLignesExpirees();
   // Backup pour GitHub Pages où DOMContentLoaded peut être raté
   window.addEventListener('load', updateClock);
 
