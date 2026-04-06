@@ -852,7 +852,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.257</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.259</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -3958,7 +3958,7 @@ function renderDashboard() {
       const sal = subset.reduce((s,p)=>s+(p.salaire||0),0);
       const moy = subset.length ? Math.round(sal/subset.length) : 0;
       const mal = subset.filter(p=>(p.etat||p.statut||'').toLowerCase().includes('maladie')).length;
-      const vac = subset.filter(p=>(p.etat||p.statut||'').toLowerCase().includes('cong')||(p.etat||'').toLowerCase().includes('vacances')).length;
+      const vac = subset.filter(p=>(p.etat||p.statut||'').toLowerCase().includes('cong')||(p.etat||'').toLowerCase().includes('vacances')||(p.cpPrendre||0)>0).length;
       const grv = subset.filter(p=>(p.etat||p.statut||'').toLowerCase().includes('grève')||(p.etat||'').toLowerCase().includes('greve')).length;
       const cng = subset.filter(p=>(p.etat||'').toLowerCase().includes('cong')).length;
       const dsp = subset.filter(p=>{const s=(p.statut||'').toLowerCase(),e=(p.etat||'').toLowerCase();return s==='actif'||s==='disponible'||e==='disponible'||e==='';}).length;
@@ -5024,7 +5024,8 @@ function parserSalaries(rows) {
       embauche: parseDateFR(c[3]), age: parseInt(c[4])||0,
       poste: c[5]||'', salaire: parseInt(c[6])||0,
       etat: c[7]||'Disponible', satisfaction: parseFloat(c[8])||0,
-      fco: fcoDate, statut
+      fco: fcoDate, statut,
+      cpPrendre: parseInt(c[10]) || 0
     };
   });
 }
@@ -6623,7 +6624,7 @@ function renderPersonnel() {
     const sal = subset.reduce((s,p)=>s+(p.salaire||0),0);
     const moy = subset.length ? Math.round(sal/subset.length) : 0;
     const mal = subset.filter(p=>(p.etat||p.statut||'').toLowerCase().includes('maladie')).length;
-    const vac = subset.filter(p=>(p.etat||p.statut||'').toLowerCase().includes('cong')||(p.etat||'').toLowerCase().includes('vacances')).length;
+    const vac = subset.filter(p=>(p.etat||p.statut||'').toLowerCase().includes('cong')||(p.etat||'').toLowerCase().includes('vacances')||(p.cpPrendre||0)>0).length;
     const grv = subset.filter(p=>(p.etat||p.statut||'').toLowerCase().includes('grève')||(p.etat||'').toLowerCase().includes('greve')).length;
     const cng = subset.filter(p=>(p.etat||'').toLowerCase().includes('cong')).length;
     const dsp = subset.filter(p=>{const s=(p.statut||'').toLowerCase(),e=(p.etat||'').toLowerCase();return s==='actif'||s==='disponible'||e==='disponible'||e==='';}).length;
@@ -11493,7 +11494,7 @@ function renderFrequentation() {
       ${allCreneaux.map((c) => {
         const g = groupes.find(gr => gr.ids.includes(c));
         const isFirst = g && g.ids[0] === c;
-        const bg = (GCOLORS[g?.label]||'#1a2a3b')+'cc';
+        const bg = GCOLORS[g?.label]||'#1a2a3b';
         const col = GTCOLS[g?.label]||'#60a5fa';
         return `<th style="text-align:center;font-size:13px;background:${bg};color:${col};padding:3px 6px;${isFirst?`border-left:3px solid ${col}55`:''};min-width:52px">${
           reseau === 'scolaire' ? ['Pointe 1','Pointe 2','Pointe 3'][['sem_pointe','sam_pointe','dim_pointe'].indexOf(c)] || c : (CRENEAU_LABELS_FREQ[c]||c)
