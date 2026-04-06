@@ -852,7 +852,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.253</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.254</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -5506,7 +5506,7 @@ function renderAffectations() {
                 `<option value="${r}" ${raisonAtelier===r?'selected':''}>${r}</option>`
               ).join('')}
             </select>
-            ${raisonAtelier ? `<span onclick="setRaisonAtelier('${b.nom}','')" title="Effacer" style="cursor:pointer;color:var(--text3);font-size:13px;line-height:1;user-select:none" onmouseover="this.style.color='var(--danger,#e55)'" onmouseout="this.style.color='var(--text3)'">✕</span>` : ''}
+            ${(raisonAtelier || remp) ? `<span onclick="setRaisonAtelier('${b.nom}','')" title="Effacer raison + remplaçant" style="cursor:pointer;color:var(--text3);font-size:13px;line-height:1;user-select:none" onmouseover="this.style.color='var(--danger,#e55)'" onmouseout="this.style.color='var(--text3)'">✕</span>` : ''}
           </div>
         </td>
       </tr>`;
