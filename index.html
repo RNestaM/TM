@@ -852,7 +852,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.254</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.256</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -6660,8 +6660,8 @@ function renderPersonnel() {
             ${mkRow('Conducteur Temps Complet', getSubset('Conducteur Temps Complet'), false)}
             ${mkRow('Conducteur Temps Partiel', getSubset('Conducteur Temps Partiel'), false)}
             ${postes.filter(po=>po!=='Conducteur Temps Complet'&&po!=='Conducteur Temps Partiel').map(po=>mkRow(po,getSubset(po),false)).join('')}
-            \${mkRow('Total', pers, true)}
-            \${(() => {
+            ${mkRow('Total', pers, true)}
+            ${(() => {
               const inter = state.config?.interimaires || 0;
               return '<tr><td style="font-size:11px;color:var(--text3);font-style:italic">Intérimaires</td>'
                 + '<td class="mono">'
