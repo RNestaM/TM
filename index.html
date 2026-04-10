@@ -1550,19 +1550,28 @@
     <!-- ═══════════════════════════════════════════ FRÉQUENTATION ═══ -->
     <div id="page-frequentation" class="page">
       <!-- Barre de contrôle -->
-      <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px">
 
-        <div id="freq-reseau-tabs" style="display:flex;gap:4px">
-          <button class="freq-tab active" data-reseau="normal"   onclick="setFreqReseau(this)">🚌 Normal</button>
-          <button class="freq-tab"        data-reseau="nocturne" onclick="setFreqReseau(this)">🌙 Nocturne</button>
-          <button class="freq-tab"        data-reseau="scolaire" onclick="setFreqReseau(this)">🎒 Scolaire</button>
+        <!-- Gauche : bannière sous 100% -->
+        <div id="freq-warning-banner" style="display:none;padding:6px 10px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;font-size:12px;color:var(--red);flex-shrink:0">
+          ⚠️ Lignes sous 100% : <span id="freq-warning-list"></span>
         </div>
-        <span id="freq-niveau-actif-badge" style="font-size:11px;padding:4px 10px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);border-radius:6px;color:var(--accent)"></span>
-      </div>
+        <div id="freq-warning-banner-placeholder" style="flex-shrink:0"></div>
 
-      <!-- Bannière lignes sous 100% -->
-      <div id="freq-warning-banner" style="display:none;margin-bottom:10px;padding:8px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;font-size:12px;color:var(--red)">
-        ⚠️ Lignes sous 100% : <span id="freq-warning-list"></span>
+        <!-- Centre : onglets réseau -->
+        <div style="display:flex;align-items:center;gap:8px;flex:1;justify-content:center">
+          <div id="freq-reseau-tabs" style="display:flex;gap:4px">
+            <button class="freq-tab active" data-reseau="normal"   onclick="setFreqReseau(this)">🚌 Normal</button>
+            <button class="freq-tab"        data-reseau="nocturne" onclick="setFreqReseau(this)">🌙 Nocturne</button>
+            <button class="freq-tab"        data-reseau="scolaire" onclick="setFreqReseau(this)">🎒 Scolaire</button>
+          </div>
+          <span id="freq-niveau-actif-badge" style="font-size:11px;padding:4px 10px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);border-radius:6px;color:var(--accent)"></span>
+        </div>
+
+        <!-- Droite : bannière >30 min (niveau 4 seulement) -->
+        <div id="freq-30min-banner" style="display:none;padding:6px 10px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;font-size:12px;color:var(--yellow);flex-shrink:0">
+          ⏱ Lignes &gt;30 min : <span id="freq-30min-list"></span>
+        </div>
       </div>
 
       <!-- Tableau fréquentation -->
@@ -11644,13 +11653,52 @@ function renderFrequentation() {
         return places < cible;
       });
     });
+    const placeholder = document.getElementById('freq-warning-banner-placeholder');
     if (sousExpl.length > 0) {
       banner.style.display = 'block';
+      if (placeholder) placeholder.style.display = 'none';
       bannerList.innerHTML = sousExpl.map(l =>
         `<span style="background:${l.couleur||'#888'};color:#fff;padding:1px 7px;border-radius:4px;margin-right:4px;font-weight:700">${l.num}</span>`
       ).join('');
     } else {
       banner.style.display = 'none';
+      if (placeholder) placeholder.style.display = 'block';
+    }
+  }
+
+  // ── Bannière lignes urbaines >30 min (niveau 4 uniquement) ──
+  const banner30 = document.getElementById('freq-30min-banner');
+  const list30   = document.getElementById('freq-30min-list');
+  if (banner30 && list30) {
+    const n = state.niveauJeu || 4;
+    if (n !== 4) {
+      banner30.style.display = 'none';
+    } else {
+      // Lignes urbaines uniquement (réseau != interurbain)
+      const lignesUrbaines = lignes.filter(l => l.reseau !== 'interurbain');
+      const over30 = lignesUrbaines.filter(ligne => {
+        const fv = freqData[ligne.num] || [];
+        const dureeAR = ligne.duree || 0;
+        if (!dureeAR) return false;
+        return allCreneaux.some(cid => {
+          const idx = freqIdxMap[cid];
+          if (idx === undefined) return false;
+          const cible = typeof fv[idx] === 'number' ? fv[idx] : 0;
+          if (cible <= 0) return false;
+          const buses = getBusAffectesLigne(ligne.num, cid);
+          if (!buses.length) return false;
+          const freq = Math.round(dureeAR / buses.length);
+          return freq > 30;
+        });
+      });
+      if (over30.length > 0) {
+        banner30.style.display = 'block';
+        list30.innerHTML = over30.map(l =>
+          `<span style="background:${l.couleur||'#888'};color:#fff;padding:1px 7px;border-radius:4px;margin-right:4px;font-weight:700">${l.num}</span>`
+        ).join('');
+      } else {
+        banner30.style.display = 'none';
+      }
     }
   }
 }
