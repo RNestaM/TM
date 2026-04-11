@@ -852,7 +852,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.263</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.265</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -1461,14 +1461,17 @@
             <div style="display:flex;gap:6px">
               <button class="btn btn-sm" style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);color:var(--accent)" onclick="genererMessageForum()">⚙️ Générer</button>
               <a href="https://forum.transport-manager.net/thread-22831-post-311297.html#pid311297" target="_blank"
-                class="btn btn-primary btn-sm" onclick="copierMessageForum()">🌐 Faire la demande</a>
+                class="btn btn-sm" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);color:var(--green);font-weight:600" onclick="faireDemandeAlliance()">✅ Faire la demande</a>
             </div>
           </div>
           <div class="card-body">
             <textarea id="panne-forum-texte" rows="8" readonly
-              placeholder="Sélectionnez des pannes 'En attente' puis cliquez sur Générer..."
+              placeholder="Sélectionnez des pannes puis cliquez sur Générer, ou importez des pannes..."
               style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;padding:8px;resize:vertical;outline:none;box-sizing:border-box;font-family:monospace"></textarea>
-            <button class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="copierMessageForum()">📋 Copier</button>
+            <div style="display:flex;gap:6px;margin-top:6px">
+              <button class="btn btn-ghost btn-sm" onclick="copierMessageForum()">📋 Copier</button>
+              <button class="btn btn-ghost btn-sm" onclick="document.getElementById('panne-forum-texte').value=''">🗑 Vider</button>
+            </div>
           </div>
         </div>
 
@@ -1481,9 +1484,8 @@
           <div style="display:flex;gap:6px;align-items:center">
             <select id="panne-filtre-statut" onchange="renderPannes()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:3px 8px;font-size:12px">
               <option value="">Tous</option>
-              <option value="En attente">En attente</option>
-              <option value="À l'atelier">À l'atelier</option>
-              <option value="Réparé">Réparé</option>
+              <option value="Nouvelle">Nouvelle</option>
+              <option value="Demande faite">Demande faite</option>
             </select>
             <button class="btn btn-ghost btn-sm" onclick="if(confirm('Supprimer toutes les pannes ?')){pushUndo('Suppression toutes pannes');state.pannes=[];saveStateWithSync();renderPannes();}">🗑 Tout vider</button>
           </div>
@@ -1550,28 +1552,19 @@
     <!-- ═══════════════════════════════════════════ FRÉQUENTATION ═══ -->
     <div id="page-frequentation" class="page">
       <!-- Barre de contrôle -->
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
 
-        <!-- Gauche : bannière sous 100% -->
-        <div id="freq-warning-banner" style="display:none;padding:6px 10px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;font-size:12px;color:var(--red);flex-shrink:0">
-          ⚠️ Lignes sous 100% : <span id="freq-warning-list"></span>
+        <div id="freq-reseau-tabs" style="display:flex;gap:4px">
+          <button class="freq-tab active" data-reseau="normal"   onclick="setFreqReseau(this)">🚌 Normal</button>
+          <button class="freq-tab"        data-reseau="nocturne" onclick="setFreqReseau(this)">🌙 Nocturne</button>
+          <button class="freq-tab"        data-reseau="scolaire" onclick="setFreqReseau(this)">🎒 Scolaire</button>
         </div>
-        <div id="freq-warning-banner-placeholder" style="flex-shrink:0"></div>
+        <span id="freq-niveau-actif-badge" style="font-size:11px;padding:4px 10px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);border-radius:6px;color:var(--accent)"></span>
+      </div>
 
-        <!-- Centre : onglets réseau -->
-        <div style="display:flex;align-items:center;gap:8px;flex:1;justify-content:center">
-          <div id="freq-reseau-tabs" style="display:flex;gap:4px">
-            <button class="freq-tab active" data-reseau="normal"   onclick="setFreqReseau(this)">🚌 Normal</button>
-            <button class="freq-tab"        data-reseau="nocturne" onclick="setFreqReseau(this)">🌙 Nocturne</button>
-            <button class="freq-tab"        data-reseau="scolaire" onclick="setFreqReseau(this)">🎒 Scolaire</button>
-          </div>
-          <span id="freq-niveau-actif-badge" style="font-size:11px;padding:4px 10px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);border-radius:6px;color:var(--accent)"></span>
-        </div>
-
-        <!-- Droite : bannière >30 min (niveau 4 seulement) -->
-        <div id="freq-30min-banner" style="display:none;padding:6px 10px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;font-size:12px;color:var(--yellow);flex-shrink:0">
-          ⏱ Lignes &gt;30 min : <span id="freq-30min-list"></span>
-        </div>
+      <!-- Bannière lignes sous 100% -->
+      <div id="freq-warning-banner" style="display:none;margin-bottom:10px;padding:8px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;font-size:12px;color:var(--red)">
+        ⚠️ Lignes sous 100% : <span id="freq-warning-list"></span>
       </div>
 
       <!-- Tableau fréquentation -->
@@ -4362,7 +4355,7 @@ function renderParc() {
         <td class="mono" style="color:${(b.etatTech||0)>=80?'var(--green)':(b.etatTech||0)>=60?'var(--yellow)':'var(--red)'}">${b.etatTech||'—'}</td>
         <td class="mono" style="color:${(b.etatInt||0)>=80?'var(--green)':(b.etatInt||0)>=60?'var(--yellow)':'var(--red)'}">${b.etatInt||'—'}</td>
         <td class="mono">${b.diffKm ? fmtNum(b.diffKm) : '—'}</td>
-        <td><select class="status-select ${cls}" onchange="changerStatutBus(${b.id},this.value,this)">${opts}</select></td>
+        <td style="${getStatutCellStyle(b.statut)}"><select class="status-select ${cls}" onchange="changerStatutBus(${b.id},this.value,this)">${opts}</select></td>
         <td>
           <button class="btn btn-ghost btn-xs" onclick="showBusDetail(${b.id})" title="Détail complet">🔍</button>
           <button class="btn btn-warning btn-xs" onclick="quickRevision(${b.id})" title="Envoyer en révision">🔧</button>
@@ -4411,7 +4404,7 @@ function renderParc() {
         <td>${yn(b.telephone)}</td><td>${yn(b.pupitre)}</td>
         <td style="font-size:10px">${b.billetique||'—'}</td>
         <td style="font-size:10px;color:${venteOk?'var(--green)':'var(--text3)'}">${fmtDateFR(b.reventeDate)||'—'}${venteOk?' ✓':''}</td>
-        <td><select class="status-select ${cls}" style="font-size:10px" onchange="changerStatutBus(${b.id},this.value,this)">${opts}</select></td>
+        <td style="${getStatutCellStyle(b.statut)}"><select class="status-select ${cls}" style="font-size:10px" onchange="changerStatutBus(${b.id},this.value,this)">${opts}</select></td>
       </tr>`;
     }).join('') || '<tr><td colspan="34" style="color:var(--text3);text-align:center;padding:20px">Aucun bus</td></tr>';
   }
@@ -5303,6 +5296,17 @@ const AFF_STATUT_STYLES = {
   'ATELIER' : { bg:'rgba(100,100,100,0.2)',   color:'var(--text3)',  border:'1px solid var(--border)'        },
 };
 
+
+function getStatutCellStyle(statut) {
+  const s = statut || '';
+  if (s === 'En service' || s === 'Service') return 'color:var(--green);font-weight:700';
+  if (s === 'Réserve') return 'color:var(--yellow);font-weight:700';
+  if (['Indispo','ATELIER','En révision','Révision','CT','Révision puis CT','CT puis Révision'].includes(s)) return 'color:var(--red);font-weight:700';
+  if (s === 'Nouveau') return 'color:var(--accent);font-weight:700';
+  if (s === 'CT urgent') return 'color:var(--red);font-weight:700';
+  if (s === 'Rénovation') return 'color:var(--orange);font-weight:700';
+  return 'color:var(--text2)';
+}
 function getAffStatut(bus) {
   if (!bus) return 'Service';
   const s = bus.statut || 'En service';
@@ -6359,7 +6363,7 @@ function parsePanneLigne(ligne) {
   const parcM = afterEur.match(/([A-Z0-9]+-[A-Z0-9-]+)/);
   const nomParc = parcM ? parcM[1] : '';
 
-  return { id: Date.now() + Math.random()*1000|0, date: dateISO, motif, jours, prix, nomParc, statut: 'En attente' };
+  return { id: Date.now() + Math.random()*1000|0, date: dateISO, motif, jours, prix, nomParc, statut: 'Nouvelle' };
 }
 
 function parsePanneJeu(texte) {
@@ -6369,7 +6373,7 @@ function parsePanneJeu(texte) {
   // "* Temps de réparation : X jour(s)"
   // "* Prix de la réparation : PRIX €"
   // "Affectations reprises par ... n°NOM_REMPLACANT"
-  const result = { motif: '', jours: 0, prix: 0, nomParc: '', remplacant: '', statut: 'En attente' };
+  const result = { motif: '', jours: 0, prix: 0, nomParc: '', remplacant: '', statut: 'Nouvelle' };
 
   // Date du jour (pas fournie dans le texte)
   result.date = today();
@@ -6452,6 +6456,8 @@ function importerPannes() {
   saveStateWithSync();
   document.getElementById('panne-import-texte').value = '';
   renderPannes();
+  // Auto-générer le message forum pour les nouvelles pannes
+  genererMessageForum(nouvelles.map(p => p.id));
   const details = nouvelles.map(p => p.nomParc + (p.remplacant ? ' → ' + p.remplacant : '')).filter(Boolean).join(', ') || 'sans bus identifié';
   toastMsg(`✅ ${nouvelles.length} panne(s) importée(s)${erreurs.length ? ' · ' + erreurs.length + ' ignorée(s)' : ''}`, 'success');
   journalLog(`Import ${nouvelles.length} panne(s) : ${details}`, 'info');
@@ -6472,11 +6478,11 @@ function toggleAllPannes(checked) {
   document.querySelectorAll('.panne-check').forEach(cb => cb.checked = checked);
 }
 
-function genererMessageForum() {
-  const selected = [...document.querySelectorAll('.panne-check:checked')].map(cb => parseInt(cb.dataset.id));
+function genererMessageForum(forceIds = null) {
+  const selected = forceIds || [...document.querySelectorAll('.panne-check:checked')].map(cb => parseInt(cb.dataset.id));
   const pannes = selected.length
     ? (state.pannes || []).filter(p => selected.includes(p.id))
-    : (state.pannes || []).filter(p => p.statut === 'En attente');
+    : (state.pannes || []).filter(p => p.statut !== 'Demande faite');
 
   if (!pannes.length) {
     toastMsg('Sélectionnez au moins une panne (ou laissez vides pour prendre les "En attente")', 'error');
@@ -6506,6 +6512,22 @@ function copierMessageForum() {
   navigator.clipboard.writeText(ta.value).then(() => toastMsg('✅ Copié !', 'success'));
 }
 
+function faireDemandeAlliance() {
+  copierMessageForum();
+  // Marquer toutes les pannes concernées par le message comme "Demande faite"
+  const ta = document.getElementById('panne-forum-texte');
+  if (!ta?.value) return;
+  // Les pannes sélectionnées ou toutes les "Nouvelle"
+  const selected = [...document.querySelectorAll('.panne-check:checked')].map(cb => parseInt(cb.dataset.id));
+  const pannes = selected.length
+    ? (state.pannes || []).filter(p => selected.includes(p.id))
+    : (state.pannes || []).filter(p => p.statut !== 'Demande faite');
+  pannes.forEach(p => { p.statut = 'Demande faite'; });
+  saveStateWithSync();
+  renderPannes();
+  toastMsg(`✅ ${pannes.length} panne(s) marquée(s) "Demande faite"`, 'success');
+}
+
 function renderPannes() {
   // Sync radio bouton remplacement
   const remp = state.config?.panneRemplacement || 'Non';
@@ -6516,9 +6538,8 @@ function renderPannes() {
   const pannes = (state.pannes || []).filter(p => !filtre || p.statut === filtre);
 
   const statutColors = {
-    'En attente': 'var(--yellow)',
-    'En cours':   'var(--accent)',
-    'Réparé':     'var(--green)'
+    'Nouvelle':      'var(--yellow)',
+    'Demande faite': 'var(--green)',
   };
 
   if (!pannes.length) {
@@ -6542,9 +6563,8 @@ function renderPannes() {
       <td>
         <select onchange="setPanneStatut(${p.id},this.value)"
           style="background:transparent;border:1px solid ${couleur}33;border-radius:4px;color:${couleur};font-size:11px;padding:2px 6px;cursor:pointer">
-          <option value="En attente" ${p.statut==='En attente'?'selected':''}>En attente</option>
-          <option value="À l'atelier" ${p.statut==="À l'atelier"?'selected':''}>À l'atelier</option>
-          <option value="Réparé"     ${p.statut==='Réparé'    ?'selected':''}>Réparé</option>
+          <option value="Nouvelle"      ${p.statut==='Nouvelle'     ?'selected':''}>Nouvelle</option>
+          <option value="Demande faite" ${p.statut==='Demande faite'?'selected':''}>Demande faite</option>
         </select>
       </td>
       <td>
@@ -11653,52 +11673,13 @@ function renderFrequentation() {
         return places < cible;
       });
     });
-    const placeholder = document.getElementById('freq-warning-banner-placeholder');
     if (sousExpl.length > 0) {
       banner.style.display = 'block';
-      if (placeholder) placeholder.style.display = 'none';
       bannerList.innerHTML = sousExpl.map(l =>
         `<span style="background:${l.couleur||'#888'};color:#fff;padding:1px 7px;border-radius:4px;margin-right:4px;font-weight:700">${l.num}</span>`
       ).join('');
     } else {
       banner.style.display = 'none';
-      if (placeholder) placeholder.style.display = 'block';
-    }
-  }
-
-  // ── Bannière lignes urbaines >30 min (niveau 4 uniquement) ──
-  const banner30 = document.getElementById('freq-30min-banner');
-  const list30   = document.getElementById('freq-30min-list');
-  if (banner30 && list30) {
-    const n = state.niveauJeu || 4;
-    if (n !== 4) {
-      banner30.style.display = 'none';
-    } else {
-      // Lignes urbaines uniquement (réseau != interurbain)
-      const lignesUrbaines = lignes.filter(l => l.reseau !== 'interurbain');
-      const over30 = lignesUrbaines.filter(ligne => {
-        const fv = freqData[ligne.num] || [];
-        const dureeAR = ligne.duree || 0;
-        if (!dureeAR) return false;
-        return allCreneaux.some(cid => {
-          const idx = freqIdxMap[cid];
-          if (idx === undefined) return false;
-          const cible = typeof fv[idx] === 'number' ? fv[idx] : 0;
-          if (cible <= 0) return false;
-          const buses = getBusAffectesLigne(ligne.num, cid);
-          if (!buses.length) return false;
-          const freq = Math.round(dureeAR / buses.length);
-          return freq > 30;
-        });
-      });
-      if (over30.length > 0) {
-        banner30.style.display = 'block';
-        list30.innerHTML = over30.map(l =>
-          `<span style="background:${l.couleur||'#888'};color:#fff;padding:1px 7px;border-radius:4px;margin-right:4px;font-weight:700">${l.num}</span>`
-        ).join('');
-      } else {
-        banner30.style.display = 'none';
-      }
     }
   }
 }
@@ -12125,6 +12106,11 @@ document.addEventListener('DOMContentLoaded', () => {
   mettreAJourEmprunts();
   updateMajBadges();
   purgerLignesExpirees();
+  // Migration anciens statuts pannes
+  (state.pannes || []).forEach(p => {
+    if (!p.statut || p.statut === 'En attente' || p.statut === 'En cours') p.statut = 'Nouvelle';
+    else if (p.statut === 'Réparé' || p.statut === "À l'atelier") p.statut = 'Demande faite';
+  });
   // Backup pour GitHub Pages où DOMContentLoaded peut être raté
   window.addEventListener('load', updateClock);
 
