@@ -855,7 +855,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.282</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.283</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -5496,7 +5496,7 @@ function renderAffectations() {
 
     busCat.forEach(b => {
       const creneaux = getAffCreneaux(b.nom);
-      const totalC   = AFF_CRENEAUX.filter(c => creneaux[c.id] && creneaux[c.id] !== '').length;
+      const totalC   = AFF_CRENEAUX.filter(c => { const v=(creneaux[c.id]||'').toLowerCase().trim(); return v && !['- ct -','- panne -','- atelier -','- révision -','- revision -','- indispo -','- rénovation -','- renovation -','- non immatricule -','- non immatriculé -'].includes(v); }).length;
 
       // Auto-statut si pas manuellement forcé
       const statutManuel = b.statut || '';
@@ -5611,7 +5611,7 @@ function saveAffCell(input, busNom, creneauId) {
   td.style.background = lignCol ? lignCol : '';
 
   const creneaux = getAffCreneaux(busNom);
-  const totalC   = AFF_CRENEAUX.filter(c => creneaux[c.id] && creneaux[c.id] !== '').length;
+  const totalC   = AFF_CRENEAUX.filter(c => { const v=(creneaux[c.id]||'').toLowerCase().trim(); return v && !['- ct -','- panne -','- atelier -','- révision -','- revision -','- indispo -','- rénovation -','- renovation -','- non immatricule -','- non immatriculé -'].includes(v); }).length;
   const row      = td.closest('tr'); // déclaré ici pour être accessible partout
 
   const b = state.bus.find(x => x.nom === busNom);
@@ -8846,7 +8846,7 @@ function renderPrepaCreneaux() {
 
     busCat.forEach(b => {
       const creneaux = getPrepaAffCreneaux(b.nom);
-      const totalC   = AFF_CRENEAUX.filter(c => creneaux[c.id] && creneaux[c.id] !== '').length;
+      const totalC   = AFF_CRENEAUX.filter(c => { const v=(creneaux[c.id]||'').toLowerCase().trim(); return v && !['- ct -','- panne -','- atelier -','- révision -','- revision -','- indispo -','- rénovation -','- renovation -','- non immatricule -','- non immatriculé -'].includes(v); }).length;
       rows += `<tr>
         <td style="position:sticky;left:0;background:var(--surface);z-index:2;font-size:12px;border-right:2px solid var(--border);padding:4px 8px;white-space:nowrap;text-align:center"><b>${b.nom}</b></td>
         <td class="mono" style="position:sticky;left:130px;background:var(--surface);z-index:2;text-align:center;border-right:3px solid var(--border);font-size:12px">${b.capa||'—'}</td>
@@ -9405,7 +9405,7 @@ function renderEquilibre() {
     return true;
   }).map(b => {
     const creneaux = getAffCreneaux(b.nom);
-    const totalC   = AFF_CRENEAUX.filter(c => creneaux[c.id] && creneaux[c.id] !== '').length;
+    const totalC   = AFF_CRENEAUX.filter(c => { const v=(creneaux[c.id]||'').toLowerCase().trim(); return v && !['- ct -','- panne -','- atelier -','- révision -','- revision -','- indispo -','- rénovation -','- renovation -','- non immatricule -','- non immatriculé -'].includes(v); }).length;
     // Créneaux remplis par groupe
     const parGroupe = {};
     ['SEMAINE','SAMEDI','DIMANCHE'].forEach(g => {
