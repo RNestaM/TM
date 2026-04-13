@@ -852,7 +852,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.266</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.268</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -1122,24 +1122,24 @@
         <div class="card">
           <div class="card-body" style="padding:0;overflow-x:auto;overflow-y:auto;max-height:1000px">
             <table class="data-table" id="parc-table-full">
-              <thead style="position:sticky;top:0;z-index:2;background:var(--surface2)"><tr>
-                <th onclick="sortParcFull('id')" style="cursor:pointer;user-select:none">ID ↕</th>
-                <th onclick="sortParcFull('nom')" style="cursor:pointer;user-select:none">Numéro Parc ↕</th>
-                <th>Modèle</th><th>Type</th><th>Énergie</th><th>Conso</th>
+              <thead style="position:sticky;top:0;z-index:4;background:var(--surface2)"><tr>
+                <th onclick="sortParcFull('id')" style="cursor:pointer;user-select:none;position:sticky;left:0;z-index:5;background:var(--surface2);min-width:60px">ID ↕</th>
+                <th onclick="sortParcFull('nom')" style="cursor:pointer;user-select:none;position:sticky;left:60px;z-index:5;background:var(--surface2);min-width:130px;border-right:2px solid var(--border)">Numéro Parc ↕</th>
+                <th onclick="sortParcFull('modele')" style="cursor:pointer;user-select:none">Modèle ↕</th><th onclick="sortParcFull('type')" style="cursor:pointer;user-select:none">Type ↕</th><th onclick="sortParcFull('energie')" style="cursor:pointer;user-select:none">Énergie ↕</th><th onclick="sortParcFull('conso')" style="cursor:pointer;user-select:none">Conso ↕</th>
                 <th onclick="sortParcFull('capa')" style="cursor:pointer;user-select:none">Places ↕</th>
                 <th onclick="sortParcFull('km')" style="cursor:pointer;user-select:none">KM Actuel ↕</th>
-                <th>KM Départ</th>
+                <th onclick="sortParcFull('kmDepart')" style="cursor:pointer;user-select:none">KM Départ ↕</th>
                 <th onclick="sortParcFull('diffKm')" style="cursor:pointer;user-select:none">Diff KM ↕</th>
                 <th onclick="sortParcFull('ct')" style="cursor:pointer;user-select:none">CT ↕</th>
                 <th onclick="sortParcFull('rev')" style="cursor:pointer;user-select:none">Révision ↕</th>
                 <th onclick="sortParcFull('etatTech')" style="cursor:pointer;user-select:none">Tech ↕</th>
                 <th onclick="sortParcFull('etatInt')" style="cursor:pointer;user-select:none">Int. ↕</th>
-                <th>Balise</th><th>Self-S.</th><th>Btn Arrêt</th><th>Caméra</th>
-                <th>Pub Arr.</th><th>Pub Av.</th><th>Pub Lat.</th>
-                <th>Rack Bag.</th><th>Rack Vél.</th><th>Ethylo</th>
-                <th>Radio</th><th>USB</th><th>WiFi</th><th>Bandeau</th>
-                <th>Écran TFT</th><th>HP</th><th>Tél.</th><th>Pupitre</th><th>Billetique</th>
-                <th>Vente possible</th><th>Statut</th>
+                <th onclick="sortParcFull('balisePrio')" style="cursor:pointer;user-select:none">Balise ↕</th><th onclick="sortParcFull('selfService')" style="cursor:pointer;user-select:none">Self-S. ↕</th><th onclick="sortParcFull('boutonsArret')" style="cursor:pointer;user-select:none">Btn Arrêt ↕</th><th onclick="sortParcFull('camera')" style="cursor:pointer;user-select:none">Caméra ↕</th>
+                <th onclick="sortParcFull('pubArr')" style="cursor:pointer;user-select:none">Pub Arr. ↕</th><th onclick="sortParcFull('pubAv')" style="cursor:pointer;user-select:none">Pub Av. ↕</th><th onclick="sortParcFull('pubLat')" style="cursor:pointer;user-select:none">Pub Lat. ↕</th>
+                <th onclick="sortParcFull('rackBagages')" style="cursor:pointer;user-select:none">Rack Bag. ↕</th><th onclick="sortParcFull('rackVelos')" style="cursor:pointer;user-select:none">Rack Vél. ↕</th><th onclick="sortParcFull('ethylotest')" style="cursor:pointer;user-select:none">Ethylo ↕</th>
+                <th onclick="sortParcFull('radio')" style="cursor:pointer;user-select:none">Radio ↕</th><th onclick="sortParcFull('usb')" style="cursor:pointer;user-select:none">USB ↕</th><th onclick="sortParcFull('wifi')" style="cursor:pointer;user-select:none">WiFi ↕</th><th onclick="sortParcFull('bandeau')" style="cursor:pointer;user-select:none">Bandeau ↕</th>
+                <th onclick="sortParcFull('ecranTFT')" style="cursor:pointer;user-select:none">Écran TFT ↕</th><th onclick="sortParcFull('hautParleurs')" style="cursor:pointer;user-select:none">HP ↕</th><th onclick="sortParcFull('telephone')" style="cursor:pointer;user-select:none">Tél. ↕</th><th onclick="sortParcFull('pupitre')" style="cursor:pointer;user-select:none">Pupitre ↕</th><th onclick="sortParcFull('billetique')" style="cursor:pointer;user-select:none">Billetique ↕</th>
+                <th onclick="sortParcFull('reventeDate')" style="cursor:pointer;user-select:none">Vente possible ↕</th><th onclick="sortParcFull('statut')" style="cursor:pointer;user-select:none">Statut ↕</th>
               </tr></thead>
               <tbody id="parc-tbody-full"></tbody>
             </table>
@@ -4376,7 +4376,17 @@ function renderParc() {
   } else {
     const yn = v => v ? '<span style="color:var(--green)">✓</span>' : '<span style="color:var(--red);font-size:10px">✗</span>';
     // Sort for full view
-    const keyMap = { id:'idJeu', nom:'nom', capa:'capa', km:'km', diffKm:'diffKm', ct:'ct', rev:'revisionDate', etatTech:'etatTech', etatInt:'etatInt' };
+    const keyMap = {
+      id:'idJeu', nom:'nom', modele:'modele', type:'type', energie:'energie', conso:'conso',
+      capa:'capa', km:'km', kmDepart:'kmDepart', diffKm:'diffKm', ct:'ct', rev:'revisionDate',
+      etatTech:'etatTech', etatInt:'etatInt',
+      balisePrio:'balisePrio', selfService:'selfService', boutonsArret:'boutonsArret', camera:'camera',
+      pubArr:'pubArr', pubAv:'pubAv', pubLat:'pubLat',
+      rackBagages:'rackBagages', rackVelos:'rackVelos', ethylotest:'ethylotest',
+      radio:'radio', usb:'usb', wifi:'wifi', bandeau:'bandeau',
+      ecranTFT:'ecranTFT', hautParleurs:'hautParleurs', telephone:'telephone', pupitre:'pupitre', billetique:'billetique',
+      reventeDate:'reventeDate', statut:'statut'
+    };
     const sk = keyMap[parcFullSortKey] || 'nom';
     filtered = [...filtered].sort((a,b) => {
       let va = a[sk] ?? '', vb = b[sk] ?? '';
@@ -4390,8 +4400,8 @@ function renderParc() {
       const opts = statusOptions.map(s => `<option value="${s}"${b.statut===s?' selected':''}>${s}</option>`).join('');
       const venteOk = b.reventeDate && new Date(b.reventeDate) <= new Date();
       return `<tr>
-        <td class="id-num">${b.idJeu||'—'}</td>
-        <td style="font-size:11px"><b>${b.nom}</b></td>
+        <td class="id-num" style="position:sticky;left:0;z-index:2;background:var(--surface)">${b.idJeu||'—'}</td>
+        <td style="font-size:11px;position:sticky;left:60px;z-index:2;background:var(--surface);border-right:2px solid var(--border)"><b>${b.nom}</b></td>
         <td style="font-size:10px;color:var(--text2)">${b.marque||''} ${b.modele||''}</td>
         <td>${getTypeBadge(b.type)}</td>
         <td style="font-size:11px">${b.energie||'—'}</td>
