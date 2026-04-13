@@ -855,7 +855,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.280</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.281</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -9394,7 +9394,15 @@ function renderEquilibre() {
   // Construire la liste des bus actifs (non Indispo) avec leur totalC et capa
   const busActifs = (state.bus || []).filter(b => {
     const s = getAffStatut(b);
-    return s !== 'Indispo';
+    if (s === 'Indispo') return false;
+    // Exclure 00- en Réserve
+    if (b.nom.startsWith('00-') && s === 'Réserve') return false;
+    // Exclure bus dont tous les créneaux sont indispo (- NON IMMATRICULE -, - ATELIER -, etc.)
+    const creneaux = getAffCreneaux(b.nom);
+    const INDISPO_VALS = ['- ct -','- panne -','- atelier -','- révision -','- revision -','- indispo -','- rénovation -','- renovation -','- non immatricule -','- non immatriculé -'];
+    const allIndispo = AFF_CRENEAUX.every(c => INDISPO_VALS.includes((creneaux[c.id]||'').toLowerCase().trim()));
+    if (allIndispo && AFF_CRENEAUX.length > 0) return false;
+    return true;
   }).map(b => {
     const creneaux = getAffCreneaux(b.nom);
     const totalC   = AFF_CRENEAUX.filter(c => creneaux[c.id] && creneaux[c.id] !== '').length;
@@ -9409,7 +9417,10 @@ function renderEquilibre() {
       libresGroupe[g] = AFF_CRENEAUX.filter(c => c.groupe === g && (!creneaux[c.id] || creneaux[c.id] === '')).map(c => c);
     });
     const capa = b.capa || 0;
-    return { nom: b.nom, totalC, capa, parGroupe, libresGroupe, creneaux };
+    // Sous-type : extrait -B-, -E-, ou '' selon le nom
+    const sousTypeMatch = b.nom.match(/^[A-Z]+-([BE])-/);
+    const sousType = sousTypeMatch ? sousTypeMatch[1] : '';
+    return { nom: b.nom, totalC, capa, parGroupe, libresGroupe, creneaux, sousType };
   });
 
   if (!busActifs.length) {
@@ -9428,6 +9439,8 @@ function renderEquilibre() {
       const catA = getAffCategorie(a.nom).label;
       const catB = getAffCategorie(b.nom).label;
       if (catA !== catB) continue;
+      // Même sous-type (-B- reste avec -B-, -E- avec -E-, autres avec autres)
+      if (a.sousType !== b.sousType) continue;
       // Capa compatible ±tol
       const capaMax = Math.max(a.capa, b.capa);
       const capaMin = Math.min(a.capa, b.capa);
