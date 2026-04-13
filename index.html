@@ -852,7 +852,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.275</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.276</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -12174,49 +12174,66 @@ let _realtimeWs = null;
 let _realtimeLastUpdate = null; // timestamp de la dernière mise à jour reçue
 
 function initRealtime() {
-  // Supabase Realtime via WebSocket natif (pas besoin du SDK)
   const projectId = SUPA_URL.replace('https://','').replace('.supabase.co','');
+  // vsn=1.0.0 pour le protocole Phoenix v1 (compatible Supabase Realtime)
   const wsUrl = `wss://${projectId}.supabase.co/realtime/v1/websocket?apikey=${SUPA_KEY}&vsn=1.0.0`;
+  let ref = 1;
 
   function connect() {
-    try {
-      _realtimeWs = new WebSocket(wsUrl);
-    } catch(e) { return; }
+    try { _realtimeWs = new WebSocket(wsUrl); } catch(e) { return; }
 
     _realtimeWs.onopen = () => {
-      // Rejoindre le canal de la table tm_storage
+      // S'abonner aux postgres_changes sur tm_storage
       _realtimeWs.send(JSON.stringify({
         topic: 'realtime:public:tm_storage',
         event: 'phx_join',
-        payload: { config: { broadcast: { self: false }, presence: { key: '' } } },
-        ref: '1'
+        payload: {
+          config: {
+            postgres_changes: [
+              { event: '*', schema: 'public', table: 'tm_storage' }
+            ]
+          }
+        },
+        ref: String(ref++)
       }));
+      console.log('[realtime] connecté, abonnement envoyé');
     };
 
     _realtimeWs.onmessage = (evt) => {
       try {
         const msg = JSON.parse(evt.data);
-        // Heartbeat
-        if (msg.event === 'heartbeat') {
-          _realtimeWs.send(JSON.stringify({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: null }));
+        console.log('[realtime] msg:', msg.event, msg.topic);
+
+        // Répondre au heartbeat
+        if (msg.topic === 'phoenix' && msg.event === 'heartbeat') {
+          _realtimeWs.send(JSON.stringify({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(ref++) }));
           return;
         }
-        // Changement dans tm_storage
-        if (msg.event === 'postgres_changes' || msg.event === 'INSERT' || msg.event === 'UPDATE') {
+        // Confirmation d'abonnement
+        if (msg.event === 'phx_reply' && msg.payload?.status === 'ok') {
+          console.log('[realtime] abonnement confirmé');
+          return;
+        }
+        // Changement postgres
+        if (msg.event === 'postgres_changes' || (msg.payload?.data?.type && ['INSERT','UPDATE','DELETE'].includes(msg.payload.data.type))) {
           const now = Date.now();
-          // Ignorer si c'est nous qui venons de pousser (debounce 4s)
-          if (_realtimeLastUpdate && now - _realtimeLastUpdate < 4000) return;
+          if (_realtimeLastUpdate && now - _realtimeLastUpdate < 4000) {
+            console.log('[realtime] ignoré (push local récent)');
+            return;
+          }
+          console.log('[realtime] changement détecté → rechargement');
           onRemoteChange();
         }
-      } catch(e) {}
+      } catch(e) { console.warn('[realtime] parse error', e); }
     };
 
-    _realtimeWs.onclose = () => {
-      // Reconnexion automatique après 5s
+    _realtimeWs.onclose = (e) => {
+      console.log('[realtime] déconnecté, reconnexion dans 5s', e.code);
       setTimeout(connect, 5000);
     };
 
-    _realtimeWs.onerror = () => {
+    _realtimeWs.onerror = (e) => {
+      console.warn('[realtime] erreur WS', e);
       _realtimeWs.close();
     };
   }
