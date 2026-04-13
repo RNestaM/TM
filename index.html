@@ -855,7 +855,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.281</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.282</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -2321,7 +2321,7 @@
         <div class="card-header">
           <div class="card-title">⚖️ Equilibre des affectations</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <label style="font-size:12px;color:var(--text3)">Écart min :</label>
+            <label style="font-size:12px;color:var(--text3)">Tolérance écart :</label>
             <input type="number" id="equil-seuil" value="2" min="1" max="10"
               style="width:52px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:13px;padding:3px 6px;text-align:center"
               oninput="renderEquilibre()">
@@ -9428,37 +9428,73 @@ function renderEquilibre() {
     return;
   }
 
-  // Trouver les paires déséquilibrées de même type (même préfixe catégorie) et capa ±tol%
+  // Grouper les bus par (catégorie + sous-type + capa compatible)
+  // puis calculer la moyenne par groupe et signaler les écarts
+  const groupesMap = {};
+  busActifs.forEach(b => {
+    const cat = getAffCategorie(b.nom).label;
+    const key = `${cat}||${b.sousType}`;
+    if (!groupesMap[key]) groupesMap[key] = [];
+    groupesMap[key].push(b);
+  });
+
+  // Pour chaque groupe, filtrer capa compatible (±tol autour de la médiane capa du groupe)
   const paires = [];
-  for (let i = 0; i < busActifs.length; i++) {
-    for (let j = i + 1; j < busActifs.length; j++) {
-      const a = busActifs[i], b = busActifs[j];
-      const diff = Math.abs(a.totalC - b.totalC);
-      if (diff < seuil) continue;
-      // Même catégorie
-      const catA = getAffCategorie(a.nom).label;
-      const catB = getAffCategorie(b.nom).label;
-      if (catA !== catB) continue;
-      // Même sous-type (-B- reste avec -B-, -E- avec -E-, autres avec autres)
-      if (a.sousType !== b.sousType) continue;
-      // Capa compatible ±tol
-      const capaMax = Math.max(a.capa, b.capa);
-      const capaMin = Math.min(a.capa, b.capa);
-      if (capaMax > 0 && capaMin > 0 && (capaMax - capaMin) / capaMax > tol) continue;
-      const lourd = a.totalC > b.totalC ? a : b;
-      const leger = a.totalC > b.totalC ? b : a;
-      const cible  = Math.round((lourd.totalC + leger.totalC) / 2);
-      const donner = lourd.totalC - cible;
-      paires.push({ lourd, leger, diff, cible, donner });
-    }
-  }
+  Object.values(groupesMap).forEach(groupe => {
+    if (groupe.length < 2) return;
+    // Capa médiane du groupe
+    const capas = groupe.map(b => b.capa).filter(c => c > 0).sort((a,b) => a-b);
+    const medCapa = capas.length ? capas[Math.floor(capas.length/2)] : 0;
+    // Sous-groupes par capa compatible
+    const sousGroupes = {};
+    groupe.forEach(b => {
+      const c = b.capa || 0;
+      // Chercher un sousGroupe existant compatible
+      let found = null;
+      for (const k of Object.keys(sousGroupes)) {
+        const ref = parseFloat(k);
+        if (ref === 0 || c === 0 || Math.abs(c - ref) / Math.max(c, ref) <= tol) { found = k; break; }
+      }
+      const key2 = found || String(c);
+      if (!sousGroupes[key2]) sousGroupes[key2] = [];
+      sousGroupes[key2].push(b);
+    });
 
-  // Trier par déséquilibre décroissant
-  paires.sort((a, b) => b.diff - a.diff);
+    Object.values(sousGroupes).forEach(sg => {
+      if (sg.length < 2) return;
+      // Moyenne totalC du sous-groupe
+      const moy = sg.reduce((s, b) => s + b.totalC, 0) / sg.length;
+      const moyArrondie = Math.round(moy);
+      // Bus au-dessus de la moyenne + seuil → trop chargés
+      const surcharges = sg.filter(b => b.totalC > moy + seuil - 1).sort((a,b) => b.totalC - a.totalC);
+      // Bus en dessous de la moyenne → trop légers
+      const sousCharges = sg.filter(b => b.totalC < moy - seuil + 1).sort((a,b) => a.totalC - b.totalC);
+      if (!surcharges.length || !sousCharges.length) return;
 
-  if (!paires.length) {
+      // Apparier chaque surchargé avec le plus léger compatible
+      surcharges.forEach(lourd => {
+        const leger = sousCharges[0]; // le plus sous-chargé
+        const cible = Math.round((lourd.totalC + leger.totalC) / 2);
+        const donner = lourd.totalC - cible;
+        if (donner <= 0) return;
+        paires.push({ lourd, leger, diff: lourd.totalC - leger.totalC, cible, donner, moy: Math.round(moy * 10) / 10 });
+      });
+    });
+  });
+
+  // Dédupliquer (un bus peut apparaître dans plusieurs paires) — garder les plus gros écarts
+  const dejaSeen = new Set();
+  const pairesFiltered = paires.filter(p => {
+    const k = `${p.lourd.nom}|${p.leger.nom}`;
+    if (dejaSeen.has(p.lourd.nom) || dejaSeen.has(p.leger.nom)) return false;
+    dejaSeen.add(p.lourd.nom); dejaSeen.add(p.leger.nom);
+    return true;
+  });
+  pairesFiltered.sort((a, b) => b.diff - a.diff);
+
+  if (!pairesFiltered.length) {
     el.innerHTML = `<div class="card"><div class="card-body" style="text-align:center;color:var(--green);padding:32px;font-weight:700">
-      ✅ Aucun déséquilibre détecté (écart min ${seuil} créneaux, tolérance places ${Math.round(tol*100)}%)
+      ✅ Toutes les affectations sont équilibrées (écart toléré : ${seuil - 1} créneau${seuil>2?'x':''} autour de la moyenne)
     </div></div>`;
     return;
   }
@@ -9495,7 +9531,7 @@ function renderEquilibre() {
 
   let html = `<div style="display:flex;flex-direction:column;gap:12px">`;
 
-  paires.forEach(({ lourd, leger, diff, cible, donner }) => {
+  pairesFiltered.forEach(({ lourd, leger, diff, cible, donner, moy }) => {
     const suggestions = suggererCreneaux(lourd, donner);
     const suggHtml = suggestions.map(c => {
       const val = lourd.creneaux[c.id] || '';
@@ -9530,7 +9566,7 @@ function renderEquilibre() {
           <div style="text-align:center;flex-shrink:0">
             <div style="font-size:22px;color:var(--accent)">→</div>
             <div style="font-size:10px;color:var(--text3);margin-top:2px">donne <b style="color:var(--accent)">${donner}</b> créneau${donner>1?'x':''}</div>
-            <div style="font-size:10px;color:var(--text3)">équilibre à <b style="color:var(--text)">${cible}</b></div>
+            <div style="font-size:10px;color:var(--text3)">cible <b style="color:var(--text)">${cible}</b> <span style="opacity:.6">(moy ${moy})</span></div>
           </div>
 
           <!-- Bus sous-chargé -->
