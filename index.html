@@ -852,7 +852,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.272</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.273</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -2270,10 +2270,12 @@
           <div class="card-title">📋 Aide à l'affectation — Quel bus sur quelle ligne ?</div>
           <div style="display:flex;gap:8px;align-items:center">
             <label style="font-size:12px;color:var(--text3)">Ligne :</label>
+            <button onclick="naviguerAideAff(-1)" style="background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:3px 10px;font-size:16px;cursor:pointer;line-height:1" title="Ligne précédente">◀</button>
             <select id="aide-aff-ligne" onchange="renderAideAffectation()"
               style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 10px;font-size:13px;font-weight:700">
               <option value="">— Choisir une ligne —</option>
             </select>
+            <button onclick="naviguerAideAff(+1)" style="background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:3px 10px;font-size:16px;cursor:pointer;line-height:1" title="Ligne suivante">▶</button>
             <label style="font-size:12px;color:var(--text3);margin-left:8px">Période :</label>
             <select id="aide-aff-periode" onchange="renderAideAffectation()"
               style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 10px;font-size:12px">
@@ -2608,10 +2610,12 @@
           <div class="card-title">📋 Quel bus sur quelle ligne ? (Prépa Niveau <span id="prepa-aide-niveau"></span>)</div>
           <div style="display:flex;gap:8px;align-items:center">
             <label style="font-size:12px;color:var(--text3)">Ligne :</label>
+            <button onclick="naviguerPrepaAide(-1)" style="background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:3px 10px;font-size:16px;cursor:pointer;line-height:1" title="Ligne précédente">◀</button>
             <select id="prepa-aide-ligne" onchange="renderPrepaAideAff()"
               style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 10px;font-size:13px;font-weight:700">
               <option value="">— Choisir une ligne —</option>
             </select>
+            <button onclick="naviguerPrepaAide(+1)" style="background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:3px 10px;font-size:16px;cursor:pointer;line-height:1" title="Ligne suivante">▶</button>
           </div>
         </div>
       </div>
@@ -9326,6 +9330,28 @@ function initAideAffectation() {
     .filter(l => l.num && l.num !== '');
   sel.innerHTML = '<option value="">— Choisir une ligne —</option>' +
     lignes.map(l => `<option value="${l.num}" ${l.num===val?'selected':''}>${l.num}</option>`).join('');
+}
+
+function naviguerAideAff(delta) {
+  const sel = document.getElementById('aide-aff-ligne');
+  if (!sel || sel.options.length <= 1) return;
+  const cur = sel.selectedIndex;
+  const next = cur + delta;
+  if (next >= 1 && next < sel.options.length) {
+    sel.selectedIndex = next;
+    renderAideAffectation();
+  }
+}
+
+function naviguerPrepaAide(delta) {
+  const sel = document.getElementById('prepa-aide-ligne');
+  if (!sel || sel.options.length <= 1) return;
+  const cur = sel.selectedIndex;
+  const next = cur + delta;
+  if (next >= 1 && next < sel.options.length) {
+    sel.selectedIndex = next;
+    renderPrepaAideAff();
+  }
 }
 
 function renderAideAffectation() {
