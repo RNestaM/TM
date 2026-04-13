@@ -792,6 +792,9 @@
       <div class="nav-item" data-page="aide-planning" onclick="nav(this)">
         <span class="icon">🗓️</span> Aide planning
       </div>
+      <div class="nav-item" data-page="equilibre-affectation" onclick="nav(this)">
+        <span class="icon">⚖️</span> Equilibre affectation
+      </div>
     </div>
 
   </div>
@@ -852,7 +855,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.279</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.280</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -2312,6 +2315,28 @@
       <div id="planning-result"></div>
     </div>
 
+    <!-- Equilibre Affectation -->
+    <div id="page-equilibre-affectation" class="page">
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-header">
+          <div class="card-title">⚖️ Equilibre des affectations</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <label style="font-size:12px;color:var(--text3)">Écart min :</label>
+            <input type="number" id="equil-seuil" value="2" min="1" max="10"
+              style="width:52px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:13px;padding:3px 6px;text-align:center"
+              oninput="renderEquilibre()">
+            <label style="font-size:12px;color:var(--text3);margin-left:8px">Tolérance places :</label>
+            <input type="number" id="equil-tol" value="10" min="0" max="50"
+              style="width:52px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:13px;padding:3px 6px;text-align:center"
+              oninput="renderEquilibre()">
+            <span style="font-size:12px;color:var(--text3)">%</span>
+            <button class="btn btn-primary btn-sm" onclick="renderEquilibre()" style="margin-left:8px">🔄 Recalculer</button>
+          </div>
+        </div>
+      </div>
+      <div id="equil-result"></div>
+    </div>
+
     <!-- ═══════════════════════════════════════════ CONFIG ═══ -->
 
     <!-- ═══════════════════════ CFG — JEU ═══ -->
@@ -3545,7 +3570,7 @@ function renderPage(page) {
   const r = { dashboard: renderDashboard, alertes: renderAlertes, parc: () => { renderParc(); renderRepartitionParc(); },
     affectations: renderAffectations, frequentation: renderFrequentation, maintenance: renderMaintenance, abribus: renderAbribus, panne: renderPannes, renovation: renderRenovation,
     personnel: renderPersonnel, lignes: renderLignes, compta: renderCompta, bilan: renderBilan,
-    pub: renderPub, achats: renderAchats, vente: renderVente, gasoil: renderGasoil, tourisme: renderTourisme, 'aide-affectation': () => { initAideAffectation(); renderAideAffectation(); }, 'aide-planning': () => {}, config: renderConfig, pubdispo: renderPubDispo, historique: renderHistoriqueBase };
+    pub: renderPub, achats: renderAchats, vente: renderVente, gasoil: renderGasoil, tourisme: renderTourisme, 'aide-affectation': () => { initAideAffectation(); renderAideAffectation(); }, 'aide-planning': () => {}, 'equilibre-affectation': renderEquilibre, config: renderConfig, pubdispo: renderPubDispo, historique: renderHistoriqueBase };
   if (r[page]) r[page]();
 }
 
@@ -9356,6 +9381,174 @@ function naviguerPrepaAide(delta) {
     sel.selectedIndex = next;
     renderPrepaAideAff();
   }
+}
+
+// ══ EQUILIBRE AFFECTATION ════════════════════════════════════════
+function renderEquilibre() {
+  const el = document.getElementById('equil-result');
+  if (!el) return;
+
+  const seuil = parseInt(document.getElementById('equil-seuil')?.value || '2');
+  const tol   = parseInt(document.getElementById('equil-tol')?.value  || '10') / 100;
+
+  // Construire la liste des bus actifs (non Indispo) avec leur totalC et capa
+  const busActifs = (state.bus || []).filter(b => {
+    const s = getAffStatut(b);
+    return s !== 'Indispo';
+  }).map(b => {
+    const creneaux = getAffCreneaux(b.nom);
+    const totalC   = AFF_CRENEAUX.filter(c => creneaux[c.id] && creneaux[c.id] !== '').length;
+    // Créneaux remplis par groupe
+    const parGroupe = {};
+    ['SEMAINE','SAMEDI','DIMANCHE'].forEach(g => {
+      parGroupe[g] = AFF_CRENEAUX.filter(c => c.groupe === g && creneaux[c.id] && creneaux[c.id] !== '').length;
+    });
+    // Créneaux libres par groupe
+    const libresGroupe = {};
+    ['SEMAINE','SAMEDI','DIMANCHE'].forEach(g => {
+      libresGroupe[g] = AFF_CRENEAUX.filter(c => c.groupe === g && (!creneaux[c.id] || creneaux[c.id] === '')).map(c => c);
+    });
+    const capa = b.capa || 0;
+    return { nom: b.nom, totalC, capa, parGroupe, libresGroupe, creneaux };
+  });
+
+  if (!busActifs.length) {
+    el.innerHTML = '<div style="color:var(--text3);padding:24px;text-align:center">Aucun bus actif trouvé.</div>';
+    return;
+  }
+
+  // Trouver les paires déséquilibrées de même type (même préfixe catégorie) et capa ±tol%
+  const paires = [];
+  for (let i = 0; i < busActifs.length; i++) {
+    for (let j = i + 1; j < busActifs.length; j++) {
+      const a = busActifs[i], b = busActifs[j];
+      const diff = Math.abs(a.totalC - b.totalC);
+      if (diff < seuil) continue;
+      // Même catégorie
+      const catA = getAffCategorie(a.nom).label;
+      const catB = getAffCategorie(b.nom).label;
+      if (catA !== catB) continue;
+      // Capa compatible ±tol
+      const capaMax = Math.max(a.capa, b.capa);
+      const capaMin = Math.min(a.capa, b.capa);
+      if (capaMax > 0 && capaMin > 0 && (capaMax - capaMin) / capaMax > tol) continue;
+      const lourd = a.totalC > b.totalC ? a : b;
+      const leger = a.totalC > b.totalC ? b : a;
+      const cible  = Math.round((lourd.totalC + leger.totalC) / 2);
+      const donner = lourd.totalC - cible;
+      paires.push({ lourd, leger, diff, cible, donner });
+    }
+  }
+
+  // Trier par déséquilibre décroissant
+  paires.sort((a, b) => b.diff - a.diff);
+
+  if (!paires.length) {
+    el.innerHTML = `<div class="card"><div class="card-body" style="text-align:center;color:var(--green);padding:32px;font-weight:700">
+      ✅ Aucun déséquilibre détecté (écart min ${seuil} créneaux, tolérance places ${Math.round(tol*100)}%)
+    </div></div>`;
+    return;
+  }
+
+  // Générer les suggestions de créneaux à transférer (répartis sur tous les groupes)
+  function suggererCreneaux(lourd, donner) {
+    // Prend les créneaux occupés du lourd, en favorisant les groupes les plus chargés
+    // et en essayant de répartir sur sem/sam/dim
+    const creneauxOccupes = AFF_CRENEAUX.filter(c =>
+      lourd.creneaux[c.id] && lourd.creneaux[c.id] !== ''
+    );
+    // Trier : groupes les plus chargés en premier, puis alterner pour équilibrer
+    const groupeCharge = { SEMAINE: lourd.parGroupe['SEMAINE'], SAMEDI: lourd.parGroupe['SAMEDI'], DIMANCHE: lourd.parGroupe['DIMANCHE'] };
+    creneauxOccupes.sort((a, b) => (groupeCharge[b.groupe] || 0) - (groupeCharge[a.groupe] || 0));
+    // Prendre `donner` créneaux en alternant groupes si possible
+    const result = [];
+    const groupesPris = { SEMAINE:0, SAMEDI:0, DIMANCHE:0 };
+    // Passe 1 : un par groupe si possible
+    for (const g of ['SEMAINE','SAMEDI','DIMANCHE']) {
+      if (result.length >= donner) break;
+      const candidat = creneauxOccupes.find(c => c.groupe === g && !result.includes(c));
+      if (candidat) { result.push(candidat); groupesPris[g]++; }
+    }
+    // Passe 2 : compléter si besoin
+    for (const c of creneauxOccupes) {
+      if (result.length >= donner) break;
+      if (!result.includes(c)) result.push(c);
+    }
+    return result.slice(0, donner);
+  }
+
+  const groupeColors = { SEMAINE:'var(--accent)', SAMEDI:'#c084fc', DIMANCHE:'#34d399' };
+  const groupeBg    = { SEMAINE:'rgba(26,58,107,0.35)', SAMEDI:'rgba(59,26,107,0.35)', DIMANCHE:'rgba(26,74,59,0.35)' };
+
+  let html = `<div style="display:flex;flex-direction:column;gap:12px">`;
+
+  paires.forEach(({ lourd, leger, diff, cible, donner }) => {
+    const suggestions = suggererCreneaux(lourd, donner);
+    const suggHtml = suggestions.map(c => {
+      const val = lourd.creneaux[c.id] || '';
+      return `<span style="display:inline-flex;align-items:center;gap:4px;background:${groupeBg[c.groupe]};border:1px solid ${groupeColors[c.groupe]}55;border-radius:5px;padding:3px 8px;font-size:11px;font-weight:700">
+        <span style="color:${groupeColors[c.groupe]};font-size:10px">${c.groupe[0]}·${c.label}</span>
+        <span style="color:var(--text)">${val || '—'}</span>
+      </span>`;
+    }).join('');
+
+    // Barre visuelle totalC
+    const maxC = AFF_CRENEAUX.length;
+    const pctLourd = Math.round(lourd.totalC / maxC * 100);
+    const pctLeger = Math.round(leger.totalC / maxC * 100);
+    const pctCible = Math.round(cible / maxC * 100);
+
+    html += `<div class="card">
+      <div class="card-body" style="padding:14px 16px">
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:12px">
+          <!-- Bus surchargé -->
+          <div style="flex:1;min-width:160px">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">${lourd.nom}</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:6px">${lourd.capa} places · ${getAffCategorie(lourd.nom).label}</div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <div style="flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden">
+                <div style="width:${pctLourd}%;height:100%;background:var(--red);border-radius:4px;transition:.3s"></div>
+              </div>
+              <span style="font-size:13px;font-weight:700;color:var(--red);min-width:20px">${lourd.totalC}</span>
+            </div>
+          </div>
+
+          <!-- Flèche + infos transfert -->
+          <div style="text-align:center;flex-shrink:0">
+            <div style="font-size:22px;color:var(--accent)">→</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:2px">donne <b style="color:var(--accent)">${donner}</b> créneau${donner>1?'x':''}</div>
+            <div style="font-size:10px;color:var(--text3)">équilibre à <b style="color:var(--text)">${cible}</b></div>
+          </div>
+
+          <!-- Bus sous-chargé -->
+          <div style="flex:1;min-width:160px">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">${leger.nom}</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:6px">${leger.capa} places · ${getAffCategorie(leger.nom).label}</div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <div style="flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden">
+                <div style="width:${pctLeger}%;height:100%;background:var(--yellow);border-radius:4px;transition:.3s"></div>
+              </div>
+              <span style="font-size:13px;font-weight:700;color:var(--yellow);min-width:20px">${leger.totalC}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Créneaux suggérés -->
+        <div style="border-top:1px solid var(--border);padding-top:10px">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:6px;font-weight:600">📌 Créneaux suggérés à transférer :</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">${suggHtml || '<span style="color:var(--text3);font-size:11px">—</span>'}</div>
+          <div style="margin-top:8px;font-size:10px;color:var(--text3)">
+            Répartition ${lourd.nom} : SEM ${lourd.parGroupe['SEMAINE']} · SAM ${lourd.parGroupe['SAMEDI']} · DIM ${lourd.parGroupe['DIMANCHE']}
+            &nbsp;|&nbsp;
+            Répartition ${leger.nom} : SEM ${leger.parGroupe['SEMAINE']} · SAM ${leger.parGroupe['SAMEDI']} · DIM ${leger.parGroupe['DIMANCHE']}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  html += `</div>`;
+  el.innerHTML = html;
 }
 
 function renderAideAffectation() {
