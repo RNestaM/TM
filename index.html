@@ -855,7 +855,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.283</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.284</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -1275,7 +1275,7 @@
           <div class="card-title">Données abribus <span id="abribus-count" class="badge badge-blue" style="margin-left:8px">0</span></div>
           <button class="btn btn-danger btn-sm" onclick="clearAbribus()">Effacer</button>
         </div>
-        <div class="card-body" style="padding:0">
+        <div class="card-body" style="padding:0;overflow-y:auto;max-height:220px">
           <table class="data-table">
             <thead><tr>
               <th onclick="sortAbribus('num')" class="sortable">N° Abribus <span class="sort-icon" data-col="num">↕</span></th>
@@ -1283,6 +1283,25 @@
               <th onclick="sortAbribus('pct2')" class="sortable">Propreté <span class="sort-icon" data-col="pct2">↕</span></th>
             </tr></thead>
             <tbody id="abribus-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <div class="card-header">
+          <div class="card-title">🔧 Conseil travaux</div>
+          <span style="font-size:11px;color:var(--text3)" id="conseil-count"></span>
+        </div>
+        <div class="card-body" style="padding:0;overflow-y:auto;max-height:calc(95vh - 480px)">
+          <table class="data-table">
+            <thead><tr>
+              <th onclick="sortConseil('num')" class="sortable">N° <span class="sort-icon" data-col-c="num">↕</span></th>
+              <th onclick="sortConseil('nbArrets')" class="sortable">Arrêts <span class="sort-icon" data-col-c="nbArrets">↕</span></th>
+              <th onclick="sortConseil('nbOptions')" class="sortable">Options <span class="sort-icon" data-col-c="nbOptions">↕</span></th>
+              <th onclick="sortConseil('pct1')" class="sortable">Usure <span class="sort-icon" data-col-c="pct1">↕</span></th>
+              <th onclick="sortConseil('pct2')" class="sortable">Propreté <span class="sort-icon" data-col-c="pct2">↕</span></th>
+            </tr></thead>
+            <tbody id="conseil-tbody"></tbody>
           </table>
         </div>
       </div>
@@ -6188,10 +6207,11 @@ function renderAbribus() {
   };
 
   tbody.innerHTML = sorted.map(a => `<tr>
-    <td class="mono"><b>#${a.num}</b></td>
+    <td class="mono"><b>${a.num}</b></td>
     <td class="mono" style="${pctColor(a.pct1)}">${a.pct1}</td>
     <td class="mono" style="${pctColor(a.pct2)}">${a.pct2}</td>
   </tr>`).join('') || '<tr><td colspan="3" style="color:var(--text3);text-align:center;padding:16px">Aucune donnée importée</td></tr>';
+  renderConseil();
 }
 
 function importerAbribus() {
@@ -6200,6 +6220,10 @@ function importerAbribus() {
   const lines = texte.replace(/\r/g, '\n').replace(/\u00A0/g, ' ').split('\n');
   const resultats = [];
   const seen = new Set();
+
+  // Noms d'options reconnus dans le texte du jeu
+  const OPTIONS_NOMS = ['installation classique', 'écran d\'information', 'écran d\'info', 'écran tactile', 'borne de recharge', 'panneau solaire', 'éclairage led', 'eclairage led', 'wifi', 'sonorisation', 'caméra', 'camera', 'poubelle', 'vélo', 'velo'];
+
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     if (line.indexOf('<>') !== -1) {
@@ -6213,25 +6237,98 @@ function importerAbribus() {
       if (!numero || seen.has(numero)) continue;
       seen.add(numero);
       const pcts = [];
+      let nbArrets = null;
+      let nbOptions = null;
+
       for (let k = i+1; k < lines.length && pcts.length < 2; k++) {
+        const lk = lines[k].trim().toLowerCase();
         const f = lines[k].match(/(\d{1,3})\s*%/);
         if (f) pcts.push(f[0].replace(/\s*/g,''));
+
+        // Nb arrêts : "X arrêt(s)" ou "arrêts : X"
+        if (nbArrets === null) {
+          const mArr = lk.match(/(\d+)\s*arr[eê]t/) || lk.match(/arr[eê]ts?\s*[:\-]\s*(\d+)/);
+          if (mArr) nbArrets = parseInt(mArr[1]);
+        }
+        // Aucune installation
+        if (nbOptions === null && lk.includes('aucune installation')) nbOptions = 0;
+        // Compter les options listées
+        if (nbOptions === null) {
+          const count = OPTIONS_NOMS.filter(o => lk.includes(o)).length;
+          if (count > 0) nbOptions = (nbOptions || 0) + count;
+        }
       }
-      if (pcts.length >= 2) resultats.push({ num: numero, pct1: pcts[0], pct2: pcts[1] });
+      if (pcts.length >= 2) resultats.push({
+        num: numero,
+        pct1: pcts[0],
+        pct2: pcts[1],
+        nbArrets: nbArrets !== null ? nbArrets : null,
+        nbOptions: nbOptions !== null ? nbOptions : null
+      });
     }
   }
   if (!resultats.length) { toastMsg('Aucune donnée trouvée. Vérifie le format.', 'error'); return; }
   state.abribus = resultats;
 
-  // Résumé
-  const moy1 = Math.round(resultats.reduce((s,r)=>s+parseInt(r.pct1),0)/resultats.length);
-  const moy2 = Math.round(resultats.reduce((s,r)=>s+parseInt(r.pct2),0)/resultats.length);
-  // Affichage résumé dans le rendu abribus (via renderAbribus)
   journalLog(`${resultats.length} abribus importés`, 'ok');
   saveStateWithSync(); renderAbribus();
   toastMsg(`${resultats.length} abribus importés ✓`, 'success');
 }
 function clearAbribus() { pushUndo('Effacement abribus'); state.abribus = []; saveStateWithSync(); renderAbribus(); }
+
+let conseilSortCol = 'nbOptions', conseilSortDir = 'asc';
+function sortConseil(col) {
+  if (conseilSortCol === col) conseilSortDir = conseilSortDir === 'asc' ? 'desc' : 'asc';
+  else { conseilSortCol = col; conseilSortDir = 'asc'; }
+  document.querySelectorAll('#page-abribus .sort-icon[data-col-c]').forEach(el => el.textContent = '↕');
+  const icon = document.querySelector(`#page-abribus .sort-icon[data-col-c="${col}"]`);
+  if (icon) icon.textContent = conseilSortDir === 'asc' ? '↑' : '↓';
+  renderConseil();
+}
+
+function renderConseil() {
+  const tbody  = document.getElementById('conseil-tbody');
+  const badge  = document.getElementById('conseil-count');
+  if (!tbody) return;
+  const MAX_OPTIONS = 7;
+  const pctColor = v => {
+    const n = parseInt(v);
+    if (n >= 90) return 'color:var(--green)';
+    if (n >= 70) return 'color:var(--yellow)';
+    return 'color:var(--red);font-weight:700';
+  };
+  // Filtrer : exclure les abribus déjà à 7 options (max)
+  const data = (state.abribus || []).filter(a => {
+    const opts = a.nbOptions !== null && a.nbOptions !== undefined ? a.nbOptions : null;
+    return opts === null || opts < MAX_OPTIONS;
+  });
+  if (badge) badge.textContent = data.length + (state.abribus?.length ? ` / ${state.abribus.length}` : '');
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="color:var(--text3);text-align:center;padding:16px">Aucune donnée ou tous les abribus sont au maximum</td></tr>';
+    return;
+  }
+  const sorted = [...data].sort((a, b) => {
+    let va, vb;
+    if (conseilSortCol === 'num') { va = parseInt(a.num); vb = parseInt(b.num); }
+    else if (conseilSortCol === 'nbArrets') { va = a.nbArrets ?? -1; vb = b.nbArrets ?? -1; }
+    else if (conseilSortCol === 'nbOptions') { va = a.nbOptions ?? -1; vb = b.nbOptions ?? -1; }
+    else if (conseilSortCol === 'pct1') { va = parseInt(a.pct1); vb = parseInt(b.pct1); }
+    else if (conseilSortCol === 'pct2') { va = parseInt(a.pct2); vb = parseInt(b.pct2); }
+    return conseilSortDir === 'asc' ? va - vb : vb - va;
+  });
+  tbody.innerHTML = sorted.map(a => {
+    const opts = a.nbOptions !== null && a.nbOptions !== undefined ? a.nbOptions : '—';
+    const arrs = a.nbArrets !== null && a.nbArrets !== undefined ? a.nbArrets : '—';
+    const optsColor = opts === 0 ? 'color:var(--red);font-weight:700' : opts === '—' ? 'color:var(--text3)' : 'color:var(--text)';
+    return `<tr>
+      <td class="mono"><b>${a.num}</b></td>
+      <td class="mono" style="${arrs === '—' ? 'color:var(--text3)' : ''}">${arrs}</td>
+      <td class="mono" style="${optsColor}">${opts}</td>
+      <td class="mono" style="${pctColor(a.pct1)}">${a.pct1}</td>
+      <td class="mono" style="${pctColor(a.pct2)}">${a.pct2}</td>
+    </tr>`;
+  }).join('');
+}
 
 // ═══════════════════════════════════════════════════════
 //  PERSONNEL / FCO
