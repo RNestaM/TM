@@ -878,7 +878,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.294</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.300</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -9410,11 +9410,11 @@ const PLAN_SCHEMAS_PLEIN = [
 ];
 
 const PLAN_SCHEMAS_PARTIEL = [
-  { c1:5, c2:9,    h:18, label:'Sam. Pointe', c2label:'Dim. Pointe'  },
-  { c1:5, c2:8,    h:17, label:'Sam. Pointe', c2label:'Dim. Creuse'  },
-  { c1:5, c2:10,   h:16, label:'Sam. Pointe', c2label:'Dim. Nuit'    },
-  { c1:7, c2:10,   h:12, label:'Sam. Nuit',   c2label:'Dim. Nuit'    },
-  { c1:5, c2:null, h:9,  label:'Sam. Pointe', c2label:'Aucune'       },
+  { c1:7, c2:10,   h:12, label:'Sam. Nuit',   c2label:'Dim. Nuit',   dispOrd:5 },
+  { c1:5, c2:9,    h:18, label:'Sam. Pointe', c2label:'Dim. Pointe', dispOrd:1 },
+  { c1:5, c2:8,    h:17, label:'Sam. Pointe', c2label:'Dim. Creuse', dispOrd:2 },
+  { c1:5, c2:10,   h:16, label:'Sam. Pointe', c2label:'Dim. Nuit',   dispOrd:3 },
+  { c1:5, c2:null, h:9,  label:'Sam. Pointe', c2label:'Aucune',      dispOrd:4 },
 ];
 
 function calculerPlanning() {
@@ -9430,8 +9430,8 @@ function calculerPlanning() {
 
   const Borig = vals.slice(0,11).map(Number);
 
-  function runGreedy(schemas) {
-    const b = [...Borig];
+  function runGreedy(schemas, bInit) {
+    const b = [...bInit];
     return schemas.map(s => {
       const b1 = b[s.c1];
       const b2 = s.c2 !== null ? b[s.c2] : null;
@@ -9442,8 +9442,17 @@ function calculerPlanning() {
     });
   }
 
-  const lignesPlein   = runGreedy(PLAN_SCHEMAS_PLEIN);
-  const lignesPartiel = runGreedy(PLAN_SCHEMAS_PARTIEL);
+  // Calcul résidu après temps plein pour alimenter le partiel
+  const bResidu = [...Borig];
+  const lignesPlein = PLAN_SCHEMAS_PLEIN.map(s => {
+    const b1 = bResidu[s.c1];
+    const b2 = s.c2 !== null ? bResidu[s.c2] : null;
+    const n  = b2 !== null ? Math.min(b1, b2) : b1;
+    bResidu[s.c1] -= n;
+    if (s.c2 !== null) bResidu[s.c2] -= n;
+    return { ...s, n };
+  });
+  const lignesPartiel = runGreedy(PLAN_SCHEMAS_PARTIEL, bResidu);
   const totalPlein    = lignesPlein.reduce((a,l)=>a+l.n, 0);
   const totalPartiel  = lignesPartiel.reduce((a,l)=>a+l.n, 0);
 
@@ -9468,6 +9477,21 @@ function calculerPlanning() {
   </div>`;
 
   const mkTable = (lignes, titre, color) => {
+    const sorted = [...lignes]
+      .sort((a,b) => (a.dispOrd !== undefined && b.dispOrd !== undefined) ? a.dispOrd - b.dispOrd : b.h - a.h)
+      .filter(l => l.n > 0);
+    // Calcul rowspan en deux passes
+    const rows = sorted.map(l => ({ ...l, showLabel: true, span: 1 }));
+    let i = 0;
+    while (i < rows.length) {
+      let j = i + 1;
+      while (j < rows.length && rows[j].label === rows[i].label) {
+        rows[i].span++;
+        rows[j].showLabel = false;
+        j++;
+      }
+      i = j;
+    }
     let t = `<div class="card" style="margin-bottom:10px">
       <div class="card-header" style="padding:6px 12px;background:${color}11;border-bottom:2px solid ${color}44">
         <div class="card-title" style="color:${color}">${titre}</div>
@@ -9478,27 +9502,26 @@ function calculerPlanning() {
             <th>Affectation 1</th>
             <th>Affectation 2</th>
             <th style="text-align:center">H/sem</th>
-            <th style="text-align:center">Besoin sem.</th>
-            <th style="text-align:center">Besoin wkd</th>
             <th style="text-align:center;color:${color}">Conducteurs</th>
           </tr></thead><tbody>`;
-    lignes.forEach(l => {
+    rows.forEach((l, idx) => {
       const hc = l.h>=40?'var(--green)':l.h>=34?'var(--yellow)':'var(--text3)';
-      const hi = l.n>0 ? `background:${color}0a;` : '';
-      const fw = l.n>0 ? '700' : '400';
-      const tc = l.n>0 ? 'var(--text)' : 'var(--text3)';
-      t += `<tr style="${hi}">
-        <td style="font-weight:${fw};color:${tc}">${l.label}</td>
-        <td style="color:${tc}">${l.c2label}</td>
-        <td style="text-align:center;font-family:Inter, var(--font-sans, sans-serif);color:${hc}">${l.h}h</td>
-        <td style="text-align:center;font-size:12px;color:var(--text3)">${Borig[l.c1]}</td>
-        <td style="text-align:center;font-size:12px;color:var(--text3)">${l.c2!==null?Borig[l.c2]:'—'}</td>
-        <td style="text-align:center;font-size:${l.n>0?16:13}px;font-weight:800;color:${l.n>0?color:'var(--text3)'}">${l.n}</td>
+      // Séparateur gras entre groupes de label différents
+      const isNewGroup = l.showLabel && idx > 0;
+      const borderTop = isNewGroup ? `border-top:2px solid ${color}55;` : '';
+      const labelCell = l.showLabel
+        ? `<td rowspan="${l.span}" style="font-weight:700;color:var(--text);vertical-align:middle;border-right:2px solid ${color}33;${borderTop}">${l.label}</td>`
+        : '';
+      t += `<tr style="background:${color}0a;${isNewGroup && !l.showLabel ? borderTop : ''}">
+        ${labelCell}
+        <td style="color:var(--text);${borderTop}">${l.c2label}</td>
+        <td style="text-align:center;font-family:Inter, var(--font-sans, sans-serif);color:${hc};${borderTop}">${l.h}h</td>
+        <td style="text-align:center;font-size:16px;font-weight:800;color:${color};${borderTop}">${l.n}</td>
       </tr>`;
     });
-    const tot = lignes.reduce((a,l)=>a+l.n,0);
+    const tot = sorted.reduce((a,l)=>a+l.n,0);
     t += `<tr style="background:${color}20;font-weight:800">
-      <td colspan="5" style="text-align:right;padding-right:14px;color:var(--text3);font-size:12px">TOTAL</td>
+      <td colspan="3" style="text-align:right;padding-right:14px;color:var(--text3);font-size:12px">TOTAL</td>
       <td style="text-align:center;font-size:18px;color:${color}">${tot}</td>
     </tr></tbody></table></div></div>`;
     return t;
