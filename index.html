@@ -855,7 +855,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.284</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.286</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -1482,7 +1482,7 @@
             <div class="card-title">📋 Message forum</div>
             <div style="display:flex;gap:6px">
               <button class="btn btn-sm" style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);color:var(--accent)" onclick="genererMessageForum()">⚙️ Générer</button>
-              <a href="https://forum.transport-manager.net/thread-22831-post-314064.html#pid314064" target="_blank"
+              <a href="https://forum.transport-manager.net/newreply.php?tid=22831" target="_blank"
                 class="btn btn-sm" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);color:var(--green);font-weight:600" onclick="faireDemandeAlliance()">✅ Faire la demande</a>
             </div>
           </div>
@@ -6217,59 +6217,71 @@ function renderAbribus() {
 function importerAbribus() {
   const texte = document.getElementById('abribus-texte').value;
   if (!texte.trim()) { toastMsg('Texte vide', 'error'); return; }
-  const lines = texte.replace(/\r/g, '\n').replace(/\u00A0/g, ' ').split('\n');
+  const lines = texte.replace(/\r/g, '\n').replace(/\u00A0/g, ' ').split('\n').map(l => l.trim()).filter(l => l !== '');
   const resultats = [];
   const seen = new Set();
+  let i = 0;
 
-  // Noms d'options reconnus dans le texte du jeu
-  const OPTIONS_NOMS = ['installation classique', 'écran d\'information', 'écran d\'info', 'écran tactile', 'borne de recharge', 'panneau solaire', 'éclairage led', 'eclairage led', 'wifi', 'sonorisation', 'caméra', 'camera', 'poubelle', 'vélo', 'velo'];
+  while (i < lines.length) {
+    // Ligne numéro de ligne (ex: "1", "60", "201")
+    const mNum = lines[i].match(/^(\d+)$/);
+    if (!mNum) { i++; continue; }
+    const num = mNum[1];
+    if (seen.has(num)) { i++; continue; }
+    i++;
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (line.indexOf('<>') !== -1) {
-      let numero = null;
-      for (let j = i-1; j >= 0; j--) {
-        const l = lines[j].trim();
-        if (l === '') continue;
-        const m = l.match(/^(\d+)$/);
-        if (m) { numero = m[1]; break; }
-      }
-      if (!numero || seen.has(numero)) continue;
-      seen.add(numero);
-      const pcts = [];
-      let nbArrets = null;
-      let nbOptions = null;
+    // Ligne suivante : description de la ligne (ex: "Aéroport <> Clinique Saint Paul")
+    // On cherche le nb d'arrêts qui suit (ligne contenant seulement un nombre)
+    let nbArrets = null;
+    // Skip la ligne de description (contient <>)
+    while (i < lines.length && !lines[i].match(/^\d+$/) && !lines[i].toLowerCase().includes('abribus') && !lines[i].toLowerCase().includes('aucune installation')) {
+      const mArr = lines[i].match(/^(\d+)$/);
+      if (mArr) { nbArrets = parseInt(mArr[1]); i++; break; }
+      i++;
+    }
+    // Chercher nb arrêts si pas encore trouvé (ligne numérique seule)
+    if (nbArrets === null && i < lines.length && lines[i].match(/^\d+$/) && parseInt(lines[i]) < 200) {
+      nbArrets = parseInt(lines[i]); i++;
+    }
 
-      for (let k = i+1; k < lines.length && pcts.length < 2; k++) {
-        const lk = lines[k].trim().toLowerCase();
-        const f = lines[k].match(/(\d{1,3})\s*%/);
-        if (f) pcts.push(f[0].replace(/\s*/g,''));
-
-        // Nb arrêts : "X arrêt(s)" ou "arrêts : X"
-        if (nbArrets === null) {
-          const mArr = lk.match(/(\d+)\s*arr[eê]t/) || lk.match(/arr[eê]ts?\s*[:\-]\s*(\d+)/);
-          if (mArr) nbArrets = parseInt(mArr[1]);
+    // Chercher "Abribus" ou "Aucune installation"
+    let nbOptions = null;
+    while (i < lines.length) {
+      const l = lines[i].toLowerCase();
+      if (l === 'abribus') {
+        i++;
+        // Compter les options jusqu'à '-' ou '%'
+        nbOptions = 0;
+        while (i < lines.length && !lines[i].match(/\d+\s*%/) && lines[i] !== '-') {
+          if (lines[i].trim() && lines[i] !== 'Abribus') nbOptions++;
+          i++;
         }
-        // Aucune installation
-        if (nbOptions === null && lk.includes('aucune installation')) nbOptions = 0;
-        // Compter les options listées
-        if (nbOptions === null) {
-          const count = OPTIONS_NOMS.filter(o => lk.includes(o)).length;
-          if (count > 0) nbOptions = (nbOptions || 0) + count;
-        }
+        break;
+      } else if (l.includes('aucune installation')) {
+        nbOptions = 0; i++;
+        break;
+      } else if (lines[i].match(/\d+\s*%/)) {
+        break;
       }
-      if (pcts.length >= 2) resultats.push({
-        num: numero,
-        pct1: pcts[0],
-        pct2: pcts[1],
-        nbArrets: nbArrets !== null ? nbArrets : null,
-        nbOptions: nbOptions !== null ? nbOptions : null
-      });
+      i++;
+    }
+
+    // Lire les 2 pourcentages
+    const pcts = [];
+    while (i < lines.length && pcts.length < 2) {
+      const m = lines[i].match(/(\d{1,3})\s*%/);
+      if (m) pcts.push(m[1] + '%');
+      i++;
+    }
+
+    if (pcts.length >= 2) {
+      seen.add(num);
+      resultats.push({ num, pct1: pcts[0], pct2: pcts[1], nbArrets, nbOptions });
     }
   }
+
   if (!resultats.length) { toastMsg('Aucune donnée trouvée. Vérifie le format.', 'error'); return; }
   state.abribus = resultats;
-
   journalLog(`${resultats.length} abribus importés`, 'ok');
   saveStateWithSync(); renderAbribus();
   toastMsg(`${resultats.length} abribus importés ✓`, 'success');
