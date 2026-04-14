@@ -878,7 +878,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.290</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.292</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -7782,9 +7782,6 @@ function renderEstimationFinDeMois() {
   const nbMoisAnnee = Object.keys(state.comptaMois || {}).filter(m => m.startsWith(String(annee))).length || 1;
   const amendesEstim = Math.round((totalAmendes / nbMoisAnnee / 30) * joursRestants);
 
-  // ── Total CA ──────────────────────────────────────────
-  const totalCA = gainQuot + ventesTitres + pubRestant + amendesEstim;
-
   // ── Somme 1er du mois (FDM précédent) ────────────────
   // Le prélèvement FDM apparaît dans le mois COURANT (payé le 1er)
   // On cherche dans le mois actuel OU précédent la catégorie "Fin de mois précédent"
@@ -7855,12 +7852,20 @@ function renderEstimationFinDeMois() {
 
   // ── Lignes custom configurables ───────────────────────
   const custom = state.config?.estim?.custom || [
-    { label: '', montant: 0 }, { label: '', montant: 0 },
-    { label: '', montant: 0 }, { label: '', montant: 0 }
+    { label: '', montant: 0, type: 'depense' },
+    { label: '', montant: 0, type: 'depense' },
+    { label: '', montant: 0, type: 'depense' },
+    { label: '', montant: 0, type: 'depense' },
+    { label: '', montant: 0, type: 'depense' },
   ];
+  while (custom.length < 5) custom.push({ label: '', montant: 0, type: 'depense' });
+
+  const customDep = custom.reduce((s,c) => s + (c.type !== 'recette' && c.montant ? c.montant : 0), 0);
+  const customRec = custom.reduce((s,c) => s + (c.type === 'recette' && c.montant ? c.montant : 0), 0);
 
   // ── Totaux ────────────────────────────────────────────
-  const totalDep = fdmPrec + empruntsEstim + assurance + gasoilEstim + custom.reduce((s,c)=>s+(c.montant||0),0);
+  const totalCA  = gainQuot + ventesTitres + pubRestant + amendesEstim + customRec;
+  const totalDep = fdmPrec + empruntsEstim + assurance + gasoilEstim + customDep;
   const diff     = totalCA - totalDep;
 
   // Solde actuel
@@ -7887,16 +7892,42 @@ function renderEstimationFinDeMois() {
   };
 
   const inputRow = (idx) => {
-    const c2 = custom[idx] || { label:'', montant:0 };
-    return `<tr>
-      <td style="padding:2px 4px"><input type="text" value="${c2.label||''}" placeholder="Label…"
-        onchange="setEstimCustom(${idx},'label',this.value)"
-        style="background:transparent;border:none;border-bottom:1px dashed var(--border);color:var(--text2);font-size:11px;width:100%;padding:2px 4px;outline:none"></td>
-      <td style="padding:2px 4px"><input type="number" value="${c2.montant||0}"
-        onchange="setEstimCustom(${idx},'montant',parseFloat(this.value)||0)"
-        style="background:transparent;border:none;border-bottom:1px dashed var(--border);color:var(--text);font-size:12px;width:90px;text-align:right;padding:2px 4px;outline:none;-moz-appearance:textfield;appearance:textfield"></td>
+    const c2 = custom[idx] || { label:'', montant:0, type:'depense' };
+    const isRec = c2.type === 'recette';
+    const montantColor = isRec ? 'var(--green)' : 'var(--red)';
+    const montantFmt = c2.montant ? Number(c2.montant).toLocaleString('fr-FR') + ' €' : '—';
+    const typeBg    = isRec ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.12)';
+    const typeColor = isRec ? 'var(--green)' : 'var(--red)';
+    const inputId = `estim-custom-input-${idx}`;
+    const dispId  = `estim-custom-disp-${idx}`;
+    return `<tr style="border-bottom:1px dashed var(--border)">
+      <td style="padding:2px 4px;border-bottom:1px dashed var(--border)">
+        <div style="display:flex;align-items:center;gap:4px">
+          <span onclick="clearEstimCustom(${idx})" title="Vider" style="cursor:pointer;color:var(--text3);font-size:11px;line-height:1;flex-shrink:0;user-select:none" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text3)'">✕</span>
+          <select onchange="setEstimCustom(${idx},'type',this.value)"
+            style="background:${typeBg};border:none;border-radius:4px;color:${typeColor};font-size:9px;font-weight:700;padding:1px 3px;cursor:pointer;outline:none;flex-shrink:0">
+            <option value="depense" ${!isRec?'selected':''}>DEP</option>
+            <option value="recette" ${isRec?'selected':''}>REC</option>
+          </select>
+          <input type="text" value="${c2.label||''}" placeholder="Label…"
+            onchange="setEstimCustom(${idx},'label',this.value)"
+            style="background:transparent;border:none;color:var(--text2);font-size:11px;flex:1;padding:2px 2px;outline:none;min-width:0">
+        </div>
+      </td>
+      <td style="padding:2px 8px;text-align:right;border-bottom:1px dashed var(--border);white-space:nowrap">
+        <span id="${dispId}" onclick="document.getElementById('${inputId}').style.display='inline';document.getElementById('${dispId}').style.display='none';document.getElementById('${inputId}').focus()"
+          style="color:${montantColor};font-size:12px;font-weight:${c2.montant?'700':'400'};cursor:text">${montantFmt}</span>
+        <input id="${inputId}" type="number" value="${c2.montant||''}" placeholder="0"
+          onchange="setEstimCustom(${idx},'montant',parseFloat(this.value)||0)"
+          onblur="this.style.display='none';document.getElementById('${dispId}').style.display='inline'"
+          style="display:none;background:transparent;border:none;border-bottom:1px solid var(--border);color:${montantColor};font-size:12px;font-weight:700;width:90px;text-align:right;padding:0;outline:none;-moz-appearance:textfield;appearance:textfield">
+      </td>
     </tr>`;
   };
+
+  // Séparer les lignes custom par type pour les placer dans la bonne zone
+  const customRecRows  = custom.map((_,i) => i).filter(i => (custom[i]?.type === 'recette'));
+  const customDepRows  = custom.map((_,i) => i).filter(i => (custom[i]?.type !== 'recette'));
 
   el.innerHTML = `
     <div style="width:100%">
@@ -7907,15 +7938,13 @@ function renderEstimationFinDeMois() {
         ${row('Ventes de titres (estimées)', fmt(ventesTitres), 'var(--green)')}
         ${row('Contrats pub restants', fmt(pubRestant), 'var(--green)')}
         ${row('Amendes', fmt(amendesEstim), 'var(--green)')}
+        ${customRecRows.map(i => inputRow(i)).join('')}
         ${row('Total CA estimé', fmt(totalCA), 'var(--green)', true, true)}
         ${row('Fin de mois précédent', fmt(fdmPrec), 'var(--red)')}
         ${emprunts.length === 0 ? row("Emprunts", "Pas d'emprunt", "var(--text3)") : empruntsEstim > 0 ? row('Emprunts (à prélever)', fmt(empruntsEstim), 'var(--red)') : row('Emprunts', '✅ Prélevé ce mois', 'var(--text3)')}
-        ${row('Assurance' + (assDejaPayee ? ' ✓' : ' (à venir)'), fmt(assurance), 'var(--red)')}
+        ${row('Assurance' + (assDejaPayee ? ' ✓' : ' (à venir)'), fmt(assurance), assDejaPayee ? 'var(--text3)' : 'var(--red)')}
         ${row('Gasoil (max mensuel)', fmt(gasoilEstim), 'var(--red)')}
-        ${inputRow(0)}
-        ${inputRow(1)}
-        ${inputRow(2)}
-        ${inputRow(3)}
+        ${customDepRows.map(i => inputRow(i)).join('')}
         ${row('Total dépenses', fmt(totalDep), 'var(--red)', true, true)}
         ${row('Différence', (diff>=0?'+':'')+fmt(diff), diff>=0?'var(--green)':'var(--red)', true, true)}
         ${row('Estimation solde', fmt(estimSolde), estimSolde>=0?'var(--green)':'var(--red)', true, true)}
@@ -7929,11 +7958,18 @@ function renderEstimationFinDeMois() {
 function setEstimCustom(idx, key, val) {
   if (!state.config) state.config = {};
   if (!state.config.estim) state.config.estim = {};
-  if (!state.config.estim.custom) state.config.estim.custom = [{},{},{},{}];
+  if (!state.config.estim.custom) state.config.estim.custom = [{},{},{},{},{}];
+  while (state.config.estim.custom.length < 5) state.config.estim.custom.push({});
   if (!state.config.estim.custom[idx]) state.config.estim.custom[idx] = {};
   state.config.estim.custom[idx][key] = val;
   saveStateWithSync();
-  // Recalcul sans re-render total pour ne pas perdre le focus
+  renderEstimationFinDeMois();
+}
+
+function clearEstimCustom(idx) {
+  if (!state.config?.estim?.custom?.[idx]) return;
+  state.config.estim.custom[idx] = { label: '', montant: 0, type: 'depense' };
+  saveStateWithSync();
   renderEstimationFinDeMois();
 }
 
