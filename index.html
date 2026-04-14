@@ -24,6 +24,26 @@
     --glow: 0 0 20px rgba(0,212,255,0.15);
   }
 
+  body.theme-light {
+    --bg: #f0f4f8;
+    --surface: #ffffff;
+    --surface2: #e8edf4;
+    --border: #cbd5e1;
+    --accent: #0284c7;
+    --accent2: #ea580c;
+    --accent3: #7c3aed;
+    --green: #059669;
+    --yellow: #d97706;
+    --red: #dc2626;
+    --orange: #ea580c;
+    --text: #0f172a;
+    --text2: #475569;
+    --text3: #94a3b8;
+    --glow: 0 0 20px rgba(2,132,199,0.12);
+  }
+
+  body.theme-light body::before { display: none; }
+
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
@@ -807,6 +827,9 @@
       <div class="nav-item cfg-nav" data-page="cfg-jeu" onclick="navConfig(this)">
         <span class="icon">🎮</span> Jeu
       </div>
+      <div class="nav-item cfg-nav" data-page="cfg-theme" onclick="navConfig(this)">
+        <span class="icon">🎨</span> Apparence
+      </div>
       <div class="nav-item cfg-nav" data-page="cfg-sync" onclick="navConfig(this)">
         <span class="icon">💾</span> Sauvegarde
         <span id="sync-nav-badge" style="margin-left:auto;font-size:9px;padding:2px 6px;border-radius:8px;display:none"></span>
@@ -855,7 +878,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.288</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.289</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -2336,24 +2359,56 @@
 
     <!-- Equilibre Affectation -->
     <div id="page-equilibre-affectation" class="page">
-      <div class="card" style="margin-bottom:12px">
-        <div class="card-header">
-          <div class="card-title">⚖️ Equilibre des affectations</div>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <label style="font-size:12px;color:var(--text3)">Tolérance écart :</label>
-            <input type="number" id="equil-seuil" value="2" min="1" max="10"
-              style="width:52px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:13px;padding:3px 6px;text-align:center"
-              oninput="renderEquilibre()">
-            <label style="font-size:12px;color:var(--text3);margin-left:8px">Tolérance places :</label>
-            <input type="number" id="equil-tol" value="10" min="0" max="50"
-              style="width:52px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:13px;padding:3px 6px;text-align:center"
-              oninput="renderEquilibre()">
-            <span style="font-size:12px;color:var(--text3)">%</span>
-            <button class="btn btn-primary btn-sm" onclick="renderEquilibre()" style="margin-left:8px">🔄 Recalculer</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start">
+
+        <!-- COLONNE GAUCHE : Equilibre -->
+        <div>
+          <div class="card" style="margin-bottom:12px">
+            <div class="card-header">
+              <div class="card-title">⚖️ Equilibre des affectations</div>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <label style="font-size:12px;color:var(--text3)">Tolérance écart :</label>
+                <input type="number" id="equil-seuil" value="2" min="1" max="10"
+                  style="width:52px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:13px;padding:3px 6px;text-align:center"
+                  oninput="renderEquilibre()">
+                <label style="font-size:12px;color:var(--text3);margin-left:8px">Tolérance places :</label>
+                <input type="number" id="equil-tol" value="10" min="0" max="50"
+                  style="width:52px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:13px;padding:3px 6px;text-align:center"
+                  oninput="renderEquilibre()">
+                <span style="font-size:12px;color:var(--text3)">%</span>
+                <button class="btn btn-primary btn-sm" onclick="renderEquilibre()" style="margin-left:8px">🔄</button>
+              </div>
+            </div>
           </div>
+          <div id="equil-result"></div>
         </div>
+
+        <!-- COLONNE DROITE : Optimisation nombre de bus -->
+        <div>
+          <div class="card" style="margin-bottom:12px">
+            <div class="card-header">
+              <div class="card-title">🎯 Optimisation du parc</div>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <label style="font-size:12px;color:var(--text3)">Cible créneaux :</label>
+                <input type="number" id="optim-cible" value="5" min="1" max="11"
+                  style="width:52px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:13px;padding:3px 6px;text-align:center"
+                  oninput="renderOptimParc()">
+                <label style="font-size:12px;color:var(--text3);margin-left:8px">Tol. places :</label>
+                <input type="number" id="optim-tol" value="10" min="0" max="50"
+                  style="width:52px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:13px;padding:3px 6px;text-align:center"
+                  oninput="renderOptimParc()">
+                <span style="font-size:12px;color:var(--text3)">%</span>
+                <button class="btn btn-primary btn-sm" onclick="renderOptimParc()" style="margin-left:8px">🔄</button>
+              </div>
+            </div>
+            <div class="card-body" style="padding:8px 12px">
+              <p style="font-size:11px;color:var(--text3)">Propose de consolider les créneaux des bus peu chargés vers d'autres, pour libérer des bus. Les contraintes -B- sont respectées.</p>
+            </div>
+          </div>
+          <div id="optim-parc-result"></div>
+        </div>
+
       </div>
-      <div id="equil-result"></div>
     </div>
 
     <!-- ═══════════════════════════════════════════ CONFIG ═══ -->
@@ -2728,6 +2783,39 @@
               </table>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════ CFG — THEME ═══ -->
+    <div id="page-cfg-theme" class="page">
+      <div style="font-size:20px;font-weight:700;color:var(--cfg-green);margin-bottom:16px">🎨 Apparence</div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Thème de couleurs</div></div>
+        <div class="card-body">
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div id="theme-btn-dark" onclick="setAppTheme('dark')"
+              style="cursor:pointer;border-radius:12px;padding:16px 24px;border:2px solid var(--border);background:var(--surface2);display:flex;flex-direction:column;align-items:center;gap:8px;min-width:120px;transition:.2s">
+              <div style="display:flex;gap:4px">
+                <div style="width:16px;height:16px;border-radius:50%;background:#0a0d14;border:1px solid #1e2640"></div>
+                <div style="width:16px;height:16px;border-radius:50%;background:#111520;border:1px solid #1e2640"></div>
+                <div style="width:16px;height:16px;border-radius:50%;background:#00d4ff;border:1px solid #00d4ff44"></div>
+              </div>
+              <div style="font-size:13px;font-weight:700">🌙 Sombre</div>
+              <div id="theme-dark-active" style="font-size:10px;color:var(--accent);font-weight:600;display:none">✓ Actif</div>
+            </div>
+            <div id="theme-btn-light" onclick="setAppTheme('light')"
+              style="cursor:pointer;border-radius:12px;padding:16px 24px;border:2px solid var(--border);background:var(--surface2);display:flex;flex-direction:column;align-items:center;gap:8px;min-width:120px;transition:.2s">
+              <div style="display:flex;gap:4px">
+                <div style="width:16px;height:16px;border-radius:50%;background:#f0f4f8;border:1px solid #cbd5e1"></div>
+                <div style="width:16px;height:16px;border-radius:50%;background:#ffffff;border:1px solid #cbd5e1"></div>
+                <div style="width:16px;height:16px;border-radius:50%;background:#0284c7;border:1px solid #0284c744"></div>
+              </div>
+              <div style="font-size:13px;font-weight:700">☀️ Clair</div>
+              <div id="theme-light-active" style="font-size:10px;color:var(--accent);font-weight:600;display:none">✓ Actif</div>
+            </div>
+          </div>
+          <div style="margin-top:16px;font-size:11px;color:var(--text3)">Le thème est sauvegardé localement dans le navigateur.</div>
         </div>
       </div>
     </div>
@@ -3589,13 +3677,29 @@ function renderPage(page) {
   const r = { dashboard: renderDashboard, alertes: renderAlertes, parc: () => { renderParc(); renderRepartitionParc(); },
     affectations: renderAffectations, frequentation: renderFrequentation, maintenance: renderMaintenance, abribus: renderAbribus, panne: renderPannes, renovation: renderRenovation,
     personnel: renderPersonnel, lignes: renderLignes, compta: renderCompta, bilan: renderBilan,
-    pub: renderPub, achats: renderAchats, vente: renderVente, gasoil: renderGasoil, tourisme: renderTourisme, 'aide-affectation': () => { initAideAffectation(); renderAideAffectation(); }, 'aide-planning': () => {}, 'equilibre-affectation': renderEquilibre, config: renderConfig, pubdispo: renderPubDispo, historique: renderHistoriqueBase };
+    pub: renderPub, achats: renderAchats, vente: renderVente, gasoil: renderGasoil, tourisme: renderTourisme, 'aide-affectation': () => { initAideAffectation(); renderAideAffectation(); }, 'aide-planning': () => {}, 'equilibre-affectation': () => { renderEquilibre(); renderOptimParc(); }, 'cfg-theme': () => { applyAppTheme(localStorage.getItem('tm-theme') || 'dark'); }, config: renderConfig, pubdispo: renderPubDispo, historique: renderHistoriqueBase };
   if (r[page]) r[page]();
 }
 
 // ═══════════════════════════════════════════════════════
 //  UTILS
 // ═══════════════════════════════════════════════════════
+function setAppTheme(t) {
+  localStorage.setItem('tm-theme', t);
+  applyAppTheme(t);
+}
+function applyAppTheme(t) {
+  document.body.classList.toggle('theme-light', t === 'light');
+  ['dark','light'].forEach(k => {
+    const el = document.getElementById('theme-' + k + '-active');
+    if (el) el.style.display = k === t ? '' : 'none';
+    const btn = document.getElementById('theme-btn-' + k);
+    if (btn) btn.style.borderColor = k === t ? 'var(--accent)' : 'var(--border)';
+  });
+}
+// Appliquer au chargement
+(function(){ applyAppTheme(localStorage.getItem('tm-theme') || 'dark'); })();
+
 function fmt(n) { return Number(n).toLocaleString('fr-FR') + ' €'; }
 function fmtNum(n) { return Number(n).toLocaleString('fr-FR'); }
 function today() { return new Date().toISOString().slice(0,10); }
@@ -9700,6 +9804,189 @@ function renderEquilibre() {
             &nbsp;|&nbsp;
             Répartition ${leger.nom} : SEM ${leger.parGroupe['SEMAINE']} · SAM ${leger.parGroupe['SAMEDI']} · DIM ${leger.parGroupe['DIMANCHE']}
           </div>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  html += `</div>`;
+  el.innerHTML = html;
+}
+
+// ══ OPTIMISATION PARC ════════════════════════════════════════
+function renderOptimParc() {
+  const el = document.getElementById('optim-parc-result');
+  if (!el) return;
+
+  const cible = parseInt(document.getElementById('optim-cible')?.value || '5');
+  const tol   = parseInt(document.getElementById('optim-tol')?.value   || '10') / 100;
+
+  const INDISPO_VALS = ['- ct -','- panne -','- atelier -','- révision -','- revision -','- indispo -','- rénovation -','- renovation -','- non immatricule -','- non immatriculé -'];
+
+  // Construire liste des bus actifs (même logique que renderEquilibre)
+  const busActifs = (state.bus || []).filter(b => {
+    const s = getAffStatut(b);
+    if (s === 'Indispo') return false;
+    if (b.nom.startsWith('00-') && s === 'Réserve') return false;
+    const creneaux = getAffCreneaux(b.nom);
+    const allIndispo = AFF_CRENEAUX.every(c => INDISPO_VALS.includes((creneaux[c.id]||'').toLowerCase().trim()));
+    if (allIndispo && AFF_CRENEAUX.length > 0) return false;
+    return true;
+  }).map(b => {
+    const creneaux = getAffCreneaux(b.nom);
+    const totalC = AFF_CRENEAUX.filter(c => { const v=(creneaux[c.id]||'').toLowerCase().trim(); return v && !INDISPO_VALS.includes(v); }).length;
+    const capa = b.capa || 0;
+    const sousTypeMatch = b.nom.match(/^[A-Z]+-([BE])-/);
+    const sousType = sousTypeMatch ? sousTypeMatch[1] : '';
+    const isB = b.nom.includes('-B-');
+    return { nom: b.nom, totalC, capa, creneaux, sousType, isB };
+  });
+
+  if (!busActifs.length) {
+    el.innerHTML = '<div style="color:var(--text3);padding:24px;text-align:center">Aucun bus actif.</div>';
+    return;
+  }
+
+  // Grouper par catégorie + sous-type
+  const groupesMap = {};
+  busActifs.forEach(b => {
+    const cat = getAffCategorie(b.nom).label;
+    const key = `${cat}||${b.sousType}`;
+    if (!groupesMap[key]) groupesMap[key] = [];
+    groupesMap[key].push(b);
+  });
+
+  const transferts = [];
+
+  Object.values(groupesMap).forEach(groupe => {
+    if (groupe.length < 2) return;
+
+    // Sous-groupes capa compatible
+    const sousGroupes = {};
+    groupe.forEach(b => {
+      const c = b.capa || 0;
+      let found = null;
+      for (const k of Object.keys(sousGroupes)) {
+        const ref = parseFloat(k);
+        if (ref === 0 || c === 0 || Math.abs(c - ref) / Math.max(c, ref) <= tol) { found = k; break; }
+      }
+      const key2 = found || String(c);
+      if (!sousGroupes[key2]) sousGroupes[key2] = [];
+      sousGroupes[key2].push(b);
+    });
+
+    Object.values(sousGroupes).forEach(sg => {
+      if (sg.length < 2) return;
+
+      // Bus en dessous de la cible → donneurs potentiels (peuvent être vidés)
+      const sousCible = sg.filter(b => b.totalC < cible).sort((a,b) => a.totalC - b.totalC);
+      // Bus pouvant absorber (totalC < cible, avec créneaux libres)
+      const absorbeurs = sg.filter(b => b.totalC < cible).sort((a,b) => b.totalC - a.totalC);
+
+      sousCible.forEach(donneur => {
+        if (donneur.totalC === 0) return; // déjà vide
+
+        // Trouver un absorbeur compatible (pas lui-même, capacité suffisante)
+        // Règle -B- : un non-B- ne peut pas remplacer un -B-, l'inverse oui
+        const receveurs = absorbeurs.filter(r => {
+          if (r.nom === donneur.nom) return false;
+          if (r.totalC + donneur.totalC > cible) return false; // ne peut pas tout absorber
+          // Contrainte -B- : si donneur est -B-, receveur doit être -B-
+          if (donneur.isB && !r.isB) return false;
+          return true;
+        });
+
+        if (!receveurs.length) return;
+        const receveur = receveurs[0];
+
+        // Créneaux occupés du donneur
+        const creneauxDonneur = AFF_CRENEAUX.filter(c => {
+          const v = (donneur.creneaux[c.id]||'').toLowerCase().trim();
+          return v && !INDISPO_VALS.includes(v);
+        }).map(c => ({ ...c, val: donneur.creneaux[c.id] }));
+
+        transferts.push({
+          donneur,
+          receveur,
+          nbCreneaux: donneur.totalC,
+          creneaux: creneauxDonneur,
+          economie: true
+        });
+      });
+    });
+  });
+
+  // Dédupliquer (chaque bus ne peut apparaître qu'une fois)
+  const vus = new Set();
+  const filtres = transferts.filter(t => {
+    if (vus.has(t.donneur.nom) || vus.has(t.receveur.nom)) return false;
+    vus.add(t.donneur.nom);
+    vus.add(t.receveur.nom);
+    return true;
+  });
+
+  if (!filtres.length) {
+    el.innerHTML = `<div class="card"><div class="card-body" style="text-align:center;color:var(--green);padding:32px;font-weight:700">
+      ✅ Aucune consolidation possible pour une cible de ${cible} créneaux
+    </div></div>`;
+    return;
+  }
+
+  const groupeColors = { SEMAINE:'var(--accent)', SAMEDI:'#c084fc', DIMANCHE:'#34d399' };
+  const groupeBg    = { SEMAINE:'rgba(26,58,107,0.35)', SAMEDI:'rgba(59,26,107,0.35)', DIMANCHE:'rgba(26,74,59,0.35)' };
+
+  let html = `<div style="display:flex;flex-direction:column;gap:10px">`;
+  html += `<div style="font-size:11px;color:var(--text3);padding:4px 0">
+    <b style="color:var(--green)">${filtres.length}</b> bus peuvent être libérés en transférant leurs créneaux
+  </div>`;
+
+  filtres.forEach(({ donneur, receveur, nbCreneaux, creneaux }) => {
+    const maxC = AFF_CRENEAUX.length;
+    const pctD = Math.round(donneur.totalC / maxC * 100);
+    const pctR = Math.round(receveur.totalC / maxC * 100);
+    const fallback = donneur.isB && !receveur.isB;
+
+    const crHtml = creneaux.map(c => `<span style="display:inline-flex;align-items:center;gap:3px;background:${groupeBg[c.groupe]};border:1px solid ${groupeColors[c.groupe]}55;border-radius:4px;padding:2px 6px;font-size:10px;font-weight:700">
+      <span style="color:${groupeColors[c.groupe]};font-size:9px">${c.groupe[0]}·${c.label}</span>
+      <span style="color:var(--text)">${c.val}</span>
+    </span>`).join('');
+
+    html += `<div class="card">
+      <div class="card-body" style="padding:12px 14px">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+          <!-- Donneur -->
+          <div style="flex:1;min-width:130px">
+            <div style="font-size:12px;font-weight:700;color:var(--text)">${donneur.nom}</div>
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px">${donneur.capa} pl.</div>
+            <div style="display:flex;align-items:center;gap:5px">
+              <div style="flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden">
+                <div style="width:${pctD}%;height:100%;background:var(--yellow);border-radius:3px"></div>
+              </div>
+              <span style="font-size:12px;font-weight:700;color:var(--yellow)">${donneur.totalC}</span>
+            </div>
+          </div>
+          <!-- Flèche -->
+          <div style="text-align:center;flex-shrink:0">
+            <div style="font-size:18px;color:var(--green)">→</div>
+            <div style="font-size:9px;color:var(--text3)">${nbCreneaux} créneau${nbCreneaux>1?'x':''}</div>
+            ${fallback ? `<div style="font-size:9px;color:var(--orange);font-style:italic">excep.</div>` : ''}
+          </div>
+          <!-- Receveur -->
+          <div style="flex:1;min-width:130px">
+            <div style="font-size:12px;font-weight:700;color:var(--text)">${receveur.nom}</div>
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px">${receveur.capa} pl. → ${receveur.totalC + nbCreneaux} créneaux</div>
+            <div style="display:flex;align-items:center;gap:5px">
+              <div style="flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden">
+                <div style="width:${pctR}%;height:100%;background:var(--accent);border-radius:3px"></div>
+              </div>
+              <span style="font-size:12px;font-weight:700;color:var(--accent)">${receveur.totalC}</span>
+            </div>
+          </div>
+        </div>
+        <!-- Créneaux à transférer -->
+        <div style="border-top:1px solid var(--border);padding-top:8px">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:5px;font-weight:600">📌 Créneaux à transférer :</div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px">${crHtml || '<span style="color:var(--text3);font-size:10px">—</span>'}</div>
         </div>
       </div>
     </div>`;
