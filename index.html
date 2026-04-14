@@ -878,7 +878,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.292</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.293</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -2359,56 +2359,50 @@
 
     <!-- Equilibre Affectation -->
     <div id="page-equilibre-affectation" class="page">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start">
 
-        <!-- COLONNE GAUCHE : Equilibre -->
-        <div>
-          <div class="card" style="margin-bottom:12px">
-            <div class="card-header">
-              <div class="card-title">⚖️ Equilibre des affectations</div>
-              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-                <label style="font-size:12px;color:var(--text3)">Tolérance écart :</label>
-                <input type="number" id="equil-seuil" value="2" min="1" max="10"
-                  style="width:52px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:13px;padding:3px 6px;text-align:center"
-                  oninput="renderEquilibre()">
-                <label style="font-size:12px;color:var(--text3);margin-left:8px">Tolérance places :</label>
-                <input type="number" id="equil-tol" value="10" min="0" max="50"
-                  style="width:52px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:13px;padding:3px 6px;text-align:center"
-                  oninput="renderEquilibre()">
-                <span style="font-size:12px;color:var(--text3)">%</span>
-                <button class="btn btn-primary btn-sm" onclick="renderEquilibre()" style="margin-left:8px">🔄</button>
-              </div>
+      <!-- Header avec toggle mode -->
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-header">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:3px;gap:3px">
+              <button id="equil-mode-btn-equilibre" onclick="setEquilMode('equilibre')"
+                style="padding:5px 14px;border-radius:6px;border:none;font-size:12px;font-weight:700;cursor:pointer;transition:.15s;background:var(--accent);color:#000">⚖️ Equilibre</button>
+              <button id="equil-mode-btn-optim" onclick="setEquilMode('optim')"
+                style="padding:5px 14px;border-radius:6px;border:none;font-size:12px;font-weight:700;cursor:pointer;transition:.15s;background:transparent;color:var(--text3)">🎯 Optimisation</button>
             </div>
           </div>
-          <div id="equil-result"></div>
-        </div>
-
-        <!-- COLONNE DROITE : Optimisation nombre de bus -->
-        <div>
-          <div class="card" style="margin-bottom:12px">
-            <div class="card-header">
-              <div class="card-title">🎯 Optimisation du parc</div>
-              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-                <label style="font-size:12px;color:var(--text3)">Cible créneaux :</label>
-                <input type="number" id="optim-cible" value="5" min="1" max="11"
-                  style="width:52px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:13px;padding:3px 6px;text-align:center"
-                  oninput="renderOptimParc()">
-                <label style="font-size:12px;color:var(--text3);margin-left:8px">Tol. places :</label>
-                <input type="number" id="optim-tol" value="10" min="0" max="50"
-                  style="width:52px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:13px;padding:3px 6px;text-align:center"
-                  oninput="renderOptimParc()">
-                <span style="font-size:12px;color:var(--text3)">%</span>
-                <button class="btn btn-primary btn-sm" onclick="renderOptimParc()" style="margin-left:8px">🔄</button>
-              </div>
-            </div>
-            <div class="card-body" style="padding:8px 12px">
-              <p style="font-size:11px;color:var(--text3)">Propose de consolider les créneaux des bus peu chargés vers d'autres, pour libérer des bus. Les contraintes -B- sont respectées.</p>
-            </div>
+          <!-- Contrôles Equilibre -->
+          <div id="equil-controls" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <label style="font-size:12px;color:var(--text3)">Tolérance écart :</label>
+            <input type="number" id="equil-seuil" value="2" min="1" max="10"
+              style="width:52px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:13px;padding:3px 6px;text-align:center"
+              oninput="renderEquilibre()">
+            <label style="font-size:12px;color:var(--text3);margin-left:4px">Tol. places :</label>
+            <input type="number" id="equil-tol" value="10" min="0" max="50"
+              style="width:52px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:13px;padding:3px 6px;text-align:center"
+              oninput="renderEquilibre()">
+            <span style="font-size:12px;color:var(--text3)">%</span>
+            <button class="btn btn-primary btn-sm" onclick="renderEquilibre()" style="margin-left:4px">🔄</button>
           </div>
-          <div id="optim-parc-result"></div>
+          <!-- Contrôles Optimisation -->
+          <div id="optim-controls" style="display:none;gap:8px;align-items:center;flex-wrap:wrap">
+            <label style="font-size:12px;color:var(--text3)">Cible créneaux :</label>
+            <input type="number" id="optim-cible" value="5" min="1" max="11"
+              style="width:52px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:13px;padding:3px 6px;text-align:center"
+              oninput="renderOptimParc()">
+            <label style="font-size:12px;color:var(--text3);margin-left:4px">Tol. places :</label>
+            <input type="number" id="optim-tol" value="10" min="0" max="50"
+              style="width:52px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:13px;padding:3px 6px;text-align:center"
+              oninput="renderOptimParc()">
+            <span style="font-size:12px;color:var(--text3)">%</span>
+            <button class="btn btn-primary btn-sm" onclick="renderOptimParc()" style="margin-left:4px">🔄</button>
+          </div>
         </div>
-
       </div>
+
+      <div id="equil-result"></div>
+      <div id="optim-parc-result" style="display:none"></div>
+
     </div>
 
     <!-- ═══════════════════════════════════════════ CONFIG ═══ -->
@@ -3677,7 +3671,7 @@ function renderPage(page) {
   const r = { dashboard: renderDashboard, alertes: renderAlertes, parc: () => { renderParc(); renderRepartitionParc(); },
     affectations: renderAffectations, frequentation: renderFrequentation, maintenance: renderMaintenance, abribus: renderAbribus, panne: renderPannes, renovation: renderRenovation,
     personnel: renderPersonnel, lignes: renderLignes, compta: renderCompta, bilan: renderBilan,
-    pub: renderPub, achats: renderAchats, vente: renderVente, gasoil: renderGasoil, tourisme: renderTourisme, 'aide-affectation': () => { initAideAffectation(); renderAideAffectation(); }, 'aide-planning': () => {}, 'equilibre-affectation': () => { renderEquilibre(); renderOptimParc(); }, 'cfg-theme': () => { applyAppTheme(localStorage.getItem('tm-theme') || 'dark'); }, config: renderConfig, pubdispo: renderPubDispo, historique: renderHistoriqueBase };
+    pub: renderPub, achats: renderAchats, vente: renderVente, gasoil: renderGasoil, tourisme: renderTourisme, 'aide-affectation': () => { initAideAffectation(); renderAideAffectation(); }, 'aide-planning': () => {}, 'equilibre-affectation': () => { setEquilMode(window._equilMode || 'equilibre'); }, 'cfg-theme': () => { applyAppTheme(localStorage.getItem('tm-theme') || 'dark'); }, config: renderConfig, pubdispo: renderPubDispo, historique: renderHistoriqueBase };
   if (r[page]) r[page]();
 }
 
@@ -9636,6 +9630,27 @@ function naviguerPrepaAide(delta) {
 }
 
 // ══ EQUILIBRE AFFECTATION ════════════════════════════════════════
+function setEquilMode(mode) {
+  window._equilMode = mode;
+  const isEq = mode === 'equilibre';
+  // Boutons toggle
+  const bEq  = document.getElementById('equil-mode-btn-equilibre');
+  const bOpt = document.getElementById('equil-mode-btn-optim');
+  if (bEq)  { bEq.style.background  = isEq  ? 'var(--accent)' : 'transparent'; bEq.style.color  = isEq  ? '#000' : 'var(--text3)'; }
+  if (bOpt) { bOpt.style.background = !isEq ? 'var(--accent)' : 'transparent'; bOpt.style.color = !isEq ? '#000' : 'var(--text3)'; }
+  // Contrôles
+  const cEq  = document.getElementById('equil-controls');
+  const cOpt = document.getElementById('optim-controls');
+  if (cEq)  cEq.style.display  = isEq  ? 'flex' : 'none';
+  if (cOpt) cOpt.style.display = !isEq ? 'flex' : 'none';
+  // Résultats
+  const rEq  = document.getElementById('equil-result');
+  const rOpt = document.getElementById('optim-parc-result');
+  if (rEq)  rEq.style.display  = isEq  ? '' : 'none';
+  if (rOpt) rOpt.style.display = !isEq ? '' : 'none';
+  // Render
+  if (isEq) renderEquilibre(); else renderOptimParc();
+}
 function renderEquilibre() {
   const el = document.getElementById('equil-result');
   if (!el) return;
