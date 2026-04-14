@@ -878,7 +878,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.289</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.290</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -7808,10 +7808,13 @@ function renderEstimationFinDeMois() {
     : 0;
 
   // ── Assurance ─────────────────────────────────────────
-  // Avant et incluant le 14 : montant assurance du mois précédent
-  // Après le 14 : 0
+  // Si déjà prélevée ce mois-ci → 0
+  // Sinon → montant du mois précédent (à venir)
   let assurance = 0;
-  if (now.getDate() <= 14) {
+  const assDejaPayee = (state.comptaMois?.[moisKey] || []).some(o =>
+    o.type === 'depense' && ((o.cat||'').toLowerCase().includes('assurance') || (o.desc||'').toLowerCase().includes('assurance'))
+  );
+  if (!assDejaPayee) {
     const opsAss = (state.comptaMois?.[moisPrecKey] || []).filter(o =>
       o.type === 'depense' && ((o.cat||'').toLowerCase().includes('assurance') || (o.desc||'').toLowerCase().includes('assurance'))
     );
@@ -7907,7 +7910,7 @@ function renderEstimationFinDeMois() {
         ${row('Total CA estimé', fmt(totalCA), 'var(--green)', true, true)}
         ${row('Fin de mois précédent', fmt(fdmPrec), 'var(--red)')}
         ${emprunts.length === 0 ? row("Emprunts", "Pas d'emprunt", "var(--text3)") : empruntsEstim > 0 ? row('Emprunts (à prélever)', fmt(empruntsEstim), 'var(--red)') : row('Emprunts', '✅ Prélevé ce mois', 'var(--text3)')}
-        ${row('Assurance (≤14)', fmt(assurance), 'var(--red)')}
+        ${row('Assurance' + (assDejaPayee ? ' ✓' : ' (à venir)'), fmt(assurance), 'var(--red)')}
         ${row('Gasoil (max mensuel)', fmt(gasoilEstim), 'var(--red)')}
         ${inputRow(0)}
         ${inputRow(1)}
