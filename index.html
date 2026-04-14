@@ -878,7 +878,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.293</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.294</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -5722,10 +5722,17 @@ function saveAffCell(input, busNom, creneauId) {
 
   const td  = input.parentElement;
   const val = (state.affCreneaux[busNom]?.[creneauId] || '');
-  td.innerHTML   = val || '';
-  const lignCol = val ? getLigneColor(val) : null;
-  td.style.color = lignCol ? '#fff' : (val ? 'var(--text)' : 'var(--text3)');
-  td.style.background = lignCol ? lignCol : '';
+  const COMPACT_VALS = {'service touristique':'Tourisme','service spécial':'Spécial','service special':'Spécial'};
+  const compactLabel = COMPACT_VALS[(val||'').toLowerCase().trim()];
+  const creneauDef = AFF_CRENEAUX.find(c => c.id === creneauId);
+  const lignCol = val && !compactLabel ? getLigneColor(val) : null;
+  const groupeBg = creneauDef ? (AFF_GROUPE_COLORS[creneauDef.groupe]?.bgCell || 'transparent') : 'transparent';
+  td.innerHTML = compactLabel
+    ? `<span style="color:var(--accent3);font-size:9px;font-weight:600">${compactLabel}</span>`
+    : (val || '');
+  td.style.color      = lignCol ? '#fff' : (val ? 'var(--text)' : 'var(--text3)');
+  td.style.background = lignCol ? lignCol : groupeBg;
+  if (lignCol) td.style.borderBottom = `3px solid ${lignCol}`; else td.style.borderBottom = '';
 
   const creneaux = getAffCreneaux(busNom);
   const totalC   = AFF_CRENEAUX.filter(c => { const v=(creneaux[c.id]||'').toLowerCase().trim(); return v && !['- ct -','- panne -','- atelier -','- révision -','- revision -','- indispo -','- rénovation -','- renovation -','- non immatricule -','- non immatriculé -'].includes(v); }).length;
