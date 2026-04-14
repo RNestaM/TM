@@ -855,7 +855,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.286</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.288</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -12831,19 +12831,22 @@ function renderPubDispoAlertes() {
     if (isUsed(b.livArr)) pubsActives.push(`<span style="font-size:9px;background:rgba(249,115,22,0.15);padding:1px 4px;border-radius:3px">Liv.Arr ${b.livArr}</span>`);
     if (isUsed(b.ecran))  pubsActives.push(`<span style="font-size:9px;background:rgba(249,115,22,0.15);padding:1px 4px;border-radius:3px">TFT ${b.ecran}</span>`);
 
-    // Candidats remplaçants : même type, tout libre, affecté
-    // places <= : vert ; places > : orange (surdimensionné)
-    const candidatsOk  = data.filter(c =>
-      c.type === b.type && !c.nom.startsWith('00-') && c.toutLibre && c.aAffectation &&
-      c.places <= b.places && c.nom !== b.nom
-    ).sort((a, c2) => c2.places - a.places); // plus grand en premier (le plus proche par le bas)
+    const isB = b.nom.includes('-B-');
 
-    const candidatsSur = data.filter(c =>
-      c.type === b.type && !c.nom.startsWith('00-') && c.toutLibre && c.aAffectation &&
-      c.places > b.places && c.nom !== b.nom
-    ).sort((a, c2) => a.places - c2.places); // plus petit en premier (le moins surdimensionné)
+    const matchB = (c) => !isB || c.nom.includes('-B-');
+    const fallB  = (c) => isB && !c.nom.includes('-B-');
 
-    const best = [...candidatsOk.slice(0, 3), ...candidatsSur.slice(0, Math.max(0, 3 - candidatsOk.length))];
+    const candidatsOkB   = data.filter(c => c.type === b.type && !c.nom.startsWith('00-') && c.toutLibre && c.aAffectation && c.places <= b.places && c.nom !== b.nom && matchB(c)).sort((a, c2) => c2.places - a.places);
+    const candidatsSurB  = data.filter(c => c.type === b.type && !c.nom.startsWith('00-') && c.toutLibre && c.aAffectation && c.places > b.places  && c.nom !== b.nom && matchB(c)).sort((a, c2) => a.places - c2.places);
+    const candidatsOkFb  = data.filter(c => c.type === b.type && !c.nom.startsWith('00-') && c.toutLibre && c.aAffectation && c.places <= b.places && c.nom !== b.nom && fallB(c)).sort((a, c2) => c2.places - a.places);
+    const candidatsSurFb = data.filter(c => c.type === b.type && !c.nom.startsWith('00-') && c.toutLibre && c.aAffectation && c.places > b.places  && c.nom !== b.nom && fallB(c)).sort((a, c2) => a.places - c2.places);
+
+    // -B- en premier, complété par non-B- seulement si pas assez
+    const primaryPool = [...candidatsOkB, ...candidatsSurB];
+    const fallbackPool = [...candidatsOkFb, ...candidatsSurFb];
+    const best = primaryPool.length >= 5
+      ? primaryPool.slice(0, 5)
+      : [...primaryPool, ...fallbackPool.slice(0, 5 - primaryPool.length)];
 
     const bState = state.bus.find(x => x.nom === b.nom);
     const nomCell = bState?.idJeu
@@ -12854,14 +12857,16 @@ function renderPubDispoAlertes() {
       ? best.map(c => {
           const cs = state.bus.find(x => x.nom === c.nom);
           const surDim = c.places > b.places;
-          const color = surDim ? 'var(--orange)' : 'var(--green)';
+          const isFallback = isB && !c.nom.includes('-B-');
+          const color = isFallback ? 'var(--text3)' : surDim ? 'var(--orange)' : 'var(--green)';
           const cLink = cs?.idJeu
             ? `<a href="https://transport-manager.net/jeu/vehicle.php?id=${cs.idJeu}" target="_blank" style="color:${color};text-decoration:none;font-weight:700;cursor:alias">${c.nom} ↗</a>`
             : `<b style="color:${color}">${c.nom}</b>`;
           const plLabel = surDim
             ? `<span style="color:var(--orange);font-size:10px">(${c.places} pl. ▲)</span>`
             : `<span style="color:var(--text3);font-size:10px">(${c.places} pl.)</span>`;
-          return `<div style="margin-bottom:2px">${cLink} ${plLabel}</div>`;
+          const fallTag = isFallback ? `<span style="font-size:9px;color:var(--text3);font-style:italic"> excep.</span>` : '';
+          return `<div style="margin-bottom:2px">${cLink} ${plLabel}${fallTag}</div>`;
         }).join('')
       : '<span style="color:var(--text3)">Aucun disponible</span>';
 
