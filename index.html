@@ -878,7 +878,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.310</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.314</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -9377,30 +9377,27 @@ function renderPrepaAff() {
   const nLignes = state.cfgLignesParNiveau?.[n]?.length ? n : (state.niveauJeu || 4);
   const cfgLignes = state.cfgLignesParNiveau?.[nLignes] || [];
   const cfgByNum = {};
-  cfgLignes.forEach(l => { cfgByNum[l.num] = l; });
+  cfgLignes.forEach(l => { cfgByNum[l.num] = l; cfgByNum[normaliseLigneNum(l.num)] = l; });
 
   // Prendre toutes les lignes présentes dans freqData, triées numériquement
-  // Merger freqData + cfgLignes pour ne pas rater des lignes sans fréquentation connue
-  const cfgNums = cfgLignes.map(l => l.num);
-  const allNums = Array.from(new Set([...Object.keys(freqData), ...cfgNums]));
-  const lignesNums = allNums.sort((a, b) => {
-    // Normaliser pour tri : PLEINE LUNE X → PL X
-    const na2 = normaliseLigneNum(a), nb2 = normaliseLigneNum(b);
-    const ia = parseInt(na2.replace(/[^0-9]/g,'')) || 0, ib = parseInt(nb2.replace(/[^0-9]/g,'')) || 0;
-    return ia !== ib ? ia - ib : na2.localeCompare(nb2);
+  // Merger freqData + cfgLignes en normalisant tout → déduplique PL1 / PLEINE LUNE 1
+  // freqData peut avoir 'PLEINE LUNE X', cfgLignes a 'PLX' → on normalise tout en PLX
+  const freqDataNorm = {};
+  Object.keys(freqData).forEach(k => { freqDataNorm[normaliseLigneNum(k)] = freqData[k]; });
+  const cfgNums = cfgLignes.map(l => normaliseLigneNum(l.num));
+  const allNumsSet = new Set([...Object.keys(freqDataNorm), ...cfgNums]);
+  const lignesNums = Array.from(allNumsSet).sort((a, b) => {
+    const ia = parseInt(a.replace(/[^0-9]/g,'')) || 0, ib = parseInt(b.replace(/[^0-9]/g,'')) || 0;
+    return ia !== ib ? ia - ib : a.localeCompare(b, undefined, {numeric:true});
   });
 
   const lignes = lignesNums
     .filter(num => {
-      const n2 = normaliseLigneNum(num);
-      if (reseau === 'nocturne') return n2.startsWith('PL');
-      if (reseau === 'scolaire') return /^(6\d\d)$/.test(n2);
-      return !n2.startsWith('PL') && !/^(6\d\d)$/.test(n2);
+      if (reseau === 'nocturne') return num.startsWith('PL');
+      if (reseau === 'scolaire') return /^(6\d\d)$/.test(num);
+      return !num.startsWith('PL') && !/^(6\d\d)$/.test(num);
     })
-    .map(num => {
-      const n2 = normaliseLigneNum(num);
-      return cfgByNum[n2] || cfgByNum[num] || { num: n2, couleur: '#888', duree: 0, vehicules: '—', bornes: false };
-    });
+    .map(num => cfgByNum[num] || { num, couleur: '#888', duree: 0, vehicules: '—', bornes: false });
 
   const groupes = reseau === 'nocturne'
     ? CRENEAU_GROUPES_FREQ_NOCTURNE
@@ -9493,10 +9490,7 @@ function renderPrepaAff() {
   var totalManquants = 0, totalTransportes = 0, totalFreq = 0;
 
   function makeLigneRows(ligne) {
-    var freqKey = freqData[ligne.num] !== undefined ? ligne.num
-      : freqData['PLEINE LUNE ' + ligne.num.replace('PL','')] !== undefined ? 'PLEINE LUNE ' + ligne.num.replace('PL','')
-      : ligne.num;
-    var freqVals = freqData[freqKey] || [];
+    var freqVals = freqDataNorm[ligne.num] || freqData[ligne.num] || freqData['PLEINE LUNE ' + ligne.num.replace('PL','')] || [];
     var couleur  = ligne.couleur || '#888';
     var dureeAR  = ligne.duree || 0;
     var vehicules = (ligne.vehicules || '').replace(/ - /g,'<br>');
@@ -12457,8 +12451,8 @@ const CRENEAU_LABELS_FREQ = {
 // Pour un créneau et une ligne : nb bus + places totales affectées
 function normaliseLigneNum(num) {
   const s = String(num).trim();
-  // Normaliser "PLEINE LUNE 1" → "PL1", "PLEINE LUNE 2" → "PL2", etc.
-  const m = s.match(/^(?:PLEINE\s+LUNE|PL)\s*(\d+)$/i);
+  // Normaliser "PLEINE LUNE 1 TRAM", "PLEINE LUNE 2", "PL3 TRAM" → "PL1", "PL2", "PL3"
+  const m = s.match(/^(?:PLEINE\s+LUNE|PL)\s*(\d+)(?:\s+.*)?$/i);
   if (m) return 'PL' + m[1];
   return s;
 }
@@ -12493,6 +12487,8 @@ function renderFrequentation() {
     return !l.num.startsWith('PL') && !l.num.startsWith('PLEINE') && !/^(6\d\d)$/.test(l.num);
   });
   const freqData  = state.freqCibles?.[n]?.[periKey]?.[reseau] || {};
+  const freqDataNorm2 = {};
+  Object.keys(freqData).forEach(k => { freqDataNorm2[normaliseLigneNum(k)] = freqData[k]; });
 
   // Créneaux à afficher + mapping index selon réseau
   const groupes = reseau === 'nocturne'
@@ -12558,10 +12554,7 @@ function renderFrequentation() {
   const rows = lignes.map(ligne => {
     // Normalise le numéro de ligne pour chercher dans freqData
     // Les lignes nocturnes peuvent être stockées comme "PL1" ou "PLEINE LUNE 1"
-    const freqKey = freqData[ligne.num] !== undefined ? ligne.num
-      : freqData['PLEINE LUNE ' + ligne.num.replace('PL','')] !== undefined ? 'PLEINE LUNE ' + ligne.num.replace('PL','')
-      : ligne.num;
-    const freqVals  = freqData[freqKey] || [];
+    const freqVals  = freqDataNorm2[normaliseLigneNum(ligne.num)] || freqData[ligne.num] || [];
     const couleur   = ligne.couleur || '#888';
     const dureeAR   = ligne.duree || 0;
     const vehicules = ligne.vehicules || '—';
