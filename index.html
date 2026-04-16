@@ -878,7 +878,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.314</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.315</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -8243,12 +8243,11 @@ function evaluerContrats() {
     return;
   }
 
-  // Trier par note décroissante
   const evaluated = contrats.map(c => {
     const note = evaluerNote(c.prix, c.jours, c.nbDemande, c.typeSupport);
     const q = c.prix && c.jours && c.nbDemande ? Math.round(c.prix / c.jours / c.nbDemande) : 0;
     return { ...c, note, q };
-  }).sort((a, b) => (b.note||0) - (a.note||0));
+  });
 
   const fmtPrix = v => Number(v).toLocaleString('fr-FR') + ' €';
   const fmtDate = d => d; // déjà en JJ/MM/AAAA
