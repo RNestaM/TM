@@ -878,7 +878,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.300</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.301</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -4185,10 +4185,12 @@ function marquerAlerteLue(id) {
   renderAlertes();
 }
 
-function renderAlertes() {
+function renderAlertes(onglet) {
   const SEUIL_JOURS = 7;
   const todayA = today();
   const nowA   = new Date(todayA);
+  window._alertesOnglet = onglet || window._alertesOnglet || 'today';
+  const mode = window._alertesOnglet;
 
   if (!state.alertesLues) state.alertesLues = {};
 
@@ -4206,15 +4208,21 @@ function renderAlertes() {
 
   const luKey  = (id) => `${todayA}_${id}`;
   const estLu  = (id) => !!state.alertesLues[luKey(id)];
-  // Lu = n'affecte que le badge, l'alerte reste visible mais avec style "lu"
   const btnLu  = (id) => estLu(id)
     ? `<span style="margin-left:auto;font-size:10px;color:var(--text3);opacity:0.5">✓ lu</span>`
     : `<button class="btn btn-ghost btn-xs" style="margin-left:auto;opacity:0.6;white-space:nowrap" onclick="marquerAlerteLue('${id}')">✓ Lu</button>`;
 
-  let html = '';
+  // Collecte toutes les alertes avec leur d
+  const allAlertes = { today: [], later: [] };
   let totalAujourdHui = 0;
 
-  // ── Rénovation urgente (état < 45) ───────────────────────
+  const push = (d, boxHtml) => {
+    if (d === 0) { allAlertes.today.push({ d, html: boxHtml }); totalAujourdHui++; }
+    else allAlertes.later.push({ d, html: boxHtml });
+  };
+  const pushToday = (boxHtml) => { allAlertes.today.push({ d: 0, html: boxHtml }); totalAujourdHui++; };
+
+  // ── Rénovation urgente (état < 45) ─────────────────────
   state.bus.forEach(b => {
     const techAlert = b.etatTech && parseInt(b.etatTech) < 45;
     const intAlert  = b.etatInt  && parseInt(b.etatInt)  < 45;
@@ -4223,129 +4231,122 @@ function renderAlertes() {
     const parts = [];
     if (techAlert) parts.push(`état tech ${b.etatTech}/100`);
     if (intAlert)  parts.push(`état int. ${b.etatInt}/100`);
-    const msg = parts.join(' · ');
     const lu = estLu(id);
-    totalAujourdHui++;
-    alerts += `<div class="alert-box danger" style="margin-bottom:8px;opacity:${lu?0.5:1}">
+    pushToday(`<div class="alert-box danger" style="margin-bottom:8px;opacity:${lu?0.5:1}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div><span style="font-weight:700">🔨 Rénovation urgente</span> — <b>${b.nom}</b><br>
-        <span style="font-size:11px;color:var(--text3)">${msg}</span></div>
+        <span style="font-size:11px;color:var(--text3)">${parts.join(' · ')}</span></div>
         ${btnLu(id)}
       </div>
-    </div>`;
+    </div>`);
   });
 
-
-  // ── Contrats Tourisme dans les 3 prochains jours ────────
-  html += `<div class="section-title">🚌 Contrats tourisme imminents</div>`;
+  // ── Contrats Tourisme ───────────────────────────────────
   const in3ISO = (() => { const d = new Date(todayA); d.setDate(d.getDate()+3); return d.toISOString().slice(0,10); })();
-  const contratsProches = (state.tourisme||[]).filter(t => {
+  (state.tourisme||[]).filter(t => {
     if (!t.dateTransport) return false;
     const iso = t.dateTransport.replace(/(\d{2})\/(\d{2})\/(\d{4})/,'$3-$2-$1');
     return iso >= todayA && iso <= in3ISO;
-  });
-  let nbContratsAffiches = 0;
-  contratsProches.forEach((t, i) => {
+  }).forEach((t, i) => {
     const id = `contrat_${t.num||i}`;
     const iso = t.dateTransport.replace(/(\d{2})\/(\d{2})\/(\d{4})/,'$3-$2-$1');
     const d = diffJ(iso);
     const label = d === 0 ? "<b>AUJOURD'HUI</b>" : d === 1 ? 'Demain' : `Dans <b>${d} j</b>`;
-    if (d === 0 && !estLu(id)) totalAujourdHui++;
-    nbContratsAffiches++;
-    html += `<div class="alert-box ${d===0?'danger':'warning'}" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
+    push(d === 0 ? 0 : 1, `<div class="alert-box ${d===0?'danger':'warning'}" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
       <span>🚌 Contrat <b>#${t.num||'?'}</b> — ${t.demandeur||'—'} — ${t.dateTransport} — ${label} — <span style="color:var(--green)">${fmt(t.montant||0)}</span></span>
       ${btnLu(id)}
-    </div>`;
+    </div>`);
   });
-  if (!nbContratsAffiches) html += `<div class="alert-box success" style="margin-bottom:8px">✅ Aucun contrat dans les 3 prochains jours.</div>`;
 
-  // ── CT expirés ──────────────────────────────────────────
-  html += `<div class="section-title" style="margin-top:14px">CT dans les ${SEUIL_JOURS} prochains jours</div>`;
-  const ctExpires = state.bus.filter(b => b.ct && b.ct < todayA);
-  let nbCTAffiches = 0;
-  ctExpires.forEach(b => {
+  // ── CT expirés ─────────────────────────────────────────
+  state.bus.filter(b => b.ct && b.ct < todayA).forEach(b => {
     const id = `ct_exp_${b.nom}`;
-    nbCTAffiches++;
     const d = diffJ(b.ct);
-    html += `<div class="alert-box danger" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
+    pushToday(`<div class="alert-box danger" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
       <span>🔍 <b>${b.nom}</b> — CT limite ${fmtDateFR(b.ct)} — <b>EXPIRÉ depuis ${Math.abs(d)} j</b></span>
       ${btnLu(id)}
-    </div>`;
+    </div>`);
   });
 
-  // ── CT à venir ──────────────────────────────────────────
-  const ctAlerts = state.bus.filter(b => {
+  // ── CT à venir ─────────────────────────────────────────
+  state.bus.filter(b => {
     const { ctDate } = getDatesCT(b);
     if (!ctDate) return false;
     const d = diffJ(ctDate);
     return d !== null && d >= 0 && d <= SEUIL_JOURS;
-  }).sort((a,b) => new Date(getDatesCT(a).ctDate) - new Date(getDatesCT(b).ctDate));
-
-  ctAlerts.forEach(b => {
+  }).sort((a,b) => new Date(getDatesCT(a).ctDate) - new Date(getDatesCT(b).ctDate))
+  .forEach(b => {
     const { ctDate } = getDatesCT(b);
     const d = diffJ(ctDate);
     const id = `ct_${b.nom}`;
-    nbCTAffiches++;
-    if (d === 0 && !estLu(id)) totalAujourdHui++;
     const label = d === 0 ? "<b>AUJOURD'HUI</b>" : `Dans <b>${d} j</b>`;
-    html += `<div class="alert-box ${d===0?'danger':'warning'}" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
+    push(d, `<div class="alert-box ${d===0?'danger':'warning'}" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
       <span>🔍 <b>${b.nom}</b> — CT prévu le ${fmtDateFR(ctDate)} — ${label}</span>
       ${btnLu(id)}
-    </div>`;
-
+    </div>`);
   });
-  if (!nbCTAffiches) html += `<div class="alert-box success" style="margin-bottom:8px">✅ Aucun CT dans les ${SEUIL_JOURS} prochains jours.</div>`;
 
-  // ── Révisions ───────────────────────────────────────────
-  html += `<div class="section-title" style="margin-top:14px">Révisions dans les ${SEUIL_JOURS} prochains jours</div>`;
-  const revAlerts = state.bus.filter(b => {
+  // ── Révisions ──────────────────────────────────────────
+  state.bus.filter(b => {
     const { revDate } = getDatesCT(b);
     if (!revDate) return false;
     const d = diffJ(revDate);
     return d !== null && d >= 0 && d <= SEUIL_JOURS;
-  }).sort((a,b) => new Date(getDatesCT(a).revDate) - new Date(getDatesCT(b).revDate));
-
-  let nbRevAffiches = 0;
-  revAlerts.forEach(b => {
+  }).sort((a,b) => new Date(getDatesCT(a).revDate) - new Date(getDatesCT(b).revDate))
+  .forEach(b => {
     const { revDate } = getDatesCT(b);
     const d = diffJ(revDate);
     const id = `rev_${b.nom}`;
-    nbRevAffiches++;
-    if (d === 0 && !estLu(id)) totalAujourdHui++;
     const label = d === 0 ? "<b>AUJOURD'HUI</b>" : `Dans <b>${d} j</b>`;
-    html += `<div class="alert-box ${d===0?'danger':'warning'}" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
+    push(d, `<div class="alert-box ${d===0?'danger':'warning'}" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
       <span>🔧 <b>${b.nom}</b> — Révision prévue le ${fmtDateFR(revDate)} — ${label}</span>
       ${btnLu(id)}
-    </div>`;
+    </div>`);
   });
-  if (!nbRevAffiches) html += `<div class="alert-box success" style="margin-bottom:8px">✅ Aucune révision planifiée dans les ${SEUIL_JOURS} prochains jours.</div>`;
 
-  // ── FCO ─────────────────────────────────────────────────
-  const nowFCO = new Date(todayA);
+  // ── FCO ────────────────────────────────────────────────
   const jourSem = new Date().getDay();
   const joursAvantLundi = jourSem === 1 ? 0 : jourSem === 0 ? 1 : 8 - jourSem;
   const prochainLundi = new Date(todayA);
   prochainLundi.setDate(prochainLundi.getDate() + joursAvantLundi);
   const prochainLundiISO = prochainLundi.toISOString().slice(0,10);
-
-  html += `<div class="section-title" style="margin-top:14px">FCO à lancer le ${jourSem===1?"aujourd'hui":fmtDateFR(prochainLundiISO)} (lundi)</div>`;
-  const fcoAlerts = (state.personnel||[]).filter(p => p.fco && p.fco <= prochainLundiISO);
-  let nbFCOAffiches = 0;
-  fcoAlerts.sort((a,b) => (a.fco||'').localeCompare(b.fco||'')).forEach(p => {
+  (state.personnel||[]).filter(p => p.fco && p.fco <= prochainLundiISO)
+  .sort((a,b) => (a.fco||'').localeCompare(b.fco||''))
+  .forEach(p => {
     const id = `fco_${p.matricule}`;
-    nbFCOAffiches++;
     const dFCO = diffJ(p.fco);
-    if (dFCO === 0) totalAujourdHui++;
     const label = dFCO < 0 ? `<b style="color:var(--red)">EXPIRÉE depuis ${Math.abs(dFCO)} j</b>` : dFCO === 0 ? "<b>AUJOURD'HUI</b>" : `Dans <b>${dFCO} j</b>`;
-    html += `<div class="alert-box ${dFCO<=0?'danger':'warning'}" style="margin-bottom:6px;display:flex;align-items:center;gap:8px;${dFCO===0?'border-width:2px':''}">
+    push(dFCO <= 0 ? 0 : dFCO, `<div class="alert-box ${dFCO<=0?'danger':'warning'}" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
       <span>🎓 <b>${p.nom}</b> (${p.matricule}) — FCO le ${fmtDateFR(p.fco)} — ${label}</span>
       ${btnLu(id)}
-    </div>`;
+    </div>`);
   });
-  if (!nbFCOAffiches) html += `<div class="alert-box success" style="margin-bottom:8px">✅ Aucune FCO à lancer ${jourSem===1?"aujourd'hui":'lundi prochain'}.</div>`;
+
+  // ── Rendu ──────────────────────────────────────────────
+  const cntToday = allAlertes.today.length;
+  const cntLater = allAlertes.later.length;
+
+  const btnStyle = (active) => active
+    ? `padding:6px 18px;border-radius:7px;border:none;font-size:13px;font-weight:700;cursor:pointer;background:var(--accent);color:#000`
+    : `padding:6px 18px;border-radius:7px;border:none;font-size:13px;font-weight:600;cursor:pointer;background:transparent;color:var(--text3)`;
+
+  let html = `<div style="display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:3px;gap:3px;margin-bottom:14px;width:fit-content">
+    <button style="${btnStyle(mode==='today')}" onclick="renderAlertes('today')">
+      📅 Aujourd'hui${cntToday>0?` <span style="background:var(--red);color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px">${cntToday}</span>`:''}
+    </button>
+    <button style="${btnStyle(mode==='later')}" onclick="renderAlertes('later')">
+      🔮 Plus tard${cntLater>0?` <span style="background:var(--yellow);color:#000;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px">${cntLater}</span>`:''}
+    </button>
+  </div>`;
+
+  const liste = allAlertes[mode];
+  if (liste.length === 0) {
+    html += `<div class="alert-box success">✅ Aucune alerte ${mode==='today'?"aujourd'hui":'dans les prochains jours'}.</div>`;
+  } else {
+    liste.forEach(a => { html += a.html; });
+  }
 
   document.getElementById('alertes-list').innerHTML = html;
-  // Badge = uniquement alertes du jour (d=0) non lues
   const _ab=document.getElementById('alert-badge'); if(_ab){_ab.textContent=totalAujourdHui;_ab.style.display=totalAujourdHui>0?'':'none';}
 }
 
