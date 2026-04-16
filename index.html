@@ -878,7 +878,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.303</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.304</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -2741,6 +2741,24 @@
     </div>
 
     <div id="page-cfg-prepa-aff" class="page">
+      <!-- Bannière simulation active -->
+      <div id="simul-banner" style="display:none;margin-bottom:12px;padding:10px 14px;background:rgba(249,115,22,0.12);border:2px solid rgba(249,115,22,0.5);border-radius:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:16px">🧪</span>
+            <span style="font-weight:700;color:var(--orange)">Mode simulation actif</span>
+            <span style="font-size:11px;color:var(--text3)">— bus réels et affectations prépa préservés</span>
+          </div>
+          <button class="btn btn-sm" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:var(--red)" onclick="quitterSimulation()">✕ Quitter simulation</button>
+        </div>
+        <div style="margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-size:12px;color:var(--text2);font-weight:600">+ Bus fictif :</span>
+          <input id="simul-bus-nom" type="text" placeholder="Nom (ex: BUS-99)" style="width:130px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px;padding:5px 8px">
+          <input id="simul-bus-places" type="number" placeholder="Places" min="1" max="200" style="width:80px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px;padding:5px 8px">
+          <button class="btn btn-sm btn-primary" onclick="ajouterBusFictif()">➕ Ajouter</button>
+          <span id="simul-bus-list" style="font-size:11px;color:var(--orange)"></span>
+        </div>
+      </div>
       <!-- Barre de contrôle -->
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
         <div style="display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid rgba(0,212,255,0.3);border-radius:8px;padding:6px 12px">
@@ -2750,7 +2768,10 @@
           <button onclick="setPrepaAffNiveau(state.prepaNiveauFreq+1)" style="background:none;border:none;color:var(--accent);font-size:16px;cursor:pointer;padding:0 4px">▶</button>
         </div>
         <span id="prepa-aff-niveau-badge" style="font-size:11px;padding:4px 10px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);border-radius:6px;color:var(--accent)"></span>
-        <button class="btn btn-sm" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--red)" onclick="clearPrepaAff()">🗑 Vider affectations</button>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button id="simul-start-btn" class="btn btn-sm" style="background:rgba(249,115,22,0.12);border:1px solid rgba(249,115,22,0.4);color:var(--orange)" onclick="activerSimulation()">🧪 Simuler achats</button>
+          <button class="btn btn-sm" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--red)" onclick="clearPrepaAff()">🗑 Vider affectations</button>
+        </div>
       </div>
       <!-- Bannière sous 100% -->
       <div id="prepa-aff-warning-banner" style="display:none;margin-bottom:10px;padding:8px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;font-size:12px;color:var(--red)">
@@ -9189,8 +9210,8 @@ function getPrepaAffCreneaux(busNom) {
 function getBusAffectesLignePrepa(ligneNum, creneauId) {
   const cible = normaliseLigneNum(ligneNum);
   const buses = [];
-  state.bus.forEach(b => {
-    // Si vidé volontairement, on ne fallback PAS sur les affectations réelles
+  const listeBus = state.simulActif ? (state.busSimul || state.bus) : state.bus;
+  listeBus.forEach(b => {
     const aff = state.prepaAffVide
       ? (state.affCreneauxPrepa?.[b.nom] || {})
       : (state.affCreneauxPrepa?.[b.nom] ?? state.affCreneaux?.[b.nom] ?? {});
@@ -9198,6 +9219,63 @@ function getBusAffectesLignePrepa(ligneNum, creneauId) {
     if (val === cible) buses.push(b);
   });
   return buses;
+}
+
+function activerSimulation() {
+  if (state.simulActif) return;
+  state.simulActif = true;
+  state.busSimul = JSON.parse(JSON.stringify(state.bus));
+  state.affCreneauxPrepaSnapshot = JSON.parse(JSON.stringify(state.affCreneauxPrepa || {}));
+  saveStateWithSync();
+  _updateSimulUI();
+  renderPrepaAff();
+  toastMsg('Simulation activée — bus réels et affectations préservés', 'success');
+}
+
+function quitterSimulation() {
+  if (!confirm('Quitter la simulation ?\n\nLes bus fictifs seront supprimés et les affectations prépa restaurées.')) return;
+  state.simulActif = false;
+  state.busSimul = null;
+  if (state.affCreneauxPrepaSnapshot) {
+    state.affCreneauxPrepa = state.affCreneauxPrepaSnapshot;
+    state.affCreneauxPrepaSnapshot = null;
+  }
+  saveStateWithSync();
+  _updateSimulUI();
+  renderPrepaAff();
+  toastMsg('Simulation terminée — données réelles restaurées', 'success');
+}
+
+function ajouterBusFictif() {
+  if (!state.simulActif) return;
+  const nom    = (document.getElementById('simul-bus-nom')?.value || '').trim();
+  const places = parseInt(document.getElementById('simul-bus-places')?.value || '0');
+  if (!nom) { toastMsg('Nom requis', 'danger'); return; }
+  if (!places || places < 1) { toastMsg('Nombre de places requis', 'danger'); return; }
+  if ((state.busSimul || []).find(b => b.nom === nom)) { toastMsg('Ce nom existe déjà', 'danger'); return; }
+  state.busSimul = state.busSimul || JSON.parse(JSON.stringify(state.bus));
+  state.busSimul.push({ nom, places, _fictif: true });
+  document.getElementById('simul-bus-nom').value = '';
+  document.getElementById('simul-bus-places').value = '';
+  saveStateWithSync();
+  _updateSimulUI();
+  renderPrepaAff();
+  toastMsg('Bus fictif "' + nom + '" ajouté (' + places + ' places)', 'success');
+}
+
+function _updateSimulUI() {
+  const banner   = document.getElementById('simul-banner');
+  const startBtn = document.getElementById('simul-start-btn');
+  const listEl   = document.getElementById('simul-bus-list');
+  const actif    = !!state.simulActif;
+  if (banner)   banner.style.display   = actif ? '' : 'none';
+  if (startBtn) startBtn.style.display = actif ? 'none' : '';
+  if (listEl && actif) {
+    const fictifs = (state.busSimul || []).filter(b => b._fictif);
+    listEl.textContent = fictifs.length
+      ? 'Bus fictifs : ' + fictifs.map(b => b.nom + ' (' + b.places + 'pl)').join(', ')
+      : '';
+  }
 }
 
 function setPrepaAffNiveau(n) {
@@ -11471,7 +11549,7 @@ function navConfig(el) {
   if (page === 'cfg-frequentation') renderFrequentations();
   if (page === 'cfg-jeu') renderCfgJeu();
   if (page === 'cfg-prepa-creneaux') renderPrepaCreneaux();
-  if (page === 'cfg-prepa-aff') renderPrepaAff();
+  if (page === 'cfg-prepa-aff') { renderPrepaAff(); _updateSimulUI(); }
   if (page === 'cfg-prepa-aide') { initPrepaAideAff(); renderPrepaAideAff(); };
   if (page === 'cfg-lignes') renderCfgLignes();
   if (page === 'cfg-sync') renderSyncPage();
