@@ -878,7 +878,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.305</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.307</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -2785,7 +2785,16 @@
           <button onclick="setPrepaAffNiveau(state.prepaNiveauFreq+1)" style="background:none;border:none;color:var(--accent);font-size:16px;cursor:pointer;padding:0 4px">▶</button>
         </div>
         <span id="prepa-aff-niveau-badge" style="font-size:11px;padding:4px 10px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);border-radius:6px;color:var(--accent)"></span>
-        <div style="display:flex;gap:8px;align-items:center">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <div id="prepa-aff-reseau-tabs" style="display:flex;gap:4px">
+            <button class="freq-tab active" data-reseau="normal"   onclick="setPrepaAffReseau(this)">🚌 Normal</button>
+            <button class="freq-tab"        data-reseau="nocturne" onclick="setPrepaAffReseau(this)">🌙 Nocturne</button>
+            <button class="freq-tab"        data-reseau="scolaire" onclick="setPrepaAffReseau(this)">🎒 Scolaire</button>
+          </div>
+          <div style="display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:2px;gap:2px">
+            <button id="prepa-aff-mode-compact" onclick="setPrepaAffMode('compact')" style="padding:4px 12px;border-radius:5px;border:none;font-size:12px;font-weight:700;cursor:pointer;background:var(--accent);color:#000">⚡ Compact</button>
+            <button id="prepa-aff-mode-complet" onclick="setPrepaAffMode('complet')" style="padding:4px 12px;border-radius:5px;border:none;font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:var(--text3)">📋 Complet</button>
+          </div>
           <button id="simul-start-btn" class="btn btn-sm" style="background:rgba(249,115,22,0.12);border:1px solid rgba(249,115,22,0.4);color:var(--orange)" onclick="activerSimulation()">🧪 Simuler achats</button>
           <button class="btn btn-sm" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--red)" onclick="clearPrepaAff()">🗑 Vider affectations</button>
         </div>
@@ -2801,7 +2810,7 @@
           <span id="prepa-aff-global-stats" style="font-size:11px;color:var(--text3)"></span>
         </div>
         <div class="card-body" style="padding:8px;overflow-y:auto;max-height:calc(100vh - 200px)">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start">
+          <div id="prepa-aff-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start">
             <div style="overflow-x:auto">
               <table class="data-table" id="prepa-aff-table-l" style="border-collapse:separate;border-spacing:0;width:100%">
                 <thead id="prepa-aff-thead-l" style="position:sticky;top:0;z-index:5"></thead>
@@ -9325,6 +9334,17 @@ function setPrepaAffNiveau(n) {
   renderPrepaAff();
 }
 
+let prepaAffMode = 'compact'; // 'compact' | 'complet'
+
+function setPrepaAffMode(m) {
+  prepaAffMode = m;
+  const btnC = document.getElementById('prepa-aff-mode-compact');
+  const btnF = document.getElementById('prepa-aff-mode-complet');
+  if (btnC) { btnC.style.background = m==='compact'?'var(--accent)':'transparent'; btnC.style.color = m==='compact'?'#000':'var(--text3)'; btnC.style.fontWeight = m==='compact'?'700':'600'; }
+  if (btnF) { btnF.style.background = m==='complet'?'var(--accent)':'transparent'; btnF.style.color = m==='complet'?'#000':'var(--text3)'; btnF.style.fontWeight = m==='complet'?'700':'600'; }
+  renderPrepaAff();
+}
+
 function renderPrepaAff() {
   if (!state.affCreneauxPrepa) state.affCreneauxPrepa = {};
 
@@ -9380,22 +9400,65 @@ function renderPrepaAff() {
     ? CRENEAU_TO_FREQ_SCOLAIRE
     : CRENEAU_TO_FREQ_NORMAL;
 
-  // Filtrer uniquement sem_pointe (pointe semaine)
-  const allC = ['sem_pointe'];
+  // Créneaux à afficher selon le mode
+  const GRP_COLORS = {
+    'SEMAINE' : { bg:'#1a3a6b', color:'#60a5fa' },
+    'SAMEDI'  : { bg:'#3b1a6b', color:'#c084fc' },
+    'DIMANCHE': { bg:'#1a4a3b', color:'#34d399' },
+  };
+  const modeComplet = (prepaAffMode === 'complet');
+  // Groupes à afficher : compact = [sem_pointe], complet = tous les créneaux de CRENEAU_GROUPES_FREQ_NORMAL
+  const grpsDef = reseau === 'nocturne' ? CRENEAU_GROUPES_FREQ_NOCTURNE : CRENEAU_GROUPES_FREQ_NORMAL;
+  const allC = modeComplet
+    ? grpsDef.reduce(function(a,g){ return a.concat(g.ids); }, [])
+    : ['sem_pointe'];
+  // Pour le mode complet, groupes avec firstCol index
+  const grpsVis = modeComplet ? grpsDef.map(function(g){
+    return { label:g.label, ids:g.ids.filter(function(id){ return allC.includes(id); }) };
+  }).filter(function(g){ return g.ids.length; }) : null;
+
+  // Mettre le grid en 1 col si complet
+  var gridEl = document.getElementById('prepa-aff-grid');
+  if (gridEl) gridEl.style.gridTemplateColumns = modeComplet ? '1fr' : '1fr 1fr';
+
+  // Sync boutons toggle
+  var btnC2 = document.getElementById('prepa-aff-mode-compact');
+  var btnF2 = document.getElementById('prepa-aff-mode-complet');
+  if (btnC2) { btnC2.style.background = !modeComplet ? 'var(--accent)' : 'transparent'; btnC2.style.color = !modeComplet ? '#000' : 'var(--text3)'; }
+  if (btnF2) { btnF2.style.background = modeComplet ? 'var(--accent)' : 'transparent'; btnF2.style.color = modeComplet ? '#000' : 'var(--text3)'; }
 
   const BG2 = 'var(--surface2)';
-  const GC  = { 'Semaine':'#1a3a6b','Samedi':'#3b1a6b','Dimanche':'#1a4a3b','Nuit':'#1a2a4b','Scolaire':'#2a4b1a' };
-  const GT  = { 'Semaine':'#60a5fa','Samedi':'#c084fc','Dimanche':'#34d399','Nuit':'#818cf8','Scolaire':'#86efac' };
 
-  // Helper : générer un thead pour une table
   function makeTheadHTML() {
-    return '<tr>'
-      + '<th rowspan="2" style="position:sticky;left:0;z-index:6;background:' + BG2 + ';min-width:90px;border-right:2px solid var(--border);text-align:center">Ligne</th>'
-      + '<th rowspan="2" style="background:' + BG2 + ';min-width:80px;border-right:2px solid var(--border);text-align:right;color:var(--text3)"></th>'
-      + '<th style="text-align:center;background:#1a3a6b;color:#60a5fa;font-weight:700;font-size:13px;border-left:3px solid #60a5fa">Semaine HP</th>'
-      + '</tr><tr>'
-      + '<th style="text-align:center;font-size:12px;background:#1a3a6bcc;color:#60a5fa;padding:3px 6px;border-left:3px solid #60a5fa55;min-width:52px">HP</th>'
-      + '</tr>';
+    var ncols = allC.length;
+    if (!modeComplet) {
+      return '<tr>'
+        + '<th rowspan="2" style="position:sticky;left:0;z-index:6;background:' + BG2 + ';min-width:90px;border-right:2px solid var(--border);text-align:center">Ligne</th>'
+        + '<th rowspan="2" style="background:' + BG2 + ';min-width:80px;border-right:2px solid var(--border);text-align:right;color:var(--text3)"></th>'
+        + '<th style="text-align:center;background:#1a3a6b;color:#60a5fa;font-weight:700;font-size:13px;border-left:3px solid #60a5fa">Semaine HP</th>'
+        + '</tr><tr>'
+        + '<th style="text-align:center;font-size:12px;background:#1a3a6bcc;color:#60a5fa;padding:3px 6px;border-left:3px solid #60a5fa55;min-width:52px">HP</th>'
+        + '</tr>';
+    }
+    // Complet : groupes + sous-colonnes
+    var row1 = '<th rowspan="2" style="position:sticky;left:0;z-index:6;background:' + BG2 + ';min-width:90px;border-right:2px solid var(--border);text-align:center">Ligne</th>'
+      + '<th rowspan="2" style="background:' + BG2 + ';min-width:80px;border-right:2px solid var(--border);text-align:right;color:var(--text3)"></th>';
+    var row2 = '';
+    var firstInGrp = {};
+    allC.forEach(function(id){ firstInGrp[id] = false; });
+    grpsVis.forEach(function(g){
+      if (g.ids.length) firstInGrp[g.ids[0]] = true;
+      var gc = GRP_COLORS[g.label.toUpperCase()] || { bg:'#222', color:'#aaa' };
+      row1 += '<th colspan="' + g.ids.length + '" style="text-align:center;background:' + gc.bg + ';color:' + gc.color + ';font-weight:700;font-size:12px;border-left:3px solid ' + gc.color + '55">' + g.label + '</th>';
+    });
+    allC.forEach(function(id){
+      var crDef = AFF_CRENEAUX.find(function(c){ return c.id === id; });
+      var lbl = CRENEAU_LABELS_FREQ[id] || (crDef ? crDef.label : id);
+      var gc = crDef ? (GRP_COLORS[crDef.groupe] || { bg:'#222', color:'#aaa' }) : { bg:'#222', color:'#aaa' };
+      var bl = firstInGrp[id] ? 'border-left:3px solid ' + gc.color + '55' : '';
+      row2 += '<th style="text-align:center;font-size:11px;background:' + gc.bg + 'cc;color:' + gc.color + ';padding:3px 4px;' + bl + ';min-width:48px">' + lbl + '</th>';
+    });
+    return '<tr>' + row1 + '</tr><tr>' + row2 + '</tr>';
   }
 
   const theadL = document.getElementById('prepa-aff-thead-l');
@@ -9405,7 +9468,7 @@ function renderPrepaAff() {
   if (!theadL || !theadR || !tbodyL || !tbodyR) return;
 
   theadL.innerHTML = makeTheadHTML();
-  theadR.innerHTML = makeTheadHTML();
+  theadR.innerHTML = modeComplet ? '' : makeTheadHTML();
 
   if (!lignes.length) {
     tbodyL.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:30px;color:var(--text3)">Aucune ligne pour N' + n + '.</td></tr>';
@@ -9425,54 +9488,77 @@ function renderPrepaAff() {
     var vehicules = (ligne.vehicules || '').replace(/ - /g,'<br>');
     var bornes   = ligne.bornes ? '<div style="color:#ffe;font-size:11px">⚡</div>' : '';
 
-    var fi = freqIdxMap['sem_pointe'];
-    var fv = fi !== undefined ? freqVals[fi] : undefined;
-    var cible = typeof fv === 'number' ? fv : (fv === 'Active' ? -1 : 0);
-    var buses  = getBusAffectesLignePrepa(ligne.num, 'sem_pointe');
-    var nbBus  = buses.length;
-    var places = buses.reduce(function(s,b){ return s+getCapaBus(b, ligne.num); }, 0);
-    var manque = cible > 0 ? places - cible : null;
-    var freq   = nbBus > 0 && dureeAR > 0 ? Math.round(dureeAR / nbBus) : null;
-    var pct    = cible > 0 ? Math.round(places / cible * 100) : null;
-    if (cible > 0) { totalFreq += cible; totalTransportes += places; totalManquants += (manque || 0); }
-
     var TT = 'border-top:5px solid ' + couleur;
     var TB = 'border-bottom:5px solid ' + couleur;
     var TN = 'border-top:1px solid var(--border)';
-    var BL = 'border-left:3px solid #60a5fa44';
     var LBL = 'font-size:12px;color:var(--text2);white-space:nowrap;padding:2px 6px;border-right:2px solid var(--border);text-align:right;min-width:80px;background:var(--surface);';
 
-    var colTD = function(style, val) { return '<td style="text-align:center;' + BL + ';' + style + '">' + val + '</td>'; };
+    // En mode compact : 1 créneau, rendu vertical existant
+    if (!modeComplet) {
+      var crId = 'sem_pointe';
+      var BL = 'border-left:3px solid #60a5fa44';
+      var colTD = function(style, val) { return '<td style="text-align:center;' + BL + ';' + style + '">' + val + '</td>'; };
+      var fi = freqIdxMap[crId];
+      var fv = fi !== undefined ? freqVals[fi] : undefined;
+      var cible = typeof fv === 'number' ? fv : (fv === 'Active' ? -1 : 0);
+      var buses  = getBusAffectesLignePrepa(ligne.num, crId);
+      var nbBus  = buses.length;
+      var places = buses.reduce(function(s,b){ return s+getCapaBus(b, ligne.num); }, 0);
+      var manque = cible > 0 ? places - cible : null;
+      var freq   = nbBus > 0 && dureeAR > 0 ? Math.round(dureeAR / nbBus) : null;
+      var pct    = cible > 0 ? Math.round(places / cible * 100) : null;
+      if (cible > 0) { totalFreq += cible; totalTransportes += places; totalManquants += (manque || 0); }
+      return '<tr>'
+        + '<td rowspan="6" style="background:' + couleur + ';padding:4px 6px;border-right:2px solid var(--border);' + TT + ';vertical-align:middle;text-align:center;min-width:90px"><div style="color:#fff;font-weight:700;font-size:14px">' + ligne.num + '</div>' + bornes + (vehicules ? '<div style="color:#ffffffcc;font-size:11px;margin-top:3px;line-height:1.3">' + vehicules + '</div>' : '') + '</td>'
+        + '<td style="' + LBL + TT + '">Fréquentation</td>' + colTD(TT, cible===(-1)?'●':(cible>0?cible:'—'))
+        + '</tr><tr><td style="' + LBL + TN + '">Transportés</td>' + colTD(TN, (cible<=0||cible===-1)?'—':'<b>'+places+'</b>')
+        + '</tr><tr><td style="' + LBL + TN + '">Nb bus</td>' + colTD(TN, (cible>0||nbBus>0)?nbBus:'—')
+        + '</tr><tr><td style="' + LBL + TN + '">Manquants</td>'
+        + (cible<=0||cible===-1 ? colTD(TN,'—') : (function(){ var ok=manque>=0; return '<td style="text-align:center;font-size:13px;font-weight:700;background:' + (ok?'rgba(16,185,129,0.12)':'rgba(239,68,68,0.12)') + ';' + BL + ';' + TN + ';color:' + (ok?'var(--green)':'var(--red)') + '">' + (manque>=0?'+'+manque:manque) + '</td>'; })())
+        + '</tr><tr><td style="' + LBL + TN + '">Fréquence</td>' + colTD(TN, (freq!==null&&cible>0)?freq+' min':'—')
+        + '</tr><tr><td style="' + LBL + TN + ';' + TB + '">% Exploit.</td>'
+        + (cible<=0||cible===-1 ? '<td style="text-align:center;' + BL + ';' + TN + ';' + TB + '">—</td>'
+          : (function(){ var ok=pct>=100; return '<td style="text-align:center;font-size:13px;font-weight:700;' + BL + ';background:' + (ok?'rgba(16,185,129,0.15)':'rgba(239,68,68,0.15)') + ';color:' + (ok?'var(--green)':'var(--red)') + ';' + TN + ';' + TB + '">' + pct + '%</td>'; })())
+        + '</tr>';
+    }
 
-    return '<tr>'
-      + '<td rowspan="6" style="background:' + couleur + ';padding:4px 6px;border-right:2px solid var(--border);' + TT + ';vertical-align:middle;text-align:center;min-width:90px"><div style="color:#fff;font-weight:700;font-size:14px">' + ligne.num + '</div>' + bornes + (vehicules ? '<div style="color:#ffffffcc;font-size:11px;margin-top:3px;line-height:1.3">' + vehicules + '</div>' : '') + '</td>'
-      + '<td style="' + LBL + TT + '">Fréquentation</td>'
-      + colTD(TT, cible===(-1)?'●':(cible>0?cible:'—'))
-      + '</tr><tr>'
-      + '<td style="' + LBL + TN + '">Transportés</td>'
-      + colTD(TN, (cible<=0||cible===-1)?'—':'<b>'+places+'</b>')
-      + '</tr><tr>'
-      + '<td style="' + LBL + TN + '">Nb bus</td>'
-      + colTD(TN, (cible>0||nbBus>0)?nbBus:'—')
-      + '</tr><tr>'
-      + '<td style="' + LBL + TN + '">Manquants</td>'
-      + (cible<=0||cible===-1 ? colTD(TN,'—') : (function(){ var ok=manque>=0; return '<td style="text-align:center;font-size:13px;font-weight:700;background:' + (ok?'rgba(16,185,129,0.12)':'rgba(239,68,68,0.12)') + ';' + BL + ';' + TN + ';color:' + (ok?'var(--green)':'var(--red)') + '">' + (manque>=0?'+'+manque:manque) + '</td>'; })())
-      + '</tr><tr>'
-      + '<td style="' + LBL + TN + '">Fréquence</td>'
-      + colTD(TN, (freq!==null&&cible>0)?freq+' min':'—')
-      + '</tr><tr>'
-      + '<td style="' + LBL + TN + ';' + TB + '">% Exploit.</td>'
-      + (cible<=0||cible===-1 ? '<td style="text-align:center;' + BL + ';' + TN + ';' + TB + '">—</td>' : (function(){ var ok=pct>=100; return '<td style="text-align:center;font-size:13px;font-weight:700;' + BL + ';background:' + (ok?'rgba(16,185,129,0.15)':'rgba(239,68,68,0.15)') + ';color:' + (ok?'var(--green)':'var(--red)') + ';' + TN + ';' + TB + '">' + pct + '%</td>'; })())
+    // Mode complet : rendu horizontal, une ligne par créneau = 1 colonne
+    var cellsHtml = '';
+    allC.forEach(function(crId) {
+      var crDef = AFF_CRENEAUX.find(function(c){ return c.id === crId; });
+      var gc = crDef ? (GRP_COLORS[crDef.groupe] || { color:'#aaa' }) : { color:'#aaa' };
+      var fi2 = freqIdxMap[crId];
+      var fv2 = fi2 !== undefined ? freqVals[fi2] : undefined;
+      var cible2 = typeof fv2 === 'number' ? fv2 : (fv2 === 'Active' ? -1 : 0);
+      var buses2 = getBusAffectesLignePrepa(ligne.num, crId);
+      var places2 = buses2.reduce(function(s,b){ return s+getCapaBus(b, ligne.num); }, 0);
+      var pct2 = cible2 > 0 ? Math.round(places2 / cible2 * 100) : null;
+      if (cible2 > 0) { totalFreq += cible2; totalTransportes += places2; }
+      var bl2 = 'border-left:2px solid ' + gc.color + '33';
+      var bg2, txt2;
+      if (cible2 === 0) { bg2 = 'transparent'; txt2 = '<span style="color:var(--text3);font-size:11px">—</span>'; }
+      else if (cible2 === -1) { bg2 = 'transparent'; txt2 = '<span style="font-size:11px">●</span>'; }
+      else if (pct2 === null) { bg2 = 'transparent'; txt2 = '—'; }
+      else if (pct2 >= 100) { bg2 = 'rgba(16,185,129,0.15)'; txt2 = '<span style="color:var(--green);font-weight:700;font-size:12px">' + places2 + '</span><br><span style="font-size:10px;color:var(--text3)">' + pct2 + '%</span>'; }
+      else { bg2 = 'rgba(239,68,68,0.12)'; txt2 = '<span style="color:var(--red);font-weight:700;font-size:12px">' + places2 + '</span><br><span style="font-size:10px;color:var(--text3)">' + pct2 + '%</span>'; }
+      cellsHtml += '<td style="text-align:center;' + bl2 + ';background:' + bg2 + ';padding:4px 3px;vertical-align:middle">' + txt2 + '</td>';
+    });
+    return '<tr style="border-top:3px solid ' + couleur + '">'
+      + '<td style="position:sticky;left:0;z-index:2;background:' + couleur + ';padding:4px 8px;border-right:2px solid var(--border);text-align:center;min-width:90px;vertical-align:middle"><div style="color:#fff;font-weight:700;font-size:14px">' + ligne.num + '</div>' + bornes + '</td>'
+      + '<td style="font-size:11px;color:var(--text2);padding:4px 6px;border-right:2px solid var(--border);white-space:nowrap;vertical-align:middle">' + (vehicules||'') + '</td>'
+      + cellsHtml
       + '</tr>';
   }
 
-  // Couper en 2 moitiés équilibrées
-  var mid = Math.ceil(lignes.length / 2);
-  var lignesL = lignes.slice(0, mid);
-  var lignesR = lignes.slice(mid);
-
-  tbodyL.innerHTML = lignesL.map(makeLigneRows).join('');
-  tbodyR.innerHTML = lignesR.map(makeLigneRows).join('');
+  // Compact : 2 colonnes ; Complet : 1 colonne pleine largeur
+  if (modeComplet) {
+    tbodyL.innerHTML = lignes.map(makeLigneRows).join('');
+    tbodyR.innerHTML = '';
+  } else {
+    var mid = Math.ceil(lignes.length / 2);
+    tbodyL.innerHTML = lignes.slice(0, mid).map(makeLigneRows).join('');
+    tbodyR.innerHTML = lignes.slice(mid).map(makeLigneRows).join('');
+  }
 
   var statsEl = document.getElementById('prepa-aff-global-stats');
   if (statsEl && totalFreq > 0) {
