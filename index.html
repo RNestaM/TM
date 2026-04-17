@@ -878,7 +878,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.317</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.319</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -2007,14 +2007,14 @@
             <div class="form-row">
               <div class="form-group">
                 <label>ID jeu</label>
-                <input type="number" id="achat-id" placeholder="91346">
+                <input type="number" id="achat-id" placeholder="91346" oninput="prefillAchatKm(this.value)">
               </div>
               <div class="form-group">
                 <label>Prix d'achat (€)</label>
                 <input type="number" id="achat-prix" placeholder="115000">
               </div>
               <div class="form-group">
-                <label>KM au compteur</label>
+                <label>KM au compteur <span id="achat-km-hint" style="font-size:10px;color:var(--accent);font-weight:400"></span></label>
                 <input type="number" id="achat-km" placeholder="0">
               </div>
             </div>
@@ -5410,6 +5410,12 @@ function csvImporter() {
         maj++;
       } else {
         state.bus.push({ id: Date.now() + Math.random()*1000|0, ...b });
+        // Enregistrer km actuel comme kmAchat si idJeu pas encore connu
+        if (b.idJeu && (!state.prixKm || !state.prixKm[b.idJeu])) {
+          if (!state.prixKm) state.prixKm = {};
+          state.prixKm[b.idJeu] = { prix: null, km: b.km };
+          journalLog('Nouveau bus ' + b.nom + ' (ID ' + b.idJeu + ') — km achat auto-enregistré : ' + b.km, 'info');
+        }
         ajouts++;
       }
     });
@@ -8439,6 +8445,28 @@ function supprimerContrat(i) { const _c = state.contratsPub[i]; pushUndo(_c ? 'S
 // ═══════════════════════════════════════════════════════
 //  ACHATS
 // ═══════════════════════════════════════════════════════
+
+function prefillAchatKm(idVal) {
+  const idJeu = parseInt(idVal);
+  const kmEl   = document.getElementById('achat-km');
+  const hint   = document.getElementById('achat-km-hint');
+  if (!idJeu || !kmEl) return;
+  const pk = state.prixKm?.[idJeu];
+  if (pk && pk.km != null) {
+    kmEl.value = pk.km;
+    if (hint) hint.textContent = '← auto depuis import';
+  } else {
+    // Chercher dans state.bus par idJeu
+    const bus = state.bus.find(b => b.idJeu === idJeu);
+    if (bus && bus.km != null) {
+      kmEl.value = bus.km;
+      if (hint) hint.textContent = '← km actuel du parc';
+    } else {
+      kmEl.value = '';
+      if (hint) hint.textContent = '';
+    }
+  }
+}
 
 function ajouterAchatManuel() {
   const idJeu = parseInt(document.getElementById('achat-id').value) || null;
