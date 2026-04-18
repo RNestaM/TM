@@ -878,7 +878,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.321</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.322</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -6721,9 +6721,20 @@ function parsePanneJeu(texte) {
             || texte.match(/Immobilisation du v[ée]hicule n°([A-Z0-9][A-Z0-9\-]+)/i);
   if (busM) result.nomParc = busM[1];
 
-  // Motif
+  // Motif — cas normal ou CT refusé (raison sur la ligne suivante)
   const motifM = texte.match(/Motif\s*:\s*(.+)/i);
-  if (motifM) result.motif = motifM[1].trim();
+  if (motifM) {
+    let motif = motifM[1].trim();
+    // Si le motif se termine par ":" (ex: "CT refusé :"), chercher la raison sur la ligne suivante
+    if (motif.endsWith(':') || motif.match(/CT refus[ée]/i)) {
+      // Chercher le texte juste après "CT refusé :"
+      const ctM = texte.match(/CT refus[ée][^:\n]*[:\s]*\n\s*(.+)/i);
+      if (ctM) motif = 'CT refusé : ' + ctM[1].trim();
+    }
+    result.motif = motif;
+    // CT refusé → pas de remplaçant (déjà géré par le CT)
+    if (motif.match(/CT refus[ée]/i)) result.remplacant = '';
+  }
 
   // Jours
   const joursM = texte.match(/Temps de r[ée]paration\s*:\s*(\d+)\s*jour/i);
@@ -6737,7 +6748,8 @@ function parsePanneJeu(texte) {
   const rempM = texte.match(/Affectations reprises par[^\n]*n°([A-Z0-9][A-Z0-9\-]+)/i);
   if (rempM) result.remplacant = rempM[1];
 
-  if (!result.nomParc || !result.motif || !result.jours) return null;
+  if (!result.nomParc || !result.motif) return null;
+  if (!result.jours && !result.motif.match(/CT refus[ée]/i)) return null;
   result.id = Date.now() + Math.random()*1000|0;
   return result;
 }
@@ -6785,7 +6797,7 @@ function importerPannes() {
       b.statut = 'Indispo';
       if (!state.planningCT) state.planningCT = {};
       if (!state.planningCT[b.nom]) state.planningCT[b.nom] = {};
-      state.planningCT[b.nom].raisonAtelier = 'Panne';
+      state.planningCT[b.nom].raisonAtelier = p.motif.match(/CT refus[ée]/i) ? 'CT refusé' : 'Panne';
       if (p.remplacant) state.planningCT[b.nom].remplacement = p.remplacant;
     }
   });
