@@ -878,7 +878,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.322</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.323</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -1958,7 +1958,7 @@
               <th>Places</th>
               <th>Pub(s) active(s) — date fin contrat</th>
               <th>Statut</th>
-              <th>Raison atelier</th>
+              <th>Raison</th>
               <th>→ Remplaçant(s) suggéré(s) (même type, tout libre, affecté, places ≤)</th>
             </tr></thead>
             <tbody id="pubdispo-alerte-tbody"></tbody>
@@ -5636,7 +5636,7 @@ function renderAffectations() {
         return `<th colspan="${gr.n}" style="text-align:center;background:${gc.bg};color:${gc.color};font-weight:700;letter-spacing:1px;font-size:11px;border-left:3px solid ${gc.color}66;border-bottom:2px solid var(--border)">${gr.g}</th>`;
       }).join('')}
       <th rowspan="2" style="${thFixed};min-width:140px;border-left:1px solid var(--border)">Remplacé par</th>
-      <th rowspan="2" style="${thFixed};min-width:130px;border-left:2px solid var(--border)">Raison atelier</th>
+      <th rowspan="2" style="${thFixed};min-width:130px;border-left:2px solid var(--border)">Raison</th>
     </tr>`;
     const row2 = `<tr>
       ${AFF_CRENEAUX.map((c, i) => {
@@ -5754,7 +5754,7 @@ function renderAffectations() {
             <select onchange="setRaisonAtelier('${b.nom}',this.value)"
               style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:${raisonAtelier?'var(--text)':'var(--text3)'};font-size:11px;padding:2px 4px;width:125px">
               <option value="">—</option>
-              ${['CT avant Rev','CT','Nouveau','Option','Panne','Rénovation','Rev avant CT','Révision'].map(r =>
+              ${['CT avant Rev','CT','Nouveau','Option','Panne','Pub','Rénovation','Rev avant CT','Révision'].map(r =>
                 `<option value="${r}" ${raisonAtelier===r?'selected':''}>${r}</option>`
               ).join('')}
             </select>
@@ -13526,7 +13526,9 @@ function renderPubDispoAlertes() {
             ? `<span style="color:var(--orange);font-size:10px">(${c.places} pl. ▲)</span>`
             : `<span style="color:var(--text3);font-size:10px">(${c.places} pl.)</span>`;
           const fallTag = isFallback ? `<span style="font-size:9px;color:var(--text3);font-style:italic"> excep.</span>` : '';
-          return `<div style="margin-bottom:2px">${cLink} ${plLabel}${fallTag}</div>`;
+          const busAvecPub = b.nom;
+          const icon = `<span title="Appliquer ce remplacement" onclick="appliquerRempPub('${busAvecPub}','${c.nom}')" style="cursor:pointer;margin-right:4px;font-size:13px;line-height:1" onmouseover="this.style.opacity='.7'" onmouseout="this.style.opacity='1'">✅</span>`;
+          return `<div style="margin-bottom:2px;display:flex;align-items:center">${icon}${cLink} ${plLabel}${fallTag}</div>`;
         }).join('')
       : '<span style="color:var(--text3)">Aucun disponible</span>';
 
@@ -13553,6 +13555,17 @@ function cellPub(val) {
   if (val === 'Non équipé') return '<span style="color:var(--text3);font-size:10px">Non éq.</span>';
   // Date de fin de contrat
   return `<span style="color:var(--orange);font-size:10px">${val}</span>`;
+}
+
+function appliquerRempPub(busAvecPub, remplacant) {
+  if (!state.planningCT) state.planningCT = {};
+  if (!state.planningCT[busAvecPub]) state.planningCT[busAvecPub] = {};
+  state.planningCT[busAvecPub].remplacement = remplacant;
+  state.planningCT[busAvecPub].raisonAtelier = 'Pub';
+  saveStateWithSync();
+  renderPubDispo();
+  renderAffectations && renderAffectations();
+  toastMsg(busAvecPub + ' → remplacé par ' + remplacant + ' (Pub)', 'success');
 }
 
 function renderPubDispoTableau() {
