@@ -878,7 +878,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.324</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.325</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -1205,6 +1205,10 @@
           <span id="aff-stats-badge" style="font-size:11px;color:var(--text3);padding:4px 10px;background:var(--surface2);border-radius:6px;border:1px solid var(--border)"></span>
       </div>
 
+      <!-- Bannière bus surchargés -->
+      <div id="aff-surcharge-banner" style="display:none;margin-bottom:10px;padding:8px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;font-size:12px;color:var(--red)">
+        ⚠️ Bus sans pause (tous créneaux du groupe occupés) : <span id="aff-surcharge-list"></span>
+      </div>
       <!-- Tableau principal -->
       <div class="card">
         <div class="card-body" style="padding:0;overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 180px)">
@@ -4151,6 +4155,49 @@ function renderDashboard() {
       return iso >= todayISO && iso <= d3.toISOString().slice(0,10);
     }).length;
     if (nbContrat > 0) msgs.push(`<div style="color:var(--orange);font-size:16px;padding:3px 0">🚌 ${nbContrat} contrat(s) tourisme imminent(s)</div>`);
+
+    // Lignes sous 100% dans fréquentation
+    const niveauF = state.niveauJeu || 4;
+    const vacF = state.modeVacances || false;
+    const freqDataF = state.freqCibles?.[niveauF]?.[vacF?'vacances':'normal']?.['normal'] || {};
+    const freqDataNormF = {};
+    Object.keys(freqDataF).forEach(k => { freqDataNormF[normaliseLigneNum(k)] = freqDataF[k]; });
+    const CRENEAU_TO_FREQ_F = CRENEAU_TO_FREQ_NORMAL;
+    const lignesF = state.cfgLignesParNiveau?.[niveauF] || [];
+    const sousExplF = lignesF.filter(ligne => {
+      const fv = freqDataNormF[normaliseLigneNum(ligne.num)] || freqDataF[ligne.num] || [];
+      return Object.keys(CRENEAU_TO_FREQ_F).some(cid => {
+        const idx = CRENEAU_TO_FREQ_F[cid];
+        if (idx === undefined) return false;
+        const cible = typeof fv[idx] === 'number' ? fv[idx] : 0;
+        if (cible <= 0) return false;
+        const buses = getBusAffectesLigne(ligne.num, cid);
+        const places = buses.reduce((s, b) => s + getCapaBus(b, ligne.num), 0);
+        return places < cible;
+      });
+    });
+    if (sousExplF.length === 1) {
+      msgs.push(`<div style="color:var(--red);font-size:16px;padding:3px 0">📉 Ligne <b>${sousExplF[0].num}</b> sous 100%</div>`);
+    } else if (sousExplF.length > 1) {
+      msgs.push(`<div style="color:var(--red);font-size:16px;padding:3px 0">📉 <b>${sousExplF.length}</b> lignes sous 100%</div>`);
+    }
+
+    // Bus sans pause (tous créneaux d'un groupe occupés)
+    const INDISPO_VALS_D = ['- ct -','- panne -','- atelier -','- révision -','- revision -','- indispo -','- rénovation -','- renovation -','- non immatricule -','- non immatriculé -'];
+    const busSurchargesD = [];
+    (state.bus||[]).forEach(b => {
+      const cr = getAffCreneaux(b.nom);
+      ['SEMAINE','SAMEDI','DIMANCHE'].forEach(g => {
+        const crensG = AFF_CRENEAUX.filter(c => c.groupe === g);
+        if (crensG.every(c => { const v=(cr[c.id]||'').toLowerCase().trim(); return v && !INDISPO_VALS_D.includes(v); })) {
+          busSurchargesD.push(b.nom);
+        }
+      });
+    });
+    if (busSurchargesD.length > 0) {
+      msgs.push(`<div style="color:var(--red);font-size:16px;padding:3px 0">⚠️ <b>${busSurchargesD.length}</b> bus sans pause créneau</div>`);
+    }
+
     elRecap.innerHTML = msgs.length
       ? msgs.join('')
       : `<div style="color:var(--green);font-size:16px">✅ Aucune alerte active</div>`;
@@ -5766,6 +5813,34 @@ function renderAffectations() {
   });
 
   tbody.innerHTML = rows;
+
+  // ── Bannière bus sans pause (tous créneaux d'un groupe occupés) ──
+  const INDISPO_VALS_AFF = ['- ct -','- panne -','- atelier -','- révision -','- revision -','- indispo -','- rénovation -','- renovation -','- non immatricule -','- non immatriculé -'];
+  const groupesCheck = ['SEMAINE','SAMEDI','DIMANCHE'];
+  const busSurcharges = [];
+  state.bus.forEach(b => {
+    const cr = getAffCreneaux(b.nom);
+    groupesCheck.forEach(g => {
+      const crensGroupe = AFF_CRENEAUX.filter(c => c.groupe === g);
+      const tousOccupes = crensGroupe.every(c => {
+        const v = (cr[c.id]||'').toLowerCase().trim();
+        return v && !INDISPO_VALS_AFF.includes(v);
+      });
+      if (tousOccupes) busSurcharges.push({ nom: b.nom, groupe: g });
+    });
+  });
+  const banner = document.getElementById('aff-surcharge-banner');
+  const blist  = document.getElementById('aff-surcharge-list');
+  if (banner && blist) {
+    if (busSurcharges.length) {
+      banner.style.display = 'block';
+      blist.innerHTML = busSurcharges.map(x =>
+        `<span style="display:inline-block;background:rgba(239,68,68,0.2);border-radius:4px;padding:1px 6px;margin:1px 2px;font-weight:700">${x.nom} <span style="font-size:10px;opacity:0.8">(${x.groupe})</span></span>`
+      ).join('');
+    } else {
+      banner.style.display = 'none';
+    }
+  }
 }
 function editAffCell(td, busNom, creneauId) {
   if (td.querySelector('input')) return;
