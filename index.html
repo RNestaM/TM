@@ -878,7 +878,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.328</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.329</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -4922,8 +4922,10 @@ function handleCsvFile(input) {
 }
 
 function readCsvFile(file) {
+  console.log('[TM-CSV] readCsvFile →', file.name, file.size, 'bytes | currentCsvType=', currentCsvType);
   const reader = new FileReader();
   reader.onload = e => {
+    console.log('[TM-CSV] FileReader.onload OK, longueur=', e.target.result.length);
     csvRawContent = e.target.result;
     document.getElementById('csv-paste-text').value = csvRawContent;
     document.getElementById('csv-dropzone').style.borderColor = 'var(--green)';
@@ -5082,6 +5084,7 @@ if (!state.prixKm || Object.keys(state.prixKm).length === 0) {
 }
 
 function parserBus(rows) {
+  console.log('[TM-CSV] parserBus | nb lignes=', rows.length, '| header=', rows[0]);
   // Colonnes CSV bus.csv (60 colonnes) :
   // 0=ID, 1=NumParc, 2=Patrimoine, 3=FinLocation, 4=TypeVehicule, 5=Marque, 6=Modele, 7=Type,
   // 8=BHNS, 9=LE, 10=Energie, 11=Conso, 12=Places, 13=Immatriculation, 14=MiseEnService,
@@ -5322,6 +5325,7 @@ function parserCompta(rows) {
 
 function csvPreview() {
   const texte = document.getElementById('csv-paste-text').value || csvRawContent;
+  console.log('[TM-CSV] csvPreview | type=', currentCsvType, '| texte longueur=', texte.length);
   if (!texte.trim()) { toastMsg('Aucun contenu CSV chargé', 'error'); return; }
   csvRawContent = texte;
   const rows = parseCSV(texte);
@@ -5427,6 +5431,7 @@ function csvImporter() {
 
   if (currentCsvType === 'bus') {
     const buses = parserBus(rows);
+    console.log('[TM-CSV] csvImporter bus | buses parsés=', buses.length);
     if (!buses.length) { toastMsg('Aucun bus trouvé', 'error'); return; }
     let maj = 0, ajouts = 0;
     buses.forEach(b => {
@@ -10925,8 +10930,10 @@ setInterval(detectExtension, 2000);
 
 // Importe directement un contenu CSV pour un type donné (sans passer par le modal)
 function importerCSVDirect(type, contenu) {
-  if (!contenu || !contenu.trim()) return;
+  console.log('[TM-EXT] importerCSVDirect | type=', type, '| contenu longueur=', contenu?.length);
+  if (!contenu || !contenu.trim()) { console.warn('[TM-EXT] contenu vide'); return; }
   const rows = parseCSV(contenu);
+  console.log('[TM-EXT] parseCSV → nb lignes=', rows.length);
   if (!state.lastImport) state.lastImport = {};
   const nowStr = new Date().toLocaleString('fr-FR');
 
@@ -11048,6 +11055,7 @@ function demarrerPollingExtension() {
     ['bus','affects','stats','salaries','compta','lastmonth'].forEach(type => {
       const raw = localStorage.getItem('tm_ext_csv_' + type);
       if (!raw) return;
+      console.log('[TM-EXT] polling : clé trouvée tm_ext_csv_' + type, '| longueur=', raw.length);
       localStorage.removeItem('tm_ext_csv_' + type);
       try {
         const payload = JSON.parse(raw);
@@ -11082,7 +11090,9 @@ function quickFetchExt(type) {
     window._extFetchDone = false;
     window._extFetchDoneType = null;
     currentCsvType = t;
-    localStorage.setItem('tm_ext_request', JSON.stringify({ type: t, timestamp: Date.now() }));
+    const reqPayload = JSON.stringify({ type: t, timestamp: Date.now() });
+    console.log('[TM-EXT] quickFetchExt : requête extension →', reqPayload);
+    localStorage.setItem('tm_ext_request', reqPayload);
     let waited = 0;
     const poll = setInterval(() => {
       waited += 250;
