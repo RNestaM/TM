@@ -878,7 +878,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.331</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.332</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -11051,10 +11051,11 @@ function importerCSVDirect(type, contenu) {
 
 // Polling localStorage : démarré dans DOMContentLoaded
 function demarrerPollingExtension() {
-  // Écoute CustomEvent dispatché par le content script (évite quota localStorage)
-  window.addEventListener('tm_ext_csv', e => {
-    const { type, content } = e.detail;
-    console.log('[TM-EXT] CustomEvent reçu :', type, content.length, 'chars');
+  // Écoute postMessage du content script (CustomEvent bloqué par Firefox isolation)
+  window.addEventListener('message', e => {
+    if (!e.data || !e.data._tm) return;
+    const { type, content } = e.data;
+    console.log('[TM-EXT] postMessage reçu :', type, content.length, 'chars');
     try {
       importerCSVDirect(type, content);
       window._extFetchDone = true;
