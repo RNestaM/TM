@@ -878,7 +878,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.332</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.334</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -6005,9 +6005,13 @@ function getCapaBus(bus, ligneNum) {
   return capaUrb; // urbain ou suburbain → capacité urbaine (la plus grande)
 }
 
-function ctPrevu(dateLimiteISO) {
-  if (!dateLimiteISO) return '';
-  const d = new Date(dateLimiteISO);
+function ctPrevu(dateLimite) {
+  if (!dateLimite || dateLimite === '-' || dateLimite === 'Jamais') return '';
+  // Accepte DD/MM/YYYY ou ISO
+  const iso = dateLimite.includes('/') ? parseDateFR(dateLimite) : dateLimite;
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
   // Reculer jusqu'à trouver un jour où le CT est ouvert
   while (estFerme(d.toISOString().slice(0,10))) {
     d.setDate(d.getDate() - 1);
@@ -13489,9 +13493,14 @@ function importerDispoPub() {
     const livArr = cols[idxS+4] || '';
     const ecran  = cols[idxS+5] || '';
 
-    const isUsed = v => v && v !== 'Libre' && v !== 'Non équipé' && v !== '';
+    // '-' = vecteur non installé → neutre (ni pub ni libre)
+    const isNonInstalle = v => !v || v === '-' || v === 'Non équipé';
+    const isUsed    = v => v && v !== 'Libre' && v !== 'Non équipé' && v !== '-' && v !== '';
+    const isLibre   = v => v === 'Libre';
     const aPub      = [panAv, panLat, livLat, panArr, livArr, ecran].some(isUsed);
-    const toutLibre = !aPub;
+    // toutLibre = tous les vecteurs installés sont libres (au moins 1 installé et aucun utilisé)
+    const vecteursInstalles = [panAv, panLat, livLat, panArr, livArr, ecran].filter(v => !isNonInstalle(v));
+    const toutLibre = vecteursInstalles.length > 0 && vecteursInstalles.every(isLibre) && !aPub;
 
     buses.push({ nom, type, places, affectation, aAffectation, aPub, toutLibre,
       panAv, panLat, livLat, panArr, livArr, ecran });
@@ -13560,7 +13569,7 @@ function renderPubDispoAlertes() {
     return;
   }
 
-  const isUsed = v => v && v !== 'Libre' && v !== 'Non équipé' && v !== '';
+  const isUsed = v => v && v !== 'Libre' && v !== 'Non équipé' && v !== '-' && v !== '';
 
   tbody.innerHTML = problemes.map(b => {
     // Pubs actives sur ce bus
@@ -13577,10 +13586,12 @@ function renderPubDispoAlertes() {
     const matchB = (c) => !isB || c.nom.includes('-B-');
     const fallB  = (c) => isB && !c.nom.includes('-B-');
 
-    const candidatsOkB   = data.filter(c => c.type === b.type && !c.nom.startsWith('00-') && c.toutLibre && c.aAffectation && c.places <= b.places && c.nom !== b.nom && matchB(c)).sort((a, c2) => c2.places - a.places);
-    const candidatsSurB  = data.filter(c => c.type === b.type && !c.nom.startsWith('00-') && c.toutLibre && c.aAffectation && c.places > b.places  && c.nom !== b.nom && matchB(c)).sort((a, c2) => a.places - c2.places);
-    const candidatsOkFb  = data.filter(c => c.type === b.type && !c.nom.startsWith('00-') && c.toutLibre && c.aAffectation && c.places <= b.places && c.nom !== b.nom && fallB(c)).sort((a, c2) => c2.places - a.places);
-    const candidatsSurFb = data.filter(c => c.type === b.type && !c.nom.startsWith('00-') && c.toutLibre && c.aAffectation && c.places > b.places  && c.nom !== b.nom && fallB(c)).sort((a, c2) => a.places - c2.places);
+    // TRAM isolés : seuls les TRAM peuvent remplacer des TRAM, et vice-versa
+    const sameType = c => c.type === b.type;
+    const candidatsOkB   = data.filter(c => sameType(c) && !c.nom.startsWith('00-') && c.toutLibre && c.aAffectation && c.places <= b.places && c.nom !== b.nom && matchB(c)).sort((a, c2) => c2.places - a.places);
+    const candidatsSurB  = data.filter(c => sameType(c) && !c.nom.startsWith('00-') && c.toutLibre && c.aAffectation && c.places > b.places  && c.nom !== b.nom && matchB(c)).sort((a, c2) => a.places - c2.places);
+    const candidatsOkFb  = data.filter(c => sameType(c) && !c.nom.startsWith('00-') && c.toutLibre && c.aAffectation && c.places <= b.places && c.nom !== b.nom && fallB(c)).sort((a, c2) => c2.places - a.places);
+    const candidatsSurFb = data.filter(c => sameType(c) && !c.nom.startsWith('00-') && c.toutLibre && c.aAffectation && c.places > b.places  && c.nom !== b.nom && fallB(c)).sort((a, c2) => a.places - c2.places);
 
     // -B- en premier, complété par non-B- seulement si pas assez
     const primaryPool = [...candidatsOkB, ...candidatsSurB];
@@ -13631,7 +13642,7 @@ function renderPubDispoAlertes() {
 }
 
 function cellPub(val) {
-  if (!val || val === '') return '<span style="color:var(--text3)">—</span>';
+  if (!val || val === '' || val === '-') return '<span style="color:var(--text3);font-size:10px">—</span>';
   if (val === 'Libre') return '<span style="color:var(--green)">Libre</span>';
   if (val === 'Non équipé') return '<span style="color:var(--text3);font-size:10px">Non éq.</span>';
   // Date de fin de contrat
