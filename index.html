@@ -878,7 +878,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.340</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.341</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -4190,7 +4190,7 @@ function renderDashboard() {
       const cr = getAffCreneaux(b.nom);
       ['SEMAINE','SAMEDI','DIMANCHE'].forEach(g => {
         const crensG = AFF_CRENEAUX.filter(c => c.groupe === g);
-        if (crensG.every(c => { const v=(cr[c.id]||'').toLowerCase().trim(); if (!v || v.includes('tourisme')) return false; return !INDISPO_VALS_D.includes(v); })) {
+        if (crensG.every(c => { const v=(cr[c.id]||'').toLowerCase().trim(); if (!v || (v.includes('tourisme') || v.includes('touristique'))) return false; return !INDISPO_VALS_D.includes(v); })) {
           busSurchargesD.push(b.nom);
         }
       });
@@ -5850,7 +5850,7 @@ function renderAffectations() {
       const tousOccupes = crensGroupe.every(c => {
         const v = (cr[c.id]||'').toLowerCase().trim();
         // Ignorer les créneaux tourisme et vides (non comptabilisés comme "sans pause")
-        if (!v || v.includes('tourisme')) return false;
+        if (!v || (v.includes('tourisme') || v.includes('touristique'))) return false;
         return !INDISPO_VALS_AFF.includes(v);
       });
       if (tousOccupes) busSurcharges.push({ nom: b.nom, groupe: g });
