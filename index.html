@@ -878,7 +878,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.347</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.348</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -4666,6 +4666,17 @@ function icn(field, val, opts = {}) {
   return val ? '<span style="color:var(--green)">✓</span>' : '<span style="color:var(--red)">✗</span>';
 }
 
+function fmtConso(b) {
+  if (!b.conso) return '—';
+  const isElec = (b.energie||'').toLowerCase() === 'electrique' || (b.energie||'').toLowerCase() === 'électrique';
+  return isElec ? b.conso + ' kWh/100' : b.conso + ' L/100';
+}
+function fmtConsoShort(b) {
+  if (!b.conso) return '—';
+  const isElec = (b.energie||'').toLowerCase() === 'electrique' || (b.energie||'').toLowerCase() === 'électrique';
+  return isElec ? b.conso + 'kWh' : b.conso + 'L';
+}
+
 function renderParc() {
   // Synchroniser display selon parcView (protection contre reset de vue)
   const elC = document.getElementById('parc-view-compact');
@@ -4702,7 +4713,7 @@ function renderParc() {
         <td class="mono" style="font-size:11px;${ctStyle}">${fmtDateFR(b.ct)||'—'}</td>
         <td class="mono">${b.capa||'—'}</td>
         <td style="text-align:center">${icn('energie',b.energie)}</td>
-        <td class="mono" style="font-size:11px;color:var(--text3)">${b.conso ? b.conso+'L' : '—'}</td>
+        <td class="mono" style="font-size:11px;color:var(--text3)">${fmtConsoShort(b)}</td>
         <td class="mono" style="color:var(--text2)">${b.prixAchat ? fmt(b.prixAchat) : '—'}</td>
         <td class="mono" style="color:var(--text3)">${b.kmDepart ? fmtNum(b.kmDepart) : '—'}</td>
         <td class="mono">${fmtNum(b.km)}</td>
@@ -4750,7 +4761,7 @@ function renderParc() {
         <td style="font-size:10px;color:var(--text2)">${b.marque||''} ${b.modele||''}</td>
         <td>${getTypeBadge(b.type)}</td>
         <td style="text-align:center">${icn('energie',b.energie)}</td>
-        <td class="mono" style="font-size:11px;color:var(--text3)">${b.conso ? b.conso+'L/100' : '—'}</td>
+        <td class="mono" style="font-size:11px;color:var(--text3)">${fmtConso(b)}</td>
         <td class="mono">${b.capa||'—'}</td>
         <td class="mono">${fmtNum(b.km)}</td>
         <td class="mono" style="color:var(--text3)">${b.kmDepart?fmtNum(b.kmDepart):'—'}</td>
@@ -4795,7 +4806,7 @@ function showBusDetail(id) {
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:8px;font-weight:700">Identification</div>
         ${row('ID Jeu', b.idJeu)} ${row('Numéro de parc', `<b>${b.nom}</b>`)} ${row('Immatriculation', b.immat)}
         ${row('Marque', b.marque)} ${row('Modèle', b.modele)} ${row('Type véhicule', b.typeVehicule||b.type)}
-        ${row('Énergie', b.energie)} ${row('Conso.', b.conso ? b.conso+' L/100km' : '')}
+        ${row('Énergie', b.energie)} ${row('Conso.', fmtConso(b))}
         ${row('Places', b.capa)} ${row('Dépôt', b.depot)} ${row('Patrimoine', b.patrimoine)}
         ${row('BHNS', yn(b.bhns))} ${row('Ligne Express', yn(b.le))}
       </div>
