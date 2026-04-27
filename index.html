@@ -878,7 +878,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.345</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.347</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -2226,7 +2226,7 @@
         <!-- Diesel -->
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
           <div class="stat-card" style="--card-accent:#EFAC19;border-top:3px solid #EFAC19">
-            <div class="stat-label">Moy. Diesel (30j)</div>
+            <div class="stat-label">Moy. Diesel</div>
             <div class="stat-value" id="gas-diesel-moy" style="font-size:20px">—</div>
           </div>
           <div class="stat-card" style="transform:scale(1.2);transform-origin:center;z-index:1;border-top:3px solid #EFAC19">
@@ -2234,14 +2234,14 @@
             <div class="stat-value" id="gas-diesel-today" style="font-size:22px;color:#EFAC19"> style="font-size:22px">—</div>
           </div>
           <div class="stat-card" style="border-top:3px solid #EFAC19">
-            <div class="stat-label">Meilleur Diesel (30j)</div>
+            <div class="stat-label">Meilleur Diesel</div>
             <div class="stat-value" id="gas-diesel-min" style="font-size:20px">—</div>
           </div>
         </div>
         <!-- GNV -->
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
           <div class="stat-card" style="border-top:3px solid #99B900">
-            <div class="stat-label">Moy. GNV (30j)</div>
+            <div class="stat-label">Moy. GNV</div>
             <div class="stat-value" id="gas-gnv-moy" style="font-size:20px">—</div>
           </div>
           <div class="stat-card" style="transform:scale(1.2);transform-origin:center;z-index:1;border-top:3px solid #99B900">
@@ -2249,7 +2249,7 @@
             <div class="stat-value" id="gas-gnv-today" style="font-size:22px;color:#99B900">—</div>
           </div>
           <div class="stat-card" style="border-top:3px solid #99B900">
-            <div class="stat-label">Meilleur GNV (30j)</div>
+            <div class="stat-label">Meilleur GNV</div>
             <div class="stat-value" id="gas-gnv-min" style="font-size:20px">—</div>
           </div>
         </div>
@@ -4749,7 +4749,7 @@ function renderParc() {
         <td style="font-size:11px;position:sticky;left:60px;z-index:2;background:var(--surface);border-right:2px solid var(--border)">${b.idJeu ? `<a href="https://transport-manager.net/jeu/vehicle.php?id=${b.idJeu}" target="_blank" style="color:inherit;text-decoration:none;font-weight:700;cursor:alias" title="Ouvrir sur le jeu">${b.nom} ↗</a>` : `<b>${b.nom}</b>`}</td>
         <td style="font-size:10px;color:var(--text2)">${b.marque||''} ${b.modele||''}</td>
         <td>${getTypeBadge(b.type)}</td>
-        <td style="font-size:11px">${b.energie||'—'}</td>
+        <td style="text-align:center">${icn('energie',b.energie)}</td>
         <td class="mono" style="font-size:11px;color:var(--text3)">${b.conso ? b.conso+'L/100' : '—'}</td>
         <td class="mono">${b.capa||'—'}</td>
         <td class="mono">${fmtNum(b.km)}</td>
@@ -10820,18 +10820,14 @@ function renderGasoil() {
 
   const data    = [...state.carburant].sort((a,b) => b.date.localeCompare(a.date));
   const now     = new Date();
-  const last30  = data.filter(e => {
-    const diff = Math.round((now - new Date(e.date)) / (1000*60*60*24));
-    return diff <= 30;
-  });
-
   // Stats cards
   const latest = data[0];
   const _gdt=document.getElementById('gas-diesel-today'); if(_gdt) _gdt.textContent = latest?.diesel ? latest.diesel.toFixed(3)+' €' : '—';
   const _ggt=document.getElementById('gas-gnv-today'); if(_ggt) _ggt.textContent = latest?.gnv ? latest.gnv.toFixed(3)+' €' : '—';
 
-  const dieselVals = last30.filter(e => e.diesel).map(e => e.diesel);
-  const gnvVals    = last30.filter(e => e.gnv).map(e => e.gnv);
+  // Moyenne sur l'ensemble des entrées (pas seulement 30 jours)
+  const dieselVals = data.filter(e => e.diesel).map(e => e.diesel);
+  const gnvVals    = data.filter(e => e.gnv).map(e => e.gnv);
   const moy = arr => arr.length ? (arr.reduce((s,v)=>s+v,0)/arr.length).toFixed(3) : '—';
   const min = arr => arr.length ? Math.min(...arr).toFixed(3) : '—';
 
@@ -10919,6 +10915,10 @@ function renderGasoilGraphique() {
   const labels  = data.map(e => e.date.slice(5)); // MM-DD
   const diesel  = data.map(e => e.diesel || null);
   const gnv     = data.map(e => e.gnv    || null);
+  // Moyennes sur TOUTES les entrées (indépendant de la période affichée)
+  const allDataFull = [...(state.carburant||[])];
+  const avgDieselAll = (() => { const v=allDataFull.filter(e=>e.diesel).map(e=>e.diesel); return v.length?v.reduce((s,x)=>s+x,0)/v.length:null; })();
+  const avgGnvAll    = (() => { const v=allDataFull.filter(e=>e.gnv).map(e=>e.gnv);       return v.length?v.reduce((s,x)=>s+x,0)/v.length:null; })();
 
   if (gasChartInstance) { gasChartInstance.destroy(); gasChartInstance = null; }
 
@@ -10989,10 +10989,10 @@ function renderGasoilGraphique() {
     });
   };
 
-  const drawAvg = (values, color, labelX) => {
+  const drawAvg = (values, color, labelX, overrideAvg) => {
     const valid = values.filter(v => v);
-    if (!valid.length) return;
-    const avg = valid.reduce((s, v) => s + v, 0) / valid.length;
+    if (!valid.length && overrideAvg == null) return;
+    const avg = overrideAvg != null ? overrideAvg : valid.reduce((s, v) => s + v, 0) / valid.length;
     const y = toY(avg);
     // Ligne pointillée
     ctx.save();
@@ -11046,8 +11046,8 @@ function renderGasoilGraphique() {
 
   drawLine(diesel, '#EFAC19');  // Diesel
   drawLine(gnv,    '#99B900');  // GNV
-  drawAvg(diesel,  '#EFAC19', 'left');
-  drawAvg(gnv,     '#99B900', 'right');
+  drawAvg(diesel,  '#EFAC19', 'left',  avgDieselAll);
+  drawAvg(gnv,     '#99B900', 'right', avgGnvAll);
   drawMinMax(diesel, '#EFAC19', 'left');
   drawMinMax(gnv,    '#99B900', 'right');
 
