@@ -878,7 +878,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.344</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.345</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -4557,7 +4557,7 @@ function renderRepartitionParc() {
     const pct = tot>0 ? Math.round(n/tot*100) : 0;
     return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
       <div style="font-size:10px;color:var(--text2);min-width:80px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${label}">${label}</div>
-      <div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;max-width:80px"><div style="width:${pct}%;height:100%;background:${color};border-radius:3px"></div></div>
+      <div style="flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden;max-width:140px"><div style="width:${pct}%;height:100%;background:${color};border-radius:4px"></div></div>
       <div style="font-size:10px;color:var(--text3);white-space:nowrap">${n} <span style="color:var(--text3);font-size:9px">(${pct}%)</span></div>
     </div>`;
   };
@@ -4569,7 +4569,7 @@ function renderRepartitionParc() {
   html += '</div>';
   // Énergie
   html += '<div><div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:6px;letter-spacing:1px">ÉNERGIE</div>';
-  const enColors = { Diesel:'#EFAC19', Hybride:'#34d399', GNV:'#99B900', Électrique:'#a78bfa', Hydrogène:'#67e8f9' };
+  const enColors = { Diesel:'#EFAC19', Hybride:'#34d399', GNV:'#99B900', Électrique:'#a78bfa', Electrique:'#a78bfa', 'Électrique':'#a78bfa', Hydrogène:'#67e8f9' };
   Object.entries(energies).sort((a,b)=>b[1]-a[1]).forEach(([e,n]) => html += mkGauge(e, n, total, enColors[e]||'var(--text2)'));
   html += '</div>';
   // Statut
@@ -4624,10 +4624,12 @@ function _checkIcon(filename) {
     .catch(() => { _iconAvail[filename] = false; return false; });
 }
 
-// Pré-charger toutes les icônes au démarrage
+// Pré-charger toutes les icônes au démarrage, puis re-render parc
 function preloadIcons() {
   const all = [...new Set(Object.values(ICON_MAP))];
-  all.forEach(f => _checkIcon(f));
+  Promise.all(all.map(f => _checkIcon(f))).then(() => {
+    if (document.getElementById('parc-tbody-full')) renderParc();
+  });
 }
 
 // Retourne HTML icône (img si dispo, sinon ✓/✗/texte)
@@ -4665,6 +4667,11 @@ function icn(field, val, opts = {}) {
 }
 
 function renderParc() {
+  // Synchroniser display selon parcView (protection contre reset de vue)
+  const elC = document.getElementById('parc-view-compact');
+  const elF = document.getElementById('parc-view-full');
+  if (elC) elC.style.display = parcView === 'compact' ? '' : 'none';
+  if (elF) elF.style.display = parcView === 'full'    ? '' : 'none';
   const search = (document.getElementById('search-parc').value||'').toLowerCase();
   let filtered = state.bus.filter(b => {
     const matchType   = currentParcTypeFilter === 'all' || b.type === currentParcTypeFilter;
