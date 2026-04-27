@@ -878,7 +878,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.341</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.344</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -1165,7 +1165,7 @@
                 <th onclick="sortParcFull('rackBagages')" style="cursor:pointer;user-select:none">Rack Bag. ↕</th><th onclick="sortParcFull('rackVelos')" style="cursor:pointer;user-select:none">Rack Vél. ↕</th><th onclick="sortParcFull('ethylotest')" style="cursor:pointer;user-select:none">Ethylo ↕</th>
                 <th onclick="sortParcFull('radio')" style="cursor:pointer;user-select:none">Radio ↕</th><th onclick="sortParcFull('usb')" style="cursor:pointer;user-select:none">USB ↕</th><th onclick="sortParcFull('wifi')" style="cursor:pointer;user-select:none">WiFi ↕</th><th onclick="sortParcFull('bandeau')" style="cursor:pointer;user-select:none">Bandeau ↕</th>
                 <th onclick="sortParcFull('ecranTFT')" style="cursor:pointer;user-select:none">Écran TFT ↕</th><th onclick="sortParcFull('hautParleurs')" style="cursor:pointer;user-select:none">HP ↕</th><th onclick="sortParcFull('telephone')" style="cursor:pointer;user-select:none">Tél. ↕</th><th onclick="sortParcFull('pupitre')" style="cursor:pointer;user-select:none">Pupitre ↕</th><th onclick="sortParcFull('billetique')" style="cursor:pointer;user-select:none">Billetique ↕</th>
-                <th onclick="sortParcFull('reventeDate')" style="cursor:pointer;user-select:none">Vente possible ↕</th><th onclick="sortParcFull('statut')" style="cursor:pointer;user-select:none">Statut ↕</th>
+                <th onclick="sortParcFull('reventeDate')" style="cursor:pointer;user-select:none">Vente possible ↕</th><th onclick="sortParcFull('argus')" style="cursor:pointer;user-select:none">Argus ↕</th><th onclick="sortParcFull('statut')" style="cursor:pointer;user-select:none">Statut ↕</th>
               </tr></thead>
               <tbody id="parc-tbody-full"></tbody>
             </table>
@@ -1257,11 +1257,14 @@
       <div class="card" style="margin-bottom:14px;border-color:rgba(245,158,11,0.3)">
         <div class="card-header" style="border-bottom-color:rgba(245,158,11,0.2)">
           <div class="card-title" style="color:var(--yellow)">🤝 Alliance — Demande de remboursement</div>
+          <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--green);cursor:pointer;margin-right:8px">
+            <input type="checkbox" id="alliance-ecolo"> 🌿 Ecolo (exclure bus diesel)
+          </label>
           <button class="btn btn-sm" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:var(--yellow)" onclick="genererDemandeAlliance()">📋 Générer</button>
         </div>
         <div class="card-body">
           <p style="font-size:11px;color:var(--text3);margin-bottom:10px">
-            Bus passés en révision et/ou CT dans les <b>15 derniers jours</b>. Une demande peut être faite tous les 15 jours.
+            Bus passés en révision et/ou CT dans le <b>dernier mois</b>. Les bus marqués "Demande Alliance" sont automatiquement exclus.
           </p>
           <div id="alliance-result"></div>
           <div id="alliance-texte-container" style="display:none;margin-top:10px">
@@ -4577,6 +4580,90 @@ function renderRepartitionParc() {
   el.innerHTML = html;
 }
 
+
+// ─── Icônes équipements ────────────────────────────────────────────────────
+const ICON_BASE = 'https://rnestam.github.io/TM/assets/icons/';
+const ICON_MAP = {
+  balisePrio:   'balise.png',
+  selfService:  'selfservice.png',
+  boutonsArret: 'stop.png',
+  camera:       'camera.png',
+  pubArr:       'pubar.png',
+  pubAv:        'pubav.png',
+  pubLat:       'publat.png',
+  ethylotest:   'ethylo.png',
+  radio:        'radio.png',
+  usb:          'usb.png',
+  wifi:         'wifi.png',
+  bandeau:      'bandeau.png',
+  ecranTFT:     'ecran.png',
+  hautParleurs: 'hp.png',
+  telephone:    'phonie.png',
+  pupitre:      'pupitre.png',
+  // énergie
+  'Diesel':     'diesel.png',
+  'Electrique': 'electrique.png',
+  'Hybride':    'hybride.png',
+  'GNV':        'gnv.png',
+  // billettique
+  'Valideurs à puce':       'valideurpuce.png',
+  'Valideurs NFC':          'valideurpuce.png',
+  'Valideurs magnétiques':  'valideurmagnetique.png',
+  'Valideurs hybrides':     'valideurhybride.png',
+  'Oblitérateurs':          'obliterateur.png',
+  'Valideurs NFC':          'valideurpuce.png',
+};
+
+// Cache de disponibilité des icônes (true/false/undefined=pas encore testé)
+const _iconAvail = {};
+
+function _checkIcon(filename) {
+  if (_iconAvail[filename] !== undefined) return Promise.resolve(_iconAvail[filename]);
+  return fetch(ICON_BASE + filename, { method:'HEAD' })
+    .then(r => { _iconAvail[filename] = r.ok; return r.ok; })
+    .catch(() => { _iconAvail[filename] = false; return false; });
+}
+
+// Pré-charger toutes les icônes au démarrage
+function preloadIcons() {
+  const all = [...new Set(Object.values(ICON_MAP))];
+  all.forEach(f => _checkIcon(f));
+}
+
+// Retourne HTML icône (img si dispo, sinon ✓/✗/texte)
+function icn(field, val, opts = {}) {
+  const { size = 18, text = false } = opts;
+  const filename = ICON_MAP[field];
+  // Pub : valeur textuelle (ex "Panneau utilisé" ou "Libre")
+  if (field === 'pubArr' || field === 'pubAv' || field === 'pubLat') {
+    if (!val || val === '—' || val === '') return '<span style="color:var(--text3);font-size:10px">—</span>';
+    if (filename && _iconAvail[filename]) {
+      const color = val === 'Libre' ? 'filter:grayscale(1);opacity:0.4' : '';
+      return `<img src="${ICON_BASE}${filename}" style="width:${size}px;height:${size}px;object-fit:contain;${color}" title="${val}">`;
+    }
+    return `<span style="font-size:9px">${val}</span>`;
+  }
+  // Énergie
+  if (field === 'energie') {
+    const ef = ICON_MAP[val];
+    if (ef && _iconAvail[ef]) return `<img src="${ICON_BASE}${ef}" style="width:${size}px;height:${size}px;object-fit:contain" title="${val}">`;
+    return `<span style="font-size:10px">${val||'—'}</span>`;
+  }
+  // Billettique
+  if (field === 'billetique') {
+    const bf = ICON_MAP[val];
+    if (bf && _iconAvail[bf]) return `<img src="${ICON_BASE}${bf}" style="width:${size}px;height:${size}px;object-fit:contain" title="${val}">`;
+    return `<span style="font-size:9px">${val||'—'}</span>`;
+  }
+  // Booléen OUI/NON
+  if (!filename) return val ? '<span style="color:var(--green)">✓</span>' : '<span style="color:var(--red)">✗</span>';
+  if (_iconAvail[filename]) {
+    if (!val) return `<img src="${ICON_BASE}${filename}" style="width:${size}px;height:${size}px;object-fit:contain;filter:grayscale(1);opacity:0.25" title="Non">`;
+    return `<img src="${ICON_BASE}${filename}" style="width:${size}px;height:${size}px;object-fit:contain" title="Oui">`;
+  }
+  return val ? '<span style="color:var(--green)">✓</span>' : '<span style="color:var(--red)">✗</span>';
+}
+
 function renderParc() {
   const search = (document.getElementById('search-parc').value||'').toLowerCase();
   let filtered = state.bus.filter(b => {
@@ -4607,7 +4694,7 @@ function renderParc() {
         <td class="mono" style="font-size:11px;${b.revisionDate&&b.revisionDate<=today()?'color:var(--orange)':''}">${fmtDateFR(b.revisionDate)||'—'}</td>
         <td class="mono" style="font-size:11px;${ctStyle}">${fmtDateFR(b.ct)||'—'}</td>
         <td class="mono">${b.capa||'—'}</td>
-        <td style="font-size:11px">${b.energie||'—'}</td>
+        <td style="text-align:center">${icn('energie',b.energie)}</td>
         <td class="mono" style="font-size:11px;color:var(--text3)">${b.conso ? b.conso+'L' : '—'}</td>
         <td class="mono" style="color:var(--text2)">${b.prixAchat ? fmt(b.prixAchat) : '—'}</td>
         <td class="mono" style="color:var(--text3)">${b.kmDepart ? fmtNum(b.kmDepart) : '—'}</td>
@@ -4665,15 +4752,16 @@ function renderParc() {
         <td class="mono" style="font-size:10px">${fmtDateFR(b.revisionDate)||'—'}</td>
         <td class="mono" style="color:${(b.etatTech||0)>=80?'var(--green)':(b.etatTech||0)>=60?'var(--yellow)':'var(--red)'}">${b.etatTech||'—'}</td>
         <td class="mono" style="color:${(b.etatInt||0)>=80?'var(--green)':(b.etatInt||0)>=60?'var(--yellow)':'var(--red)'}">${b.etatInt||'—'}</td>
-        <td>${yn(b.balisePrio)}</td><td>${yn(b.selfService)}</td><td>${yn(b.boutonsArret)}</td>
-        <td>${yn(b.camera)}</td>
-        <td style="font-size:9px">${b.pubArr||'—'}</td><td style="font-size:9px">${b.pubAv||'—'}</td><td style="font-size:9px">${b.pubLat||'—'}</td>
-        <td>${yn(b.rackBagages)}</td><td>${yn(b.rackVelos)}</td><td>${yn(b.ethylotest)}</td>
-        <td>${yn(b.radio)}</td><td>${yn(b.usb)}</td><td>${yn(b.wifi)}</td>
-        <td>${yn(b.bandeau)}</td><td>${yn(b.ecranTFT)}</td><td>${yn(b.hautParleurs)}</td>
-        <td>${yn(b.telephone)}</td><td>${yn(b.pupitre)}</td>
-        <td style="font-size:10px">${b.billetique||'—'}</td>
+        <td style="text-align:center">${icn('balisePrio',b.balisePrio)}</td><td style="text-align:center">${icn('selfService',b.selfService)}</td><td style="text-align:center">${icn('boutonsArret',b.boutonsArret)}</td>
+        <td style="text-align:center">${icn('camera',b.camera)}</td>
+        <td style="text-align:center">${icn('pubArr',b.pubArr,{size:16})}</td><td style="text-align:center">${icn('pubAv',b.pubAv,{size:16})}</td><td style="text-align:center">${icn('pubLat',b.pubLat,{size:16})}</td>
+        <td>${yn(b.rackBagages)}</td><td>${yn(b.rackVelos)}</td><td style="text-align:center">${icn('ethylotest',b.ethylotest)}</td>
+        <td style="text-align:center">${icn('radio',b.radio)}</td><td style="text-align:center">${icn('usb',b.usb)}</td><td style="text-align:center">${icn('wifi',b.wifi)}</td>
+        <td style="text-align:center">${icn('bandeau',b.bandeau)}</td><td style="text-align:center">${icn('ecranTFT',b.ecranTFT)}</td><td style="text-align:center">${icn('hautParleurs',b.hautParleurs)}</td>
+        <td style="text-align:center">${icn('telephone',b.telephone)}</td><td style="text-align:center">${icn('pupitre',b.pupitre)}</td>
+        <td style="text-align:center">${icn('billetique',b.billetique,{size:16})}</td>
         <td style="font-size:10px;color:${venteOk?'var(--green)':'var(--text3)'}">${fmtDateFR(b.reventeDate)||'—'}${venteOk?' ✓':''}</td>
+        <td class="mono" style="font-size:10px;color:var(--accent3)">${b.argus ? fmt(b.argus) : '—'}</td>
         <td style="${getStatutCellStyle(b.statut)}"><select class="status-select ${cls}" style="font-size:10px" onchange="changerStatutBus(${b.id},this.value,this)">${opts}</select></td>
       </tr>`;
     }).join('') || '<tr><td colspan="34" style="color:var(--text3);text-align:center;padding:20px">Aucun bus</td></tr>';
@@ -6394,21 +6482,39 @@ function supprimerCTHistorique(idx) {
 }
 
 function genererDemandeAlliance() {
-  const j15ago = addDays(today(), -15);
+  const j30ago = addDays(today(), -30);
+  const ecolo  = document.getElementById('alliance-ecolo')?.checked;
   if (!state.ct) state.ct = [];
 
-  // CT dans les 15 derniers jours, PAS encore demandés
-  const ctEligibles = state.ct.filter(c =>
-    c.date && c.date >= j15ago && c.date <= today() && !c.demandeAlliance
-  );
+  // Filtre ecolo : exclure les bus (hors CAR) diesel
+  const isExcluEcolo = b => {
+    if (!ecolo) return false;
+    if (!b) return false;
+    const isDiesel = (b.energie||'').toLowerCase() === 'diesel';
+    const isCar    = (b.type||'').toUpperCase() === 'CAR';
+    return isDiesel && !isCar;
+  };
 
-  // Révisions planifiées dans les 15 derniers jours (bus non déjà dans ctEligibles)
+  // CT dans le dernier mois, PAS encore demandés, PAS "Demande Alliance", PAS exclus ecolo
+  const ctEligibles = state.ct.filter(c => {
+    if (!c.date || c.date < j30ago || c.date > today()) return false;
+    if (c.demandeAlliance) return false;
+    const b = state.bus.find(x => x.nom === c.bus);
+    const plan = (state.planningCT || {})[c.bus] || {};
+    if (plan.demandeAlliance) return false;
+    if (isExcluEcolo(b)) return false;
+    return true;
+  });
+
+  // Révisions dans le dernier mois (bus non déjà dans ctEligibles)
   const ctBusNoms = new Set(ctEligibles.map(c => c.bus));
   const revEligibles = state.bus.filter(b => {
-    if (ctBusNoms.has(b.nom)) return false; // déjà inclus via CT
+    if (ctBusNoms.has(b.nom)) return false;
     const plan = (state.planningCT || {})[b.nom] || {};
+    if (plan.demandeAlliance) return false;
+    if (isExcluEcolo(b)) return false;
     const revDate = plan.revDate || '';
-    return revDate && revDate >= j15ago && revDate <= today();
+    return revDate && revDate >= j30ago && revDate <= today();
   });
 
   const result    = document.getElementById('alliance-result');
@@ -6418,7 +6524,7 @@ function genererDemandeAlliance() {
   const total = ctEligibles.length + revEligibles.length;
 
   if (!total) {
-    result.innerHTML = '<div class="alert-box info">Aucun bus éligible (tous déjà demandés ou aucun CT/révision dans les 15 derniers jours).</div>';
+    result.innerHTML = '<div class="alert-box info">Aucun bus éligible (tous déjà demandés, exclus ou aucun CT/révision dans le dernier mois).</div>';
     if (container) container.style.display = 'none';
     return;
   }
@@ -13465,6 +13571,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initSync();
 
   // Polling extension — DOIT être ici, après que le DOM et les fonctions sont prêts
+  preloadIcons();
   demarrerPollingExtension();
   updateNiveauUI();
 
