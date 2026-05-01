@@ -878,7 +878,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.296</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.350</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -1165,7 +1165,7 @@
                 <th onclick="sortParcFull('rackBagages')" style="cursor:pointer;user-select:none">Rack Bag. ↕</th><th onclick="sortParcFull('rackVelos')" style="cursor:pointer;user-select:none">Rack Vél. ↕</th><th onclick="sortParcFull('ethylotest')" style="cursor:pointer;user-select:none">Ethylo ↕</th>
                 <th onclick="sortParcFull('radio')" style="cursor:pointer;user-select:none">Radio ↕</th><th onclick="sortParcFull('usb')" style="cursor:pointer;user-select:none">USB ↕</th><th onclick="sortParcFull('wifi')" style="cursor:pointer;user-select:none">WiFi ↕</th><th onclick="sortParcFull('bandeau')" style="cursor:pointer;user-select:none">Bandeau ↕</th>
                 <th onclick="sortParcFull('ecranTFT')" style="cursor:pointer;user-select:none">Écran TFT ↕</th><th onclick="sortParcFull('hautParleurs')" style="cursor:pointer;user-select:none">HP ↕</th><th onclick="sortParcFull('telephone')" style="cursor:pointer;user-select:none">Tél. ↕</th><th onclick="sortParcFull('pupitre')" style="cursor:pointer;user-select:none">Pupitre ↕</th><th onclick="sortParcFull('billetique')" style="cursor:pointer;user-select:none">Billetique ↕</th>
-                <th onclick="sortParcFull('reventeDate')" style="cursor:pointer;user-select:none">Vente possible ↕</th><th onclick="sortParcFull('statut')" style="cursor:pointer;user-select:none">Statut ↕</th>
+                <th onclick="sortParcFull('reventeDate')" style="cursor:pointer;user-select:none">Vente possible ↕</th><th onclick="sortParcFull('argus')" style="cursor:pointer;user-select:none">Argus ↕</th><th onclick="sortParcFull('statut')" style="cursor:pointer;user-select:none">Statut ↕</th>
               </tr></thead>
               <tbody id="parc-tbody-full"></tbody>
             </table>
@@ -1205,6 +1205,10 @@
           <span id="aff-stats-badge" style="font-size:11px;color:var(--text3);padding:4px 10px;background:var(--surface2);border-radius:6px;border:1px solid var(--border)"></span>
       </div>
 
+      <!-- Bannière bus surchargés -->
+      <div id="aff-surcharge-banner" style="display:none;margin-bottom:10px;padding:8px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;font-size:12px;color:var(--red)">
+        ⚠️ Bus sans pause (tous créneaux du groupe occupés) : <span id="aff-surcharge-list"></span>
+      </div>
       <!-- Tableau principal -->
       <div class="card">
         <div class="card-body" style="padding:0;overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 180px)">
@@ -1253,11 +1257,14 @@
       <div class="card" style="margin-bottom:14px;border-color:rgba(245,158,11,0.3)">
         <div class="card-header" style="border-bottom-color:rgba(245,158,11,0.2)">
           <div class="card-title" style="color:var(--yellow)">🤝 Alliance — Demande de remboursement</div>
+          <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--green);cursor:pointer;margin-right:8px">
+            <input type="checkbox" id="alliance-ecolo"> 🌿 Ecolo (exclure bus diesel)
+          </label>
           <button class="btn btn-sm" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:var(--yellow)" onclick="genererDemandeAlliance()">📋 Générer</button>
         </div>
         <div class="card-body">
           <p style="font-size:11px;color:var(--text3);margin-bottom:10px">
-            Bus passés en révision et/ou CT dans les <b>15 derniers jours</b>. Une demande peut être faite tous les 15 jours.
+            Bus passés en révision et/ou CT dans le <b>dernier mois</b>. Les bus marqués "Demande Alliance" sont automatiquement exclus.
           </p>
           <div id="alliance-result"></div>
           <div id="alliance-texte-container" style="display:none;margin-top:10px">
@@ -1545,6 +1552,7 @@
                 <th>Motif</th>
                 <th>Jours</th>
                 <th>Coût</th>
+                <th style="font-size:11px">Créneaux au moment de la panne</th>
                 <th>Statut</th>
                 <th></th>
               </tr>
@@ -1958,7 +1966,7 @@
               <th>Places</th>
               <th>Pub(s) active(s) — date fin contrat</th>
               <th>Statut</th>
-              <th>Raison atelier</th>
+              <th>Raison</th>
               <th>→ Remplaçant(s) suggéré(s) (même type, tout libre, affecté, places ≤)</th>
             </tr></thead>
             <tbody id="pubdispo-alerte-tbody"></tbody>
@@ -2007,14 +2015,14 @@
             <div class="form-row">
               <div class="form-group">
                 <label>ID jeu</label>
-                <input type="number" id="achat-id" placeholder="91346">
+                <input type="number" id="achat-id" placeholder="91346" oninput="prefillAchatKm(this.value)">
               </div>
               <div class="form-group">
                 <label>Prix d'achat (€)</label>
                 <input type="number" id="achat-prix" placeholder="115000">
               </div>
               <div class="form-group">
-                <label>KM au compteur</label>
+                <label>KM au compteur <span id="achat-km-hint" style="font-size:10px;color:var(--accent);font-weight:400"></span></label>
                 <input type="number" id="achat-km" placeholder="0">
               </div>
             </div>
@@ -2218,7 +2226,7 @@
         <!-- Diesel -->
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
           <div class="stat-card" style="--card-accent:#EFAC19;border-top:3px solid #EFAC19">
-            <div class="stat-label">Moy. Diesel (30j)</div>
+            <div class="stat-label">Moy. Diesel</div>
             <div class="stat-value" id="gas-diesel-moy" style="font-size:20px">—</div>
           </div>
           <div class="stat-card" style="transform:scale(1.2);transform-origin:center;z-index:1;border-top:3px solid #EFAC19">
@@ -2226,14 +2234,14 @@
             <div class="stat-value" id="gas-diesel-today" style="font-size:22px;color:#EFAC19"> style="font-size:22px">—</div>
           </div>
           <div class="stat-card" style="border-top:3px solid #EFAC19">
-            <div class="stat-label">Meilleur Diesel (30j)</div>
+            <div class="stat-label">Meilleur Diesel</div>
             <div class="stat-value" id="gas-diesel-min" style="font-size:20px">—</div>
           </div>
         </div>
         <!-- GNV -->
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
           <div class="stat-card" style="border-top:3px solid #99B900">
-            <div class="stat-label">Moy. GNV (30j)</div>
+            <div class="stat-label">Moy. GNV</div>
             <div class="stat-value" id="gas-gnv-moy" style="font-size:20px">—</div>
           </div>
           <div class="stat-card" style="transform:scale(1.2);transform-origin:center;z-index:1;border-top:3px solid #99B900">
@@ -2241,7 +2249,7 @@
             <div class="stat-value" id="gas-gnv-today" style="font-size:22px;color:#99B900">—</div>
           </div>
           <div class="stat-card" style="border-top:3px solid #99B900">
-            <div class="stat-label">Meilleur GNV (30j)</div>
+            <div class="stat-label">Meilleur GNV</div>
             <div class="stat-value" id="gas-gnv-min" style="font-size:20px">—</div>
           </div>
         </div>
@@ -2584,7 +2592,7 @@
         </div>
         <div class="card-body" style="padding:0">
           <div style="padding:10px 14px;font-size:11px;color:var(--text3)">
-            Détecte les entrées en double dans la comptabilité (même id, ou même montant+desc, ou même montant+date).
+            Détecte les entrées en double dans la comptabilité : même <b>id</b>, même <b>montant + libellé</b>, ou même <b>montant + date</b>.
           </div>
           <div id="cfg-doublons-result"></div>
         </div>
@@ -2731,14 +2739,33 @@
     </div>
 
     <div id="page-cfg-prepa-creneaux" class="page">
+      <!-- Bannière simulation active -->
+      <div id="simul-banner-creneaux" style="display:none;margin-bottom:12px;padding:10px 14px;background:rgba(249,115,22,0.12);border:2px solid rgba(249,115,22,0.5);border-radius:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:16px">🧪</span>
+            <span style="font-weight:700;color:var(--orange)">Mode simulation actif</span>
+            <span style="font-size:11px;color:var(--text3)">— bus réels et affectations prépa préservés</span>
+          </div>
+          <button class="btn btn-sm" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:var(--red)" onclick="quitterSimulation()">✕ Quitter simulation</button>
+        </div>
+        <div style="margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-size:12px;color:var(--text2);font-weight:600">+ Bus fictifs :</span>
+          <input id="simul-bus-qty-2" type="number" placeholder="Qté" min="1" max="50" value="1" style="width:55px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px;padding:5px 8px">
+          <input id="simul-bus-nom-2" type="text" placeholder="Nom (ex: Standard)" style="width:120px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px;padding:5px 8px">
+          <input id="simul-bus-places-2" type="number" placeholder="Places" min="1" max="200" style="width:70px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px;padding:5px 8px">
+          <button class="btn btn-sm btn-primary" onclick="ajouterBusFictif2()">➕ Ajouter</button>
+          <span style="font-size:10px;color:var(--text3)">→ TEST-Nom1-places … TEST-NomX-places</span>
+          <span id="simul-bus-list-2" style="font-size:11px;color:var(--orange)"></span>
+          <span id="simul-banner-creneaux-list" style="font-size:11px;color:var(--text3)"></span>
+        </div>
+      </div>
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px">
         <div style="font-size:20px;font-weight:700;color:var(--cfg-green)">🗓️ Affectation prépa</div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <span style="font-size:11px;color:var(--text3);padding:4px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px">
-            Affectations brouillon · basé sur le parc actuel
-          </span>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <input type="text" id="prepa-creneaux-search" placeholder="🔍 Filtrer..." oninput="renderPrepaCreneaux()"
             style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:5px 10px;font-size:12px;width:180px">
+          <button id="simul-start-btn-creneaux" class="btn btn-sm" style="background:rgba(249,115,22,0.12);border:1px solid rgba(249,115,22,0.4);color:var(--orange)" onclick="activerSimulation()">🧪 Simuler achats</button>
           <button class="btn btn-sm" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--red)"
             onclick="clearPrepaCreneaux()">🗑 Vider</button>
           <button class="btn btn-sm" style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);color:var(--accent)"
@@ -2756,6 +2783,26 @@
     </div>
 
     <div id="page-cfg-prepa-aff" class="page">
+      <!-- Bannière simulation active -->
+      <div id="simul-banner" style="display:none;margin-bottom:12px;padding:10px 14px;background:rgba(249,115,22,0.12);border:2px solid rgba(249,115,22,0.5);border-radius:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:16px">🧪</span>
+            <span style="font-weight:700;color:var(--orange)">Mode simulation actif</span>
+            <span style="font-size:11px;color:var(--text3)">— bus réels et affectations prépa préservés</span>
+          </div>
+          <button class="btn btn-sm" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:var(--red)" onclick="quitterSimulation()">✕ Quitter simulation</button>
+        </div>
+        <div style="margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-size:12px;color:var(--text2);font-weight:600">+ Bus fictifs :</span>
+          <input id="simul-bus-qty" type="number" placeholder="Qté" min="1" max="50" value="1" style="width:55px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px;padding:5px 8px">
+          <input id="simul-bus-nom" type="text" placeholder="Nom (ex: Standard)" style="width:120px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px;padding:5px 8px">
+          <input id="simul-bus-places" type="number" placeholder="Places" min="1" max="200" style="width:70px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px;padding:5px 8px">
+          <button class="btn btn-sm btn-primary" onclick="ajouterBusFictif()">➕ Ajouter</button>
+          <span style="font-size:10px;color:var(--text3)">→ TEST-Nom1-places … TEST-NomX-places</span>
+          <span id="simul-bus-list" style="font-size:11px;color:var(--orange)"></span>
+        </div>
+      </div>
       <!-- Barre de contrôle -->
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
         <div style="display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid rgba(0,212,255,0.3);border-radius:8px;padding:6px 12px">
@@ -2765,7 +2812,19 @@
           <button onclick="setPrepaAffNiveau(state.prepaNiveauFreq+1)" style="background:none;border:none;color:var(--accent);font-size:16px;cursor:pointer;padding:0 4px">▶</button>
         </div>
         <span id="prepa-aff-niveau-badge" style="font-size:11px;padding:4px 10px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);border-radius:6px;color:var(--accent)"></span>
-        <button class="btn btn-sm" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--red)" onclick="clearPrepaAff()">🗑 Vider affectations</button>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <div id="prepa-aff-reseau-tabs" style="display:flex;gap:4px">
+            <button class="freq-tab active" data-reseau="normal"   onclick="setPrepaAffReseau(this)">🚌 Normal</button>
+            <button class="freq-tab"        data-reseau="nocturne" onclick="setPrepaAffReseau(this)">🌙 Nocturne</button>
+            <button class="freq-tab"        data-reseau="scolaire" onclick="setPrepaAffReseau(this)">🎒 Scolaire</button>
+          </div>
+          <div style="display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:2px;gap:2px">
+            <button id="prepa-aff-mode-compact" onclick="setPrepaAffMode('compact')" style="padding:4px 12px;border-radius:5px;border:none;font-size:12px;font-weight:700;cursor:pointer;background:var(--accent);color:#000">⚡ Compact</button>
+            <button id="prepa-aff-mode-complet" onclick="setPrepaAffMode('complet')" style="padding:4px 12px;border-radius:5px;border:none;font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:var(--text3)">📋 Complet</button>
+          </div>
+          <button id="simul-start-btn" class="btn btn-sm" style="background:rgba(249,115,22,0.12);border:1px solid rgba(249,115,22,0.4);color:var(--orange)" onclick="activerSimulation()">🧪 Simuler achats</button>
+          <button class="btn btn-sm" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--red)" onclick="clearPrepaAff()">🗑 Vider affectations</button>
+        </div>
       </div>
       <!-- Bannière sous 100% -->
       <div id="prepa-aff-warning-banner" style="display:none;margin-bottom:10px;padding:8px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;font-size:12px;color:var(--red)">
@@ -2778,7 +2837,7 @@
           <span id="prepa-aff-global-stats" style="font-size:11px;color:var(--text3)"></span>
         </div>
         <div class="card-body" style="padding:8px;overflow-y:auto;max-height:calc(100vh - 200px)">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start">
+          <div id="prepa-aff-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start">
             <div style="overflow-x:auto">
               <table class="data-table" id="prepa-aff-table-l" style="border-collapse:separate;border-spacing:0;width:100%">
                 <thead id="prepa-aff-thead-l" style="position:sticky;top:0;z-index:5"></thead>
@@ -3525,8 +3584,8 @@ let state = loadState() || {
   achats: [],
   abribus: [],
   contratsPub: [],
-  compta: [],      // source unique de vérité — toutes les ops à plat
-  comptaMois: {},   // legacy — migré vers compta au démarrage
+  compta: [],      // legacy — migré vers comptaMois au démarrage
+  comptaMois: {},   // { 'YYYY-MM': [...ops] }
   gasoil: [],
   journal: [],
   conso: { niveau: 5000, moy: 0 },
@@ -3921,7 +3980,7 @@ function renderDashboard() {
   const ctDiffs = state.bus.map(b => {
     const plan = state.planningCT?.[b.nom] || {};
     if (plan.ctDate === 'DONE' || plan.envoyeType === 'CT' || plan.envoyeType === 'Both') return null;
-    const ct = (plan.ctDate && plan.ctDate !== 'DONE') ? plan.ctDate : ctPrevu(b.ct);
+    const ct = (plan.ctDate && plan.ctDate !== 'DONE') ? plan.ctDate : ctPrevu(parseDateFR(b.ct));
     if (!ct) return null;
     const d = diffD(ct);
     if (d < 0) return null; // date passée sans envoi → ignorer
@@ -3947,7 +4006,7 @@ function renderDashboard() {
   const elRev = document.getElementById('dash-ech-rev');
   if (elRev) elRev.innerHTML = nbRevToday > 0 ? `<span style="color:var(--yellow);font-weight:700">${nbRevToday} révision(s) aujourd'hui</span>` : fmtEch(nextRev);
   // FCO
-  const fcoDiffs = (state.personnel||[]).filter(p=>p.fco).map(p=>diffD(p.fco)).filter(d=>d!==null).sort((a,b)=>a-b);
+  const fcoDiffs = (state.personnel||[]).filter(p=>p.fco).map(p=>diffD(lundiPrecedentOuEgal(p.fco))).filter(d=>d!==null).sort((a,b)=>a-b);
   const nextFCO = fcoDiffs.length ? fcoDiffs[0] : null;
   const elFCO = document.getElementById('dash-ech-fco');
   if (elFCO) elFCO.innerHTML = fmtEch(nextFCO);
@@ -4115,6 +4174,49 @@ function renderDashboard() {
       return iso >= todayISO && iso <= d3.toISOString().slice(0,10);
     }).length;
     if (nbContrat > 0) msgs.push(`<div style="color:var(--orange);font-size:16px;padding:3px 0">🚌 ${nbContrat} contrat(s) tourisme imminent(s)</div>`);
+
+    // Lignes sous 100% dans fréquentation
+    const niveauF = state.niveauJeu || 4;
+    const vacF = state.modeVacances || false;
+    const freqDataF = state.freqCibles?.[niveauF]?.[vacF?'vacances':'normal']?.['normal'] || {};
+    const freqDataNormF = {};
+    Object.keys(freqDataF).forEach(k => { freqDataNormF[normaliseLigneNum(k)] = freqDataF[k]; });
+    const CRENEAU_TO_FREQ_F = CRENEAU_TO_FREQ_NORMAL;
+    const lignesF = state.cfgLignesParNiveau?.[niveauF] || [];
+    const sousExplF = lignesF.filter(ligne => {
+      const fv = freqDataNormF[normaliseLigneNum(ligne.num)] || freqDataF[ligne.num] || [];
+      return Object.keys(CRENEAU_TO_FREQ_F).some(cid => {
+        const idx = CRENEAU_TO_FREQ_F[cid];
+        if (idx === undefined) return false;
+        const cible = typeof fv[idx] === 'number' ? fv[idx] : 0;
+        if (cible <= 0) return false;
+        const buses = getBusAffectesLigne(ligne.num, cid);
+        const places = buses.reduce((s, b) => s + getCapaBus(b, ligne.num), 0);
+        return places < cible;
+      });
+    });
+    if (sousExplF.length === 1) {
+      msgs.push(`<div style="color:var(--red);font-size:16px;padding:3px 0">📉 Ligne <b>${sousExplF[0].num}</b> sous 100%</div>`);
+    } else if (sousExplF.length > 1) {
+      msgs.push(`<div style="color:var(--red);font-size:16px;padding:3px 0">📉 <b>${sousExplF.length}</b> lignes sous 100%</div>`);
+    }
+
+    // Bus sans pause (tous créneaux d'un groupe occupés)
+    const INDISPO_VALS_D = ['- ct -','- panne -','- atelier -','- révision -','- revision -','- indispo -','- rénovation -','- renovation -','- non immatricule -','- non immatriculé -'];
+    const busSurchargesD = [];
+    (state.bus||[]).forEach(b => {
+      const cr = getAffCreneaux(b.nom);
+      ['SEMAINE','SAMEDI','DIMANCHE'].forEach(g => {
+        const crensG = AFF_CRENEAUX.filter(c => c.groupe === g);
+        if (crensG.every(c => { const v=(cr[c.id]||'').toLowerCase().trim(); if (!v || (v.includes('tourisme') || v.includes('touristique'))) return false; return !INDISPO_VALS_D.includes(v); })) {
+          busSurchargesD.push(b.nom);
+        }
+      });
+    });
+    if (busSurchargesD.length > 0) {
+      msgs.push(`<div style="color:var(--red);font-size:16px;padding:3px 0">⚠️ <b>${busSurchargesD.length}</b> bus sans pause créneau</div>`);
+    }
+
     elRecap.innerHTML = msgs.length
       ? msgs.join('')
       : `<div style="color:var(--green);font-size:16px">✅ Aucune alerte active</div>`;
@@ -4200,10 +4302,12 @@ function marquerAlerteLue(id) {
   renderAlertes();
 }
 
-function renderAlertes() {
+function renderAlertes(onglet) {
   const SEUIL_JOURS = 7;
   const todayA = today();
   const nowA   = new Date(todayA);
+  window._alertesOnglet = onglet || window._alertesOnglet || 'today';
+  const mode = window._alertesOnglet;
 
   if (!state.alertesLues) state.alertesLues = {};
 
@@ -4211,25 +4315,34 @@ function renderAlertes() {
     if (!dateISO) return null;
     return Math.round((new Date(dateISO) - nowA) / (1000*60*60*24));
   };
-
   const getDatesCT = (b) => {
     const plan = state.planningCT?.[b.nom] || {};
     const ctDate  = plan.ctDate  === 'DONE' ? null : (plan.ctDate  || ctPrevu(b.ct) || null);
     const revDate = plan.revDate === 'DONE' ? null : (plan.revDate || (ctDate ? revisionPrevue(ctDate) : null));
     return { ctDate, revDate };
   };
-
-  const luKey  = (id) => `${todayA}_${id}`;
-  const estLu  = (id) => !!state.alertesLues[luKey(id)];
-  // Lu = n'affecte que le badge, l'alerte reste visible mais avec style "lu"
-  const btnLu  = (id) => estLu(id)
+  const luKey = (id) => `${todayA}_${id}`;
+  const estLu = (id) => !!state.alertesLues[luKey(id)];
+  const btnLu = (id) => estLu(id)
     ? `<span style="margin-left:auto;font-size:10px;color:var(--text3);opacity:0.5">✓ lu</span>`
     : `<button class="btn btn-ghost btn-xs" style="margin-left:auto;opacity:0.6;white-space:nowrap" onclick="marquerAlerteLue('${id}')">✓ Lu</button>`;
 
-  let html = '';
+  // Collecte par catégorie, chaque item = { d, html }
+  const cats = {
+    renov:    { titre: '🔨 Rénovation urgente',                        today: [], later: [] },
+    contrats: { titre: '🚌 Contrats tourisme imminents',               today: [], later: [] },
+    ct:       { titre: `🔍 CT dans les ${SEUIL_JOURS} prochains jours`, today: [], later: [] },
+    rev:      { titre: `🔧 Révisions dans les ${SEUIL_JOURS} prochains jours`, today: [], later: [] },
+    fco:      { titre: '🎓 FCO',                                        today: [], later: [] },
+  };
   let totalAujourdHui = 0;
 
-  // ── Rénovation urgente (état < 45) ───────────────────────
+  const push = (cat, d, boxHtml) => {
+    if (d <= 0) { cats[cat].today.push(boxHtml); totalAujourdHui++; }
+    else cats[cat].later.push(boxHtml);
+  };
+
+  // ── Rénovation urgente ──────────────────────────────────
   state.bus.forEach(b => {
     const techAlert = b.etatTech && parseInt(b.etatTech) < 45;
     const intAlert  = b.etatInt  && parseInt(b.etatInt)  < 45;
@@ -4238,129 +4351,124 @@ function renderAlertes() {
     const parts = [];
     if (techAlert) parts.push(`état tech ${b.etatTech}/100`);
     if (intAlert)  parts.push(`état int. ${b.etatInt}/100`);
-    const msg = parts.join(' · ');
     const lu = estLu(id);
-    totalAujourdHui++;
-    alerts += `<div class="alert-box danger" style="margin-bottom:8px;opacity:${lu?0.5:1}">
+    push('renov', 0, `<div class="alert-box danger" style="margin-bottom:8px;opacity:${lu?0.5:1}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div><span style="font-weight:700">🔨 Rénovation urgente</span> — <b>${b.nom}</b><br>
-        <span style="font-size:11px;color:var(--text3)">${msg}</span></div>
+        <div><b>${b.nom}</b><br><span style="font-size:11px;color:var(--text3)">${parts.join(' · ')}</span></div>
         ${btnLu(id)}
       </div>
-    </div>`;
+    </div>`);
   });
 
-
-  // ── Contrats Tourisme dans les 3 prochains jours ────────
-  html += `<div class="section-title">🚌 Contrats tourisme imminents</div>`;
+  // ── Contrats Tourisme ───────────────────────────────────
   const in3ISO = (() => { const d = new Date(todayA); d.setDate(d.getDate()+3); return d.toISOString().slice(0,10); })();
-  const contratsProches = (state.tourisme||[]).filter(t => {
+  (state.tourisme||[]).filter(t => {
     if (!t.dateTransport) return false;
     const iso = t.dateTransport.replace(/(\d{2})\/(\d{2})\/(\d{4})/,'$3-$2-$1');
     return iso >= todayA && iso <= in3ISO;
-  });
-  let nbContratsAffiches = 0;
-  contratsProches.forEach((t, i) => {
+  }).forEach((t, i) => {
     const id = `contrat_${t.num||i}`;
     const iso = t.dateTransport.replace(/(\d{2})\/(\d{2})\/(\d{4})/,'$3-$2-$1');
     const d = diffJ(iso);
     const label = d === 0 ? "<b>AUJOURD'HUI</b>" : d === 1 ? 'Demain' : `Dans <b>${d} j</b>`;
-    if (d === 0 && !estLu(id)) totalAujourdHui++;
-    nbContratsAffiches++;
-    html += `<div class="alert-box ${d===0?'danger':'warning'}" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
-      <span>🚌 Contrat <b>#${t.num||'?'}</b> — ${t.demandeur||'—'} — ${t.dateTransport} — ${label} — <span style="color:var(--green)">${fmt(t.montant||0)}</span></span>
+    push('contrats', d, `<div class="alert-box ${d===0?'danger':'warning'}" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
+      <span>Contrat <b>#${t.num||'?'}</b> — ${t.demandeur||'—'} — ${t.dateTransport} — ${label} — <span style="color:var(--green)">${fmt(t.montant||0)}</span></span>
       ${btnLu(id)}
-    </div>`;
+    </div>`);
   });
-  if (!nbContratsAffiches) html += `<div class="alert-box success" style="margin-bottom:8px">✅ Aucun contrat dans les 3 prochains jours.</div>`;
 
-  // ── CT expirés ──────────────────────────────────────────
-  html += `<div class="section-title" style="margin-top:14px">CT dans les ${SEUIL_JOURS} prochains jours</div>`;
-  const ctExpires = state.bus.filter(b => b.ct && b.ct < todayA);
-  let nbCTAffiches = 0;
-  ctExpires.forEach(b => {
+  // ── CT expirés ─────────────────────────────────────────
+  state.bus.filter(b => b.ct && b.ct < todayA).forEach(b => {
     const id = `ct_exp_${b.nom}`;
-    nbCTAffiches++;
     const d = diffJ(b.ct);
-    html += `<div class="alert-box danger" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
-      <span>🔍 <b>${b.nom}</b> — CT limite ${fmtDateFR(b.ct)} — <b>EXPIRÉ depuis ${Math.abs(d)} j</b></span>
+    push('ct', 0, `<div class="alert-box danger" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
+      <span><b>${b.nom}</b> — CT limite ${fmtDateFR(b.ct)} — <b>EXPIRÉ depuis ${Math.abs(d)} j</b></span>
       ${btnLu(id)}
-    </div>`;
+    </div>`);
   });
 
-  // ── CT à venir ──────────────────────────────────────────
-  const ctAlerts = state.bus.filter(b => {
+  // ── CT à venir ─────────────────────────────────────────
+  state.bus.filter(b => {
     const { ctDate } = getDatesCT(b);
     if (!ctDate) return false;
     const d = diffJ(ctDate);
     return d !== null && d >= 0 && d <= SEUIL_JOURS;
-  }).sort((a,b) => new Date(getDatesCT(a).ctDate) - new Date(getDatesCT(b).ctDate));
-
-  ctAlerts.forEach(b => {
+  }).sort((a,b) => new Date(getDatesCT(a).ctDate) - new Date(getDatesCT(b).ctDate))
+  .forEach(b => {
     const { ctDate } = getDatesCT(b);
     const d = diffJ(ctDate);
     const id = `ct_${b.nom}`;
-    nbCTAffiches++;
-    if (d === 0 && !estLu(id)) totalAujourdHui++;
     const label = d === 0 ? "<b>AUJOURD'HUI</b>" : `Dans <b>${d} j</b>`;
-    html += `<div class="alert-box ${d===0?'danger':'warning'}" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
-      <span>🔍 <b>${b.nom}</b> — CT prévu le ${fmtDateFR(ctDate)} — ${label}</span>
+    push('ct', d, `<div class="alert-box ${d===0?'danger':'warning'}" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
+      <span><b>${b.nom}</b> — CT prévu le ${fmtDateFR(ctDate)} — ${label}</span>
       ${btnLu(id)}
-    </div>`;
-
+    </div>`);
   });
-  if (!nbCTAffiches) html += `<div class="alert-box success" style="margin-bottom:8px">✅ Aucun CT dans les ${SEUIL_JOURS} prochains jours.</div>`;
 
-  // ── Révisions ───────────────────────────────────────────
-  html += `<div class="section-title" style="margin-top:14px">Révisions dans les ${SEUIL_JOURS} prochains jours</div>`;
-  const revAlerts = state.bus.filter(b => {
+  // ── Révisions ──────────────────────────────────────────
+  state.bus.filter(b => {
     const { revDate } = getDatesCT(b);
     if (!revDate) return false;
     const d = diffJ(revDate);
     return d !== null && d >= 0 && d <= SEUIL_JOURS;
-  }).sort((a,b) => new Date(getDatesCT(a).revDate) - new Date(getDatesCT(b).revDate));
-
-  let nbRevAffiches = 0;
-  revAlerts.forEach(b => {
+  }).sort((a,b) => new Date(getDatesCT(a).revDate) - new Date(getDatesCT(b).revDate))
+  .forEach(b => {
     const { revDate } = getDatesCT(b);
     const d = diffJ(revDate);
     const id = `rev_${b.nom}`;
-    nbRevAffiches++;
-    if (d === 0 && !estLu(id)) totalAujourdHui++;
     const label = d === 0 ? "<b>AUJOURD'HUI</b>" : `Dans <b>${d} j</b>`;
-    html += `<div class="alert-box ${d===0?'danger':'warning'}" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
-      <span>🔧 <b>${b.nom}</b> — Révision prévue le ${fmtDateFR(revDate)} — ${label}</span>
+    push('rev', d, `<div class="alert-box ${d===0?'danger':'warning'}" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
+      <span><b>${b.nom}</b> — Révision prévue le ${fmtDateFR(revDate)} — ${label}</span>
       ${btnLu(id)}
-    </div>`;
+    </div>`);
   });
-  if (!nbRevAffiches) html += `<div class="alert-box success" style="margin-bottom:8px">✅ Aucune révision planifiée dans les ${SEUIL_JOURS} prochains jours.</div>`;
 
-  // ── FCO ─────────────────────────────────────────────────
-  const nowFCO = new Date(todayA);
+  // ── FCO ────────────────────────────────────────────────
   const jourSem = new Date().getDay();
   const joursAvantLundi = jourSem === 1 ? 0 : jourSem === 0 ? 1 : 8 - jourSem;
   const prochainLundi = new Date(todayA);
   prochainLundi.setDate(prochainLundi.getDate() + joursAvantLundi);
   const prochainLundiISO = prochainLundi.toISOString().slice(0,10);
-
-  html += `<div class="section-title" style="margin-top:14px">FCO à lancer le ${jourSem===1?"aujourd'hui":fmtDateFR(prochainLundiISO)} (lundi)</div>`;
-  const fcoAlerts = (state.personnel||[]).filter(p => p.fco && p.fco <= prochainLundiISO);
-  let nbFCOAffiches = 0;
-  fcoAlerts.sort((a,b) => (a.fco||'').localeCompare(b.fco||'')).forEach(p => {
+  (state.personnel||[]).filter(p => p.fco && p.fco <= prochainLundiISO)
+  .sort((a,b) => (a.fco||'').localeCompare(b.fco||''))
+  .forEach(p => {
     const id = `fco_${p.matricule}`;
-    nbFCOAffiches++;
     const dFCO = diffJ(p.fco);
-    if (dFCO === 0) totalAujourdHui++;
     const label = dFCO < 0 ? `<b style="color:var(--red)">EXPIRÉE depuis ${Math.abs(dFCO)} j</b>` : dFCO === 0 ? "<b>AUJOURD'HUI</b>" : `Dans <b>${dFCO} j</b>`;
-    html += `<div class="alert-box ${dFCO<=0?'danger':'warning'}" style="margin-bottom:6px;display:flex;align-items:center;gap:8px;${dFCO===0?'border-width:2px':''}">
-      <span>🎓 <b>${p.nom}</b> (${p.matricule}) — FCO le ${fmtDateFR(p.fco)} — ${label}</span>
+    push('fco', dFCO, `<div class="alert-box ${dFCO<=0?'danger':'warning'}" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
+      <span><b>${p.nom}</b> (${p.matricule}) — FCO le ${fmtDateFR(p.fco)} — ${label}</span>
       ${btnLu(id)}
-    </div>`;
+    </div>`);
   });
-  if (!nbFCOAffiches) html += `<div class="alert-box success" style="margin-bottom:8px">✅ Aucune FCO à lancer ${jourSem===1?"aujourd'hui":'lundi prochain'}.</div>`;
+
+  // ── Rendu ──────────────────────────────────────────────
+  const cntToday = Object.values(cats).reduce((s,c)=>s+c.today.length,0);
+  const cntLater = Object.values(cats).reduce((s,c)=>s+c.later.length,0);
+
+  const btnStyle = (active) => active
+    ? `padding:6px 18px;border-radius:7px;border:none;font-size:13px;font-weight:700;cursor:pointer;background:var(--accent);color:#000`
+    : `padding:6px 18px;border-radius:7px;border:none;font-size:13px;font-weight:600;cursor:pointer;background:transparent;color:var(--text3)`;
+
+  let html = `<div style="display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:3px;gap:3px;margin-bottom:14px;width:fit-content">
+    <button style="${btnStyle(mode==='today')}" onclick="renderAlertes('today')">
+      📅 Aujourd'hui${cntToday>0?` <span style="background:var(--red);color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px">${cntToday}</span>`:''}
+    </button>
+    <button style="${btnStyle(mode==='later')}" onclick="renderAlertes('later')">
+      🔮 Plus tard${cntLater>0?` <span style="background:var(--yellow);color:#000;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px">${cntLater}</span>`:''}
+    </button>
+  </div>`;
+
+  let anyShown = false;
+  Object.values(cats).forEach(cat => {
+    const items = cat[mode];
+    if (items.length === 0) return;
+    anyShown = true;
+    html += `<div class="section-title" style="margin-top:10px">${cat.titre}</div>`;
+    items.forEach(h => { html += h; });
+  });
+  if (!anyShown) html += `<div class="alert-box success">✅ Aucune alerte ${mode==='today'?"aujourd'hui":'dans les prochains jours'}.</div>`;
 
   document.getElementById('alertes-list').innerHTML = html;
-  // Badge = uniquement alertes du jour (d=0) non lues
   const _ab=document.getElementById('alert-badge'); if(_ab){_ab.textContent=totalAujourdHui;_ab.style.display=totalAujourdHui>0?'':'none';}
 }
 
@@ -4464,7 +4572,7 @@ function renderRepartitionParc() {
     const pct = tot>0 ? Math.round(n/tot*100) : 0;
     return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
       <div style="font-size:10px;color:var(--text2);min-width:80px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${label}">${label}</div>
-      <div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;max-width:80px"><div style="width:${pct}%;height:100%;background:${color};border-radius:3px"></div></div>
+      <div style="flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden;max-width:140px"><div style="width:${pct}%;height:100%;background:${color};border-radius:4px"></div></div>
       <div style="font-size:10px;color:var(--text3);white-space:nowrap">${n} <span style="color:var(--text3);font-size:9px">(${pct}%)</span></div>
     </div>`;
   };
@@ -4476,7 +4584,7 @@ function renderRepartitionParc() {
   html += '</div>';
   // Énergie
   html += '<div><div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:6px;letter-spacing:1px">ÉNERGIE</div>';
-  const enColors = { Diesel:'#EFAC19', Hybride:'#34d399', GNV:'#99B900', Électrique:'#a78bfa', Hydrogène:'#67e8f9' };
+  const enColors = { Diesel:'#EFAC19', Hybride:'#34d399', GNV:'#99B900', Électrique:'#a78bfa', Electrique:'#a78bfa', 'Électrique':'#a78bfa', Hydrogène:'#67e8f9' };
   Object.entries(energies).sort((a,b)=>b[1]-a[1]).forEach(([e,n]) => html += mkGauge(e, n, total, enColors[e]||'var(--text2)'));
   html += '</div>';
   // Statut
@@ -4487,7 +4595,109 @@ function renderRepartitionParc() {
   el.innerHTML = html;
 }
 
+
+// ─── Icônes équipements ────────────────────────────────────────────────────
+const ICON_BASE = 'https://rnestam.github.io/TM/assets/icons/';
+const ICON_MAP = {
+  balisePrio:   'balise.png',
+  selfService:  'selfservice.png',
+  boutonsArret: 'stop.png',
+  camera:       'camera.png',
+  pubArr:       'pubar.png',
+  pubAv:        'pubav.png',
+  pubLat:       'publat.png',
+  ethylotest:   'ethylo.png',
+  radio:        'radio.png',
+  usb:          'usb.png',
+  wifi:         'wifi.png',
+  bandeau:      'bandeau.png',
+  ecranTFT:     'ecran.png',
+  hautParleurs: 'hp.png',
+  telephone:    'phonie.png',
+  pupitre:      'pupitre.png',
+  // énergie
+  'Diesel':     'diesel.png',
+  'Electrique': 'electrique.png',
+  'Hybride':    'hybride.png',
+  'GNV':        'gnv.png',
+  // billettique
+  'Valideurs à puce':       'valideurpuce.png',
+  'Valideurs NFC':          'valideurpuce.png',
+  'Valideurs magnétiques':  'valideurmagnetique.png',
+  'Valideurs hybrides':     'valideurhybride.png',
+  'Oblitérateurs':          'obliterateur.png',
+  'Valideurs NFC':          'valideurpuce.png',
+};
+
+// Cache de disponibilité des icônes (true/false/undefined=pas encore testé)
+const _iconAvail = {};
+
+function _checkIcon(filename) {
+  if (_iconAvail[filename] !== undefined) return Promise.resolve(_iconAvail[filename]);
+  return fetch(ICON_BASE + filename, { method:'HEAD' })
+    .then(r => { _iconAvail[filename] = r.ok; return r.ok; })
+    .catch(() => { _iconAvail[filename] = false; return false; });
+}
+
+// Pré-charger toutes les icônes au démarrage, puis re-render parc
+function preloadIcons() {
+  const all = [...new Set(Object.values(ICON_MAP))];
+  Promise.all(all.map(f => _checkIcon(f))).then(() => {
+    if (document.getElementById('parc-tbody-full')) renderParc();
+  });
+}
+
+// Retourne HTML icône (img si dispo, sinon ✓/✗/texte)
+function icn(field, val, opts = {}) {
+  const { size = 18, text = false } = opts;
+  const filename = ICON_MAP[field];
+  // Pub : valeur textuelle (ex "Panneau utilisé" ou "Libre")
+  if (field === 'pubArr' || field === 'pubAv' || field === 'pubLat') {
+    if (!val || val === '—' || val === '') return '<span style="color:var(--text3);font-size:10px">—</span>';
+    if (filename && _iconAvail[filename]) {
+      const color = val === 'Libre' ? 'filter:grayscale(1);opacity:0.4' : '';
+      return `<img src="${ICON_BASE}${filename}" style="width:${size}px;height:${size}px;object-fit:contain;${color}" title="${val}">`;
+    }
+    return `<span style="font-size:9px">${val}</span>`;
+  }
+  // Énergie
+  if (field === 'energie') {
+    const ef = ICON_MAP[val];
+    if (ef && _iconAvail[ef]) return `<img src="${ICON_BASE}${ef}" style="width:${size}px;height:${size}px;object-fit:contain" title="${val}">`;
+    return `<span style="font-size:10px">${val||'—'}</span>`;
+  }
+  // Billettique
+  if (field === 'billetique') {
+    const bf = ICON_MAP[val];
+    if (bf && _iconAvail[bf]) return `<img src="${ICON_BASE}${bf}" style="width:${size}px;height:${size}px;object-fit:contain" title="${val}">`;
+    return `<span style="font-size:9px">${val||'—'}</span>`;
+  }
+  // Booléen OUI/NON
+  if (!filename) return val ? '<span style="color:var(--green)">✓</span>' : '<span style="color:var(--red)">✗</span>';
+  if (_iconAvail[filename]) {
+    if (!val) return `<img src="${ICON_BASE}${filename}" style="width:${size}px;height:${size}px;object-fit:contain;filter:grayscale(1);opacity:0.25" title="Non">`;
+    return `<img src="${ICON_BASE}${filename}" style="width:${size}px;height:${size}px;object-fit:contain" title="Oui">`;
+  }
+  return val ? '<span style="color:var(--green)">✓</span>' : '<span style="color:var(--red)">✗</span>';
+}
+
+function fmtConso(b) {
+  if (!b.conso) return '—';
+  const isElec = (b.energie||'').toLowerCase() === 'electrique' || (b.energie||'').toLowerCase() === 'électrique';
+  return isElec ? b.conso + ' kWh/100' : b.conso + ' L/100';
+}
+function fmtConsoShort(b) {
+  if (!b.conso) return '—';
+  const isElec = (b.energie||'').toLowerCase() === 'electrique' || (b.energie||'').toLowerCase() === 'électrique';
+  return isElec ? b.conso + 'kWh' : b.conso + 'L';
+}
+
 function renderParc() {
+  // Synchroniser display selon parcView (protection contre reset de vue)
+  const elC = document.getElementById('parc-view-compact');
+  const elF = document.getElementById('parc-view-full');
+  if (elC) elC.style.display = parcView === 'compact' ? '' : 'none';
+  if (elF) elF.style.display = parcView === 'full'    ? '' : 'none';
   const search = (document.getElementById('search-parc').value||'').toLowerCase();
   let filtered = state.bus.filter(b => {
     const matchType   = currentParcTypeFilter === 'all' || b.type === currentParcTypeFilter;
@@ -4517,8 +4727,8 @@ function renderParc() {
         <td class="mono" style="font-size:11px;${b.revisionDate&&b.revisionDate<=today()?'color:var(--orange)':''}">${fmtDateFR(b.revisionDate)||'—'}</td>
         <td class="mono" style="font-size:11px;${ctStyle}">${fmtDateFR(b.ct)||'—'}</td>
         <td class="mono">${b.capa||'—'}</td>
-        <td style="font-size:11px">${b.energie||'—'}</td>
-        <td class="mono" style="font-size:11px;color:var(--text3)">${b.conso ? b.conso+'L' : '—'}</td>
+        <td style="text-align:center">${icn('energie',b.energie)}</td>
+        <td class="mono" style="font-size:11px;color:var(--text3)">${fmtConsoShort(b)}</td>
         <td class="mono" style="color:var(--text2)">${b.prixAchat ? fmt(b.prixAchat) : '—'}</td>
         <td class="mono" style="color:var(--text3)">${b.kmDepart ? fmtNum(b.kmDepart) : '—'}</td>
         <td class="mono">${fmtNum(b.km)}</td>
@@ -4546,7 +4756,7 @@ function renderParc() {
       rackBagages:'rackBagages', rackVelos:'rackVelos', ethylotest:'ethylotest',
       radio:'radio', usb:'usb', wifi:'wifi', bandeau:'bandeau',
       ecranTFT:'ecranTFT', hautParleurs:'hautParleurs', telephone:'telephone', pupitre:'pupitre', billetique:'billetique',
-      reventeDate:'reventeDate', statut:'statut'
+      reventeDate:'reventeDate', argus:'argus', statut:'statut'
     };
     const sk = keyMap[parcFullSortKey] || 'nom';
     filtered = [...filtered].sort((a,b) => {
@@ -4565,8 +4775,8 @@ function renderParc() {
         <td style="font-size:11px;position:sticky;left:60px;z-index:2;background:var(--surface);border-right:2px solid var(--border)">${b.idJeu ? `<a href="https://transport-manager.net/jeu/vehicle.php?id=${b.idJeu}" target="_blank" style="color:inherit;text-decoration:none;font-weight:700;cursor:alias" title="Ouvrir sur le jeu">${b.nom} ↗</a>` : `<b>${b.nom}</b>`}</td>
         <td style="font-size:10px;color:var(--text2)">${b.marque||''} ${b.modele||''}</td>
         <td>${getTypeBadge(b.type)}</td>
-        <td style="font-size:11px">${b.energie||'—'}</td>
-        <td class="mono" style="font-size:11px;color:var(--text3)">${b.conso ? b.conso+'L/100' : '—'}</td>
+        <td style="text-align:center">${icn('energie',b.energie)}</td>
+        <td class="mono" style="font-size:11px;color:var(--text3)">${fmtConso(b)}</td>
         <td class="mono">${b.capa||'—'}</td>
         <td class="mono">${fmtNum(b.km)}</td>
         <td class="mono" style="color:var(--text3)">${b.kmDepart?fmtNum(b.kmDepart):'—'}</td>
@@ -4575,15 +4785,16 @@ function renderParc() {
         <td class="mono" style="font-size:10px">${fmtDateFR(b.revisionDate)||'—'}</td>
         <td class="mono" style="color:${(b.etatTech||0)>=80?'var(--green)':(b.etatTech||0)>=60?'var(--yellow)':'var(--red)'}">${b.etatTech||'—'}</td>
         <td class="mono" style="color:${(b.etatInt||0)>=80?'var(--green)':(b.etatInt||0)>=60?'var(--yellow)':'var(--red)'}">${b.etatInt||'—'}</td>
-        <td>${yn(b.balisePrio)}</td><td>${yn(b.selfService)}</td><td>${yn(b.boutonsArret)}</td>
-        <td>${yn(b.camera)}</td>
-        <td style="font-size:9px">${b.pubArr||'—'}</td><td style="font-size:9px">${b.pubAv||'—'}</td><td style="font-size:9px">${b.pubLat||'—'}</td>
-        <td>${yn(b.rackBagages)}</td><td>${yn(b.rackVelos)}</td><td>${yn(b.ethylotest)}</td>
-        <td>${yn(b.radio)}</td><td>${yn(b.usb)}</td><td>${yn(b.wifi)}</td>
-        <td>${yn(b.bandeau)}</td><td>${yn(b.ecranTFT)}</td><td>${yn(b.hautParleurs)}</td>
-        <td>${yn(b.telephone)}</td><td>${yn(b.pupitre)}</td>
-        <td style="font-size:10px">${b.billetique||'—'}</td>
+        <td style="text-align:center">${icn('balisePrio',b.balisePrio)}</td><td style="text-align:center">${icn('selfService',b.selfService)}</td><td style="text-align:center">${icn('boutonsArret',b.boutonsArret)}</td>
+        <td style="text-align:center">${icn('camera',b.camera)}</td>
+        <td style="text-align:center">${icn('pubArr',b.pubArr,{size:16})}</td><td style="text-align:center">${icn('pubAv',b.pubAv,{size:16})}</td><td style="text-align:center">${icn('pubLat',b.pubLat,{size:16})}</td>
+        <td>${yn(b.rackBagages)}</td><td>${yn(b.rackVelos)}</td><td style="text-align:center">${icn('ethylotest',b.ethylotest)}</td>
+        <td style="text-align:center">${icn('radio',b.radio)}</td><td style="text-align:center">${icn('usb',b.usb)}</td><td style="text-align:center">${icn('wifi',b.wifi)}</td>
+        <td style="text-align:center">${icn('bandeau',b.bandeau)}</td><td style="text-align:center">${icn('ecranTFT',b.ecranTFT)}</td><td style="text-align:center">${icn('hautParleurs',b.hautParleurs)}</td>
+        <td style="text-align:center">${icn('telephone',b.telephone)}</td><td style="text-align:center">${icn('pupitre',b.pupitre)}</td>
+        <td style="text-align:center">${icn('billetique',b.billetique,{size:16})}</td>
         <td style="font-size:10px;color:${venteOk?'var(--green)':'var(--text3)'}">${fmtDateFR(b.reventeDate)||'—'}${venteOk?' ✓':''}</td>
+        <td class="mono" style="font-size:10px;color:var(--accent3)">${b.argus ? fmt(b.argus) : '—'}</td>
         <td style="${getStatutCellStyle(b.statut)}"><select class="status-select ${cls}" style="font-size:10px" onchange="changerStatutBus(${b.id},this.value,this)">${opts}</select></td>
       </tr>`;
     }).join('') || '<tr><td colspan="34" style="color:var(--text3);text-align:center;padding:20px">Aucun bus</td></tr>';
@@ -4610,7 +4821,7 @@ function showBusDetail(id) {
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:8px;font-weight:700">Identification</div>
         ${row('ID Jeu', b.idJeu)} ${row('Numéro de parc', `<b>${b.nom}</b>`)} ${row('Immatriculation', b.immat)}
         ${row('Marque', b.marque)} ${row('Modèle', b.modele)} ${row('Type véhicule', b.typeVehicule||b.type)}
-        ${row('Énergie', b.energie)} ${row('Conso.', b.conso ? b.conso+' L/100km' : '')}
+        ${row('Énergie', b.energie)} ${row('Conso.', fmtConso(b))}
         ${row('Places', b.capa)} ${row('Dépôt', b.depot)} ${row('Patrimoine', b.patrimoine)}
         ${row('BHNS', yn(b.bhns))} ${row('Ligne Express', yn(b.le))}
       </div>
@@ -4833,8 +5044,10 @@ function handleCsvFile(input) {
 }
 
 function readCsvFile(file) {
+  console.log('[TM-CSV] readCsvFile →', file.name, file.size, 'bytes | currentCsvType=', currentCsvType);
   const reader = new FileReader();
   reader.onload = e => {
+    console.log('[TM-CSV] FileReader.onload OK, longueur=', e.target.result.length);
     csvRawContent = e.target.result;
     document.getElementById('csv-paste-text').value = csvRawContent;
     document.getElementById('csv-dropzone').style.borderColor = 'var(--green)';
@@ -4990,6 +5203,7 @@ if (!state.prixKm || Object.keys(state.prixKm).length === 0) {
 }
 
 function parserBus(rows) {
+  console.log('[TM-CSV] parserBus | nb lignes=', rows.length, '| header=', rows[0]);
   // Colonnes CSV bus.csv (60 colonnes) :
   // 0=ID, 1=NumParc, 2=Patrimoine, 3=FinLocation, 4=TypeVehicule, 5=Marque, 6=Modele, 7=Type,
   // 8=BHNS, 9=LE, 10=Energie, 11=Conso, 12=Places, 13=Immatriculation, 14=MiseEnService,
@@ -5059,8 +5273,8 @@ function parserBus(rows) {
       km:           kmActuel,
       kmDepart,
       diffKm,
-      revisionDate: parseDateFR(c[16]),
-      ct:           parseDateFR(c[17]),
+      revisionDate: ['-','jamais',''].includes((c[16]||'').toLowerCase().trim()) ? '' : parseDateFR(c[16]),
+      ct:           ['-','jamais',''].includes((c[17]||'').toLowerCase().trim()) ? '' : parseDateFR(c[17]),
       garantie:     parseDateFR(c[18]),
       statut,
       depot:        c[20] || '',
@@ -5230,6 +5444,7 @@ function parserCompta(rows) {
 
 function csvPreview() {
   const texte = document.getElementById('csv-paste-text').value || csvRawContent;
+  console.log('[TM-CSV] csvPreview | type=', currentCsvType, '| texte longueur=', texte.length);
   if (!texte.trim()) { toastMsg('Aucun contenu CSV chargé', 'error'); return; }
   csvRawContent = texte;
   const rows = parseCSV(texte);
@@ -5335,8 +5550,28 @@ function csvImporter() {
 
   if (currentCsvType === 'bus') {
     const buses = parserBus(rows);
+    console.log('[TM-CSV] csvImporter bus | buses parsés=', buses.length);
     if (!buses.length) { toastMsg('Aucun bus trouvé', 'error'); return; }
-    let maj = 0, ajouts = 0;
+    let maj = 0, ajouts = 0, suppr = 0;
+    // Supprimer les bus absents du CSV (location terminée, vendu...)
+    const nomsImportes = new Set(buses.map(b => b.nom));
+    const idJeuxImportes = new Set(buses.map(b => b.idJeu).filter(Boolean));
+    const busASupprimer = state.bus.filter(b =>
+      !b._fictif && // garder bus fictifs simulation
+      !nomsImportes.has(b.nom) &&
+      !(b.idJeu && idJeuxImportes.has(b.idJeu))
+    );
+    if (busASupprimer.length) {
+      const noms = busASupprimer.map(b => b.nom).join(', ');
+      if (!confirm(`${busASupprimer.length} bus absent(s) du CSV seront supprimés du parc :\n${noms}\n\nConfirmer ?`)) {
+        // annulé — on continue sans supprimer
+      } else {
+        busASupprimer.forEach(b => {
+          state.bus = state.bus.filter(x => x.nom !== b.nom);
+          suppr++;
+        });
+      }
+    }
     buses.forEach(b => {
       const exist = state.bus.find(x => x.nom === b.nom || (b.idJeu && x.idJeu === b.idJeu));
       if (exist) {
@@ -5365,13 +5600,19 @@ function csvImporter() {
         maj++;
       } else {
         state.bus.push({ id: Date.now() + Math.random()*1000|0, ...b });
+        // Enregistrer km actuel comme kmAchat si idJeu pas encore connu
+        if (b.idJeu && (!state.prixKm || !state.prixKm[b.idJeu])) {
+          if (!state.prixKm) state.prixKm = {};
+          state.prixKm[b.idJeu] = { prix: null, km: b.km };
+          journalLog('Nouveau bus ' + b.nom + ' (ID ' + b.idJeu + ') — km achat auto-enregistré : ' + b.km, 'info');
+        }
         ajouts++;
       }
     });
     state.lastImport.bus = nowStr;
-    journalLog(`MAJ CSV bus : ${maj} MàJ · ${ajouts} nouveaux`, 'ok');
+    journalLog(`MAJ CSV bus : ${maj} MàJ · ${ajouts} nouveaux · ${suppr} supprimés`, 'ok');
     saveStateWithSync();
-    toastMsg(`✅ ${maj} mis à jour · ${ajouts} ajoutés`, 'success');
+    toastMsg(`✅ ${maj} mis à jour · ${ajouts} ajoutés${suppr ? ' · ' + suppr + ' supprimés' : ''}`, 'success');
     setTimeout(() => { renderParc(); renderDashboard(); updateBusSelects(); closeModal('modal-maj-csv'); }, 50);
 
   } else if (currentCsvType === 'affects') {
@@ -5585,7 +5826,7 @@ function renderAffectations() {
         return `<th colspan="${gr.n}" style="text-align:center;background:${gc.bg};color:${gc.color};font-weight:700;letter-spacing:1px;font-size:11px;border-left:3px solid ${gc.color}66;border-bottom:2px solid var(--border)">${gr.g}</th>`;
       }).join('')}
       <th rowspan="2" style="${thFixed};min-width:140px;border-left:1px solid var(--border)">Remplacé par</th>
-      <th rowspan="2" style="${thFixed};min-width:130px;border-left:2px solid var(--border)">Raison atelier</th>
+      <th rowspan="2" style="${thFixed};min-width:130px;border-left:2px solid var(--border)">Raison</th>
     </tr>`;
     const row2 = `<tr>
       ${AFF_CRENEAUX.map((c, i) => {
@@ -5692,7 +5933,7 @@ function renderAffectations() {
         <td style="border-left:1px solid var(--border);padding:3px 6px">
           <input type="text" value="${remp}" placeholder="Filtrer..."
             list="list-aff-${b.nom.replace(/[^a-zA-Z0-9]/g,'_')}"
-            onchange="setAffRemplacement('${b.nom}',this.value)"
+            onchange="setAffRemplacement('${b.nom}',this.value)" oninput="handleDatalistInput(this,'${b.nom}',setAffRemplacement)"
             style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:11px;padding:2px 6px;width:130px">
           <datalist id="list-aff-${b.nom.replace(/[^a-zA-Z0-9]/g,'_')}">
             ${autresBus.map(x=>`<option value="${x.nom}">`).join('')}
@@ -5703,7 +5944,7 @@ function renderAffectations() {
             <select onchange="setRaisonAtelier('${b.nom}',this.value)"
               style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:${raisonAtelier?'var(--text)':'var(--text3)'};font-size:11px;padding:2px 4px;width:125px">
               <option value="">—</option>
-              ${['CT avant Rev','CT','Nouveau','Option','Panne','Rénovation','Rev avant CT','Révision'].map(r =>
+              ${['CT avant Rev','CT','Nouveau','Option','Panne','Pub','Rénovation','Rev avant CT','Révision'].map(r =>
                 `<option value="${r}" ${raisonAtelier===r?'selected':''}>${r}</option>`
               ).join('')}
             </select>
@@ -5715,6 +5956,36 @@ function renderAffectations() {
   });
 
   tbody.innerHTML = rows;
+
+  // ── Bannière bus sans pause (tous créneaux d'un groupe occupés) ──
+  const INDISPO_VALS_AFF = ['- ct -','- panne -','- atelier -','- révision -','- revision -','- indispo -','- rénovation -','- renovation -','- non immatricule -','- non immatriculé -'];
+  const groupesCheck = ['SEMAINE','SAMEDI','DIMANCHE'];
+  const busSurcharges = [];
+  state.bus.forEach(b => {
+    const cr = getAffCreneaux(b.nom);
+    groupesCheck.forEach(g => {
+      const crensGroupe = AFF_CRENEAUX.filter(c => c.groupe === g);
+      const tousOccupes = crensGroupe.every(c => {
+        const v = (cr[c.id]||'').toLowerCase().trim();
+        // Ignorer les créneaux tourisme et vides (non comptabilisés comme "sans pause")
+        if (!v || (v.includes('tourisme') || v.includes('touristique'))) return false;
+        return !INDISPO_VALS_AFF.includes(v);
+      });
+      if (tousOccupes) busSurcharges.push({ nom: b.nom, groupe: g });
+    });
+  });
+  const banner = document.getElementById('aff-surcharge-banner');
+  const blist  = document.getElementById('aff-surcharge-list');
+  if (banner && blist) {
+    if (busSurcharges.length) {
+      banner.style.display = 'block';
+      blist.innerHTML = busSurcharges.map(x =>
+        `<span style="display:inline-block;background:rgba(239,68,68,0.2);border-radius:4px;padding:1px 6px;margin:1px 2px;font-weight:700">${x.nom} <span style="font-size:10px;opacity:0.8">(${x.groupe})</span></span>`
+      ).join('');
+    } else {
+      banner.style.display = 'none';
+    }
+  }
 }
 function editAffCell(td, busNom, creneauId) {
   if (td.querySelector('input')) return;
@@ -5874,9 +6145,13 @@ function getCapaBus(bus, ligneNum) {
   return capaUrb; // urbain ou suburbain → capacité urbaine (la plus grande)
 }
 
-function ctPrevu(dateLimiteISO) {
-  if (!dateLimiteISO) return '';
-  const d = new Date(dateLimiteISO);
+function ctPrevu(dateLimite) {
+  if (!dateLimite || dateLimite === '-' || dateLimite === 'Jamais') return '';
+  // Accepte DD/MM/YYYY ou ISO
+  const iso = dateLimite.includes('/') ? parseDateFR(dateLimite) : dateLimite;
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
   // Reculer jusqu'à trouver un jour où le CT est ouvert
   while (estFerme(d.toISOString().slice(0,10))) {
     d.setDate(d.getDate() - 1);
@@ -6033,7 +6308,7 @@ function renderMaintenance() {
         value="${plan.remplacement||''}"
         placeholder="Filtrer..."
         list="${listId}"
-        onchange="setRemplacement('${b.nom}',this.value)"
+        onchange="setRemplacement('${b.nom}',this.value)" oninput="handleDatalistInput(this,'${b.nom}',setRemplacement)"
         style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:3px 6px;font-size:11px;width:130px">
       <datalist id="${listId}">
         ${busDispos.filter(x=>x.nom!==b.nom).map(x=>`<option value="${x.nom}">`).join('')}
@@ -6175,6 +6450,14 @@ function setPlanDate(busNom, type, val) {
   saveStateWithSync();
 }
 
+// Valide uniquement si la valeur tapée correspond exactement à une option de la datalist
+function handleDatalistInput(input, busNom, saveFn) {
+  const list = document.getElementById(input.getAttribute('list'));
+  if (!list) return;
+  const options = Array.from(list.options).map(o => o.value);
+  if (options.includes(input.value)) saveFn(busNom, input.value);
+}
+
 function setRemplacement(busNom, remplacant) {
   if (!state.planningCT) state.planningCT = {};
   if (!state.planningCT[busNom]) state.planningCT[busNom] = {};
@@ -6229,21 +6512,39 @@ function supprimerCTHistorique(idx) {
 }
 
 function genererDemandeAlliance() {
-  const j15ago = addDays(today(), -15);
+  const j30ago = addDays(today(), -30);
+  const ecolo  = document.getElementById('alliance-ecolo')?.checked;
   if (!state.ct) state.ct = [];
 
-  // CT dans les 15 derniers jours, PAS encore demandés
-  const ctEligibles = state.ct.filter(c =>
-    c.date && c.date >= j15ago && c.date <= today() && !c.demandeAlliance
-  );
+  // Filtre ecolo : exclure les bus (hors CAR) diesel
+  const isExcluEcolo = b => {
+    if (!ecolo) return false;
+    if (!b) return false;
+    const isDiesel = (b.energie||'').toLowerCase() === 'diesel';
+    const isCar    = (b.type||'').toUpperCase() === 'CAR';
+    return isDiesel && !isCar;
+  };
 
-  // Révisions planifiées dans les 15 derniers jours (bus non déjà dans ctEligibles)
+  // CT dans le dernier mois, PAS encore demandés, PAS "Demande Alliance", PAS exclus ecolo
+  const ctEligibles = state.ct.filter(c => {
+    if (!c.date || c.date < j30ago || c.date > today()) return false;
+    if (c.demandeAlliance) return false;
+    const b = state.bus.find(x => x.nom === c.bus);
+    const plan = (state.planningCT || {})[c.bus] || {};
+    if (plan.demandeAlliance) return false;
+    if (isExcluEcolo(b)) return false;
+    return true;
+  });
+
+  // Révisions dans le dernier mois (bus non déjà dans ctEligibles)
   const ctBusNoms = new Set(ctEligibles.map(c => c.bus));
   const revEligibles = state.bus.filter(b => {
-    if (ctBusNoms.has(b.nom)) return false; // déjà inclus via CT
+    if (ctBusNoms.has(b.nom)) return false;
     const plan = (state.planningCT || {})[b.nom] || {};
+    if (plan.demandeAlliance) return false;
+    if (isExcluEcolo(b)) return false;
     const revDate = plan.revDate || '';
-    return revDate && revDate >= j15ago && revDate <= today();
+    return revDate && revDate >= j30ago && revDate <= today();
   });
 
   const result    = document.getElementById('alliance-result');
@@ -6253,7 +6554,7 @@ function genererDemandeAlliance() {
   const total = ctEligibles.length + revEligibles.length;
 
   if (!total) {
-    result.innerHTML = '<div class="alert-box info">Aucun bus éligible (tous déjà demandés ou aucun CT/révision dans les 15 derniers jours).</div>';
+    result.innerHTML = '<div class="alert-box info">Aucun bus éligible (tous déjà demandés, exclus ou aucun CT/révision dans le dernier mois).</div>';
     if (container) container.style.display = 'none';
     return;
   }
@@ -6662,9 +6963,20 @@ function parsePanneJeu(texte) {
             || texte.match(/Immobilisation du v[ée]hicule n°([A-Z0-9][A-Z0-9\-]+)/i);
   if (busM) result.nomParc = busM[1];
 
-  // Motif
+  // Motif — cas normal ou CT refusé (raison sur la ligne suivante)
   const motifM = texte.match(/Motif\s*:\s*(.+)/i);
-  if (motifM) result.motif = motifM[1].trim();
+  if (motifM) {
+    let motif = motifM[1].trim();
+    // Si le motif se termine par ":" (ex: "CT refusé :"), chercher la raison sur la ligne suivante
+    if (motif.endsWith(':') || motif.match(/CT refus[ée]/i)) {
+      // Chercher le texte juste après "CT refusé :"
+      const ctM = texte.match(/CT refus[ée][^:\n]*[:\s]*\n\s*(.+)/i);
+      if (ctM) motif = 'CT refusé : ' + ctM[1].trim();
+    }
+    result.motif = motif;
+    // CT refusé → pas de remplaçant (déjà géré par le CT)
+    if (motif.match(/CT refus[ée]/i)) result.remplacant = '';
+  }
 
   // Jours
   const joursM = texte.match(/Temps de r[ée]paration\s*:\s*(\d+)\s*jour/i);
@@ -6678,7 +6990,19 @@ function parsePanneJeu(texte) {
   const rempM = texte.match(/Affectations reprises par[^\n]*n°([A-Z0-9][A-Z0-9\-]+)/i);
   if (rempM) result.remplacant = rempM[1];
 
-  if (!result.nomParc || !result.motif || !result.jours) return null;
+  // Créneaux au moment de la panne : ligne après "Affectations au moment de la panne"
+  // Format : "10 ¦ 64 ¦ - ¦ - | - ¦ 7 ¦ - ¦ - | - ¦ - ¦ -"
+  const affM = texte.match(/Affectations au moment de la panne\s*\n\s*([^\n]+)/i);
+  if (affM) {
+    const vals = affM[1].split(/[¦|]/).map(v => v.trim());
+    const crIds = ['sem_creuse','sem_pointe','sem_soir','sem_nuit','sam_creuse','sam_pointe','sam_soir','sam_nuit','dim_creuse','dim_pointe','dim_nuit'];
+    const crSnapshot = {};
+    vals.forEach((v, i) => { if (crIds[i] && v && v !== '-' && v !== '') crSnapshot[crIds[i]] = v; });
+    if (Object.keys(crSnapshot).length) result.creneaux = crSnapshot;
+  }
+
+  if (!result.nomParc || !result.motif) return null;
+  if (!result.jours && !result.motif.match(/CT refus[ée]/i)) return null;
   result.id = Date.now() + Math.random()*1000|0;
   return result;
 }
@@ -6726,8 +7050,9 @@ function importerPannes() {
       b.statut = 'Indispo';
       if (!state.planningCT) state.planningCT = {};
       if (!state.planningCT[b.nom]) state.planningCT[b.nom] = {};
-      state.planningCT[b.nom].raisonAtelier = 'Panne';
+      state.planningCT[b.nom].raisonAtelier = p.motif.match(/CT refus[ée]/i) ? 'CT refusé' : 'Panne';
       if (p.remplacant) state.planningCT[b.nom].remplacement = p.remplacant;
+      // Snapshot créneaux déjà extrait du texte brut dans parsePanneJeu (p.creneaux)
     }
   });
 
@@ -6821,7 +7146,7 @@ function renderPannes() {
   };
 
   if (!pannes.length) {
-    tbody.innerHTML = '<tr><td colspan="8" style="color:var(--text3);text-align:center;padding:16px">Aucune panne enregistrée</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" style="color:var(--text3);text-align:center;padding:16px">Aucune panne enregistrée</td></tr>';
     return;
   }
 
@@ -6838,6 +7163,24 @@ function renderPannes() {
       <td style="font-size:12px">${p.motif||'—'}</td>
       <td class="mono" style="text-align:center;color:${p.jours>=3?'var(--red)':'var(--text2)'}">${p.jours} j</td>
       <td class="mono" style="color:var(--text2)">${p.prix ? fmt(p.prix) : '—'}</td>
+      <td style="font-size:10px;color:var(--text2);line-height:1.6">${(() => {
+        if (!p.creneaux || !Object.keys(p.creneaux).length) return '<span style="color:var(--text3)">—</span>';
+        const GRP2 = [
+          ['sem_creuse','sem_pointe','sem_soir','sem_nuit'],
+          ['sam_creuse','sam_pointe','sam_soir','sam_nuit'],
+          ['dim_creuse','dim_pointe','dim_nuit'],
+        ];
+        const sep  = '<span style="color:var(--text3);margin:0 1px;font-size:10px">·</span>';
+        const gsep = '<span style="color:var(--border);margin:0 3px;font-size:13px;font-weight:300">|</span>';
+        return GRP2.map(ids =>
+          ids.map(id => {
+            const v = p.creneaux[id];
+            if (!v || v === '-') return `<span style="color:var(--text3);font-size:10px">-</span>`;
+            const col = getLigneColor(v) || '#6b7280';
+            return `<span style="display:inline-block;background:${col};color:#fff;font-weight:700;font-size:10px;border-radius:50%;width:20px;height:20px;line-height:20px;text-align:center;vertical-align:middle">${v}</span>`;
+          }).join(sep)
+        ).join(gsep);
+      })()}</td>
       <td>
         <select onchange="setPanneStatut(${p.id},this.value)"
           style="background:transparent;border:1px solid ${couleur}33;border-radius:4px;color:${couleur};font-size:11px;padding:2px 6px;cursor:pointer">
@@ -6885,7 +7228,7 @@ function renderRenovation() {
       <td style="padding:2px 6px">
         <input type="text" value="${remp}" placeholder="Filtrer..."
           list="list-renov-${busKey}"
-          onchange="setRemplacementRenov('${b.nom}',this.value)"
+          onchange="setRemplacementRenov('${b.nom}',this.value)" oninput="handleDatalistInput(this,'${b.nom}',setRemplacementRenov)"
           style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:11px;padding:2px 6px;width:120px">
         <datalist id="list-renov-${busKey}">
           ${allBus.map(x=>`<option value="${x.nom}">`).join('')}
@@ -7205,7 +7548,7 @@ function supprimerLigne(i) { const l = state.lignes[i]; pushUndo(l ? 'Suppressio
 // ═══════════════════════════════════════════════════════
 //  COMPTA
 // ═══════════════════════════════════════════════════════
-// Helper : vue par mois calculée à la volée depuis state.compta (lecture seule)
+// Vue par mois calculée à la volée depuis state.compta (lecture seule)
 function cptMois() {
   const map = {};
   (state.compta||[]).forEach(o => {
@@ -7397,8 +7740,7 @@ function importerHistorique() {
 function renderHistoriqueBase() {
   const el = document.getElementById('histo-base-content');
   if (!el) return;
-  const cm = cptMois();
-  const moisList = Object.keys(cm).sort();
+  const moisList = Object.keys(cptMois()).sort();
   if (!moisList.length) { el.innerHTML = '<span style="color:var(--text3)">Aucune donnée comptable dans la base.</span>'; return; }
   const byAnnee = {};
   moisList.forEach(m => {
@@ -7408,22 +7750,22 @@ function renderHistoriqueBase() {
   });
   el.innerHTML = Object.entries(byAnnee).sort((a,b)=>b[0].localeCompare(a[0])).map(([annee, mois]) => {
     const mosHtml = mois.map(m => {
-      const ops = cm[m];
+      const ops = cptMois()[m] || [];
       const rec = ops.filter(o=>o.type==='recette').reduce((a,o)=>a+o.montant,0);
       const dep = ops.filter(o=>o.type==='depense').reduce((a,o)=>a+o.montant,0);
       const solde = rec - dep;
       const color = solde >= 0 ? 'var(--green)' : 'var(--red)';
       return `<span style="display:inline-block;margin:2px;padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:4px;cursor:pointer" onclick="nav(document.querySelector('[data-page=compta]'));setComptaMoisFiltre('${m}')" title="${ops.length} ops · ${fmt(rec)} rec · ${fmt(dep)} dep">
         <b style="color:var(--accent)">${m.substring(5)}</b>
-        <span style="color:${color};margin-left:4px">${solde>=0?'+':''} ${fmt(solde)}</span>
+        <span style="color:${color};margin-left:4px">${solde>=0?'+':''}${fmt(solde)}</span>
         <span style="color:var(--text3);font-size:10px;margin-left:3px">${ops.length}op</span>
       </span>`;
     }).join('');
-    const totalRec = mois.reduce((a,m)=>a+(cm[m]||[]).filter(o=>o.type==='recette').reduce((b,o)=>b+o.montant,0),0);
-    const totalDep = mois.reduce((a,m)=>a+(cm[m]||[]).filter(o=>o.type==='depense').reduce((b,o)=>b+o.montant,0),0);
+    const totalRec = mois.reduce((a,m)=>a+(cptMois()[m]||[]).filter(o=>o.type==='recette').reduce((b,o)=>b+o.montant,0),0);
+    const totalDep = mois.reduce((a,m)=>a+(cptMois()[m]||[]).filter(o=>o.type==='depense').reduce((b,o)=>b+o.montant,0),0);
     return `<div style="margin-bottom:12px">
       <div style="font-weight:700;color:var(--accent2);margin-bottom:4px;font-size:13px">
-        ${annee} &nbsp; <span style="font-size:11px;color:var(--text3);font-weight:400">Rec: <span style="color:var(--green)">${fmt(totalRec)}</span> · Dép: <span style="color:var(--red)">${fmt(totalDep)}</span> · Solde: <span style="color:${totalRec-totalDep>=0?'var(--green)":'var(--red)'}">${fmt(totalRec-totalDep)}</span></span>
+        ${annee} &nbsp; <span style="font-size:11px;color:var(--text3);font-weight:400">Rec: <span style="color:var(--green)">${fmt(totalRec)}</span> · Dép: <span style="color:var(--red)">${fmt(totalDep)}</span> · Solde: <span style="color:${totalRec-totalDep>=0?'var(--green)':'var(--red)'}">${fmt(totalRec-totalDep)}</span></span>
       </div>
       <div>${mosHtml}</div>
     </div>`;
@@ -7666,7 +8008,7 @@ function renderCompta() {
     const moisDeLannee = Object.keys(cptMois()).filter(m => m.startsWith(anneeActuelle)).sort().reverse();
     const tbody = document.getElementById('compta-mois-tbody');
     if (tbody) tbody.innerHTML = moisDeLannee.map(m => {
-      const ops = (cptMois()[m]||[]);
+      const ops = cptMois()[m] || [];
       const rec = ops.filter(o=>o.type==='recette').reduce((s,o)=>s+o.montant,0);
       const dep = ops.filter(o=>o.type==='depense').reduce((s,o)=>s+o.montant,0);
       const sol = rec - dep;
@@ -7737,18 +8079,18 @@ function renderEstimationFinDeMois() {
 
     // Agréger les recettes "Ventes de titres" / "Recette du" par date (jours passés uniquement)
     const recParDate = {};
-    (state.compta||[]).forEach(o => {  // flat compta
-        if (o.type !== 'recette' || !o.date) return;
-        if (o.date >= todayISO) return;   // exclure aujourd'hui et futur
-        if (o.date < cutoffISO) return;   // exclure > 28 jours
-        const cat  = (o.cat  || '');
-        const desc = (o.desc || '').toLowerCase();
-        const isVentes = cat === 'Ventes de titres'
-          || desc.startsWith('recette du ')
-          || desc.includes('recette du ');
-        if (!isVentes) return;
-        recParDate[o.date] = (recParDate[o.date] || 0) + o.montant;
-    });
+     (state.compta||[]).forEach(o => {
+       if (o.type !== 'recette' || !o.date) return;
+       if (o.date >= todayISO) return;
+       if (o.date < cutoffISO) return;
+       const cat  = (o.cat  || '');
+       const desc = (o.desc || '').toLowerCase();
+       const isVentes = cat === 'Ventes de titres'
+         || desc.startsWith('recette du ')
+         || desc.includes('recette du ');
+       if (!isVentes) return;
+       recParDate[o.date] = (recParDate[o.date] || 0) + o.montant;
+     });
 
 
     // Moyennes par catégorie de jour (Sem / Sam / Dim)
@@ -7796,7 +8138,7 @@ function renderEstimationFinDeMois() {
   let totalAmendes = 0;
   const debutAnnee = `${annee}-01`;
   (state.compta||[]).filter(o=>(o.date||'')>=debutAnnee).forEach(o => {
-      if (o.type === 'depense' && (o.cat||'').toLowerCase().includes('amende')) totalAmendes += o.montant;
+    if (o.type === 'depense' && (o.cat||'').toLowerCase().includes('amende')) totalAmendes += o.montant;
   });
   const nbMoisAnnee = [...new Set((state.compta||[]).map(o=>(o.date||'1970').substring(0,7)).filter(m=>m.startsWith(String(annee))))].length || 1;
   const amendesEstim = Math.round((totalAmendes / nbMoisAnnee / 30) * joursRestants);
@@ -7839,14 +8181,13 @@ function renderEstimationFinDeMois() {
 
   // ── Gasoil : max mensuel sur l'année - déjà payé ce mois ─
   const gasoilParMois = {};
-  (()=>{const _cm=cptMois();Object.entries(_cm).forEach(([m, ops]) => {
+  (state.compta||[]).forEach(o => {
+    const m = (o.date||'').substring(0,7);
     if (!m.startsWith(String(annee))) return;
-    ops.forEach(o => {
-      if (o.type === 'depense' && ((o.cat||'').toLowerCase().includes('gasoil') || (o.cat||'').toLowerCase().includes('carburant') || (o.desc||'').toLowerCase().includes('gasoil'))) {
-        gasoilParMois[m] = (gasoilParMois[m] || 0) + o.montant;
-      }
-    });
-  });})();
+    if (o.type === 'depense' && ((o.cat||'').toLowerCase().includes('gasoil') || (o.cat||'').toLowerCase().includes('carburant') || (o.desc||'').toLowerCase().includes('gasoil'))) {
+      gasoilParMois[m] = (gasoilParMois[m] || 0) + o.montant;
+    }
+  });
   const gasoilMax = Object.values(gasoilParMois).length ? Math.max(...Object.values(gasoilParMois)) : 0;
   const gasoilMoisActuel = gasoilParMois[moisKey] || 0;
   const gasoilEstim = Math.max(0, gasoilMax - gasoilMoisActuel);
@@ -8204,12 +8545,11 @@ function evaluerContrats() {
     return;
   }
 
-  // Trier par note décroissante
   const evaluated = contrats.map(c => {
     const note = evaluerNote(c.prix, c.jours, c.nbDemande, c.typeSupport);
     const q = c.prix && c.jours && c.nbDemande ? Math.round(c.prix / c.jours / c.nbDemande) : 0;
     return { ...c, note, q };
-  }).sort((a, b) => (b.note||0) - (a.note||0));
+  });
 
   const fmtPrix = v => Number(v).toLocaleString('fr-FR') + ' €';
   const fmtDate = d => d; // déjà en JJ/MM/AAAA
@@ -8393,6 +8733,28 @@ function supprimerContrat(i) { const _c = state.contratsPub[i]; pushUndo(_c ? 'S
 // ═══════════════════════════════════════════════════════
 //  ACHATS
 // ═══════════════════════════════════════════════════════
+
+function prefillAchatKm(idVal) {
+  const idJeu = parseInt(idVal);
+  const kmEl   = document.getElementById('achat-km');
+  const hint   = document.getElementById('achat-km-hint');
+  if (!idJeu || !kmEl) return;
+  const pk = state.prixKm?.[idJeu];
+  if (pk && pk.km != null) {
+    kmEl.value = pk.km;
+    if (hint) hint.textContent = '← auto depuis import';
+  } else {
+    // Chercher dans state.bus par idJeu
+    const bus = state.bus.find(b => b.idJeu === idJeu);
+    if (bus && bus.km != null) {
+      kmEl.value = bus.km;
+      if (hint) hint.textContent = '← km actuel du parc';
+    } else {
+      kmEl.value = '';
+      if (hint) hint.textContent = '';
+    }
+  }
+}
 
 function ajouterAchatManuel() {
   const idJeu = parseInt(document.getElementById('achat-id').value) || null;
@@ -9053,7 +9415,8 @@ function copierCreneauxVersPrepa() {
 function renderPrepaCreneaux() {
   if (!state.affCreneauxPrepa) state.affCreneauxPrepa = {};
   const search = (document.getElementById('prepa-creneaux-search')?.value || '').toLowerCase();
-  let allBus = [...state.bus].sort((a, b) => a.nom.localeCompare(b.nom));
+  const srcBus = state.simulActif ? (state.busSimul || state.bus) : state.bus;
+  let allBus = [...srcBus].sort((a, b) => a.nom.localeCompare(b.nom, undefined, {numeric:true, sensitivity:'base'}));
   if (search) allBus = allBus.filter(b => b.nom.toLowerCase().includes(search));
 
   const NCOLS = AFF_CRENEAUX.length;
@@ -9201,8 +9564,8 @@ function getPrepaAffCreneaux(busNom) {
 function getBusAffectesLignePrepa(ligneNum, creneauId) {
   const cible = normaliseLigneNum(ligneNum);
   const buses = [];
-  state.bus.forEach(b => {
-    // Si vidé volontairement, on ne fallback PAS sur les affectations réelles
+  const listeBus = state.simulActif ? (state.busSimul || state.bus) : state.bus;
+  listeBus.forEach(b => {
     const aff = state.prepaAffVide
       ? (state.affCreneauxPrepa?.[b.nom] || {})
       : (state.affCreneauxPrepa?.[b.nom] ?? state.affCreneaux?.[b.nom] ?? {});
@@ -9212,9 +9575,101 @@ function getBusAffectesLignePrepa(ligneNum, creneauId) {
   return buses;
 }
 
+function activerSimulation() {
+  if (state.simulActif) return;
+  state.simulActif = true;
+  state.busSimul = JSON.parse(JSON.stringify(state.bus));
+  state.affCreneauxPrepaSnapshot = JSON.parse(JSON.stringify(state.affCreneauxPrepa || {}));
+  saveStateWithSync();
+  _updateSimulUI();
+  renderPrepaAff();
+  toastMsg('Simulation activée — bus réels et affectations préservés', 'success');
+}
+
+function quitterSimulation() {
+  if (!confirm('Quitter la simulation ?\n\nLes bus fictifs seront supprimés et les affectations prépa restaurées.')) return;
+  state.simulActif = false;
+  state.busSimul = null;
+  if (state.affCreneauxPrepaSnapshot) {
+    state.affCreneauxPrepa = state.affCreneauxPrepaSnapshot;
+    state.affCreneauxPrepaSnapshot = null;
+  }
+  saveStateWithSync();
+  _updateSimulUI();
+  renderPrepaAff();
+  toastMsg('Simulation terminée — données réelles restaurées', 'success');
+}
+
+function _ajouterBusFictifMasse(suffix, renderFn) {
+  if (!state.simulActif) return;
+  const nom    = (document.getElementById('simul-bus-nom' + suffix)?.value || '').trim();
+  const places = parseInt(document.getElementById('simul-bus-places' + suffix)?.value || '0');
+  const qty    = Math.max(1, Math.min(50, parseInt(document.getElementById('simul-bus-qty' + suffix)?.value || '1')));
+  if (!nom) { toastMsg('Nom requis', 'danger'); return; }
+  if (!places || places < 1) { toastMsg('Nombre de places requis', 'danger'); return; }
+  state.busSimul = state.busSimul || JSON.parse(JSON.stringify(state.bus));
+  const added = [];
+  for (let i = 1; i <= qty; i++) {
+    const busNom = 'TEST-' + nom + i + '-' + places;
+    if ((state.busSimul).find(b => b.nom === busNom)) continue;
+    state.busSimul.push({ nom: busNom, places, capa: places, _fictif: true });
+    added.push(busNom);
+  }
+  if (!added.length) { toastMsg('Tous ces bus existent déjà', 'danger'); return; }
+  const nomEl    = document.getElementById('simul-bus-nom' + suffix);
+  const placesEl = document.getElementById('simul-bus-places' + suffix);
+  const qtyEl    = document.getElementById('simul-bus-qty' + suffix);
+  if (nomEl)    nomEl.value = '';
+  if (placesEl) placesEl.value = '';
+  if (qtyEl)    qtyEl.value = '1';
+  saveStateWithSync();
+  _updateSimulUI();
+  renderFn();
+  toastMsg(added.length + ' bus fictif(s) ajouté(s) : ' + added[0] + (added.length > 1 ? ' … ' + added[added.length-1] : ''), 'success');
+}
+
+function ajouterBusFictif() {
+  _ajouterBusFictifMasse('', renderPrepaAff);
+}
+
+function _updateSimulUI() {
+  const banner   = document.getElementById('simul-banner');
+  const banner2  = document.getElementById('simul-banner-creneaux');
+  const startBtn  = document.getElementById('simul-start-btn');
+  const startBtn2 = document.getElementById('simul-start-btn-creneaux');
+  const listEl    = document.getElementById('simul-bus-list');
+  const listEl2   = document.getElementById('simul-banner-creneaux-list');
+  const actif     = !!state.simulActif;
+  if (banner)    banner.style.display    = actif ? '' : 'none';
+  if (banner2)   banner2.style.display   = actif ? '' : 'none';
+  if (startBtn)  startBtn.style.display  = actif ? 'none' : '';
+  if (startBtn2) startBtn2.style.display = actif ? 'none' : '';
+  const fictifs = actif ? (state.busSimul || []).filter(b => b._fictif) : [];
+  const fictifsTxt = fictifs.length
+    ? 'Bus fictifs : ' + fictifs.map(b => b.nom + ' (' + b.places + 'pl)').join(', ')
+    : '';
+  if (listEl)  listEl.textContent  = actif ? fictifsTxt : '';
+  if (listEl2) listEl2.textContent = actif && fictifsTxt ? '— ' + fictifsTxt : '';
+}
+
+function ajouterBusFictif2() {
+  _ajouterBusFictifMasse('-2', renderPrepaCreneaux);
+}
+
 function setPrepaAffNiveau(n) {
   state.prepaNiveauFreq = Math.max(1, Math.min(5, n));
   saveStateWithSync();
+  renderPrepaAff();
+}
+
+let prepaAffMode = 'compact'; // 'compact' | 'complet'
+
+function setPrepaAffMode(m) {
+  prepaAffMode = m;
+  const btnC = document.getElementById('prepa-aff-mode-compact');
+  const btnF = document.getElementById('prepa-aff-mode-complet');
+  if (btnC) { btnC.style.background = m==='compact'?'var(--accent)':'transparent'; btnC.style.color = m==='compact'?'#000':'var(--text3)'; btnC.style.fontWeight = m==='compact'?'700':'600'; }
+  if (btnF) { btnF.style.background = m==='complet'?'var(--accent)':'transparent'; btnF.style.color = m==='complet'?'#000':'var(--text3)'; btnF.style.fontWeight = m==='complet'?'700':'600'; }
   renderPrepaAff();
 }
 
@@ -9245,19 +9700,25 @@ function renderPrepaAff() {
   const nLignes = state.cfgLignesParNiveau?.[n]?.length ? n : (state.niveauJeu || 4);
   const cfgLignes = state.cfgLignesParNiveau?.[nLignes] || [];
   const cfgByNum = {};
-  cfgLignes.forEach(l => { cfgByNum[l.num] = l; });
+  cfgLignes.forEach(l => { cfgByNum[l.num] = l; cfgByNum[normaliseLigneNum(l.num)] = l; });
 
   // Prendre toutes les lignes présentes dans freqData, triées numériquement
-  const lignesNums = Object.keys(freqData).sort((a, b) => {
-    const na = parseInt(a) || 0, nb = parseInt(b) || 0;
-    return na !== nb ? na - nb : a.localeCompare(b);
+  // Merger freqData + cfgLignes en normalisant tout → déduplique PL1 / PLEINE LUNE 1
+  // freqData peut avoir 'PLEINE LUNE X', cfgLignes a 'PLX' → on normalise tout en PLX
+  const freqDataNorm = {};
+  Object.keys(freqData).forEach(k => { freqDataNorm[normaliseLigneNum(k)] = freqData[k]; });
+  const cfgNums = cfgLignes.map(l => normaliseLigneNum(l.num));
+  const allNumsSet = new Set([...Object.keys(freqDataNorm), ...cfgNums]);
+  const lignesNums = Array.from(allNumsSet).sort((a, b) => {
+    const ia = parseInt(a.replace(/[^0-9]/g,'')) || 0, ib = parseInt(b.replace(/[^0-9]/g,'')) || 0;
+    return ia !== ib ? ia - ib : a.localeCompare(b, undefined, {numeric:true});
   });
 
   const lignes = lignesNums
     .filter(num => {
-      if (reseau === 'nocturne') return num.startsWith('PL') || num.startsWith('PLEINE');
+      if (reseau === 'nocturne') return num.startsWith('PL');
       if (reseau === 'scolaire') return /^(6\d\d)$/.test(num);
-      return !num.startsWith('PL') && !num.startsWith('PLEINE') && !/^(6\d\d)$/.test(num);
+      return !num.startsWith('PL') && !/^(6\d\d)$/.test(num);
     })
     .map(num => cfgByNum[num] || { num, couleur: '#888', duree: 0, vehicules: '—', bornes: false });
 
@@ -9273,22 +9734,65 @@ function renderPrepaAff() {
     ? CRENEAU_TO_FREQ_SCOLAIRE
     : CRENEAU_TO_FREQ_NORMAL;
 
-  // Filtrer uniquement sem_pointe (pointe semaine)
-  const allC = ['sem_pointe'];
+  // Créneaux à afficher selon le mode
+  const GRP_COLORS = {
+    'SEMAINE' : { bg:'#1a3a6b', color:'#60a5fa' },
+    'SAMEDI'  : { bg:'#3b1a6b', color:'#c084fc' },
+    'DIMANCHE': { bg:'#1a4a3b', color:'#34d399' },
+  };
+  const modeComplet = (prepaAffMode === 'complet');
+  // Groupes à afficher : compact = [sem_pointe], complet = tous les créneaux de CRENEAU_GROUPES_FREQ_NORMAL
+  const grpsDef = reseau === 'nocturne' ? CRENEAU_GROUPES_FREQ_NOCTURNE : CRENEAU_GROUPES_FREQ_NORMAL;
+  const allC = modeComplet
+    ? grpsDef.reduce(function(a,g){ return a.concat(g.ids); }, [])
+    : ['sem_pointe'];
+  // Pour le mode complet, groupes avec firstCol index
+  const grpsVis = modeComplet ? grpsDef.map(function(g){
+    return { label:g.label, ids:g.ids.filter(function(id){ return allC.includes(id); }) };
+  }).filter(function(g){ return g.ids.length; }) : null;
+
+  // Mettre le grid en 1 col si complet
+  var gridEl = document.getElementById('prepa-aff-grid');
+  if (gridEl) gridEl.style.gridTemplateColumns = modeComplet ? '1fr' : '1fr 1fr';
+
+  // Sync boutons toggle
+  var btnC2 = document.getElementById('prepa-aff-mode-compact');
+  var btnF2 = document.getElementById('prepa-aff-mode-complet');
+  if (btnC2) { btnC2.style.background = !modeComplet ? 'var(--accent)' : 'transparent'; btnC2.style.color = !modeComplet ? '#000' : 'var(--text3)'; }
+  if (btnF2) { btnF2.style.background = modeComplet ? 'var(--accent)' : 'transparent'; btnF2.style.color = modeComplet ? '#000' : 'var(--text3)'; }
 
   const BG2 = 'var(--surface2)';
-  const GC  = { 'Semaine':'#1a3a6b','Samedi':'#3b1a6b','Dimanche':'#1a4a3b','Nuit':'#1a2a4b','Scolaire':'#2a4b1a' };
-  const GT  = { 'Semaine':'#60a5fa','Samedi':'#c084fc','Dimanche':'#34d399','Nuit':'#818cf8','Scolaire':'#86efac' };
 
-  // Helper : générer un thead pour une table
   function makeTheadHTML() {
-    return '<tr>'
-      + '<th rowspan="2" style="position:sticky;left:0;z-index:6;background:' + BG2 + ';min-width:90px;border-right:2px solid var(--border);text-align:center">Ligne</th>'
-      + '<th rowspan="2" style="background:' + BG2 + ';min-width:80px;border-right:2px solid var(--border);text-align:right;color:var(--text3)"></th>'
-      + '<th style="text-align:center;background:#1a3a6b;color:#60a5fa;font-weight:700;font-size:13px;border-left:3px solid #60a5fa">Semaine HP</th>'
-      + '</tr><tr>'
-      + '<th style="text-align:center;font-size:12px;background:#1a3a6bcc;color:#60a5fa;padding:3px 6px;border-left:3px solid #60a5fa55;min-width:52px">HP</th>'
-      + '</tr>';
+    var ncols = allC.length;
+    if (!modeComplet) {
+      return '<tr>'
+        + '<th rowspan="2" style="position:sticky;left:0;z-index:6;background:' + BG2 + ';min-width:90px;border-right:2px solid var(--border);text-align:center">Ligne</th>'
+        + '<th rowspan="2" style="background:' + BG2 + ';min-width:80px;border-right:2px solid var(--border);text-align:right;color:var(--text3)"></th>'
+        + '<th style="text-align:center;background:#1a3a6b;color:#60a5fa;font-weight:700;font-size:13px;border-left:3px solid #60a5fa">Semaine HP</th>'
+        + '</tr><tr>'
+        + '<th style="text-align:center;font-size:12px;background:#1a3a6bcc;color:#60a5fa;padding:3px 6px;border-left:3px solid #60a5fa55;min-width:52px">HP</th>'
+        + '</tr>';
+    }
+    // Complet : groupes + sous-colonnes
+    var row1 = '<th rowspan="2" style="position:sticky;left:0;z-index:6;background:' + BG2 + ';min-width:90px;border-right:2px solid var(--border);text-align:center">Ligne</th>'
+      + '<th rowspan="2" style="background:' + BG2 + ';min-width:80px;border-right:2px solid var(--border);text-align:right;color:var(--text3)"></th>';
+    var row2 = '';
+    var firstInGrp = {};
+    allC.forEach(function(id){ firstInGrp[id] = false; });
+    grpsVis.forEach(function(g){
+      if (g.ids.length) firstInGrp[g.ids[0]] = true;
+      var gc = GRP_COLORS[g.label.toUpperCase()] || { bg:'#222', color:'#aaa' };
+      row1 += '<th colspan="' + g.ids.length + '" style="text-align:center;background:' + gc.bg + ';color:' + gc.color + ';font-weight:700;font-size:12px;border-left:3px solid ' + gc.color + '55">' + g.label + '</th>';
+    });
+    allC.forEach(function(id){
+      var crDef = AFF_CRENEAUX.find(function(c){ return c.id === id; });
+      var lbl = CRENEAU_LABELS_FREQ[id] || (crDef ? crDef.label : id);
+      var gc = crDef ? (GRP_COLORS[crDef.groupe] || { bg:'#222', color:'#aaa' }) : { bg:'#222', color:'#aaa' };
+      var bl = firstInGrp[id] ? 'border-left:3px solid ' + gc.color + '55' : '';
+      row2 += '<th style="text-align:center;font-size:11px;background:' + gc.bg + 'cc;color:' + gc.color + ';padding:3px 4px;' + bl + ';min-width:48px">' + lbl + '</th>';
+    });
+    return '<tr>' + row1 + '</tr><tr>' + row2 + '</tr>';
   }
 
   const theadL = document.getElementById('prepa-aff-thead-l');
@@ -9298,7 +9802,7 @@ function renderPrepaAff() {
   if (!theadL || !theadR || !tbodyL || !tbodyR) return;
 
   theadL.innerHTML = makeTheadHTML();
-  theadR.innerHTML = makeTheadHTML();
+  theadR.innerHTML = modeComplet ? '' : makeTheadHTML();
 
   if (!lignes.length) {
     tbodyL.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:30px;color:var(--text3)">Aucune ligne pour N' + n + '.</td></tr>';
@@ -9309,63 +9813,94 @@ function renderPrepaAff() {
   var totalManquants = 0, totalTransportes = 0, totalFreq = 0;
 
   function makeLigneRows(ligne) {
-    var freqKey = freqData[ligne.num] !== undefined ? ligne.num
-      : freqData['PLEINE LUNE ' + ligne.num.replace('PL','')] !== undefined ? 'PLEINE LUNE ' + ligne.num.replace('PL','')
-      : ligne.num;
-    var freqVals = freqData[freqKey] || [];
+    var freqVals = freqDataNorm[ligne.num] || freqData[ligne.num] || freqData['PLEINE LUNE ' + ligne.num.replace('PL','')] || [];
     var couleur  = ligne.couleur || '#888';
     var dureeAR  = ligne.duree || 0;
     var vehicules = (ligne.vehicules || '').replace(/ - /g,'<br>');
     var bornes   = ligne.bornes ? '<div style="color:#ffe;font-size:11px">⚡</div>' : '';
 
-    var fi = freqIdxMap['sem_pointe'];
-    var fv = fi !== undefined ? freqVals[fi] : undefined;
-    var cible = typeof fv === 'number' ? fv : (fv === 'Active' ? -1 : 0);
-    var buses  = getBusAffectesLignePrepa(ligne.num, 'sem_pointe');
-    var nbBus  = buses.length;
-    var places = buses.reduce(function(s,b){ return s+getCapaBus(b, ligne.num); }, 0);
-    var manque = cible > 0 ? places - cible : null;
-    var freq   = nbBus > 0 && dureeAR > 0 ? Math.round(dureeAR / nbBus) : null;
-    var pct    = cible > 0 ? Math.round(places / cible * 100) : null;
-    if (cible > 0) { totalFreq += cible; totalTransportes += places; totalManquants += (manque || 0); }
-
     var TT = 'border-top:5px solid ' + couleur;
     var TB = 'border-bottom:5px solid ' + couleur;
     var TN = 'border-top:1px solid var(--border)';
-    var BL = 'border-left:3px solid #60a5fa44';
     var LBL = 'font-size:12px;color:var(--text2);white-space:nowrap;padding:2px 6px;border-right:2px solid var(--border);text-align:right;min-width:80px;background:var(--surface);';
 
-    var colTD = function(style, val) { return '<td style="text-align:center;' + BL + ';' + style + '">' + val + '</td>'; };
+    // En mode compact : 1 créneau, rendu vertical existant
+    if (!modeComplet) {
+      var crId = 'sem_pointe';
+      var BL = 'border-left:3px solid #60a5fa44';
+      var colTD = function(style, val) { return '<td style="text-align:center;' + BL + ';' + style + '">' + val + '</td>'; };
+      var fi = freqIdxMap[crId];
+      var fv = fi !== undefined ? freqVals[fi] : undefined;
+      var cible = typeof fv === 'number' ? fv : (fv === 'Active' ? -1 : 0);
+      var buses  = getBusAffectesLignePrepa(ligne.num, crId);
+      var nbBus  = buses.length;
+      var places = buses.reduce(function(s,b){ return s+getCapaBus(b, ligne.num); }, 0);
+      var manque = cible > 0 ? places - cible : null;
+      var freq   = nbBus > 0 && dureeAR > 0 ? Math.round(dureeAR / nbBus) : null;
+      var pct    = cible > 0 ? Math.round(places / cible * 100) : null;
+      if (cible > 0) { totalFreq += cible; totalTransportes += places; totalManquants += (manque || 0); }
+      return '<tr>'
+        + '<td rowspan="6" style="background:' + couleur + ';padding:4px 6px;border-right:2px solid var(--border);' + TT + ';vertical-align:middle;text-align:center;min-width:90px"><div style="color:#fff;font-weight:700;font-size:14px">' + ligne.num + '</div>' + bornes + (vehicules ? '<div style="color:#ffffffcc;font-size:11px;margin-top:3px;line-height:1.3">' + vehicules + '</div>' : '') + '</td>'
+        + '<td style="' + LBL + TT + '">Fréquentation</td>' + colTD(TT, cible===(-1)?'●':(cible>0?cible:'—'))
+        + '</tr><tr><td style="' + LBL + TN + '">Transportés</td>' + colTD(TN, (cible<=0||cible===-1)?'—':'<b>'+places+'</b>')
+        + '</tr><tr><td style="' + LBL + TN + '">Nb bus</td>' + colTD(TN, (cible>0||nbBus>0)?nbBus:'—')
+        + '</tr><tr><td style="' + LBL + TN + '">Manquants</td>'
+        + (cible<=0||cible===-1 ? colTD(TN,'—') : (function(){ var ok=manque>=0; return '<td style="text-align:center;font-size:13px;font-weight:700;background:' + (ok?'rgba(16,185,129,0.12)':'rgba(239,68,68,0.12)') + ';' + BL + ';' + TN + ';color:' + (ok?'var(--green)':'var(--red)') + '">' + (manque>=0?'+'+manque:manque) + '</td>'; })())
+        + '</tr><tr><td style="' + LBL + TN + '">Fréquence</td>' + colTD(TN, (freq!==null&&cible>0)?freq+' min':'—')
+        + '</tr><tr><td style="' + LBL + TN + ';' + TB + '">% Exploit.</td>'
+        + (cible<=0||cible===-1 ? '<td style="text-align:center;' + BL + ';' + TN + ';' + TB + '">—</td>'
+          : (function(){ var ok=pct>=100; return '<td style="text-align:center;font-size:13px;font-weight:700;' + BL + ';background:' + (ok?'rgba(16,185,129,0.15)':'rgba(239,68,68,0.15)') + ';color:' + (ok?'var(--green)':'var(--red)') + ';' + TN + ';' + TB + '">' + pct + '%</td>'; })())
+        + '</tr>';
+    }
 
-    return '<tr>'
-      + '<td rowspan="6" style="background:' + couleur + ';padding:4px 6px;border-right:2px solid var(--border);' + TT + ';vertical-align:middle;text-align:center;min-width:90px"><div style="color:#fff;font-weight:700;font-size:14px">' + ligne.num + '</div>' + bornes + (vehicules ? '<div style="color:#ffffffcc;font-size:11px;margin-top:3px;line-height:1.3">' + vehicules + '</div>' : '') + '</td>'
-      + '<td style="' + LBL + TT + '">Fréquentation</td>'
-      + colTD(TT, cible===(-1)?'●':(cible>0?cible:'—'))
-      + '</tr><tr>'
-      + '<td style="' + LBL + TN + '">Transportés</td>'
-      + colTD(TN, (cible<=0||cible===-1)?'—':'<b>'+places+'</b>')
-      + '</tr><tr>'
-      + '<td style="' + LBL + TN + '">Nb bus</td>'
-      + colTD(TN, (cible>0||nbBus>0)?nbBus:'—')
-      + '</tr><tr>'
-      + '<td style="' + LBL + TN + '">Manquants</td>'
-      + (cible<=0||cible===-1 ? colTD(TN,'—') : (function(){ var ok=manque>=0; return '<td style="text-align:center;font-size:13px;font-weight:700;background:' + (ok?'rgba(16,185,129,0.12)':'rgba(239,68,68,0.12)') + ';' + BL + ';' + TN + ';color:' + (ok?'var(--green)':'var(--red)') + '">' + (manque>=0?'+'+manque:manque) + '</td>'; })())
-      + '</tr><tr>'
-      + '<td style="' + LBL + TN + '">Fréquence</td>'
-      + colTD(TN, (freq!==null&&cible>0)?freq+' min':'—')
-      + '</tr><tr>'
-      + '<td style="' + LBL + TN + ';' + TB + '">% Exploit.</td>'
-      + (cible<=0||cible===-1 ? '<td style="text-align:center;' + BL + ';' + TN + ';' + TB + '">—</td>' : (function(){ var ok=pct>=100; return '<td style="text-align:center;font-size:13px;font-weight:700;' + BL + ';background:' + (ok?'rgba(16,185,129,0.15)':'rgba(239,68,68,0.15)') + ';color:' + (ok?'var(--green)':'var(--red)') + ';' + TN + ';' + TB + '">' + pct + '%</td>'; })())
+    // Mode complet : rendu horizontal, une ligne par créneau = 1 colonne
+    var cellsHtml = '';
+    allC.forEach(function(crId) {
+      var crDef = AFF_CRENEAUX.find(function(c){ return c.id === crId; });
+      var gc = crDef ? (GRP_COLORS[crDef.groupe] || { color:'#aaa' }) : { color:'#aaa' };
+      var fi2 = freqIdxMap[crId];
+      var fv2 = fi2 !== undefined ? freqVals[fi2] : undefined;
+      var cible2 = typeof fv2 === 'number' ? fv2 : (fv2 === 'Active' ? -1 : 0);
+      var buses2 = getBusAffectesLignePrepa(ligne.num, crId);
+      var places2 = buses2.reduce(function(s,b){ return s+getCapaBus(b, ligne.num); }, 0);
+      var pct2 = cible2 > 0 ? Math.round(places2 / cible2 * 100) : null;
+      if (cible2 > 0) { totalFreq += cible2; totalTransportes += places2; }
+      var manq2 = cible2 > 0 ? places2 - cible2 : null;
+      var bl2 = 'border-left:2px solid ' + gc.color + '33';
+      var bg2, txt2;
+      if (cible2 === 0) {
+        bg2 = 'transparent';
+        txt2 = '<span style="color:var(--text3);font-size:11px">—</span>';
+      } else if (cible2 === -1) {
+        bg2 = 'transparent';
+        txt2 = '<span style="font-size:11px">●</span>';
+      } else {
+        var ok2 = pct2 !== null && pct2 >= 100;
+        bg2 = ok2 ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.12)';
+        var col2 = ok2 ? 'var(--green)' : 'var(--red)';
+        var manqStr = manq2 !== null ? (manq2 >= 0 ? '+' + manq2 : String(manq2)) : '—';
+        txt2 = '<div style="font-weight:700;font-size:12px;color:' + col2 + '">' + places2 + ' / ' + cible2 + '</div>'
+             + '<div style="font-size:10px;color:' + col2 + '">' + (pct2 !== null ? pct2 + '%' : '—') + '</div>'
+             + '<div style="font-size:10px;color:' + col2 + ';font-weight:600">' + manqStr + '</div>';
+      }
+      cellsHtml += '<td style="text-align:center;' + bl2 + ';background:' + bg2 + ';padding:3px 2px;vertical-align:middle;line-height:1.2">' + txt2 + '</td>';
+    });
+    return '<tr style="border-top:3px solid ' + couleur + '">'
+      + '<td style="position:sticky;left:0;z-index:2;background:' + couleur + ';padding:4px 8px;border-right:2px solid var(--border);text-align:center;min-width:90px;vertical-align:middle"><div style="color:#fff;font-weight:700;font-size:14px">' + ligne.num + '</div>' + bornes + '</td>'
+      + '<td style="font-size:11px;color:var(--text2);padding:4px 6px;border-right:2px solid var(--border);white-space:nowrap;vertical-align:middle">' + (vehicules||'') + '</td>'
+      + cellsHtml
       + '</tr>';
   }
 
-  // Couper en 2 moitiés équilibrées
-  var mid = Math.ceil(lignes.length / 2);
-  var lignesL = lignes.slice(0, mid);
-  var lignesR = lignes.slice(mid);
-
-  tbodyL.innerHTML = lignesL.map(makeLigneRows).join('');
-  tbodyR.innerHTML = lignesR.map(makeLigneRows).join('');
+  // Compact : 2 colonnes ; Complet : 1 colonne pleine largeur
+  if (modeComplet) {
+    tbodyL.innerHTML = lignes.map(makeLigneRows).join('');
+    tbodyR.innerHTML = '';
+  } else {
+    var mid = Math.ceil(lignes.length / 2);
+    tbodyL.innerHTML = lignes.slice(0, mid).map(makeLigneRows).join('');
+    tbodyR.innerHTML = lignes.slice(mid).map(makeLigneRows).join('');
+  }
 
   var statsEl = document.getElementById('prepa-aff-global-stats');
   if (statsEl && totalFreq > 0) {
@@ -9428,11 +9963,11 @@ const PLAN_SCHEMAS_PLEIN = [
 ];
 
 const PLAN_SCHEMAS_PARTIEL = [
-  { c1:5, c2:9,    h:18, label:'Sam. Pointe', c2label:'Dim. Pointe'  },
-  { c1:5, c2:8,    h:17, label:'Sam. Pointe', c2label:'Dim. Creuse'  },
-  { c1:5, c2:10,   h:16, label:'Sam. Pointe', c2label:'Dim. Nuit'    },
-  { c1:7, c2:10,   h:12, label:'Sam. Nuit',   c2label:'Dim. Nuit'    },
-  { c1:5, c2:null, h:9,  label:'Sam. Pointe', c2label:'Aucune'       },
+  { c1:7, c2:10,   h:12, label:'Sam. Nuit',   c2label:'Dim. Nuit',   dispOrd:5 },
+  { c1:5, c2:9,    h:18, label:'Sam. Pointe', c2label:'Dim. Pointe', dispOrd:1 },
+  { c1:5, c2:8,    h:17, label:'Sam. Pointe', c2label:'Dim. Creuse', dispOrd:2 },
+  { c1:5, c2:10,   h:16, label:'Sam. Pointe', c2label:'Dim. Nuit',   dispOrd:3 },
+  { c1:5, c2:null, h:9,  label:'Sam. Pointe', c2label:'Aucune',      dispOrd:4 },
 ];
 
 function calculerPlanning() {
@@ -9448,8 +9983,8 @@ function calculerPlanning() {
 
   const Borig = vals.slice(0,11).map(Number);
 
-  function runGreedy(schemas) {
-    const b = [...Borig];
+  function runGreedy(schemas, bInit) {
+    const b = [...bInit];
     return schemas.map(s => {
       const b1 = b[s.c1];
       const b2 = s.c2 !== null ? b[s.c2] : null;
@@ -9460,8 +9995,17 @@ function calculerPlanning() {
     });
   }
 
-  const lignesPlein   = runGreedy(PLAN_SCHEMAS_PLEIN);
-  const lignesPartiel = runGreedy(PLAN_SCHEMAS_PARTIEL);
+  // Calcul résidu après temps plein pour alimenter le partiel
+  const bResidu = [...Borig];
+  const lignesPlein = PLAN_SCHEMAS_PLEIN.map(s => {
+    const b1 = bResidu[s.c1];
+    const b2 = s.c2 !== null ? bResidu[s.c2] : null;
+    const n  = b2 !== null ? Math.min(b1, b2) : b1;
+    bResidu[s.c1] -= n;
+    if (s.c2 !== null) bResidu[s.c2] -= n;
+    return { ...s, n };
+  });
+  const lignesPartiel = runGreedy(PLAN_SCHEMAS_PARTIEL, bResidu);
   const totalPlein    = lignesPlein.reduce((a,l)=>a+l.n, 0);
   const totalPartiel  = lignesPartiel.reduce((a,l)=>a+l.n, 0);
 
@@ -9486,6 +10030,21 @@ function calculerPlanning() {
   </div>`;
 
   const mkTable = (lignes, titre, color) => {
+    const sorted = [...lignes]
+      .sort((a,b) => (a.dispOrd !== undefined && b.dispOrd !== undefined) ? a.dispOrd - b.dispOrd : b.h - a.h)
+      .filter(l => l.n > 0);
+    // Calcul rowspan en deux passes
+    const rows = sorted.map(l => ({ ...l, showLabel: true, span: 1 }));
+    let i = 0;
+    while (i < rows.length) {
+      let j = i + 1;
+      while (j < rows.length && rows[j].label === rows[i].label) {
+        rows[i].span++;
+        rows[j].showLabel = false;
+        j++;
+      }
+      i = j;
+    }
     let t = `<div class="card" style="margin-bottom:10px">
       <div class="card-header" style="padding:6px 12px;background:${color}11;border-bottom:2px solid ${color}44">
         <div class="card-title" style="color:${color}">${titre}</div>
@@ -9496,27 +10055,26 @@ function calculerPlanning() {
             <th>Affectation 1</th>
             <th>Affectation 2</th>
             <th style="text-align:center">H/sem</th>
-            <th style="text-align:center">Besoin sem.</th>
-            <th style="text-align:center">Besoin wkd</th>
             <th style="text-align:center;color:${color}">Conducteurs</th>
           </tr></thead><tbody>`;
-    lignes.forEach(l => {
+    rows.forEach((l, idx) => {
       const hc = l.h>=40?'var(--green)':l.h>=34?'var(--yellow)':'var(--text3)';
-      const hi = l.n>0 ? `background:${color}0a;` : '';
-      const fw = l.n>0 ? '700' : '400';
-      const tc = l.n>0 ? 'var(--text)' : 'var(--text3)';
-      t += `<tr style="${hi}">
-        <td style="font-weight:${fw};color:${tc}">${l.label}</td>
-        <td style="color:${tc}">${l.c2label}</td>
-        <td style="text-align:center;font-family:Inter, var(--font-sans, sans-serif);color:${hc}">${l.h}h</td>
-        <td style="text-align:center;font-size:12px;color:var(--text3)">${Borig[l.c1]}</td>
-        <td style="text-align:center;font-size:12px;color:var(--text3)">${l.c2!==null?Borig[l.c2]:'—'}</td>
-        <td style="text-align:center;font-size:${l.n>0?16:13}px;font-weight:800;color:${l.n>0?color:'var(--text3)'}">${l.n}</td>
+      // Séparateur gras entre groupes de label différents
+      const isNewGroup = l.showLabel && idx > 0;
+      const borderTop = isNewGroup ? `border-top:2px solid ${color}55;` : '';
+      const labelCell = l.showLabel
+        ? `<td rowspan="${l.span}" style="font-weight:700;color:var(--text);vertical-align:middle;border-right:2px solid ${color}33;${borderTop}">${l.label}</td>`
+        : '';
+      t += `<tr style="background:${color}0a;${isNewGroup && !l.showLabel ? borderTop : ''}">
+        ${labelCell}
+        <td style="color:var(--text);${borderTop}">${l.c2label}</td>
+        <td style="text-align:center;font-family:Inter, var(--font-sans, sans-serif);color:${hc};${borderTop}">${l.h}h</td>
+        <td style="text-align:center;font-size:16px;font-weight:800;color:${color};${borderTop}">${l.n}</td>
       </tr>`;
     });
-    const tot = lignes.reduce((a,l)=>a+l.n,0);
+    const tot = sorted.reduce((a,l)=>a+l.n,0);
     t += `<tr style="background:${color}20;font-weight:800">
-      <td colspan="5" style="text-align:right;padding-right:14px;color:var(--text3);font-size:12px">TOTAL</td>
+      <td colspan="3" style="text-align:right;padding-right:14px;color:var(--text3);font-size:12px">TOTAL</td>
       <td style="text-align:center;font-size:18px;color:${color}">${tot}</td>
     </tr></tbody></table></div></div>`;
     return t;
@@ -9967,11 +10525,24 @@ function renderOptimParc() {
 
         // Trouver un absorbeur compatible (pas lui-même, capacité suffisante)
         // Règle -B- : un non-B- ne peut pas remplacer un -B-, l'inverse oui
+        // Créneaux occupés du donneur (ids)
+        const creneauxDonneurIds = AFF_CRENEAUX
+          .filter(c => { const v=(donneur.creneaux[c.id]||'').toLowerCase().trim(); return v && !INDISPO_VALS.includes(v); })
+          .map(c => c.id);
+
         const receveurs = absorbeurs.filter(r => {
           if (r.nom === donneur.nom) return false;
-          if (r.totalC + donneur.totalC > cible) return false; // ne peut pas tout absorber
+          if (r.totalC + donneur.totalC > cible) return false;
           // Contrainte -B- : si donneur est -B-, receveur doit être -B-
           if (donneur.isB && !r.isB) return false;
+          // Ne pas proposer un receveur sans aucune affectation
+          if (r.totalC === 0) return false;
+          // Vérifier que tous les créneaux du donneur sont libres chez le receveur
+          const tousLibres = creneauxDonneurIds.every(id => {
+            const v = (r.creneaux[id]||'').toLowerCase().trim();
+            return !v || INDISPO_VALS.includes(v);
+          });
+          if (!tousLibres) return false;
           return true;
         });
 
@@ -10276,18 +10847,14 @@ function renderGasoil() {
 
   const data    = [...state.carburant].sort((a,b) => b.date.localeCompare(a.date));
   const now     = new Date();
-  const last30  = data.filter(e => {
-    const diff = Math.round((now - new Date(e.date)) / (1000*60*60*24));
-    return diff <= 30;
-  });
-
   // Stats cards
   const latest = data[0];
   const _gdt=document.getElementById('gas-diesel-today'); if(_gdt) _gdt.textContent = latest?.diesel ? latest.diesel.toFixed(3)+' €' : '—';
   const _ggt=document.getElementById('gas-gnv-today'); if(_ggt) _ggt.textContent = latest?.gnv ? latest.gnv.toFixed(3)+' €' : '—';
 
-  const dieselVals = last30.filter(e => e.diesel).map(e => e.diesel);
-  const gnvVals    = last30.filter(e => e.gnv).map(e => e.gnv);
+  // Moyenne sur l'ensemble des entrées (pas seulement 30 jours)
+  const dieselVals = data.filter(e => e.diesel).map(e => e.diesel);
+  const gnvVals    = data.filter(e => e.gnv).map(e => e.gnv);
   const moy = arr => arr.length ? (arr.reduce((s,v)=>s+v,0)/arr.length).toFixed(3) : '—';
   const min = arr => arr.length ? Math.min(...arr).toFixed(3) : '—';
 
@@ -10375,6 +10942,10 @@ function renderGasoilGraphique() {
   const labels  = data.map(e => e.date.slice(5)); // MM-DD
   const diesel  = data.map(e => e.diesel || null);
   const gnv     = data.map(e => e.gnv    || null);
+  // Moyennes sur TOUTES les entrées (indépendant de la période affichée)
+  const allDataFull = [...(state.carburant||[])];
+  const avgDieselAll = (() => { const v=allDataFull.filter(e=>e.diesel).map(e=>e.diesel); return v.length?v.reduce((s,x)=>s+x,0)/v.length:null; })();
+  const avgGnvAll    = (() => { const v=allDataFull.filter(e=>e.gnv).map(e=>e.gnv);       return v.length?v.reduce((s,x)=>s+x,0)/v.length:null; })();
 
   if (gasChartInstance) { gasChartInstance.destroy(); gasChartInstance = null; }
 
@@ -10445,10 +11016,10 @@ function renderGasoilGraphique() {
     });
   };
 
-  const drawAvg = (values, color, labelX) => {
+  const drawAvg = (values, color, labelX, overrideAvg) => {
     const valid = values.filter(v => v);
-    if (!valid.length) return;
-    const avg = valid.reduce((s, v) => s + v, 0) / valid.length;
+    if (!valid.length && overrideAvg == null) return;
+    const avg = overrideAvg != null ? overrideAvg : valid.reduce((s, v) => s + v, 0) / valid.length;
     const y = toY(avg);
     // Ligne pointillée
     ctx.save();
@@ -10502,8 +11073,8 @@ function renderGasoilGraphique() {
 
   drawLine(diesel, '#EFAC19');  // Diesel
   drawLine(gnv,    '#99B900');  // GNV
-  drawAvg(diesel,  '#EFAC19', 'left');
-  drawAvg(gnv,     '#99B900', 'right');
+  drawAvg(diesel,  '#EFAC19', 'left',  avgDieselAll);
+  drawAvg(gnv,     '#99B900', 'right', avgGnvAll);
   drawMinMax(diesel, '#EFAC19', 'left');
   drawMinMax(gnv,    '#99B900', 'right');
 
@@ -10555,15 +11126,24 @@ setInterval(detectExtension, 2000);
 
 // Importe directement un contenu CSV pour un type donné (sans passer par le modal)
 function importerCSVDirect(type, contenu) {
-  if (!contenu || !contenu.trim()) return;
+  console.log('[TM-EXT] importerCSVDirect | type=', type, '| contenu longueur=', contenu?.length);
+  if (!contenu || !contenu.trim()) { console.warn('[TM-EXT] contenu vide'); return; }
   const rows = parseCSV(contenu);
+  console.log('[TM-EXT] parseCSV → nb lignes=', rows.length);
   if (!state.lastImport) state.lastImport = {};
   const nowStr = new Date().toLocaleString('fr-FR');
 
   if (type === 'bus') {
     const buses = parserBus(rows);
     if (!buses.length) { toastMsg('bus.csv : aucun bus trouvé', 'error'); return; }
-    let maj = 0, ajouts = 0;
+    let maj = 0, ajouts = 0, suppr = 0;
+    const nomsImportes2 = new Set(buses.map(b => b.nom));
+    const idJeuxImportes2 = new Set(buses.map(b => b.idJeu).filter(Boolean));
+    state.bus = state.bus.filter(b =>
+      b._fictif ||
+      nomsImportes2.has(b.nom) ||
+      (b.idJeu && idJeuxImportes2.has(b.idJeu))
+    );
     buses.forEach(b => {
       const exist = state.bus.find(x => x.nom === b.nom || (b.idJeu && x.idJeu === b.idJeu));
       if (exist) {
@@ -10674,24 +11254,21 @@ function importerCSVDirect(type, contenu) {
 
 // Polling localStorage : démarré dans DOMContentLoaded
 function demarrerPollingExtension() {
-  setInterval(() => {
-    ['bus','affects','stats','salaries','compta','lastmonth'].forEach(type => {
-      const raw = localStorage.getItem('tm_ext_csv_' + type);
-      if (!raw) return;
-      localStorage.removeItem('tm_ext_csv_' + type);
-      try {
-        const payload = JSON.parse(raw);
-        importerCSVDirect(type, payload.content);
-        // Signaler la fin pour fetchViaExtension
-        window._extFetchDone = true;
-        window._extFetchDoneType = type;
-        updateMajBadges();
-      } catch(err) {
-        console.error('TM import error:', err);
-        window._extFetchDone = true; // reset quand même le bouton
-      }
-    });
-  }, 500);
+  // Écoute postMessage du content script (CustomEvent bloqué par Firefox isolation)
+  window.addEventListener('message', e => {
+    if (!e.data || !e.data._tm) return;
+    const { type, content } = e.data;
+    console.log('[TM-EXT] postMessage reçu :', type, content.length, 'chars');
+    try {
+      importerCSVDirect(type, content);
+      window._extFetchDone = true;
+      window._extFetchDoneType = type;
+      updateMajBadges();
+    } catch(err) {
+      console.error('[TM-EXT] importerCSVDirect erreur:', err);
+      window._extFetchDone = true;
+    }
+  });
 }
 
 
@@ -10712,12 +11289,14 @@ function quickFetchExt(type) {
     window._extFetchDone = false;
     window._extFetchDoneType = null;
     currentCsvType = t;
-    localStorage.setItem('tm_ext_request', JSON.stringify({ type: t, timestamp: Date.now() }));
+    const reqPayload = JSON.stringify({ type: t, timestamp: Date.now() });
+    console.log('[TM-EXT] quickFetchExt : requête extension →', reqPayload);
+    localStorage.setItem('tm_ext_request', reqPayload);
     let waited = 0;
     const poll = setInterval(() => {
       waited += 250;
       if (window._extFetchDone) { clearInterval(poll); resolve(); return; }
-      if (waited >= 12000) { clearInterval(poll); reject(new Error('Pas de réponse pour ' + t)); }
+      if (waited >= 25000) { clearInterval(poll); reject(new Error('Pas de réponse pour ' + t)); }
     }, 250);
   });
 
@@ -10894,129 +11473,39 @@ function renderConfig() {
 // ═══════════════════════════════════════════════════════
 function detecterDoublons() {
   const ops = state.compta || [];
-  const el = document.getElementById('cfg-doublons-result');
-  if (!el) return;
-
-  // Groupes de doublons potentiels
   const groupes = [];
-
-  // 1. Même id
-  const parId = {};
-  ops.forEach((o, i) => { const k = String(o.id); if (!parId[k]) parId[k] = []; parId[k].push(i); });
-  Object.entries(parId).forEach(([k, idxs]) => {
-    if (idxs.length > 1) groupes.push({ type: 'id', label: `id = ${k}`, idxs });
-  });
-
-  // 2. Même montant + desc (ignorer desc vide)
-  const parMontantDesc = {};
-  ops.forEach((o, i) => {
-    if (!o.desc) return;
-    const k = `${o.montant}|${(o.desc||'').trim()}`;
-    if (!parMontantDesc[k]) parMontantDesc[k] = [];
-    parMontantDesc[k].push(i);
-  });
-  Object.entries(parMontantDesc).forEach(([k, idxs]) => {
-    if (idxs.length > 1) {
-      // Ne signaler que si pas déjà couvert par id
-      const alreadyCovered = groupes.some(g => g.idxs.some(i => idxs.includes(i)));
-      if (!alreadyCovered) groupes.push({ type: 'montant+desc', label: `montant+desc = ${k}`, idxs });
-    }
-  });
-
-  // 3. Même montant + date
-  const parMontantDate = {};
-  ops.forEach((o, i) => {
-    if (!o.date) return;
-    const k = `${o.montant}|${o.date}`;
-    if (!parMontantDate[k]) parMontantDate[k] = [];
-    parMontantDate[k].push(i);
-  });
-  Object.entries(parMontantDate).forEach(([k, idxs]) => {
-    if (idxs.length > 1) {
-      const alreadyCovered = groupes.some(g => g.idxs.some(i => idxs.includes(i)));
-      if (!alreadyCovered) groupes.push({ type: 'montant+date', label: `montant+date = ${k}`, idxs });
-    }
-  });
-
-  if (!groupes.length) {
-    el.innerHTML = '<div style="padding:12px 14px;font-size:12px;color:var(--green)">✅ Aucun doublon détecté.</div>';
-    return;
-  }
-
-  el.innerHTML = groupes.map((g, gi) => {
-    const rows = g.idxs.map(i => {
-      const o = ops[i];
-      return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border)">
-        <span style="font-size:11px;color:var(--text2);min-width:80px">${fmtDateFR(o.date)}</span>
-        <span style="font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${o.desc||''}">${o.desc||'—'}</span>
-        <span style="font-size:11px;min-width:80px;text-align:right;color:${o.type==='recette'?'var(--green)':'var(--red)'}">
-          ${o.type==='recette'?'+':'−'}${fmt(o.montant)}
-        </span>
-        <button class="btn btn-ghost btn-xs" style="color:var(--red);font-size:10px" onclick="supprimerDoublon(${i},${gi})">🗑 Suppr.</button>
-      </div>`;
-    }).join('');
-    return `<div style="padding:10px 14px;border-bottom:2px solid var(--border)">
-      <div style="font-size:10px;color:var(--yellow);margin-bottom:6px">⚠ ${g.idxs.length} entrées · critère : <b>${g.type}</b></div>
-      ${rows}
-    </div>`;
-  }).join('');
-}
-
-function supprimerDoublon(idx, groupeIdx) {
-  const o = (state.compta||[])[idx];
-  if (!o) return;
-  const desc = (o.desc||'').substring(0,40);
-  if (!confirm(`Supprimer cette entrée ?\n${fmtDateFR(o.date)} · ${desc} · ${fmt(o.montant)} €`)) return;
-  pushUndo('Suppression doublon compta');
-  state.compta.splice(idx, 1);
-  saveStateWithSync();
-  detecterDoublons(); // ré-analyser après suppression
-  toastMsg('Entrée supprimée ✓', 'success');
-}
-
-// ═══════════════════════════════════════════════════════
-//  DÉTECTEUR DE DOUBLONS COMPTA
-// ═══════════════════════════════════════════════════════
-function detecterDoublons() {
-  const ops = state.compta || [];
-  const groupes = []; // chaque groupe = tableau d'ops en doublon
 
   // Critère 1 : même id
   const byId = {};
-  ops.forEach(o => {
-    const k = String(o.id);
-    if (!byId[k]) byId[k] = [];
-    byId[k].push(o);
-  });
+  ops.forEach(o => { const k = String(o.id); if (!byId[k]) byId[k] = []; byId[k].push(o); });
   Object.values(byId).filter(g => g.length > 1).forEach(g => groupes.push({ type: 'ID identique', ops: g }));
 
-  // Critère 2 : même montant + desc (desc non vide)
-  const byMontantDesc = {};
+  // Critère 2 : même montant + libellé (desc non vide)
+  const byMD = {};
   ops.forEach(o => {
     if (!o.desc) return;
     const k = `${o.montant}_${(o.desc||'').trim().toLowerCase()}`;
-    if (!byMontantDesc[k]) byMontantDesc[k] = [];
-    byMontantDesc[k].push(o);
+    if (!byMD[k]) byMD[k] = [];
+    byMD[k].push(o);
   });
-  Object.values(byMontantDesc).filter(g => g.length > 1).forEach(g => {
-    // Ne pas ré-ajouter si déjà détecté via ID
-    const ids = g.map(o=>o.id);
-    const dejavu = groupes.some(gr => gr.ops.some(o => ids.includes(o.id)));
-    if (!dejavu) groupes.push({ type: 'Montant + libellé identiques', ops: g });
+  Object.values(byMD).filter(g => g.length > 1).forEach(g => {
+    const ids = g.map(o => o.id);
+    if (!groupes.some(gr => gr.ops.some(o => ids.includes(o.id))))
+      groupes.push({ type: 'Montant + libellé identiques', ops: g });
   });
 
   // Critère 3 : même montant + date
-  const byMontantDate = {};
+  const byMDat = {};
   ops.forEach(o => {
     if (!o.date || !o.montant) return;
     const k = `${o.montant}_${o.date}`;
-    if (!byMontantDate[k]) byMontantDate[k] = [];
-    byMontantDate[k].push(o);
+    if (!byMDat[k]) byMDat[k] = [];
+    byMDat[k].push(o);
   });
-  Object.values(byMontantDate).filter(g => g.length > 1).forEach(g => {
-    const ids = g.map(o=>o.id);
-    const dejavu = groupes.some(gr => gr.ops.some(o => ids.includes(o.id)));
-    if (!dejavu) groupes.push({ type: 'Montant + date identiques', ops: g });
+  Object.values(byMDat).filter(g => g.length > 1).forEach(g => {
+    const ids = g.map(o => o.id);
+    if (!groupes.some(gr => gr.ops.some(o => ids.includes(o.id))))
+      groupes.push({ type: 'Montant + date identiques', ops: g });
   });
 
   const el = document.getElementById('cfg-doublons-result');
@@ -11035,10 +11524,10 @@ function detecterDoublons() {
         <td style="padding:4px 8px;font-size:11px;font-family:monospace;color:${o.type==='recette'?'var(--green)':'var(--red)'}">${o.type==='recette'?'+':'−'}${fmt(o.montant)}</td>
         <td style="padding:4px 8px;font-size:11px;color:var(--text3)">${o.cat||'—'}</td>
         <td style="padding:4px 8px">
-          <button class="btn btn-danger btn-xs" onclick="supprimerDoublon(${JSON.stringify(o.id)},${gi})">✕ Supprimer</button>
+          <button class="btn btn-danger btn-xs" onclick="supprimerDoublon(${JSON.stringify(o.id)},${gi})">✕</button>
         </td>
       </tr>`).join('');
-    return `<div style="margin:0;border-bottom:2px solid var(--border)">
+    return `<div style="border-bottom:2px solid var(--border)">
       <div style="padding:8px 12px;background:rgba(251,191,36,0.08);display:flex;justify-content:space-between;align-items:center">
         <span style="font-size:11px;font-weight:600;color:var(--yellow)">⚠️ ${grp.type} — ${grp.ops.length} entrées</span>
         <button class="btn btn-ghost btn-xs" onclick="garderPremierDoublon(${gi})" style="color:var(--accent)">Garder le 1er, suppr. les autres</button>
@@ -11052,38 +11541,30 @@ function supprimerDoublon(id, groupeIdx) {
   const idx = (state.compta||[]).findIndex(o => o.id === id);
   if (idx === -1) { toastMsg('Opération introuvable', 'error'); return; }
   const op = state.compta[idx];
-  if (!confirm(`Supprimer cette opération ?\n${fmtDateFR(op.date)} · ${op.desc} · ${fmt(op.montant)} €`)) return;
+  if (!confirm(`Supprimer ?\n${fmtDateFR(op.date)} · ${op.desc} · ${fmt(op.montant)} €`)) return;
   pushUndo('Suppression doublon compta');
   state.compta.splice(idx, 1);
   saveStateWithSync();
   toastMsg('Opération supprimée ✓', 'success');
-  detecterDoublons(); // re-analyser
+  detecterDoublons();
   if (document.getElementById('page-compta')?.classList.contains('active')) renderCompta();
 }
 
 function garderPremierDoublon(groupeIdx) {
-  // Re-calculer les groupes pour avoir l'index frais
-  detecterDoublons();
-  // On récupère le groupe depuis le DOM indirectement — il faut refaire le calcul
-  // Appel simplifié : supprimer tous sauf le premier de chaque groupe
   const ops = state.compta || [];
   const groupes = [];
-
   const byId = {};
   ops.forEach(o => { const k=String(o.id); if(!byId[k])byId[k]=[]; byId[k].push(o); });
   Object.values(byId).filter(g=>g.length>1).forEach(g=>groupes.push(g));
-
   const byMD = {};
   ops.forEach(o => { if(!o.desc)return; const k=`${o.montant}_${(o.desc||'').trim().toLowerCase()}`; if(!byMD[k])byMD[k]=[]; byMD[k].push(o); });
   Object.values(byMD).filter(g=>g.length>1).forEach(g=>{ const ids=g.map(o=>o.id); if(!groupes.some(gr=>gr.some(o=>ids.includes(o.id))))groupes.push(g); });
-
   const byMDat = {};
   ops.forEach(o => { if(!o.date||!o.montant)return; const k=`${o.montant}_${o.date}`; if(!byMDat[k])byMDat[k]=[]; byMDat[k].push(o); });
   Object.values(byMDat).filter(g=>g.length>1).forEach(g=>{ const ids=g.map(o=>o.id); if(!groupes.some(gr=>gr.some(o=>ids.includes(o.id))))groupes.push(g); });
-
   const grp = groupes[groupeIdx];
   if (!grp || grp.length < 2) { toastMsg('Groupe introuvable', 'error'); return; }
-  const toDelete = grp.slice(1).map(o=>o.id);
+  const toDelete = grp.slice(1).map(o => o.id);
   if (!confirm(`Supprimer ${toDelete.length} doublon(s), garder le premier ?`)) return;
   pushUndo('Suppression doublons compta (garder 1er)');
   state.compta = (state.compta||[]).filter(o => !toDelete.includes(o.id));
@@ -11171,9 +11652,12 @@ function mettreAJourEmprunts() {
     (state.compta||[]).forEach(o => {
         if (o.type !== 'depense' || !o.date) return;
         if (o.date <= dateCreation) return;
+        // Regex : cr(e/é)dit suivi du numéro + espace ou fin de chaîne (évite 12345 qui matche 123456)
         const desc = (o.desc || '');
         const regex = new RegExp('cr[eé]dit\s+' + numStr + '(?:\s|$)', 'i');
-        if (regex.test(desc)) { count++; }
+        if (regex.test(desc)) {
+          count++;
+        }
     });
 
     const nbRestant = Math.max(0, e.nb - count);
@@ -11296,8 +11780,7 @@ function resetSection(section) {
   };
   if (!confirm(`Vider ${labels[section]||section} ?\nCette action est irréversible.`)) return;
   if (section === 'statsLignes') state.statsLignes = [];
-  else if (section === 'compta') { state.compta = []; }
-  else state[section] = [];
+  else if (section === 'compta') { state.compta = []; delete state.comptaMois; }
   saveStateWithSync();
   renderDashboard();
   renderConfig();
@@ -11658,8 +12141,8 @@ function navConfig(el) {
   if (page === 'cfg-categories') renderCategories();
   if (page === 'cfg-frequentation') renderFrequentations();
   if (page === 'cfg-jeu') renderCfgJeu();
-  if (page === 'cfg-prepa-creneaux') renderPrepaCreneaux();
-  if (page === 'cfg-prepa-aff') renderPrepaAff();
+  if (page === 'cfg-prepa-creneaux') { renderPrepaCreneaux(); _updateSimulUI(); }
+  if (page === 'cfg-prepa-aff') { renderPrepaAff(); _updateSimulUI(); }
   if (page === 'cfg-prepa-aide') { initPrepaAideAff(); renderPrepaAideAff(); };
   if (page === 'cfg-lignes') renderCfgLignes();
   if (page === 'cfg-sync') renderSyncPage();
@@ -12411,8 +12894,8 @@ const CRENEAU_LABELS_FREQ = {
 // Pour un créneau et une ligne : nb bus + places totales affectées
 function normaliseLigneNum(num) {
   const s = String(num).trim();
-  // Normaliser "PLEINE LUNE 1" → "PL1", "PLEINE LUNE 2" → "PL2", etc.
-  const m = s.match(/^(?:PLEINE\s+LUNE|PL)\s*(\d+)$/i);
+  // Normaliser "PLEINE LUNE 1 TRAM", "PLEINE LUNE 2", "PL3 TRAM" → "PL1", "PL2", "PL3"
+  const m = s.match(/^(?:PLEINE\s+LUNE|PL)\s*(\d+)(?:\s+.*)?$/i);
   if (m) return 'PL' + m[1];
   return s;
 }
@@ -12447,6 +12930,8 @@ function renderFrequentation() {
     return !l.num.startsWith('PL') && !l.num.startsWith('PLEINE') && !/^(6\d\d)$/.test(l.num);
   });
   const freqData  = state.freqCibles?.[n]?.[periKey]?.[reseau] || {};
+  const freqDataNorm2 = {};
+  Object.keys(freqData).forEach(k => { freqDataNorm2[normaliseLigneNum(k)] = freqData[k]; });
 
   // Créneaux à afficher + mapping index selon réseau
   const groupes = reseau === 'nocturne'
@@ -12512,10 +12997,7 @@ function renderFrequentation() {
   const rows = lignes.map(ligne => {
     // Normalise le numéro de ligne pour chercher dans freqData
     // Les lignes nocturnes peuvent être stockées comme "PL1" ou "PLEINE LUNE 1"
-    const freqKey = freqData[ligne.num] !== undefined ? ligne.num
-      : freqData['PLEINE LUNE ' + ligne.num.replace('PL','')] !== undefined ? 'PLEINE LUNE ' + ligne.num.replace('PL','')
-      : ligne.num;
-    const freqVals  = freqData[freqKey] || [];
+    const freqVals  = freqDataNorm2[normaliseLigneNum(ligne.num)] || freqData[ligne.num] || [];
     const couleur   = ligne.couleur || '#888';
     const dureeAR   = ligne.duree || 0;
     const vehicules = ligne.vehicules || '—';
@@ -13222,6 +13704,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initSync();
 
   // Polling extension — DOIT être ici, après que le DOM et les fonctions sont prêts
+  preloadIcons();
   demarrerPollingExtension();
   updateNiveauUI();
 
@@ -13309,9 +13792,14 @@ function importerDispoPub() {
     const livArr = cols[idxS+4] || '';
     const ecran  = cols[idxS+5] || '';
 
-    const isUsed = v => v && v !== 'Libre' && v !== 'Non équipé' && v !== '';
+    // '-' = vecteur non installé → neutre (ni pub ni libre)
+    const isNonInstalle = v => !v || v === '-' || v === 'Non équipé';
+    const isUsed    = v => v && v !== 'Libre' && v !== 'Non équipé' && v !== '-' && v !== '';
+    const isLibre   = v => v === 'Libre';
     const aPub      = [panAv, panLat, livLat, panArr, livArr, ecran].some(isUsed);
-    const toutLibre = !aPub;
+    // toutLibre = tous les vecteurs installés sont libres (au moins 1 installé et aucun utilisé)
+    const vecteursInstalles = [panAv, panLat, livLat, panArr, livArr, ecran].filter(v => !isNonInstalle(v));
+    const toutLibre = vecteursInstalles.length > 0 && vecteursInstalles.every(isLibre) && !aPub;
 
     buses.push({ nom, type, places, affectation, aAffectation, aPub, toutLibre,
       panAv, panLat, livLat, panArr, livArr, ecran });
@@ -13380,7 +13868,7 @@ function renderPubDispoAlertes() {
     return;
   }
 
-  const isUsed = v => v && v !== 'Libre' && v !== 'Non équipé' && v !== '';
+  const isUsed = v => v && v !== 'Libre' && v !== 'Non équipé' && v !== '-' && v !== '';
 
   tbody.innerHTML = problemes.map(b => {
     // Pubs actives sur ce bus
@@ -13397,10 +13885,12 @@ function renderPubDispoAlertes() {
     const matchB = (c) => !isB || c.nom.includes('-B-');
     const fallB  = (c) => isB && !c.nom.includes('-B-');
 
-    const candidatsOkB   = data.filter(c => c.type === b.type && !c.nom.startsWith('00-') && c.toutLibre && c.aAffectation && c.places <= b.places && c.nom !== b.nom && matchB(c)).sort((a, c2) => c2.places - a.places);
-    const candidatsSurB  = data.filter(c => c.type === b.type && !c.nom.startsWith('00-') && c.toutLibre && c.aAffectation && c.places > b.places  && c.nom !== b.nom && matchB(c)).sort((a, c2) => a.places - c2.places);
-    const candidatsOkFb  = data.filter(c => c.type === b.type && !c.nom.startsWith('00-') && c.toutLibre && c.aAffectation && c.places <= b.places && c.nom !== b.nom && fallB(c)).sort((a, c2) => c2.places - a.places);
-    const candidatsSurFb = data.filter(c => c.type === b.type && !c.nom.startsWith('00-') && c.toutLibre && c.aAffectation && c.places > b.places  && c.nom !== b.nom && fallB(c)).sort((a, c2) => a.places - c2.places);
+    // TRAM isolés : seuls les TRAM peuvent remplacer des TRAM, et vice-versa
+    const sameType = c => c.type === b.type;
+    const candidatsOkB   = data.filter(c => sameType(c) && !c.nom.startsWith('00-') && c.toutLibre && c.aAffectation && c.places <= b.places && c.nom !== b.nom && matchB(c)).sort((a, c2) => c2.places - a.places);
+    const candidatsSurB  = data.filter(c => sameType(c) && !c.nom.startsWith('00-') && c.toutLibre && c.aAffectation && c.places > b.places  && c.nom !== b.nom && matchB(c)).sort((a, c2) => a.places - c2.places);
+    const candidatsOkFb  = data.filter(c => sameType(c) && !c.nom.startsWith('00-') && c.toutLibre && c.aAffectation && c.places <= b.places && c.nom !== b.nom && fallB(c)).sort((a, c2) => c2.places - a.places);
+    const candidatsSurFb = data.filter(c => sameType(c) && !c.nom.startsWith('00-') && c.toutLibre && c.aAffectation && c.places > b.places  && c.nom !== b.nom && fallB(c)).sort((a, c2) => a.places - c2.places);
 
     // -B- en premier, complété par non-B- seulement si pas assez
     const primaryPool = [...candidatsOkB, ...candidatsSurB];
@@ -13427,7 +13917,9 @@ function renderPubDispoAlertes() {
             ? `<span style="color:var(--orange);font-size:10px">(${c.places} pl. ▲)</span>`
             : `<span style="color:var(--text3);font-size:10px">(${c.places} pl.)</span>`;
           const fallTag = isFallback ? `<span style="font-size:9px;color:var(--text3);font-style:italic"> excep.</span>` : '';
-          return `<div style="margin-bottom:2px">${cLink} ${plLabel}${fallTag}</div>`;
+          const busAvecPub = b.nom;
+          const icon = `<span title="Appliquer ce remplacement" onclick="appliquerRempPub('${busAvecPub}','${c.nom}')" style="cursor:pointer;margin-right:4px;font-size:13px;line-height:1" onmouseover="this.style.opacity='.7'" onmouseout="this.style.opacity='1'">✅</span>`;
+          return `<div style="margin-bottom:2px;display:flex;align-items:center">${icon}${cLink} ${plLabel}${fallTag}</div>`;
         }).join('')
       : '<span style="color:var(--text3)">Aucun disponible</span>';
 
@@ -13449,11 +13941,22 @@ function renderPubDispoAlertes() {
 }
 
 function cellPub(val) {
-  if (!val || val === '') return '<span style="color:var(--text3)">—</span>';
+  if (!val || val === '' || val === '-') return '<span style="color:var(--text3);font-size:10px">—</span>';
   if (val === 'Libre') return '<span style="color:var(--green)">Libre</span>';
   if (val === 'Non équipé') return '<span style="color:var(--text3);font-size:10px">Non éq.</span>';
   // Date de fin de contrat
   return `<span style="color:var(--orange);font-size:10px">${val}</span>`;
+}
+
+function appliquerRempPub(busAvecPub, remplacant) {
+  if (!state.planningCT) state.planningCT = {};
+  if (!state.planningCT[busAvecPub]) state.planningCT[busAvecPub] = {};
+  state.planningCT[busAvecPub].remplacement = remplacant;
+  state.planningCT[busAvecPub].raisonAtelier = 'Pub';
+  saveStateWithSync();
+  renderPubDispo();
+  renderAffectations && renderAffectations();
+  toastMsg(busAvecPub + ' → remplacé par ' + remplacant + ' (Pub)', 'success');
 }
 
 function renderPubDispoTableau() {
