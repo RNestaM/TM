@@ -878,7 +878,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.350</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.352</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -11475,12 +11475,33 @@ function detecterDoublons() {
   const ops = state.compta || [];
   const groupes = [];
 
-  // Critère 1 : même id
+  // Helper : écart en jours entre deux dates ISO
+  const ecartJours = (d1, d2) => {
+    if (!d1 || !d2) return 999;
+    return Math.abs((new Date(d1) - new Date(d2)) / 86400000);
+  };
+  // Helper : sous-groupes d'ops proches (≤2 jours) au sein d'un groupe même-clé
+  const sousGroupesProches = (g) => {
+    const vus = new Array(g.length).fill(false);
+    const result = [];
+    for (let i = 0; i < g.length; i++) {
+      if (vus[i]) continue;
+      const sg = [g[i]];
+      for (let j = i+1; j < g.length; j++) {
+        if (!vus[j] && ecartJours(g[i].date, g[j].date) <= 2) { sg.push(g[j]); vus[j] = true; }
+      }
+      vus[i] = true;
+      if (sg.length > 1) result.push(sg);
+    }
+    return result;
+  };
+
+  // Critère 1 : même id (pas de contrainte de date)
   const byId = {};
   ops.forEach(o => { const k = String(o.id); if (!byId[k]) byId[k] = []; byId[k].push(o); });
   Object.values(byId).filter(g => g.length > 1).forEach(g => groupes.push({ type: 'ID identique', ops: g }));
 
-  // Critère 2 : même montant + libellé (desc non vide)
+  // Critère 2 : même montant + libellé, dates ≤ 2 jours d'écart
   const byMD = {};
   ops.forEach(o => {
     if (!o.desc) return;
@@ -11489,12 +11510,14 @@ function detecterDoublons() {
     byMD[k].push(o);
   });
   Object.values(byMD).filter(g => g.length > 1).forEach(g => {
-    const ids = g.map(o => o.id);
-    if (!groupes.some(gr => gr.ops.some(o => ids.includes(o.id))))
-      groupes.push({ type: 'Montant + libellé identiques', ops: g });
+    sousGroupesProches(g).forEach(sg => {
+      const ids = sg.map(o => o.id);
+      if (!groupes.some(gr => gr.ops.some(o => ids.includes(o.id))))
+        groupes.push({ type: 'Montant + libellé identiques (±2j)', ops: sg });
+    });
   });
 
-  // Critère 3 : même montant + date
+  // Critère 3 : même montant + date exacte (déjà identique → forcément ≤2j)
   const byMDat = {};
   ops.forEach(o => {
     if (!o.date || !o.montant) return;
@@ -11516,6 +11539,9 @@ function detecterDoublons() {
     return;
   }
 
+  // Stocker les groupes globalement pour lookup par index (évite les IDs dans onclick)
+  window._doublonGroupes = groupes;
+
   el.innerHTML = groupes.map((grp, gi) => {
     const lignes = grp.ops.map((o, oi) => `
       <tr style="background:${oi%2===0?'var(--surface)':'var(--surface2)'}">
@@ -11524,7 +11550,7 @@ function detecterDoublons() {
         <td style="padding:4px 8px;font-size:11px;font-family:monospace;color:${o.type==='recette'?'var(--green)':'var(--red)'}">${o.type==='recette'?'+':'−'}${fmt(o.montant)}</td>
         <td style="padding:4px 8px;font-size:11px;color:var(--text3)">${o.cat||'—'}</td>
         <td style="padding:4px 8px">
-          <button class="btn btn-danger btn-xs" onclick="supprimerDoublon(${JSON.stringify(o.id)},${gi})">✕</button>
+          <button class="btn btn-danger btn-xs" onclick="supprimerDoublon(${gi},${oi})">✕</button>
         </td>
       </tr>`).join('');
     return `<div style="border-bottom:2px solid var(--border)">
@@ -11537,13 +11563,14 @@ function detecterDoublons() {
   }).join('');
 }
 
-function supprimerDoublon(id, groupeIdx) {
-  const idx = (state.compta||[]).findIndex(o => o.id === id);
-  if (idx === -1) { toastMsg('Opération introuvable', 'error'); return; }
-  const op = state.compta[idx];
-  if (!confirm(`Supprimer ?\n${fmtDateFR(op.date)} · ${op.desc} · ${fmt(op.montant)} €`)) return;
+function supprimerDoublon(gi, oi) {
+  const grp = (window._doublonGroupes||[])[gi];
+  if (!grp) { toastMsg('Groupe introuvable', 'error'); return; }
+  const o = grp.ops[oi];
+  if (!o) { toastMsg('Opération introuvable', 'error'); return; }
+  if (!confirm(`Supprimer ?\n${fmtDateFR(o.date)} · ${o.desc} · ${fmt(o.montant)} €`)) return;
   pushUndo('Suppression doublon compta');
-  state.compta.splice(idx, 1);
+  state.compta = (state.compta||[]).filter(x => x !== o);
   saveStateWithSync();
   toastMsg('Opération supprimée ✓', 'success');
   detecterDoublons();
