@@ -879,7 +879,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.363</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.366</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -5278,13 +5278,21 @@ function parserBus(rows) {
     else if (statutJeu.includes('réserve') || statutJeu.includes('reserve')) statut = 'Réserve';
 
     let type = 'STD';
-    const nu = nom.toUpperCase().replace(/^00-/, ''); // strip leading 00-
-    if (nu.startsWith('MIN-')) type = 'MIN';
-    else if (nu.startsWith('MID-')) type = 'MID';
-    else if (nu.startsWith('ART-')) type = 'ART';
-    else if (nu.startsWith('CAR-')) type = 'CAR';
+    const tv = (c[4] || '').toLowerCase();
+    const t7 = (c[7] || '').toLowerCase();
+    const nu = nom.toUpperCase().replace(/^00-/, '');
+    if      (tv.includes('tramway'))                                                        type = 'TRAM';
+    else if (tv.includes('autocar'))                                                        type = 'CAR';
+    else if (tv.includes('autobus') && (t7.includes('articulé') || t7.includes('articule'))) type = 'ART';
+    else if (tv.includes('autobus') && t7.includes('midi'))                                 type = 'MID';
+    else if (tv.includes('autobus') && t7.includes('mini'))                                 type = 'MIN';
+    else if (tv.includes('autobus') && t7.includes('standard'))                             type = 'STD';
+    // Fallback sur préfixe du nom
+    else if (nu.startsWith('MIN-'))  type = 'MIN';
+    else if (nu.startsWith('MID-'))  type = 'MID';
+    else if (nu.startsWith('ART-'))  type = 'ART';
+    else if (nu.startsWith('CAR-'))  type = 'CAR';
     else if (nu.startsWith('TRAM-')) type = 'TRAM';
-    else if (nu.startsWith('STD-')) type = 'STD';
 
     // Récupérer prix/km depuis notre base ou depuis le CSV
     const pkData = idJeu ? (state.prixKm && state.prixKm[idJeu] ? state.prixKm[idJeu] : {}) : {};
@@ -5641,7 +5649,7 @@ function csvImporter() {
           }
         }
         Object.assign(exist, { km:b.km, statut:b.statut, ct:b.ct, revisionDate:b.revisionDate,
-          energie:b.energie, conso:b.conso, marque:b.marque, modele:b.modele, depot:b.depot });
+          energie:b.energie, conso:b.conso, marque:b.marque, modele:b.modele, depot:b.depot, type:b.type });
         if (b.idJeu) exist.idJeu = b.idJeu;
         maj++;
       } else {
