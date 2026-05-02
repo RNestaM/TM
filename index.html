@@ -879,7 +879,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.359</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.363</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -2033,11 +2033,11 @@
               </div>
               <div class="form-group">
                 <label>Prix d'achat (€)</label>
-                <input type="number" id="achat-prix" placeholder="115000">
+                <input type="text" id="achat-prix" placeholder="115000" inputmode="numeric">
               </div>
               <div class="form-group">
                 <label>KM au compteur <span id="achat-km-hint" style="font-size:10px;color:var(--accent);font-weight:400"></span></label>
-                <input type="number" id="achat-km" placeholder="0">
+                <input type="text" id="achat-km" placeholder="0" inputmode="numeric">
               </div>
             </div>
             <div class="alert-box info" style="margin-bottom:12px;font-size:11px">
@@ -4560,14 +4560,35 @@ function renderRepartitionParc() {
   if (!el || !state.bus.length) { if(el) el.innerHTML='<div style="color:var(--text3);padding:10px">Aucun bus.</div>'; return; }
   const colors = { MIN:'var(--accent)', MID:'var(--accent3)', STD:'var(--green)', ART:'var(--yellow)', CAR:'var(--orange)', TRAM:'var(--red)', '00':'var(--text3)' };
   const tNames = { MIN:'Minibus', MID:'Midibus', STD:'Standard', ART:'Articulé', CAR:'Car/Autocar', TRAM:'Tramway', '00':'Remplaçant' };
-  const total = state.bus.length;
+
+  // Appliquer les mêmes filtres que renderParc
+  const search = (document.getElementById('search-parc')?.value || '').toLowerCase();
+  let bus = state.bus.filter(b => {
+    const matchType    = currentParcTypeFilter === 'all' || b.type === currentParcTypeFilter;
+    const matchSearch  = !search || b.nom.toLowerCase().includes(search) || String(b.idJeu||'').includes(search) || (b.marque||'').toLowerCase().includes(search) || (b.modele||'').toLowerCase().includes(search) || (b.immat||'').toLowerCase().includes(search);
+    const eNorm = (b.energie||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const matchEnergie = currentParcEnergieFilter === 'all' || eNorm.includes(currentParcEnergieFilter);
+    const sNorm = (b.statut||'').toLowerCase();
+    const matchStatut  = currentParcStatutFilter === 'all'
+      || (currentParcStatutFilter === 'service'  && ['en service','service','nouveau'].includes(sNorm))
+      || (currentParcStatutFilter === 'reserve'  && sNorm === 'réserve')
+      || (currentParcStatutFilter === 'indispo'  && ['indispo','atelier','ct urgent','en révision','révision','révision puis ct','ct puis révision'].includes(sNorm));
+    return matchType && matchSearch && matchEnergie && matchStatut;
+  });
+
+  const total = bus.length;
+  if (!total) { el.innerHTML='<div style="color:var(--text3);padding:10px">Aucun bus correspondant.</div>'; return; }
+
+  // Légende filtre actif
+  const filtreActif = currentParcTypeFilter !== 'all' || currentParcEnergieFilter !== 'all' || currentParcStatutFilter !== 'all' || search;
+  const legendeFiltre = filtreActif ? `<div style="font-size:10px;color:var(--accent3);padding:4px 10px 0">⚡ Filtré — ${total} bus</div>` : '';
 
   // Par type
-  const types = {}; state.bus.forEach(b => { types[b.type]=(types[b.type]||0)+1; });
+  const types = {}; bus.forEach(b => { types[b.type]=(types[b.type]||0)+1; });
   // Par énergie
-  const energies = {}; state.bus.forEach(b => { const e=b.energie||'—'; energies[e]=(energies[e]||0)+1; });
+  const energies = {}; bus.forEach(b => { const e=b.energie||'—'; energies[e]=(energies[e]||0)+1; });
   // Par statut
-  const statuts = {}; state.bus.forEach(b => { const s=b.statut||'—'; statuts[s]=(statuts[s]||0)+1; });
+  const statuts = {}; bus.forEach(b => { const s=b.statut||'—'; statuts[s]=(statuts[s]||0)+1; });
 
   const mkGauge = (label, n, tot, color) => {
     const pct = tot>0 ? Math.round(n/tot*100) : 0;
@@ -4578,11 +4599,13 @@ function renderRepartitionParc() {
     </div>`;
   };
 
-  let html = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;padding:10px">';
-  // Types
-  html += '<div><div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:6px;letter-spacing:1px">TYPE</div>';
-  Object.entries(types).sort((a,b)=>b[1]-a[1]).forEach(([t,n]) => html += mkGauge(tNames[t]||t, n, total, colors[t]||'var(--accent)'));
-  html += '</div>';
+  let html = legendeFiltre + '<div style="display:grid;grid-template-columns:' + (currentParcTypeFilter === 'all' ? '1fr 1fr 1fr' : '1fr 1fr') + ';gap:16px;padding:10px">';
+  // Types (masqué si filtre type actif → tous les bus sont du même type)
+  if (currentParcTypeFilter === 'all') {
+    html += '<div><div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:6px;letter-spacing:1px">TYPE</div>';
+    Object.entries(types).sort((a,b)=>b[1]-a[1]).forEach(([t,n]) => html += mkGauge(tNames[t]||t, n, total, colors[t]||'var(--accent)'));
+    html += '</div>';
+  }
   // Énergie
   html += '<div><div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:6px;letter-spacing:1px">ÉNERGIE</div>';
   const enColors = { Diesel:'#EFAC19', Hybride:'#34d399', GNV:'#99B900', Électrique:'#a78bfa', Electrique:'#a78bfa', 'Électrique':'#a78bfa', Hydrogène:'#67e8f9' };
@@ -4889,19 +4912,19 @@ function filterByType(el, type) {
   document.querySelectorAll('#tabs-parc .tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   currentParcTypeFilter = type;
-  renderParc();
+  renderParc(); renderRepartitionParc();
 }
 function filterByEnergie(el, val) {
   document.querySelectorAll('#tabs-parc-energie .tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   currentParcEnergieFilter = val;
-  renderParc();
+  renderParc(); renderRepartitionParc();
 }
 function filterByStatutParc(el, val) {
   document.querySelectorAll('#tabs-parc-statut .tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   currentParcStatutFilter = val;
-  renderParc();
+  renderParc(); renderRepartitionParc();
 }
 
 function ajouterBus() {
@@ -8775,8 +8798,8 @@ function prefillAchatKm(idVal) {
 
 function ajouterAchatManuel() {
   const idJeu = parseInt(document.getElementById('achat-id').value) || null;
-  const prix  = parseInt(document.getElementById('achat-prix').value) || 0;
-  const km    = parseInt(document.getElementById('achat-km').value) || 0;
+  const prix  = parseInt((document.getElementById('achat-prix').value||'').replace(/[^\d]/g,'')) || 0;
+  const km    = parseInt((document.getElementById('achat-km').value||'').replace(/[^\d]/g,'')) || 0;
 
   if (!idJeu) { toastMsg('ID jeu requis', 'error'); return; }
 
