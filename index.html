@@ -878,7 +878,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.352</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.349</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -2583,21 +2583,6 @@
           </div>
         </div>
       </div>
-
-      <!-- ══ Détecteur de doublons compta ══ -->
-      <div class="card" style="margin-top:14px">
-        <div class="card-header">
-          <div class="card-title">🔍 Doublons compta</div>
-          <button class="btn btn-sm btn-primary" onclick="detecterDoublons()">🔍 Analyser</button>
-        </div>
-        <div class="card-body" style="padding:0">
-          <div style="padding:10px 14px;font-size:11px;color:var(--text3)">
-            Détecte les entrées en double dans la comptabilité : même <b>id</b>, même <b>montant + libellé</b>, ou même <b>montant + date</b>.
-          </div>
-          <div id="cfg-doublons-result"></div>
-        </div>
-      </div>
-
     </div>
 
     <!-- ═══════════════════════ CFG — CATÉGORIES ═══ -->
@@ -3699,7 +3684,7 @@ function resetTotal() {
   // Remettre l'état à zéro sans recharger la page
   state.bus = []; state.affectations = []; state.maintenance = []; state.ct = [];
   state.personnel = []; state.lignes = []; state.statsLignes = []; state.achats = []; state.tourisme = state.tourisme || [];
-  state.abribus = []; state.pannes = []; state.contratsPub = []; state.compta = []; delete state.comptaMois;
+  state.abribus = []; state.pannes = []; state.contratsPub = []; state.compta = []; state.comptaMois = {};
   state.gasoil = []; state.journal = []; state.carburant = []; state.pubDispo = [];
   state.conso = { niveau: 5000, moy: 0 };
   state.config = { argentDepart: 0 };
@@ -5183,16 +5168,19 @@ const PRIX_KM_INIT = {
   165202:{prix:134700,km:434141},165203:{prix:134700,km:434141}
 };
 
-// Migration comptaMois (ancien format par mois) → compta plat
-if (state.comptaMois && Object.keys(state.comptaMois).length > 0) {
-  const seen = new Set((state.compta||[]).map(o => o.id));
-  Object.values(state.comptaMois).forEach(arr => (arr||[]).forEach(op => {
-    if (!seen.has(op.id)) { seen.add(op.id); (state.compta = state.compta||[]).push(op); }
-  }));
-  delete state.comptaMois;
+// Migration compta plat → comptaMois
+if (state.compta && state.compta.length > 0 && (!state.comptaMois || Object.keys(state.comptaMois).length === 0)) {
+  state.comptaMois = {};
+  state.compta.forEach(op => {
+    const mois = (op.date || '').substring(0, 7); // YYYY-MM
+    if (!mois) return;
+    if (!state.comptaMois[mois]) state.comptaMois[mois] = [];
+    state.comptaMois[mois].push(op);
+  });
+  state.compta = []; // vider l'ancien
   saveStateWithSync();
 }
-if (!state.compta) state.compta = [];
+if (!state.comptaMois) state.comptaMois = {};
 if (!state.pannes) state.pannes = [];
 
 // Pré-charger les données prix/km dans le state si premier lancement
@@ -7548,40 +7536,30 @@ function supprimerLigne(i) { const l = state.lignes[i]; pushUndo(l ? 'Suppressio
 // ═══════════════════════════════════════════════════════
 //  COMPTA
 // ═══════════════════════════════════════════════════════
-// Vue par mois calculée à la volée depuis state.compta (lecture seule)
-function cptMois() {
-  const map = {};
-  (state.compta||[]).forEach(o => {
-    const m = (o.date||'').substring(0,7);
-    if (!m) return;
-    if (!map[m]) map[m] = [];
-    map[m].push(o);
-  });
-  return map;
-}
-
-// Helper : aplatit toutes les opérations triées par date
+// Helper : aplatit toutes les opérations de comptaMois en tableau trié
 function allOps() {
-  return [...(state.compta||[])].sort((a,b) => (a.date||'').localeCompare(b.date||''));
+  const ops = [];
+  Object.values(state.comptaMois || {}).forEach(arr => arr.forEach(o => ops.push(o)));
+  return ops.sort((a,b) => (a.date||'').localeCompare(b.date||''));
 }
 
 // Helper : opérations d'un mois donné (YYYY-MM)
 function opsDuMois(mois) {
-  return (state.compta||[]).filter(o => (o.date||'').startsWith(mois));
+  return state.comptaMois[mois] || [];
 }
 
 // Importer des ops dans un mois — sans doublon, sans écraser
 function importerOpsMois(mois, ops) {
-  const existKeys = new Set((state.compta||[]).filter(o=>(o.date||'').startsWith(mois)).map(o=>o.date+'_'+o.desc+'_'+o.montant));
+  if (!state.comptaMois[mois]) state.comptaMois[mois] = [];
+  const existKeys = new Set(state.comptaMois[mois].map(o => o.date+'_'+o.desc+'_'+o.montant));
   const nouvelles = ops.filter(o => !existKeys.has(o.date+'_'+o.desc+'_'+o.montant));
-  nouvelles.forEach(o => state.compta.push(o));
+  state.comptaMois[mois] = [...state.comptaMois[mois], ...nouvelles];
   return nouvelles.length;
 }
 
-// Remplacer (écraser) les ops d'un mois
+// Remplacer (écraser) le mois en cours
 function remplacerOpsMois(mois, ops) {
-  state.compta = (state.compta||[]).filter(o => !(o.date||'').startsWith(mois));
-  ops.forEach(o => state.compta.push(o));
+  state.comptaMois[mois] = ops;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -7664,7 +7642,7 @@ function analyserHistorique() {
   // Calculer doublons potentiels
   let dup = 0;
   moisList.forEach(mois => {
-    const existing = opsDuMois(mois);
+    const existing = state.comptaMois[mois] || [];
     const existKeys = new Set(existing.map(o => o.date+'_'+o.desc+'_'+o.montant));
     opsByMois[mois].forEach(o => { if (existKeys.has(o.date+'_'+o.desc+'_'+o.montant)) dup++; });
   });
@@ -7684,7 +7662,7 @@ function analyserHistorique() {
     const ops = opsByMois[m];
     const rec = ops.filter(o=>o.type==='recette').reduce((a,o)=>a+o.montant,0);
     const dep = ops.filter(o=>o.type==='depense').reduce((a,o)=>a+o.montant,0);
-    const existCount = opsDuMois(m).length;
+    const existCount = (state.comptaMois[m]||[]).length;
     const badge = existCount > 0 ? `<span style="color:var(--yellow);margin-left:6px">⚠ ${existCount} déjà présentes</span>` : '<span style="color:var(--green);margin-left:6px">✓ nouveau</span>';
     return `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)">
       <span><b>${m}</b>${badge}</span>
@@ -7740,7 +7718,7 @@ function importerHistorique() {
 function renderHistoriqueBase() {
   const el = document.getElementById('histo-base-content');
   if (!el) return;
-  const moisList = Object.keys(cptMois()).sort();
+  const moisList = Object.keys(state.comptaMois).sort();
   if (!moisList.length) { el.innerHTML = '<span style="color:var(--text3)">Aucune donnée comptable dans la base.</span>'; return; }
   const byAnnee = {};
   moisList.forEach(m => {
@@ -7750,7 +7728,7 @@ function renderHistoriqueBase() {
   });
   el.innerHTML = Object.entries(byAnnee).sort((a,b)=>b[0].localeCompare(a[0])).map(([annee, mois]) => {
     const mosHtml = mois.map(m => {
-      const ops = cptMois()[m] || [];
+      const ops = state.comptaMois[m];
       const rec = ops.filter(o=>o.type==='recette').reduce((a,o)=>a+o.montant,0);
       const dep = ops.filter(o=>o.type==='depense').reduce((a,o)=>a+o.montant,0);
       const solde = rec - dep;
@@ -7761,8 +7739,8 @@ function renderHistoriqueBase() {
         <span style="color:var(--text3);font-size:10px;margin-left:3px">${ops.length}op</span>
       </span>`;
     }).join('');
-    const totalRec = mois.reduce((a,m)=>a+(cptMois()[m]||[]).filter(o=>o.type==='recette').reduce((b,o)=>b+o.montant,0),0);
-    const totalDep = mois.reduce((a,m)=>a+(cptMois()[m]||[]).filter(o=>o.type==='depense').reduce((b,o)=>b+o.montant,0),0);
+    const totalRec = mois.reduce((a,m)=>a+(state.comptaMois[m]||[]).filter(o=>o.type==='recette').reduce((b,o)=>b+o.montant,0),0);
+    const totalDep = mois.reduce((a,m)=>a+(state.comptaMois[m]||[]).filter(o=>o.type==='depense').reduce((b,o)=>b+o.montant,0),0);
     return `<div style="margin-bottom:12px">
       <div style="font-weight:700;color:var(--accent2);margin-bottom:4px;font-size:13px">
         ${annee} &nbsp; <span style="font-size:11px;color:var(--text3);font-weight:400">Rec: <span style="color:var(--green)">${fmt(totalRec)}</span> · Dép: <span style="color:var(--red)">${fmt(totalDep)}</span> · Solde: <span style="color:${totalRec-totalDep>=0?'var(--green)':'var(--red)'}">${fmt(totalRec-totalDep)}</span></span>
@@ -7972,7 +7950,7 @@ function renderCompta() {
   if (topbarSolde) { topbarSolde.textContent = fmt(solde); topbarSolde.style.color = solde >= 0 ? 'var(--green)' : 'var(--red)'; }
 
   // Selector années
-  const annees = [...new Set(Object.keys(cptMois()).map(m => m.substring(0,4)))].sort().reverse();
+  const annees = [...new Set(Object.keys(state.comptaMois).map(m => m.substring(0,4)))].sort().reverse();
 
   // Peupler le select années des répartitions
   const selRepAnnee = document.getElementById('compta-rep-annee');
@@ -8005,10 +7983,10 @@ function renderCompta() {
     selAnnee.innerHTML = annees.map(a => `<option value="${a}" ${a===anneeActuelle?'selected':''}>${a}</option>`).join('');
 
     // Tableau par mois pour l'année sélectionnée
-    const moisDeLannee = Object.keys(cptMois()).filter(m => m.startsWith(anneeActuelle)).sort().reverse();
+    const moisDeLannee = Object.keys(state.comptaMois).filter(m => m.startsWith(anneeActuelle)).sort().reverse();
     const tbody = document.getElementById('compta-mois-tbody');
     if (tbody) tbody.innerHTML = moisDeLannee.map(m => {
-      const ops = cptMois()[m] || [];
+      const ops = state.comptaMois[m];
       const rec = ops.filter(o=>o.type==='recette').reduce((s,o)=>s+o.montant,0);
       const dep = ops.filter(o=>o.type==='depense').reduce((s,o)=>s+o.montant,0);
       const sol = rec - dep;
@@ -8020,7 +7998,7 @@ function renderCompta() {
         <td class="mono" style="color:var(--red)">${fmt(dep)}</td>
         <td class="mono" style="color:${sol>=0?'var(--green)':'var(--red)'};font-weight:700">${sol>=0?'+':''}${fmt(sol)}</td>
         <td class="mono" style="color:var(--text3)">${ops.length}</td>
-        <td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();if(confirm('Supprimer tout le mois ${m} ?')){saveStateWithSync('Suppression compta mois : ${m}');state.compta=(state.compta||[]).filter(o=>!(o.date||'').startsWith('${m}'));saveState();renderCompta();}">🗑</button></td>
+        <td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();if(confirm('Supprimer tout le mois ${m} ?')){saveStateWithSync('Suppression compta mois : ${m}');delete state.comptaMois['${m}'];saveState();renderCompta();}">🗑</button></td>
       </tr>`;
     }).join('') || '<tr><td colspan="6" style="color:var(--text3);text-align:center;padding:16px">Aucune donnée pour cette année</td></tr>';
 
@@ -8064,7 +8042,7 @@ function renderEstimationFinDeMois() {
   const joursRestants = lastDay - now.getDate();
 
   // Ops du mois courant
-  const opsMois = opsDuMois(moisKey);
+  const opsMois = state.comptaMois?.[moisKey] || [];
 
   // ── Gains quotidiens ──────────────────────────────────
   const gainQuot = (state.config?.estim?.gainQuotidien ?? 4000) * joursRestants;
@@ -8079,18 +8057,20 @@ function renderEstimationFinDeMois() {
 
     // Agréger les recettes "Ventes de titres" / "Recette du" par date (jours passés uniquement)
     const recParDate = {};
-     (state.compta||[]).forEach(o => {
-       if (o.type !== 'recette' || !o.date) return;
-       if (o.date >= todayISO) return;
-       if (o.date < cutoffISO) return;
-       const cat  = (o.cat  || '');
-       const desc = (o.desc || '').toLowerCase();
-       const isVentes = cat === 'Ventes de titres'
-         || desc.startsWith('recette du ')
-         || desc.includes('recette du ');
-       if (!isVentes) return;
-       recParDate[o.date] = (recParDate[o.date] || 0) + o.montant;
-     });
+    Object.values(state.comptaMois || {}).forEach(ops => {
+      ops.forEach(o => {
+        if (o.type !== 'recette' || !o.date) return;
+        if (o.date >= todayISO) return;   // exclure aujourd'hui et futur
+        if (o.date < cutoffISO) return;   // exclure > 28 jours
+        const cat  = (o.cat  || '');
+        const desc = (o.desc || '').toLowerCase();
+        const isVentes = cat === 'Ventes de titres'
+          || desc.startsWith('recette du ')
+          || desc.includes('recette du ');
+        if (!isVentes) return;
+        recParDate[o.date] = (recParDate[o.date] || 0) + o.montant;
+      });
+    });
 
 
     // Moyennes par catégorie de jour (Sem / Sam / Dim)
@@ -8137,10 +8117,13 @@ function renderEstimationFinDeMois() {
   // ── Amendes : moyenne mensuelle * joursRestants/30 ───
   let totalAmendes = 0;
   const debutAnnee = `${annee}-01`;
-  (state.compta||[]).filter(o=>(o.date||'')>=debutAnnee).forEach(o => {
-    if (o.type === 'depense' && (o.cat||'').toLowerCase().includes('amende')) totalAmendes += o.montant;
+  Object.entries(state.comptaMois || {}).forEach(([m, ops]) => {
+    if (m < debutAnnee) return;
+    ops.forEach(o => {
+      if (o.type === 'depense' && (o.cat||'').toLowerCase().includes('amende')) totalAmendes += o.montant;
+    });
   });
-  const nbMoisAnnee = [...new Set((state.compta||[]).map(o=>(o.date||'1970').substring(0,7)).filter(m=>m.startsWith(String(annee))))].length || 1;
+  const nbMoisAnnee = Object.keys(state.comptaMois || {}).filter(m => m.startsWith(String(annee))).length || 1;
   const amendesEstim = Math.round((totalAmendes / nbMoisAnnee / 30) * joursRestants);
 
   // ── Somme 1er du mois (FDM précédent) ────────────────
@@ -8151,8 +8134,8 @@ function renderEstimationFinDeMois() {
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
   })();
   const opsFDMPrec = [
-    ...opsDuMois(moisKey),
-    ...opsDuMois(moisPrecKey)
+    ...(state.comptaMois?.[moisKey] || []),
+    ...(state.comptaMois?.[moisPrecKey] || [])
   ].filter(o =>
     o.type === 'depense' && (
       (o.cat||'').toLowerCase().includes('fin de mois') ||
@@ -8169,11 +8152,11 @@ function renderEstimationFinDeMois() {
   // Si déjà prélevée ce mois-ci → 0
   // Sinon → montant du mois précédent (à venir)
   let assurance = 0;
-  const assDejaPayee = opsDuMois(moisKey).some(o =>
+  const assDejaPayee = (state.comptaMois?.[moisKey] || []).some(o =>
     o.type === 'depense' && ((o.cat||'').toLowerCase().includes('assurance') || (o.desc||'').toLowerCase().includes('assurance'))
   );
   if (!assDejaPayee) {
-    const opsAss = opsDuMois(moisPrecKey).filter(o =>
+    const opsAss = (state.comptaMois?.[moisPrecKey] || []).filter(o =>
       o.type === 'depense' && ((o.cat||'').toLowerCase().includes('assurance') || (o.desc||'').toLowerCase().includes('assurance'))
     );
     assurance = opsAss.reduce((s,o) => s+o.montant, 0);
@@ -8181,12 +8164,13 @@ function renderEstimationFinDeMois() {
 
   // ── Gasoil : max mensuel sur l'année - déjà payé ce mois ─
   const gasoilParMois = {};
-  (state.compta||[]).forEach(o => {
-    const m = (o.date||'').substring(0,7);
+  Object.entries(state.comptaMois || {}).forEach(([m, ops]) => {
     if (!m.startsWith(String(annee))) return;
-    if (o.type === 'depense' && ((o.cat||'').toLowerCase().includes('gasoil') || (o.cat||'').toLowerCase().includes('carburant') || (o.desc||'').toLowerCase().includes('gasoil'))) {
-      gasoilParMois[m] = (gasoilParMois[m] || 0) + o.montant;
-    }
+    ops.forEach(o => {
+      if (o.type === 'depense' && ((o.cat||'').toLowerCase().includes('gasoil') || (o.cat||'').toLowerCase().includes('carburant') || (o.desc||'').toLowerCase().includes('gasoil'))) {
+        gasoilParMois[m] = (gasoilParMois[m] || 0) + o.montant;
+      }
+    });
   });
   const gasoilMax = Object.values(gasoilParMois).length ? Math.max(...Object.values(gasoilParMois)) : 0;
   const gasoilMoisActuel = gasoilParMois[moisKey] || 0;
@@ -8198,7 +8182,7 @@ function renderEstimationFinDeMois() {
   if (emprunts.length) {
     const pattern = (num) => new RegExp('cr[eé]dit\\s+' + num + '(?:\\s|$)', 'i');
     // Ops dépense du mois courant
-    const opsMoisDep = opsDuMois(moisKey).filter(o => o.type === 'depense');
+    const opsMoisDep = (state.comptaMois?.[moisKey] || []).filter(o => o.type === 'depense');
     emprunts.forEach(e => {
       if (!e.numero || (e.nbRestant ?? e.nb) <= 0) return;
       const re = pattern(e.numero);
@@ -8235,7 +8219,7 @@ function renderEstimationFinDeMois() {
   const estimSolde   = soldeActuel + diff;
 
   // Abonnements en début de mois prochain
-  const abos = opsDuMois(moisKey).filter(o =>
+  const abos = (state.comptaMois?.[moisKey] || []).filter(o =>
     o.type === 'recette' && ((o.cat||'').toLowerCase().includes('abo') || (o.desc||'').toLowerCase().includes('abo'))
   );
   const totalAbo = abos.reduce((s,o) => s+o.montant, 0);
@@ -8383,7 +8367,7 @@ function renderComptaTableau() {
   const anneeVal = selA ? selA.value : '';
   const moisKey  = (anneeVal && moisVal) ? `${anneeVal}-${moisVal}` : null;
 
-  let ops = moisKey ? opsDuMois(moisKey) : (comptaMoisFiltre ? opsDuMois(comptaMoisFiltre) : allOps());
+  let ops = moisKey ? (state.comptaMois[moisKey] || []) : (comptaMoisFiltre ? (state.comptaMois[comptaMoisFiltre] || []) : allOps());
   if (typeFiltre) ops = ops.filter(o => o.type === typeFiltre);
   const catFiltre = (document.getElementById('compta-cat-filtre')||{}).value || '';
   if (catFiltre) ops = ops.filter(o => o.cat === catFiltre);
@@ -11468,139 +11452,6 @@ function renderConfig() {
   renderEmprunts();
 }
 
-// ═══════════════════════════════════════════════════════
-//  DÉTECTEUR DE DOUBLONS COMPTA
-// ═══════════════════════════════════════════════════════
-function detecterDoublons() {
-  const ops = state.compta || [];
-  const groupes = [];
-
-  // Helper : écart en jours entre deux dates ISO
-  const ecartJours = (d1, d2) => {
-    if (!d1 || !d2) return 999;
-    return Math.abs((new Date(d1) - new Date(d2)) / 86400000);
-  };
-  // Helper : sous-groupes d'ops proches (≤2 jours) au sein d'un groupe même-clé
-  const sousGroupesProches = (g) => {
-    const vus = new Array(g.length).fill(false);
-    const result = [];
-    for (let i = 0; i < g.length; i++) {
-      if (vus[i]) continue;
-      const sg = [g[i]];
-      for (let j = i+1; j < g.length; j++) {
-        if (!vus[j] && ecartJours(g[i].date, g[j].date) <= 2) { sg.push(g[j]); vus[j] = true; }
-      }
-      vus[i] = true;
-      if (sg.length > 1) result.push(sg);
-    }
-    return result;
-  };
-
-  // Critère 1 : même id (pas de contrainte de date)
-  const byId = {};
-  ops.forEach(o => { const k = String(o.id); if (!byId[k]) byId[k] = []; byId[k].push(o); });
-  Object.values(byId).filter(g => g.length > 1).forEach(g => groupes.push({ type: 'ID identique', ops: g }));
-
-  // Critère 2 : même montant + libellé, dates ≤ 2 jours d'écart
-  const byMD = {};
-  ops.forEach(o => {
-    if (!o.desc) return;
-    const k = `${o.montant}_${(o.desc||'').trim().toLowerCase()}`;
-    if (!byMD[k]) byMD[k] = [];
-    byMD[k].push(o);
-  });
-  Object.values(byMD).filter(g => g.length > 1).forEach(g => {
-    sousGroupesProches(g).forEach(sg => {
-      const ids = sg.map(o => o.id);
-      if (!groupes.some(gr => gr.ops.some(o => ids.includes(o.id))))
-        groupes.push({ type: 'Montant + libellé identiques (±2j)', ops: sg });
-    });
-  });
-
-  // Critère 3 : même montant + date exacte (déjà identique → forcément ≤2j)
-  const byMDat = {};
-  ops.forEach(o => {
-    if (!o.date || !o.montant) return;
-    const k = `${o.montant}_${o.date}`;
-    if (!byMDat[k]) byMDat[k] = [];
-    byMDat[k].push(o);
-  });
-  Object.values(byMDat).filter(g => g.length > 1).forEach(g => {
-    const ids = g.map(o => o.id);
-    if (!groupes.some(gr => gr.ops.some(o => ids.includes(o.id))))
-      groupes.push({ type: 'Montant + date identiques', ops: g });
-  });
-
-  const el = document.getElementById('cfg-doublons-result');
-  if (!el) return;
-
-  if (!groupes.length) {
-    el.innerHTML = `<div style="padding:14px;color:var(--green);font-size:12px">✅ Aucun doublon détecté (${ops.length} opérations analysées)</div>`;
-    return;
-  }
-
-  // Stocker les groupes globalement pour lookup par index (évite les IDs dans onclick)
-  window._doublonGroupes = groupes;
-
-  el.innerHTML = groupes.map((grp, gi) => {
-    const lignes = grp.ops.map((o, oi) => `
-      <tr style="background:${oi%2===0?'var(--surface)':'var(--surface2)'}">
-        <td style="padding:4px 8px;font-size:11px;color:var(--text3)">${fmtDateFR(o.date)||'—'}</td>
-        <td style="padding:4px 8px;font-size:11px">${(o.desc||'').substring(0,40)}</td>
-        <td style="padding:4px 8px;font-size:11px;font-family:monospace;color:${o.type==='recette'?'var(--green)':'var(--red)'}">${o.type==='recette'?'+':'−'}${fmt(o.montant)}</td>
-        <td style="padding:4px 8px;font-size:11px;color:var(--text3)">${o.cat||'—'}</td>
-        <td style="padding:4px 8px">
-          <button class="btn btn-danger btn-xs" onclick="supprimerDoublon(${gi},${oi})">✕</button>
-        </td>
-      </tr>`).join('');
-    return `<div style="border-bottom:2px solid var(--border)">
-      <div style="padding:8px 12px;background:rgba(251,191,36,0.08);display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:11px;font-weight:600;color:var(--yellow)">⚠️ ${grp.type} — ${grp.ops.length} entrées</span>
-        <button class="btn btn-ghost btn-xs" onclick="garderPremierDoublon(${gi})" style="color:var(--accent)">Garder le 1er, suppr. les autres</button>
-      </div>
-      <table style="width:100%;border-collapse:collapse">${lignes}</table>
-    </div>`;
-  }).join('');
-}
-
-function supprimerDoublon(gi, oi) {
-  const grp = (window._doublonGroupes||[])[gi];
-  if (!grp) { toastMsg('Groupe introuvable', 'error'); return; }
-  const o = grp.ops[oi];
-  if (!o) { toastMsg('Opération introuvable', 'error'); return; }
-  if (!confirm(`Supprimer ?\n${fmtDateFR(o.date)} · ${o.desc} · ${fmt(o.montant)} €`)) return;
-  pushUndo('Suppression doublon compta');
-  state.compta = (state.compta||[]).filter(x => x !== o);
-  saveStateWithSync();
-  toastMsg('Opération supprimée ✓', 'success');
-  detecterDoublons();
-  if (document.getElementById('page-compta')?.classList.contains('active')) renderCompta();
-}
-
-function garderPremierDoublon(groupeIdx) {
-  const ops = state.compta || [];
-  const groupes = [];
-  const byId = {};
-  ops.forEach(o => { const k=String(o.id); if(!byId[k])byId[k]=[]; byId[k].push(o); });
-  Object.values(byId).filter(g=>g.length>1).forEach(g=>groupes.push(g));
-  const byMD = {};
-  ops.forEach(o => { if(!o.desc)return; const k=`${o.montant}_${(o.desc||'').trim().toLowerCase()}`; if(!byMD[k])byMD[k]=[]; byMD[k].push(o); });
-  Object.values(byMD).filter(g=>g.length>1).forEach(g=>{ const ids=g.map(o=>o.id); if(!groupes.some(gr=>gr.some(o=>ids.includes(o.id))))groupes.push(g); });
-  const byMDat = {};
-  ops.forEach(o => { if(!o.date||!o.montant)return; const k=`${o.montant}_${o.date}`; if(!byMDat[k])byMDat[k]=[]; byMDat[k].push(o); });
-  Object.values(byMDat).filter(g=>g.length>1).forEach(g=>{ const ids=g.map(o=>o.id); if(!groupes.some(gr=>gr.some(o=>ids.includes(o.id))))groupes.push(g); });
-  const grp = groupes[groupeIdx];
-  if (!grp || grp.length < 2) { toastMsg('Groupe introuvable', 'error'); return; }
-  const toDelete = grp.slice(1).map(o => o.id);
-  if (!confirm(`Supprimer ${toDelete.length} doublon(s), garder le premier ?`)) return;
-  pushUndo('Suppression doublons compta (garder 1er)');
-  state.compta = (state.compta||[]).filter(o => !toDelete.includes(o.id));
-  saveStateWithSync();
-  toastMsg(`${toDelete.length} doublon(s) supprimé(s) ✓`, 'success');
-  detecterDoublons();
-  if (document.getElementById('page-compta')?.classList.contains('active')) renderCompta();
-}
-
 function renderUndoList() {
   const el = document.getElementById('cfg-undo-list');
   if (!el) return;
@@ -11676,7 +11527,8 @@ function mettreAJourEmprunts() {
 
     // Compter toutes les ops "Prélèvement crédit XXXX" postérieures à la création
     let count = 0;
-    (state.compta||[]).forEach(o => {
+    Object.values(state.comptaMois || {}).forEach(ops => {
+      ops.forEach(o => {
         if (o.type !== 'depense' || !o.date) return;
         if (o.date <= dateCreation) return;
         // Regex : cr(e/é)dit suivi du numéro + espace ou fin de chaîne (évite 12345 qui matche 123456)
@@ -11685,6 +11537,7 @@ function mettreAJourEmprunts() {
         if (regex.test(desc)) {
           count++;
         }
+      });
     });
 
     const nbRestant = Math.max(0, e.nb - count);
@@ -11807,7 +11660,8 @@ function resetSection(section) {
   };
   if (!confirm(`Vider ${labels[section]||section} ?\nCette action est irréversible.`)) return;
   if (section === 'statsLignes') state.statsLignes = [];
-  else if (section === 'compta') { state.compta = []; delete state.comptaMois; }
+  else if (section === 'compta') { state.compta = []; state.comptaMois = {}; }
+  else state[section] = [];
   saveStateWithSync();
   renderDashboard();
   renderConfig();
@@ -11935,7 +11789,7 @@ function importerSauvegarde(input) {
     try {
       const data = JSON.parse(e.target.result);
       // Vérification minimale
-      if (!data.bus && !data.comptaMois && !data.compta && !data.personnel) {
+      if (!data.bus && !data.comptaMois && !data.personnel) {
         throw new Error('Fichier invalide — ce n\'est pas une sauvegarde TM Manager.');
       }
       if (!confirm(`⚠️ Charger la sauvegarde "${file.name}" ?\n\nToutes tes données actuelles seront remplacées. Cette action est irréversible.`)) {
@@ -12217,7 +12071,8 @@ function categoriserLibelle(lib) {
 // ── MAJ toutes les opérations ────────────────────────────
 function majToutesOps() {
   let total = 0, modif = 0;
-  (state.compta||[]).forEach(op => {
+  Object.keys(state.comptaMois || {}).forEach(mois => {
+    (state.comptaMois[mois] || []).forEach(op => {
       total++;
       const result = matcherLibelle(op.desc);
       const newCat   = result.cat;
@@ -12230,6 +12085,7 @@ function majToutesOps() {
         if (result.type) op.type = result.type; // Correction du type si catégorie définit un type
         modif++;
       }
+    });
   });
   saveStateWithSync();
   const el = document.getElementById('maj-ops-result');
@@ -12299,7 +12155,9 @@ function renderCategories() {
 
 function compterOpsMatchees(cat) {
   let n = 0;
-  (state.compta||[]).forEach(op => { if (op.cat === cat.nom) n++; });
+  Object.values(state.comptaMois || {}).forEach(ops => {
+    (ops||[]).forEach(op => { if (op.cat === cat.nom) n++; });
+  });
   return n;
 }
 
