@@ -878,7 +878,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.349</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.352</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -11210,25 +11210,22 @@ function importerCSVDirect(type, contenu) {
     const mois = ops[0].date ? ops[0].date.substring(0, 7) : null;
     if (!mois) { toastMsg('Impossible de détecter le mois', 'error'); return; }
 
-    let nbNouvelles;
+    const today = new Date();
+    const moisCourant = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
+    const moisPrecObj = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const moisPrec = `${moisPrecObj.getFullYear()}-${String(moisPrecObj.getMonth()+1).padStart(2,'0')}`;
     if (type === 'compta') {
-      nbNouvelles = importerOpsMois(mois, ops);
-      const opsJ1 = ops.filter(o => o.date && o.date.endsWith('-01'));
-      if (opsJ1.length) {
-        const moisPrec = new Date(mois + '-01');
-        moisPrec.setMonth(moisPrec.getMonth() - 1);
-        importerOpsMois(moisPrec.toISOString().substring(0, 7), opsJ1);
-      }
+      remplacerOpsMois(moisCourant, ops);
       state.lastImport.compta = nowStr;
       mettreAJourEmprunts();
-      journalLog(`MAJ compta ${fmtMois(mois)} : ${nbNouvelles} nouvelles opérations`, 'ok');
-      toastMsg(`💰 ${nbNouvelles} opérations importées (${mois})`, 'success');
+      journalLog(`MAJ compta ${fmtMois(moisCourant)} : ${ops.length} opérations (remplacement)`, 'ok');
+      toastMsg(`💰 ${ops.length} opérations importées (${moisCourant})`, 'success');
     } else {
-      nbNouvelles = importerOpsMois(mois, ops);
+      remplacerOpsMois(moisPrec, ops);
       state.lastImport.lastmonth = nowStr;
       mettreAJourEmprunts();
-      journalLog(`MAJ compta fin de mois ${fmtMois(mois)} : ${nbNouvelles} opérations ajoutées`, 'ok');
-      toastMsg(`💰 FDM ${mois} : ${nbNouvelles} opérations ajoutées`, 'success');
+      journalLog(`MAJ compta fin de mois ${fmtMois(moisPrec)} : ${ops.length} opérations (remplacement)`, 'ok');
+      toastMsg(`💰 FDM ${moisPrec} : ${ops.length} opérations importées`, 'success');
     }
 
     saveStateWithSync(); renderDashboard();
