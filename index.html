@@ -568,6 +568,7 @@
     appearance: none;
     -webkit-appearance: none;
   }
+  .status-reserve { color: var(--yellow) !important; }
   /* ── MODE CONFIGURATION ─────────────────────────────── */
   :root { --cfg-green: #22c55e; --cfg-green-dim: rgba(34,197,94,0.12); --cfg-green-border: rgba(34,197,94,0.3); }
 
@@ -878,7 +879,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.352</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.359</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -1106,6 +1107,19 @@
           <div class="tab" onclick="filterByType(this,'ART')">Articulé</div>
           <div class="tab" onclick="filterByType(this,'CAR')">Car</div>
           <div class="tab" onclick="filterByType(this,'TRAM')">Tram</div>
+        </div>
+        <div class="tabs" id="tabs-parc-energie">
+          <div class="tab active" onclick="filterByEnergie(this,'all')">Toutes</div>
+          <div class="tab" onclick="filterByEnergie(this,'diesel')" title="Diesel"><img src="https://rnestam.github.io/TM/assets/icons/diesel.png" style="width:16px;height:16px;object-fit:contain;vertical-align:middle"></div>
+          <div class="tab" onclick="filterByEnergie(this,'hybride')" title="Hybride"><img src="https://rnestam.github.io/TM/assets/icons/hybride.png" style="width:16px;height:16px;object-fit:contain;vertical-align:middle"></div>
+          <div class="tab" onclick="filterByEnergie(this,'gnv')" title="GNV"><img src="https://rnestam.github.io/TM/assets/icons/gnv.png" style="width:16px;height:16px;object-fit:contain;vertical-align:middle"></div>
+          <div class="tab" onclick="filterByEnergie(this,'electrique')" title="Électrique"><img src="https://rnestam.github.io/TM/assets/icons/electrique.png" style="width:16px;height:16px;object-fit:contain;vertical-align:middle"></div>
+        </div>
+        <div class="tabs" id="tabs-parc-statut">
+          <div class="tab active" onclick="filterByStatutParc(this,'all')">Tous</div>
+          <div class="tab" onclick="filterByStatutParc(this,'service')"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:4px;vertical-align:middle"></span>Service</div>
+          <div class="tab" onclick="filterByStatutParc(this,'reserve')"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--yellow);margin-right:4px;vertical-align:middle"></span>Réserve</div>
+          <div class="tab" onclick="filterByStatutParc(this,'indispo')"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--red);margin-right:4px;vertical-align:middle"></span>Indispo</div>
         </div>
         <div class="tabs" style="margin-left:8px" id="parc-view-tabs">
           <div class="tab active" onclick="setParcView(this,'compact')">Compact</div>
@@ -3547,6 +3561,8 @@ let undoStack = []; // RAM uniquement, pas de persistance localStorage (state tr
 let syncPaused = localStorage.getItem('tm_sync_paused') === '1';
 let modeConfig        = false;
 let currentParcTypeFilter = 'all';
+let currentParcEnergieFilter = 'all';
+let currentParcStatutFilter  = 'all';
 let editBusId         = null;
 let parcView          = 'compact';
 let currentCsvType    = 'bus';
@@ -4499,7 +4515,7 @@ const STATUS_CLASS = {
   'Nouveau':     'status-nouveau',
   'CT urgent':   'status-ct-urgent',
   'Musée':       'status-musee',
-  'Réserve':     'status-indispo'
+  'Réserve':     'status-reserve'
 };
 
 function ouvrirCTPlanif(nomBus) {
@@ -4691,7 +4707,14 @@ function renderParc() {
       || (b.marque||'').toLowerCase().includes(search)
       || (b.modele||'').toLowerCase().includes(search)
       || (b.immat||'').toLowerCase().includes(search);
-    return matchType && matchSearch;
+    const eNorm = (b.energie||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const matchEnergie = currentParcEnergieFilter === 'all' || eNorm.includes(currentParcEnergieFilter);
+    const sNorm = (b.statut||'').toLowerCase();
+    const matchStatut = currentParcStatutFilter === 'all'
+      || (currentParcStatutFilter === 'service'  && ['en service','service','nouveau'].includes(sNorm))
+      || (currentParcStatutFilter === 'reserve'  && sNorm === 'réserve')
+      || (currentParcStatutFilter === 'indispo'  && ['indispo','atelier','ct urgent','en révision','révision','révision puis ct','ct puis révision'].includes(sNorm));
+    return matchType && matchSearch && matchEnergie && matchStatut;
   });
   filtered = sortData(filtered, 'parc', 'nom');
 
@@ -4866,6 +4889,18 @@ function filterByType(el, type) {
   document.querySelectorAll('#tabs-parc .tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   currentParcTypeFilter = type;
+  renderParc();
+}
+function filterByEnergie(el, val) {
+  document.querySelectorAll('#tabs-parc-energie .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  currentParcEnergieFilter = val;
+  renderParc();
+}
+function filterByStatutParc(el, val) {
+  document.querySelectorAll('#tabs-parc-statut .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  currentParcStatutFilter = val;
   renderParc();
 }
 
@@ -5881,11 +5916,12 @@ function renderAffectations() {
       const nomCell  = urlBus
         ? `<a href="${urlBus}" target="_blank" style="color:inherit;text-decoration:none;font-weight:700;cursor:alias" title="Ouvrir le véhicule">${b.nom}</a>`
         : `<b>${b.nom}</b>`;
+      const energieIcn = icn('energie', b.energie, { size: 14 });
 
       rows += `<tr style="background:${rowBg}">
         <td class="mono" style="position:sticky;left:0;background:${rowBg||'var(--surface)'};z-index:2;text-align:center;border-right:3px solid var(--border);font-size:11px;font-weight:700;min-width:50px;color:${totalC>=8?'var(--red)':totalC>=6?'var(--yellow)':'var(--text2)'}">${totalC}</td>
         <td style="position:sticky;left:50px;background:${rowBg||'var(--surface)'};z-index:2;font-size:12px;border-right:2px solid var(--border);padding:4px 8px;white-space:nowrap;text-align:center">
-          <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${sStyle.color==='var(--text)'?'var(--green)':sStyle.color};margin-right:5px;vertical-align:middle"></span>${nomCell}
+          ${energieIcn ? `<span style="margin-right:4px;vertical-align:middle">${energieIcn}</span>` : ''}${nomCell}
         </td>
         <td style="position:sticky;left:180px;background:${rowBg||'var(--surface)'};z-index:2;border-right:1px solid var(--border);padding:3px 6px;text-align:center">
           <select onchange="setAffStatut('${b.nom}',this.value)"
@@ -8114,25 +8150,22 @@ function renderEstimationFinDeMois() {
   });
   pubRestant = Math.round(pubRestant);
 
-  // ── Amendes : moyenne mensuelle * joursRestants/30 ───
-  let totalAmendes = 0;
-  const debutAnnee = `${annee}-01`;
-  Object.entries(state.comptaMois || {}).forEach(([m, ops]) => {
-    if (m < debutAnnee) return;
-    ops.forEach(o => {
-      if (o.type === 'depense' && (o.cat||'').toLowerCase().includes('amende')) totalAmendes += o.montant;
-    });
-  });
-  const nbMoisAnnee = Object.keys(state.comptaMois || {}).filter(m => m.startsWith(String(annee))).length || 1;
-  const amendesEstim = Math.round((totalAmendes / nbMoisAnnee / 30) * joursRestants);
-
-  // ── Somme 1er du mois (FDM précédent) ────────────────
-  // Le prélèvement FDM apparaît dans le mois COURANT (payé le 1er)
-  // On cherche dans le mois actuel OU précédent la catégorie "Fin de mois précédent"
+  // ── Mois précédent (clé) ──────────────────────────────
   const moisPrecKey = (() => {
     const d = new Date(annee, now.getMonth()-1, 1);
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
   })();
+
+  // ── Amendes : recettes "paiement des amendes" du mois précédent, proratisé sur jours restants ──
+  let amendesMoisPrec = 0;
+  (state.comptaMois?.[moisPrecKey] || []).forEach(o => {
+    if (o.type === 'recette' && ((o.cat||'').toLowerCase().includes('amende') || (o.desc||'').toLowerCase().includes('amende'))) amendesMoisPrec += o.montant;
+  });
+  const amendesEstim = Math.round(amendesMoisPrec * joursRestants / lastDay);
+
+  // ── Somme 1er du mois (FDM précédent) ────────────────
+  // Le prélèvement FDM apparaît dans le mois COURANT (payé le 1er)
+  // On cherche dans le mois actuel OU précédent la catégorie "Fin de mois précédent"
   const opsFDMPrec = [
     ...(state.comptaMois?.[moisKey] || []),
     ...(state.comptaMois?.[moisPrecKey] || [])
@@ -8281,7 +8314,7 @@ function renderEstimationFinDeMois() {
         ${row('Gains quotidiens (~'+fmt(state.config?.estim?.gainQuotidien??4000)+'/j)', fmt(gainQuot), 'var(--green)')}
         ${row('Ventes de titres (estimées)', fmt(ventesTitres), 'var(--green)')}
         ${row('Contrats pub restants', fmt(pubRestant), 'var(--green)')}
-        ${row('Amendes', fmt(amendesEstim), 'var(--green)')}
+        ${amendesEstim > 0 ? row('Paiement amendes (estimé)', fmt(amendesEstim), 'var(--green)') : row('Paiement amendes', '—', 'var(--text3)')}
         ${customRecRows.map(i => inputRow(i)).join('')}
         ${row('Total CA estimé', fmt(totalCA), 'var(--green)', true, true)}
         ${row('Fin de mois précédent', fmt(fdmPrec), 'var(--red)')}
@@ -8292,7 +8325,7 @@ function renderEstimationFinDeMois() {
         ${row('Total dépenses', fmt(totalDep), 'var(--red)', true, true)}
         ${row('Différence', (diff>=0?'+':'')+fmt(diff), diff>=0?'var(--green)':'var(--red)', true, true)}
         ${row('Estimation solde', fmt(estimSolde), estimSolde>=0?'var(--green)':'var(--red)', true, true)}
-        ${row('Avec abonnements', fmt(estimAvecAbo), estimAvecAbo>=0?'var(--green)':'var(--red)', true)}
+        ${row('Avec abonnements (+'+fmt(totalAbo)+')', fmt(estimAvecAbo), estimAvecAbo>=0?'var(--green)':'var(--red)', true)}
       </table>
 
     </div>`;
