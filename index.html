@@ -879,7 +879,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.368</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.376</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -1716,7 +1716,14 @@
 
           <!-- Estimation fin de mois (placeholder) -->
           <div class="card">
-            <div class="card-header"><div class="card-title">🔮 Estimation fin de mois</div></div>
+            <div class="card-header">
+              <div class="card-title">🔮 Estimation fin de mois</div>
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-size:11px;color:var(--text3)">Jusqu'au</span>
+                <input type="date" id="estim-date-filtre" autocomplete="off" oninput="renderEstimationFinDeMois()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;padding:3px 7px;outline:none">
+                <button class="btn btn-ghost btn-xs" onclick="initEstimDate();renderEstimationFinDeMois()" title="Réinitialiser">↺</button>
+              </div>
+            </div>
             <div class="card-body" id="compta-estimation" style="min-height:150px;max-height:500px;overflow-y:auto;padding:0">
               <span style="color:var(--text3);font-size:12px">— à venir —</span>
             </div>
@@ -1910,11 +1917,11 @@
       <!-- Tableau contrats triés par date fin -->
       <div class="card" style="margin-top:14px">
         <div class="card-header">
-          <div class="card-title">Contrats en cours <span id="pub-count-badge" class="badge badge-blue" style="margin-left:8px">0</span></div>
-          <div style="display:flex;gap:6px">
-            <button class="btn btn-ghost btn-sm" onclick="setPubFiltre('tous')" id="pub-f-tous">Tous</button>
-            <button class="btn btn-ghost btn-sm" onclick="setPubFiltre('encours')" id="pub-f-encours">En cours</button>
-            <button class="btn btn-ghost btn-sm" onclick="setPubFiltre('avenir')" id="pub-f-avenir">À venir</button>
+          <div class="card-title">Contrats en cours <span id="pub-count-badge" class="badge badge-blue" style="margin-left:8px">0</span> <span id="pub-total-encours" style="margin-left:10px;font-size:13px;color:var(--green);font-weight:700"></span></div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:11px;color:var(--text3)">Jusqu'au</span>
+            <input type="date" id="pub-date-filtre" value="" autocomplete="off" oninput="this._userSet=!!this.value;renderPubTableau()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;padding:3px 7px;outline:none">
+            <button class="btn btn-ghost btn-xs" onclick="const el=document.getElementById('pub-date-filtre');el.value='';el._userSet=false;renderPubTableau()" title="Effacer la date">🗑</button>
           </div>
         </div>
         <div class="card-body" style="padding:0;overflow-x:auto;overflow-y:auto;max-height:400px">
@@ -8040,6 +8047,7 @@ function renderCompta() {
   }
 
   renderComptaRepartitions();
+  initEstimDate();
   renderEstimationFinDeMois();
   // Peupler le select catégories
   const selCat = document.getElementById('compta-cat-filtre');
@@ -8100,6 +8108,17 @@ function renderCompta() {
 //  ESTIMATION FIN DE MOIS
 // ═══════════════════════════════════════════════════════
 
+function initEstimDate() {
+  const el = document.getElementById('estim-date-filtre');
+  if (!el) return;
+  const now = new Date();
+  const lastDay = new Date(now.getFullYear(), now.getMonth()+1, 0);
+  const y = lastDay.getFullYear();
+  const m = String(lastDay.getMonth()+1).padStart(2,'0');
+  const d = String(lastDay.getDate()).padStart(2,'0');
+  el.value = `${y}-${m}-${d}`;
+}
+
 function renderEstimationFinDeMois() {
   const el = document.getElementById('compta-estimation');
   if (!el) return;
@@ -8110,9 +8129,18 @@ function renderEstimationFinDeMois() {
   const mois     = String(now.getMonth()+1).padStart(2,'0');
   const moisKey  = `${annee}-${mois}`;
 
+  // Date cible : champ ou dernier jour du mois
+  const dateEl = document.getElementById('estim-date-filtre');
+  const dateCibleISO = dateEl?.value || (() => {
+    const ld = new Date(annee, now.getMonth()+1, 0);
+    return ld.toISOString().slice(0,10);
+  })();
+  const dateCible = new Date(dateCibleISO + 'T12:00:00');
+
   // Dernier jour du mois
   const lastDay  = new Date(annee, now.getMonth()+1, 0).getDate();
-  const joursRestants = lastDay - now.getDate();
+  // joursRestants = date cible - aujourd'hui (en jours)
+  const joursRestants = Math.max(0, Math.round((dateCible - now) / (1000*60*60*24)));
 
   // Ops du mois courant
   const opsMois = state.comptaMois?.[moisKey] || [];
@@ -8160,8 +8188,8 @@ function renderEstimationFinDeMois() {
     const moySam = cntSam ? Math.round(sumSam / cntSam) : 0;
     const moyDim = cntDim ? Math.round(sumDim / cntDim) : 0;
 
-    // Sommer les jours restants (aujourd'hui inclus → fin du mois)
-    for (let d = now.getDate(); d <= lastDay; d++) {
+    // Sommer les jours restants (aujourd'hui inclus → date cible)
+    for (let d = now.getDate(); d <= dateCible.getDate() && dateCible.getMonth() === now.getMonth(); d++) {
       const j = new Date(annee, now.getMonth(), d).getDay();
       if (j === 0)      ventesTitres += moyDim;
       else if (j === 6) ventesTitres += moySam;
@@ -8171,15 +8199,15 @@ function renderEstimationFinDeMois() {
   }
 
   // ── Contrats pub restants ce mois ────────────────────
-  const finMois  = new Date(annee, now.getMonth()+1, 0);
+  const finMois   = dateCible;
   const debutMois = new Date(annee, now.getMonth(), 1);
   let pubRestant = 0;
   (state.contratsPub || []).forEach(c => {
     if (!c.fin) return;
     const ff = new Date(c.fin);
-    // Contrat actif ce mois → gains non encore reçus (fin >= today)
+    // Contrat actif et se terminant avant/à la date cible
     if (ff >= new Date(todayISO) && ff >= debutMois && ff <= finMois) pubRestant += (c.gains || 0);
-    // Contrat se terminant après ce mois → gains proratisés sur jours restants
+    // Contrat se terminant après la date cible → gains proratisés sur jours restants
     else if (ff > finMois && c.debut && new Date(c.debut) <= new Date(todayISO)) {
       const joursContrat = Math.round((ff - new Date(c.debut)) / (1000*60*60*24)) || 1;
       pubRestant += ((c.gains || 0) / joursContrat) * joursRestants;
@@ -8200,9 +8228,10 @@ function renderEstimationFinDeMois() {
   });
   const amendesEstim = Math.round(amendesMoisPrec * joursRestants / lastDay);
 
-  // ── Somme 1er du mois (FDM précédent) ────────────────
-  // Le prélèvement FDM apparaît dans le mois COURANT (payé le 1er)
-  // On cherche dans le mois actuel OU précédent la catégorie "Fin de mois précédent"
+  // ── Fin de mois précédent : seulement si date cible = dernier jour du mois ──
+  const dernierJourMois = new Date(annee, now.getMonth()+1, 0);
+  const isLastDay = dateCible.getDate() === dernierJourMois.getDate()
+                 && dateCible.getMonth() === dernierJourMois.getMonth();
   const opsFDMPrec = [
     ...(state.comptaMois?.[moisKey] || []),
     ...(state.comptaMois?.[moisPrecKey] || [])
@@ -8213,26 +8242,25 @@ function renderEstimationFinDeMois() {
       (o.cat||'').toLowerCase().includes('fdm')
     )
   );
-  // Prendre le montant le plus récent (évite les doublons inter-mois)
-  const fdmPrec = opsFDMPrec.length
+  const fdmPrec = isLastDay && opsFDMPrec.length
     ? Math.max(...opsFDMPrec.map(o => o.montant))
     : 0;
 
-  // ── Assurance ─────────────────────────────────────────
-  // Si déjà prélevée ce mois-ci → 0
-  // Sinon → montant du mois précédent (à venir)
+  // ── Assurance : prélevée le 14 du mois ───────────────
+  // Si déjà prélevée ce mois → 0. Sinon → 0 si date < 14, sinon montant M-1.
   let assurance = 0;
   const assDejaPayee = (state.comptaMois?.[moisKey] || []).some(o =>
     o.type === 'depense' && ((o.cat||'').toLowerCase().includes('assurance') || (o.desc||'').toLowerCase().includes('assurance'))
   );
-  if (!assDejaPayee) {
+  if (!assDejaPayee && dateCible.getDate() >= 14) {
     const opsAss = (state.comptaMois?.[moisPrecKey] || []).filter(o =>
       o.type === 'depense' && ((o.cat||'').toLowerCase().includes('assurance') || (o.desc||'').toLowerCase().includes('assurance'))
     );
     assurance = opsAss.reduce((s,o) => s+o.montant, 0);
   }
 
-  // ── Gasoil : max mensuel sur l'année - déjà payé ce mois ─
+  // ── Gasoil : prix journalier × jours restants ────────
+  // Moyenne mensuelle → prix/jour → × joursRestants
   const gasoilParMois = {};
   Object.entries(state.comptaMois || {}).forEach(([m, ops]) => {
     if (!m.startsWith(String(annee))) return;
@@ -8242,23 +8270,29 @@ function renderEstimationFinDeMois() {
       }
     });
   });
-  const gasoilMax = Object.values(gasoilParMois).length ? Math.max(...Object.values(gasoilParMois)) : 0;
+  const gasoilMoyMois = Object.values(gasoilParMois).length
+    ? Object.values(gasoilParMois).reduce((s,v)=>s+v,0) / Object.values(gasoilParMois).length
+    : 0;
+  const gasoilJournalier = gasoilMoyMois / lastDay;
   const gasoilMoisActuel = gasoilParMois[moisKey] || 0;
-  const gasoilEstim = Math.max(0, gasoilMax - gasoilMoisActuel);
+  const gasoilEstim = Math.max(0, Math.round(gasoilJournalier * joursRestants) - 0);
 
-  // ── Emprunts : mensualités non encore prélevées ce mois ─
+  // ── Emprunts : date de prélèvement = jour de création du prêt ──
   let empruntsEstim = 0;
   const emprunts = state.config?.emprunts || [];
   if (emprunts.length) {
     const pattern = (num) => new RegExp('cr[eé]dit\\s+' + num + '(?:\\s|$)', 'i');
-    // Ops dépense du mois courant
     const opsMoisDep = (state.comptaMois?.[moisKey] || []).filter(o => o.type === 'depense');
     emprunts.forEach(e => {
       if (!e.numero || (e.nbRestant ?? e.nb) <= 0) return;
       const re = pattern(e.numero);
-      // Vérifier si le prélèvement de CE mois est déjà présent
       const dejaPreleve = opsMoisDep.some(o => re.test(o.desc || ''));
-      if (!dejaPreleve) {
+      if (dejaPreleve) return; // déjà prélevé ce mois
+      // Jour de prélèvement = jour de la date de création du prêt
+      const dateCreation = e.dateCreation ? new Date(e.dateCreation) : null;
+      const jourPrelev = dateCreation ? dateCreation.getDate() : 1;
+      // Inclure seulement si date cible >= jour de prélèvement
+      if (dateCible.getDate() >= jourPrelev) {
         empruntsEstim += e.mensualite || 0;
       }
     });
@@ -8356,7 +8390,7 @@ function renderEstimationFinDeMois() {
         ${row('Total CA estimé', fmt(totalCA), 'var(--green)', true, true)}
         ${row('Fin de mois précédent', fmt(fdmPrec), 'var(--red)')}
         ${emprunts.length === 0 ? row("Emprunts", "Pas d'emprunt", "var(--text3)") : empruntsEstim > 0 ? row('Emprunts (à prélever)', fmt(empruntsEstim), 'var(--red)') : row('Emprunts', '✅ Prélevé ce mois', 'var(--text3)')}
-        ${row('Assurance' + (assDejaPayee ? ' ✓' : ' (à venir)'), fmt(assurance), assDejaPayee ? 'var(--text3)' : 'var(--red)')}
+        ${row('Assurance' + (assDejaPayee ? ' ✓' : dateCible.getDate() < 14 ? ' (après le 14)' : ' (à venir)'), fmt(assurance), assDejaPayee ? 'var(--text3)' : assurance === 0 ? 'var(--text3)' : 'var(--red)')}
         ${row('Gasoil (max mensuel)', fmt(gasoilEstim), 'var(--red)')}
         ${customDepRows.map(i => inputRow(i)).join('')}
         ${row('Total dépenses', fmt(totalDep), 'var(--red)', true, true)}
@@ -8679,11 +8713,11 @@ function renderPub() {
     const nb = avant - state.contratsPub.length;
     journalLog(`${nb} contrat(s) pub expiré(s) supprimé(s) automatiquement`, 'info');
   }
+  const dateEl = document.getElementById('pub-date-filtre');
+  if (dateEl && !dateEl._userSet) dateEl.value = '';
   renderPubStatCards();
   renderPubGainsMois();
   renderPubTableau();
-  const badge = document.getElementById('pub-count-badge');
-  if (badge) badge.textContent = state.contratsPub.length + ' contrats';
 }
 
 function gainsPourMois(moisStr) {
@@ -8737,14 +8771,24 @@ function renderPubTableau() {
   const now      = new Date();
   const nowISO   = now.toISOString().slice(0,10);
   const cutoff   = new Date(nowISO + 'T16:30:00');
-  // Après purge dans renderPub, tous les contrats restants sont actifs ou futurs
-  const isEncours = (c) => (c.debut||'') <= nowISO && (c.fin > nowISO || (c.fin === nowISO && now < cutoff));
-  const isAvenir  = (c) => (c.debut||'') > nowISO;
+
+  // Date filtre optionnelle — forcer vide si le navigateur a auto-rempli
+  const dateEl = document.getElementById('pub-date-filtre');
+  const dateFiltre = dateEl?.value || '';
 
   let contrats = [...state.contratsPub];
-  if (pubFiltre === 'encours') contrats = contrats.filter(isEncours);
-  else if (pubFiltre === 'avenir') contrats = contrats.filter(isAvenir);
+  // Sans date : tous les contrats en cours. Avec date : contrats dont fin <= date
+  if (dateFiltre) {
+    contrats = contrats.filter(c => (c.fin||'') <= limiteISO);
+  }
   contrats = sortData(contrats, 'pub', 'fin');
+
+  // Total et mise à jour badge
+  const total = contrats.reduce((s, c) => s + (c.gains||0), 0);
+  const totalEl = document.getElementById('pub-total-encours');
+  if (totalEl) totalEl.textContent = fmt(total);
+  const badge = document.getElementById('pub-count-badge');
+  if (badge) badge.textContent = contrats.length + ' contrats';
   const tbody = document.getElementById('pub-tbody');
   tbody.innerHTML = contrats.map(c => {
     const todayStr = nowISO;
