@@ -879,7 +879,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.376</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.381</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -1281,11 +1281,7 @@
             Bus passés en révision et/ou CT dans le <b>dernier mois</b>. Les bus marqués "Demande Alliance" sont automatiquement exclus.
           </p>
           <div id="alliance-result"></div>
-          <div id="alliance-texte-container" style="display:none;margin-top:10px">
-            <textarea id="alliance-texte" rows="5" readonly style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px;font-family:Inter, var(--font-sans, sans-serif);font-size:11px;box-sizing:border-box"></textarea>
-            <button class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="copierAllianceTexte()">📋 Copier</button>
-          </div>
-        </div>
+                 </div>
       </div>
 
       <!-- ── VOLET 3 : Historique CT ──────────────────── -->
@@ -1295,7 +1291,7 @@
         </div>
         <div class="card-body" style="padding:0">
           <table class="data-table">
-            <thead><tr><th>Bus</th><th>Date réelle</th><th>KM</th><th>Résultat</th><th style="text-align:center">Demande Alliance</th><th></th></tr></thead>
+            <thead><tr><th>Bus</th><th style="text-align:center">Date CT</th><th style="text-align:center">Date Révision</th><th style="text-align:center">Demande Alliance</th><th></th></tr></thead>
             <tbody id="ct-tbody"></tbody>
           </table>
         </div>
@@ -3606,6 +3602,7 @@ let state = loadState() || {
 if (!state.config) state.config = { argentDepart: 0 };
 if (!state.statsLignes) state.statsLignes = [];
 if (!state.lastImport) state.lastImport = {};
+if (!state.rev) state.rev = [];
 if (!state.cfgLignesParNiveau) state.cfgLignesParNiveau = {};
 if (!state.themes) state.themes = [];
 if (!state.planningCT) state.planningCT = {};
@@ -5643,7 +5640,7 @@ function csvImporter() {
             if (!state.ct) state.ct = [];
             // Éviter doublon
             if (!state.ct.find(c => c.bus === exist.nom && c.date === exist.ct)) {
-              state.ct.push({ id: Date.now() + Math.random()*1000|0, bus: exist.nom, date: exist.ct, dateReelle: (() => { try { const d = new Date(exist.ct); d.setDate(d.getDate() - 185); return d.toISOString().slice(0,10); } catch(e) { return today(); } })(), km: exist.km || 0, resultat: 'Favorable' });
+              state.ct.push({ id: Date.now() + Math.random()*1000|0, bus: exist.nom, date: exist.ct, dateReelle: today(), km: exist.km || 0, resultat: 'Favorable' });
             }
             // Reset planningCT pour ce bus — nouveau cycle CT
             if (state.planningCT?.[exist.nom]) {
@@ -6425,22 +6422,41 @@ function renderMaintenance() {
 
   // Historique CT
   const ctbody = document.getElementById('ct-tbody');
-  if (ctbody) ctbody.innerHTML = [...(state.ct||[])].reverse().map((c,i) => {
-    const realIdx = state.ct.length - 1 - i;
-    const demandeOk = c.demandeAlliance || false;
-    return `<tr style="${demandeOk?'opacity:0.5':''}">
-      <td>${(() => { const b = (state.bus||[]).find(x => x.nom === c.bus); return b?.idJeu ? `<a href="https://transport-manager.net/jeu/vehicle.php?id=${b.idJeu}" target="_blank" style="color:inherit;text-decoration:none;font-weight:700;cursor:alias" title="Ouvrir sur le jeu">${c.bus} ↗</a>` : `<b>${c.bus}</b>`; })()}</td>
-      <td class="mono" title="Date limite CT : ${fmtDateFR(c.date)}">${fmtDateFR(c.dateReelle || c.date)}</td>
-      <td class="mono">${fmtNum(c.km)} km</td>
-      <td>${c.resultat ? getStatusBadge(c.resultat) : ctStatus(c.date)}</td>
-      <td style="text-align:center">
-        <input type="checkbox" ${demandeOk?'checked':''} onchange="setDemandeAlliance(${realIdx},this.checked)"
-          style="width:15px;height:15px;cursor:pointer" title="${demandeOk?'Demande faite le '+fmtDateFR(c.dateDemande||''):'Marquer comme demandé'}">
-        ${demandeOk?`<span style="font-size:10px;color:var(--green);display:block">${fmtDateFR(c.dateDemande||'')}</span>`:''}
-      </td>
-      <td><button class="btn btn-danger btn-xs" onclick="supprimerCTHistorique(${realIdx})">✕</button></td>
-    </tr>`;
-  }).join('') || '<tr><td colspan="6" style="color:var(--text3);text-align:center;padding:16px">Aucun CT enregistré — alimenté automatiquement via import bus.csv</td></tr>';
+  if (ctbody) {
+    // Fusionner state.ct et state.rev par bus
+    const allBus = new Set([...(state.ct||[]).map(c=>c.bus), ...(state.rev||[]).map(r=>r.bus)]);
+    const fusionnes = [...allBus].map(nom => {
+      const ct  = [...(state.ct||[])].filter(c=>c.bus===nom).sort((a,b)=>(b.dateReelle||b.date).localeCompare(a.dateReelle||a.date))[0];
+      const rev = [...(state.rev||[])].filter(r=>r.bus===nom).sort((a,b)=>b.dateReelle.localeCompare(a.dateReelle))[0];
+      return { nom, ct, rev };
+    }).sort((a,b) => {
+      const da = (a.ct?.dateReelle||a.ct?.date||a.rev?.dateReelle||'');
+      const db = (b.ct?.dateReelle||b.ct?.date||b.rev?.dateReelle||'');
+      return db.localeCompare(da);
+    });
+
+    ctbody.innerHTML = fusionnes.map(({ nom, ct, rev }) => {
+      const b = (state.bus||[]).find(x => x.nom === nom);
+      const busLink = b?.idJeu
+        ? `<a href="https://transport-manager.net/jeu/vehicle.php?id=${b.idJeu}" target="_blank" style="color:inherit;text-decoration:none;font-weight:700;cursor:alias" title="Ouvrir sur le jeu">${nom} ↗</a>`
+        : `<b>${nom}</b>`;
+      const demandeOk = ct?.demandeAlliance || false;
+      const ctIdx = ct ? state.ct.indexOf(ct) : -1;
+      const dateCT  = ct  ? fmtDateFR(ct.dateReelle || ct.date) : '—';
+      const dateRev = rev ? fmtDateFR(rev.dateReelle) : '—';
+      return `<tr style="${demandeOk?'opacity:0.5':''}">
+        <td>${busLink}</td>
+        <td class="mono" style="text-align:center">${dateCT}</td>
+        <td class="mono" style="text-align:center;color:var(--yellow)">${dateRev}</td>
+        <td style="text-align:center">
+          <input type="checkbox" ${demandeOk?'checked':''} onchange="setDemandeAlliance(${ctIdx},this.checked)"
+            style="width:15px;height:15px;cursor:pointer" title="${demandeOk?'Demande faite le '+fmtDateFR(ct?.dateDemande||''):'Marquer comme demandé'}" ${ctIdx<0?'disabled':''}>
+          ${demandeOk?`<span style="font-size:10px;color:var(--green);display:block">${fmtDateFR(ct?.dateDemande||'')}</span>`:''}
+        </td>
+        <td>${ctIdx>=0?`<button class="btn btn-danger btn-xs" onclick="supprimerCTHistorique(${ctIdx})">✕</button>`:''}</td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="5" style="color:var(--text3);text-align:center;padding:16px">Aucun CT/révision enregistré</td></tr>';
+  }
 }
 
 function marquerEnvoye(busNom, type) {
@@ -6451,6 +6467,13 @@ function marquerEnvoye(busNom, type) {
 
   if (type === 'Rev') {
     plan.revDate = 'DONE';
+    plan.revEnvoyeDate = today();
+    // Enregistrer dans state.rev
+    if (!state.rev) state.rev = [];
+    if (!state.rev.find(r => r.bus === busNom && r.dateReelle === today())) {
+      const b = (state.bus||[]).find(x => x.nom === busNom);
+      state.rev.push({ id: Date.now() + Math.random()*1000|0, bus: busNom, dateReelle: today(), km: b?.km || 0 });
+    }
     // Si CT pas encore envoyé, c'est "Rev avant CT" sinon "Révision"
     const ctPending = plan.ctDate !== 'DONE' && plan.ctDate;
     plan.raisonAtelier = ctPending ? 'Rev avant CT' : 'Révision';
@@ -6459,6 +6482,7 @@ function marquerEnvoye(busNom, type) {
   }
   if (type === 'CT') {
     plan.ctDate = 'DONE';
+    plan.ctEnvoyeDate = today();
     // Si Rev pas encore envoyée, c'est "CT puis Rev" sinon "CT"
     const revPending = plan.revDate !== 'DONE' && plan.revDate;
     plan.raisonAtelier = revPending ? 'CT avant Rev' : 'CT';
@@ -6598,47 +6622,86 @@ function genererDemandeAlliance() {
     return true;
   });
 
-  // Révisions dans le dernier mois (bus non déjà dans ctEligibles)
+  // Révisions dans le dernier mois depuis state.rev
   const ctBusNoms = new Set(ctEligibles.map(c => c.bus));
-  const revEligibles = state.bus.filter(b => {
-    if (ctBusNoms.has(b.nom)) return false;
-    const plan = (state.planningCT || {})[b.nom] || {};
+  if (!state.rev) state.rev = [];
+  const revEligibles = state.rev.filter(r => {
+    if (!r.dateReelle || r.dateReelle < j30ago || r.dateReelle > today()) return false;
+    if (r.demandeAlliance) return false;
+    const plan = (state.planningCT || {})[r.bus] || {};
     if (plan.demandeAlliance) return false;
+    const b = state.bus.find(x => x.nom === r.bus);
     if (isExcluEcolo(b)) return false;
-    const revDate = plan.revDate || '';
-    return revDate && revDate >= j30ago && revDate <= today();
+    return true;
   });
 
-  const result    = document.getElementById('alliance-result');
-  const container = document.getElementById('alliance-texte-container');
-  const textarea  = document.getElementById('alliance-texte');
-
-  const total = ctEligibles.length + revEligibles.length;
+  const result = document.getElementById('alliance-result');
+  const total  = ctEligibles.length + revEligibles.length;
 
   if (!total) {
     result.innerHTML = '<div class="alert-box info">Aucun bus éligible (tous déjà demandés, exclus ou aucun CT/révision dans le dernier mois).</div>';
-    if (container) container.style.display = 'none';
     return;
   }
 
-  result.innerHTML = `<div style="font-size:12px;color:var(--accent);margin-bottom:6px">
-    <b>${total}</b> bus éligible(s) · ${ctEligibles.length} CT · ${revEligibles.length} révision(s) uniquement
-  </div>`;
-  if (container) container.style.display = 'block';
-
-  const lignesCT  = ctEligibles.map(c => {
-    const b = state.bus.find(x => x.nom === c.bus);
-    return `${c.bus} (ID= ${b?.idJeu||'?'})`;
+  // Marquer demandeAlliance = true sur tous les bus générés
+  pushUndo('Demande Alliance générée');
+  ctEligibles.forEach(c => {
+    c.demandeAlliance = true;
+    c.dateDemande = today();
+    if (state.planningCT?.[c.bus]) state.planningCT[c.bus].demandeAlliance = true;
   });
-  const lignesRev = revEligibles.map(b => `${b.nom} (ID= ${b.idJeu||'?'})`);
+  revEligibles.forEach(r => {
+    r.demandeAlliance = true;
+    r.dateDemande = today();
+    if (!state.planningCT) state.planningCT = {};
+    if (!state.planningCT[r.bus]) state.planningCT[r.bus] = {};
+    state.planningCT[r.bus].demandeAlliance = true;
+  });
+  saveStateWithSync();
 
-  if (textarea) textarea.value = [...lignesCT, ...lignesRev].join('\n');
-}
+  // Grouper CT par date
+  const ctByDate = {};
+  ctEligibles.forEach(c => {
+    if (!ctByDate[c.date]) ctByDate[c.date] = [];
+    ctByDate[c.date].push(c.bus);
+  });
+  // Grouper Révisions par date
+  const revByDate = {};
+  revEligibles.forEach(r => {
+    const revDate = r.dateReelle || '';
+    if (!revByDate[revDate]) revByDate[revDate] = [];
+    revByDate[revDate].push(r.bus);
+  });
 
-function copierAllianceTexte() {
-  const ta = document.getElementById('alliance-texte');
-  if (!ta) return;
-  navigator.clipboard.writeText(ta.value).then(() => toastMsg('📋 Copié !', 'success'));
+  const ctDates  = Object.keys(ctByDate).sort();
+  const revDates = Object.keys(revByDate).sort();
+  const maxRows  = Math.max(ctDates.length, revDates.length);
+
+  let rows = '';
+  for (let i = 0; i < maxRows; i++) {
+    const cd = ctDates[i];
+    const rd = revDates[i];
+    const ctCell  = cd ? `<b>${fmtDateFR(cd)}</b> : ${ctByDate[cd].length}` : '';
+    const revCell = rd ? `<b>${fmtDateFR(rd)}</b> : ${revByDate[rd].length}` : '';
+    rows += `<tr>
+      <td style="padding:4px 10px;color:var(--text)">${ctCell}</td>
+      <td style="padding:4px 10px;color:var(--text3);text-align:center">—</td>
+      <td style="padding:4px 10px;color:var(--text)">${revCell}</td>
+    </tr>`;
+  }
+
+  result.innerHTML = `
+    <div style="font-size:11px;color:var(--green);margin-bottom:8px">
+      ✅ <b>${total}</b> bus marqués "Demande Alliance" · ${ctEligibles.length} CT · ${revEligibles.length} révision(s)
+    </div>
+    <table style="border-collapse:collapse;font-size:12px;width:100%">
+      <thead><tr>
+        <th style="padding:4px 10px;text-align:left;color:var(--accent);border-bottom:1px solid var(--border)">CT</th>
+        <th style="padding:4px 10px;border-bottom:1px solid var(--border)"></th>
+        <th style="padding:4px 10px;text-align:left;color:var(--purple);border-bottom:1px solid var(--border)">Révision</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
 }
 
 // Maintenance héritée (alertes)
@@ -10151,9 +10214,9 @@ function calculerPlanning() {
         <table class="data-table" style="width:100%">
           <thead><tr style="background:${color}18">
             <th>Affectation 1</th>
+            <th style="text-align:center;color:${color}">Conducteurs</th>
             <th>Affectation 2</th>
             <th style="text-align:center">H/sem</th>
-            <th style="text-align:center;color:${color}">Conducteurs</th>
           </tr></thead><tbody>`;
     rows.forEach((l, idx) => {
       const hc = l.h>=40?'var(--green)':l.h>=34?'var(--yellow)':'var(--text3)';
@@ -10165,15 +10228,16 @@ function calculerPlanning() {
         : '';
       t += `<tr style="background:${color}0a;${isNewGroup && !l.showLabel ? borderTop : ''}">
         ${labelCell}
+        <td style="text-align:center;font-size:16px;font-weight:800;color:${color};${borderTop}">${l.n}</td>
         <td style="color:var(--text);${borderTop}">${l.c2label}</td>
         <td style="text-align:center;font-family:Inter, var(--font-sans, sans-serif);color:${hc};${borderTop}">${l.h}h</td>
-        <td style="text-align:center;font-size:16px;font-weight:800;color:${color};${borderTop}">${l.n}</td>
       </tr>`;
     });
     const tot = sorted.reduce((a,l)=>a+l.n,0);
     t += `<tr style="background:${color}20;font-weight:800">
-      <td colspan="3" style="text-align:right;padding-right:14px;color:var(--text3);font-size:12px">TOTAL</td>
+      <td style="text-align:right;padding-right:14px;color:var(--text3);font-size:12px">TOTAL</td>
       <td style="text-align:center;font-size:18px;color:${color}">${tot}</td>
+      <td colspan="2"></td>
     </tr></tbody></table></div></div>`;
     return t;
   };
@@ -11252,7 +11316,7 @@ function importerCSVDirect(type, contenu) {
           if (diffJours >= 30) {
             if (!state.ct) state.ct = [];
             if (!state.ct.find(c => c.bus === exist.nom && c.date === exist.ct)) {
-              state.ct.push({ id: Date.now() + Math.random()*1000|0, bus: exist.nom, date: exist.ct, dateReelle: (() => { try { const d = new Date(exist.ct); d.setDate(d.getDate() - 185); return d.toISOString().slice(0,10); } catch(e) { return today(); } })(), km: exist.km || 0, resultat: 'Favorable' });
+              state.ct.push({ id: Date.now() + Math.random()*1000|0, bus: exist.nom, date: exist.ct, dateReelle: today(), km: exist.km || 0, resultat: 'Favorable' });
             }
             // Reset planningCT pour ce bus — nouveau cycle CT
             if (state.planningCT?.[exist.nom]) {
