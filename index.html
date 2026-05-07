@@ -879,7 +879,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.383</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.384</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -13701,12 +13701,14 @@ async function onRemoteChange() {
     if (!resp.ok) return;
     const rows = await resp.json();
     if (!rows.length) return;
+    // Si un push local est en attente (debounce actif), ignorer le remote —
+    // notre version locale est plus récente et va partir dans 3s
+    if (syncDebounceTimer !== null) return;
     const loaded = JSON.parse(rows[0].value);
     if (!loaded || typeof loaded !== 'object' || Object.keys(loaded).length < 2) return;
     // Préserver lastImport local s'il est plus récent que le remote
     const localImport = state.lastImport || {};
     Object.assign(state, loaded);
-    // Pour chaque clé de lastImport, garder la date la plus récente
     if (!state.lastImport) state.lastImport = {};
     Object.keys(localImport).forEach(k => {
       if (!state.lastImport[k] || localImport[k] > state.lastImport[k]) {
