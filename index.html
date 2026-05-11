@@ -879,7 +879,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.387</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.389</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -1121,6 +1121,11 @@
           <div class="tab" onclick="filterByStatutParc(this,'reserve')"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--yellow);margin-right:4px;vertical-align:middle"></span>Réserve</div>
           <div class="tab" onclick="filterByStatutParc(this,'indispo')"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--red);margin-right:4px;vertical-align:middle"></span>Indispo</div>
         </div>
+        <div class="tabs" id="tabs-parc-pub">
+          <div class="tab active" onclick="filterByPubParc(this,'all')">📢 Toutes</div>
+          <div class="tab" onclick="filterByPubParc(this,'avec')">Avec pub</div>
+          <div class="tab" onclick="filterByPubParc(this,'sans')">Sans pub</div>
+        </div>
         <div class="tabs" style="margin-left:8px" id="parc-view-tabs">
           <div class="tab active" onclick="setParcView(this,'compact')">Compact</div>
           <div class="tab" onclick="setParcView(this,'full')">Complet</div>
@@ -1149,6 +1154,7 @@
                 <th onclick="sortTable('parc','etatInt')" class="sortable">Int. <span class="sort-icon" data-col="etatInt">↕</span></th>
                 <th onclick="sortTable('parc','diffKm')" class="sortable">Diff KM <span class="sort-icon" data-col="diffKm">↕</span></th>
                 <th>Statut</th>
+                <th id="parc-compact-pub-header">Pub</th>
                 <th>Actions</th>
               </tr></thead>
               <tbody id="parc-tbody"></tbody>
@@ -1179,7 +1185,7 @@
                 <th onclick="sortParcFull('rackBagages')" style="cursor:pointer;user-select:none">Rack Bag. ↕</th><th onclick="sortParcFull('rackVelos')" style="cursor:pointer;user-select:none">Rack Vél. ↕</th><th onclick="sortParcFull('ethylotest')" style="cursor:pointer;user-select:none">Ethylo ↕</th>
                 <th onclick="sortParcFull('radio')" style="cursor:pointer;user-select:none">Radio ↕</th><th onclick="sortParcFull('usb')" style="cursor:pointer;user-select:none">USB ↕</th><th onclick="sortParcFull('wifi')" style="cursor:pointer;user-select:none">WiFi ↕</th><th onclick="sortParcFull('bandeau')" style="cursor:pointer;user-select:none">Bandeau ↕</th>
                 <th onclick="sortParcFull('ecranTFT')" style="cursor:pointer;user-select:none">Écran TFT ↕</th><th onclick="sortParcFull('hautParleurs')" style="cursor:pointer;user-select:none">HP ↕</th><th onclick="sortParcFull('telephone')" style="cursor:pointer;user-select:none">Tél. ↕</th><th onclick="sortParcFull('pupitre')" style="cursor:pointer;user-select:none">Pupitre ↕</th><th onclick="sortParcFull('billetique')" style="cursor:pointer;user-select:none">Billetique ↕</th>
-                <th onclick="sortParcFull('reventeDate')" style="cursor:pointer;user-select:none">Vente possible ↕</th><th onclick="sortParcFull('argus')" style="cursor:pointer;user-select:none">Argus ↕</th><th onclick="sortParcFull('statut')" style="cursor:pointer;user-select:none">Statut ↕</th>
+                <th onclick="sortParcFull('reventeDate')" style="cursor:pointer;user-select:none">Vente possible ↕</th><th onclick="sortParcFull('argus')" style="cursor:pointer;user-select:none">Argus ↕</th><th id="parc-full-pub-header" style="cursor:pointer;user-select:none">Pub ↕</th><th onclick="sortParcFull('statut')" style="cursor:pointer;user-select:none">Statut ↕</th>
               </tr></thead>
               <tbody id="parc-tbody-full"></tbody>
             </table>
@@ -3566,6 +3572,7 @@ let modeConfig        = false;
 let currentParcTypeFilter = 'all';
 let currentParcEnergieFilter = 'all';
 let currentParcStatutFilter  = 'all';
+let currentParcPubFilter     = 'all';
 let editBusId         = null;
 let parcView          = 'compact';
 let currentCsvType    = 'bus';
@@ -4577,14 +4584,18 @@ function renderRepartitionParc() {
       || (currentParcStatutFilter === 'service'  && ['en service','service','nouveau'].includes(sNorm))
       || (currentParcStatutFilter === 'reserve'  && sNorm === 'réserve')
       || (currentParcStatutFilter === 'indispo'  && ['indispo','atelier','ct urgent','en révision','révision','révision puis ct','ct puis révision'].includes(sNorm));
-    return matchType && matchSearch && matchEnergie && matchStatut;
+    const pubVal = getPubDispo(b.nom);
+    const matchPub = currentParcPubFilter === 'all'
+      || (currentParcPubFilter === 'avec'  && pubVal !== null && pubVal !== 'Libre')
+      || (currentParcPubFilter === 'sans'  && (pubVal === null || pubVal === 'Libre'));
+    return matchType && matchSearch && matchEnergie && matchStatut && matchPub;
   });
 
   const total = bus.length;
   if (!total) { el.innerHTML='<div style="color:var(--text3);padding:10px">Aucun bus correspondant.</div>'; return; }
 
   // Légende filtre actif
-  const filtreActif = currentParcTypeFilter !== 'all' || currentParcEnergieFilter !== 'all' || currentParcStatutFilter !== 'all' || search;
+  const filtreActif = currentParcTypeFilter !== 'all' || currentParcEnergieFilter !== 'all' || currentParcStatutFilter !== 'all' || currentParcPubFilter !== 'all' || search;
   const legendeFiltre = filtreActif ? `<div style="font-size:10px;color:var(--accent3);padding:4px 10px 0">⚡ Filtré — ${total} bus</div>` : '';
 
   // Par type
@@ -4721,6 +4732,12 @@ function fmtConsoShort(b) {
 }
 
 function renderParc() {
+  // Mettre à jour l'intitulé des colonnes pub avec la date d'import
+  const pubHdr = getPubDispoHeader();
+  const hc = document.getElementById('parc-compact-pub-header');
+  const hf = document.getElementById('parc-full-pub-header');
+  if (hc) hc.textContent = pubHdr;
+  if (hf) hf.textContent = pubHdr + ' ↕';
   // Synchroniser display selon parcView (protection contre reset de vue)
   const elC = document.getElementById('parc-view-compact');
   const elF = document.getElementById('parc-view-full');
@@ -4741,7 +4758,11 @@ function renderParc() {
       || (currentParcStatutFilter === 'service'  && ['en service','service','nouveau'].includes(sNorm))
       || (currentParcStatutFilter === 'reserve'  && sNorm === 'réserve')
       || (currentParcStatutFilter === 'indispo'  && ['indispo','atelier','ct urgent','en révision','révision','révision puis ct','ct puis révision'].includes(sNorm));
-    return matchType && matchSearch && matchEnergie && matchStatut;
+    const pubVal2 = getPubDispo(b.nom);
+    const matchPub2 = currentParcPubFilter === 'all'
+      || (currentParcPubFilter === 'avec'  && pubVal2 !== null && pubVal2 !== 'Libre')
+      || (currentParcPubFilter === 'sans'  && (pubVal2 === null || pubVal2 === 'Libre'));
+    return matchType && matchSearch && matchEnergie && matchStatut && matchPub2;
   });
   filtered = sortData(filtered, 'parc', 'nom');
 
@@ -4771,13 +4792,14 @@ function renderParc() {
         <td class="mono" style="color:${(b.etatInt||0)>=80?'var(--green)':(b.etatInt||0)>=60?'var(--yellow)':'var(--red)'}">${b.etatInt||'—'}</td>
         <td class="mono">${b.diffKm ? fmtNum(b.diffKm) : '—'}</td>
         <td style="${getStatutCellStyle(b.statut)}"><select class="status-select ${cls}" onchange="changerStatutBus(${b.id},this.value,this)">${opts}</select></td>
+        <td class="mono" style="font-size:11px;${(() => { const pv=getPubDispo(b.nom); return pv && pv !== 'Libre' && pv !== 'Pub' ? 'color:var(--yellow)' : pv === 'Libre' ? 'color:var(--green)' : 'color:var(--text3)'; })()}">${getPubDispo(b.nom) || '—'}</td>
         <td>
           <button class="btn btn-ghost btn-xs" onclick="showBusDetail(${b.id})" title="Détail complet">🔍</button>
           <button class="btn btn-warning btn-xs" onclick="quickRevision(${b.id})" title="Envoyer en révision">🔧</button>
           <button class="btn btn-danger btn-xs" onclick="retirerBus(${b.id})" title="Retirer du parc">🗑️</button>
         </td>
       </tr>`;
-    }).join('') || '<tr><td colspan="16" style="color:var(--text3);text-align:center;padding:20px">Aucun bus — Importe ton bus.csv</td></tr>';
+    }).join('') || '<tr><td colspan="17" style="color:var(--text3);text-align:center;padding:20px">Aucun bus — Importe ton bus.csv</td></tr>';
 
   } else {
     const yn = v => v ? '<span style="color:var(--green)">✓</span>' : '<span style="color:var(--red);font-size:10px">✗</span>';
@@ -4830,9 +4852,10 @@ function renderParc() {
         <td style="text-align:center">${icn('billetique',b.billetique,{size:16})}</td>
         <td style="font-size:10px;color:${venteOk?'var(--green)':'var(--text3)'}">${fmtDateFR(b.reventeDate)||'—'}${venteOk?' ✓':''}</td>
         <td class="mono" style="font-size:10px;color:var(--accent3)">${b.argus ? fmt(b.argus) : '—'}</td>
+        <td class="mono" style="font-size:11px;${(() => { const pv=getPubDispo(b.nom); return pv && pv !== 'Libre' && pv !== 'Pub' ? 'color:var(--yellow)' : pv === 'Libre' ? 'color:var(--green)' : 'color:var(--text3)'; })()}">${getPubDispo(b.nom) || '—'}</td>
         <td style="${getStatutCellStyle(b.statut)}"><select class="status-select ${cls}" style="font-size:10px" onchange="changerStatutBus(${b.id},this.value,this)">${opts}</select></td>
       </tr>`;
-    }).join('') || '<tr><td colspan="34" style="color:var(--text3);text-align:center;padding:20px">Aucun bus</td></tr>';
+    }).join('') || '<tr><td colspan="35" style="color:var(--text3);text-align:center;padding:20px">Aucun bus</td></tr>';
   }
 }
 
@@ -4912,6 +4935,47 @@ function changerStatutBus(id, newStatut, sel) {
 }
 
 function filterParc() { renderParc(); renderRepartitionParc(); }
+
+// Retourne la date max de pub (JJ/MM/AAAA) ou 'Libre' pour un bus
+function getPubDispo(busNom) {
+  const pd = (state.pubDispo||[]).find(p => p.nom === busNom);
+  if (!pd) return null; // pas de données importées pour ce bus
+  if (pd.toutLibre) return 'Libre';
+  // Chercher la date la plus lointaine parmi les champs date
+  const champs = ['panAv','panLat','livLat','panArr','livArr','ecran'];
+  const dateFR = /^\d{2}\/\d{2}\/\d{4}$/;
+  let maxDate = null;
+  champs.forEach(c => {
+    const v = pd[c];
+    if (v && dateFR.test(v)) {
+      // Convertir JJ/MM/AAAA → AAAA-MM-JJ pour comparaison
+      const iso = v.slice(6)+'-'+v.slice(3,5)+'-'+v.slice(0,2);
+      if (!maxDate || iso > maxDate) maxDate = iso;
+    }
+  });
+  if (maxDate) {
+    // Retourner en JJ/MM (sans l'année)
+    return maxDate.slice(8,10)+'/'+maxDate.slice(5,7);
+  }
+  return 'Pub'; // aPub=true mais pas de date trouvée
+}
+
+function getPubDispoHeader() {
+  const d = state.lastImport?.pubDispo;
+  if (!d) return 'Pub';
+  // d est un ISO string, on extrait JJ/MM
+  const dt = new Date(d);
+  const dd = String(dt.getDate()).padStart(2,'0');
+  const mm = String(dt.getMonth()+1).padStart(2,'0');
+  return `Pub (${dd}/${mm})`;
+}
+
+function filterByPubParc(el, val) {
+  document.querySelectorAll('#tabs-parc-pub .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  currentParcPubFilter = val;
+  renderParc(); renderRepartitionParc();
+}
 function filterByType(el, type) {
   document.querySelectorAll('#tabs-parc .tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
@@ -13828,7 +13892,7 @@ function importerDispoPub() {
     const desc = cols[1] && cols[1].includes('n°') ? cols[1] : (cols[0] && cols[0].includes('n°') ? cols[0] : '');
     if (!desc) return;
 
-    const nomMatch = desc.match(/n°([A-Z0-9\-]+)/);
+    const nomMatch = desc.match(/n°([A-Z0-9\-\/]+)/);
     if (!nomMatch) return;
     const nom = nomMatch[1].trim();
 
@@ -13889,6 +13953,8 @@ function importerDispoPub() {
   }
 
   state.pubDispo = buses;
+  if (!state.lastImport) state.lastImport = {};
+  state.lastImport.pubDispo = new Date().toISOString();
   journalLog(`${buses.length} bus pub importés`, 'ok');
   saveStateWithSync(); renderPubDispo();
   document.getElementById('pubdispo-texte').value = '';
