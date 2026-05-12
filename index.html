@@ -879,7 +879,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.392</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.394</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -8406,17 +8406,17 @@ function renderEstimationFinDeMois() {
   // ── Contrats pub restants ce mois ────────────────────
   const finMois   = dateCible;
   const debutMois = new Date(annee, now.getMonth(), 1);
+  // Avant 16h : on inclut les contrats se terminant aujourd'hui
+  // Après 16h  : on exclut aujourd'hui (encaissé trop tard)
+  const dateMinPub = now.getHours() < 16 ? todayISO : (() => {
+    const d = new Date(now); d.setDate(d.getDate()+1); return d.toISOString().slice(0,10);
+  })();
   let pubRestant = 0;
   (state.contratsPub || []).forEach(c => {
     if (!c.fin) return;
-    const ff = new Date(c.fin);
-    // Contrat actif et se terminant avant/à la date cible
-    if (ff >= new Date(todayISO) && ff >= debutMois && ff <= finMois) pubRestant += (c.gains || 0);
-    // Contrat se terminant après la date cible → gains proratisés sur jours restants
-    else if (ff > finMois && c.debut && new Date(c.debut) <= new Date(todayISO)) {
-      const joursContrat = Math.round((ff - new Date(c.debut)) / (1000*60*60*24)) || 1;
-      pubRestant += ((c.gains || 0) / joursContrat) * joursRestants;
-    }
+    // Comparer en ISO string pour éviter bugs timezone
+    const finISO = c.fin.slice(0,10);
+    if (finISO >= dateMinPub && finISO <= dateCibleISO) pubRestant += (c.gains || 0);
   });
   pubRestant = Math.round(pubRestant);
 
