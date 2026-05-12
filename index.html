@@ -879,7 +879,7 @@
   </div>
 
   <div class="sidebar-bottom">
-    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.396</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
+    <span id="clock">--:--:--</span> &nbsp;|&nbsp; <span id="sidebar-version" style="color:var(--accent3);font-size:10px">V1.398</span> &nbsp;|&nbsp; <button id="sidebar-cfg-btn" onclick="toggleModeConfig()" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0;font-family:inherit">⚙️ Config</button>
   </div>
 </div>
 
@@ -4241,6 +4241,12 @@ function renderDashboard() {
       msgs.push(`<div style="color:var(--red);font-size:16px;padding:3px 0">⚠️ <b>${busSurchargesD.length}</b> bus sans pause créneau</div>`);
     }
 
+    const nbNonImmat = (state.bus||[]).filter(b => (b.immat||'').toLowerCase().includes('non immatricul')).length;
+    if (nbNonImmat > 0) msgs.push(`<div style="color:var(--red);font-size:16px;padding:3px 0">🚫 ${nbNonImmat} bus non immatriculé(s)</div>`);
+
+    const nbElecDepasse = (state.bus||[]).filter(b => busDepasseAutonomie(b)).length;
+    if (nbElecDepasse > 0) msgs.push(`<div style="color:var(--red);font-size:16px;padding:3px 0">⚡ ${nbElecDepasse} bus électrique(s) dépassent 250 km/j</div>`);
+
     elRecap.innerHTML = msgs.length
       ? msgs.join('')
       : `<div style="color:var(--green);font-size:16px">✅ Aucune alerte active</div>`;
@@ -4816,7 +4822,7 @@ function renderParc() {
       const ctStyle = ctDiff !== null && ctDiff <= 0 ? 'color:var(--red)' : ctDiff !== null && ctDiff <= 5 ? 'color:var(--orange)' : '';
       return `<tr>
         <td class="id-num">${b.idJeu ? '<a href="https://transport-manager.net/jeu/vehicle.php?id='+b.idJeu+'" target="_blank" style="color:var(--accent);text-decoration:none;font-weight:700" title="Voir le véhicule">'+b.idJeu+'</a>' : '—'}</td>
-        <td><b>${b.idJeu ? '<a href="https://transport-manager.net/jeu/vehicle.php?id='+b.idJeu+'" target="_blank" style="color:inherit;text-decoration:none;font-weight:700;cursor:alias" title="Ouvrir le véhicule">'+b.nom+'</a>' : b.nom}</b></td>
+        <td><b>${b.idJeu ? '<a href="https://transport-manager.net/jeu/vehicle.php?id='+b.idJeu+'" target="_blank" style="color:inherit;text-decoration:none;font-weight:700;cursor:alias" title="Ouvrir le véhicule">'+b.nom+'</a>' : b.nom}</b>${(b.immat||'').toLowerCase().includes('non immatricul') ? ' <span title="Non immatriculé" style="color:var(--red);font-size:11px">🚫</span>' : ''}</td>
         <td style="font-size:10px;color:var(--text3)">${b.marque||''} ${b.modele||''}</td>
         <td class="mono" style="font-size:11px">${b.anneMES ? b.anneMES.substring(0,4) : '—'}</td>
         <td class="mono" style="font-size:11px;${b.revisionDate&&b.revisionDate<=today()?'color:var(--orange)':''}">${fmtDateFR(b.revisionDate)||'—'}</td>
@@ -4990,7 +4996,7 @@ function calcKmElecBus(busNom) {
     if (/^-\s*.+\s*-$/.test(ligneNum.toLowerCase())) return 0;
     const ligne = getLigne(ligneNum);
     if (!ligne || !ligne.duree || !ligne.km) return 0;
-    const km = Math.ceil((dureeMinCreneau * 60) / ligne.duree * ligne.km);
+    const km = Math.ceil(dureeMinCreneau / ligne.duree * ligne.km);
     const avecBorne = ligne.bornes && bornes.includes(String(ligne.num));
     return avecBorne ? Math.ceil(km / 2) : km;
   };
@@ -6766,23 +6772,18 @@ function genererDemandeAlliance() {
 
   // CT dans le dernier mois, PAS encore demandés, PAS "Demande Alliance", PAS exclus ecolo
   const ctEligibles = state.ct.filter(c => {
-    if (!c.date || c.date < j30ago || c.date > today()) return false;
+    const dateRef = c.dateReelle || c.date;
+    if (!dateRef || dateRef < j30ago || dateRef > today()) return false;
     if (c.demandeAlliance) return false;
     const b = state.bus.find(x => x.nom === c.bus);
-    const plan = (state.planningCT || {})[c.bus] || {};
-    if (plan.demandeAlliance) return false;
     if (isExcluEcolo(b)) return false;
     return true;
   });
 
-  // Révisions dans le dernier mois depuis state.rev
-  const ctBusNoms = new Set(ctEligibles.map(c => c.bus));
   if (!state.rev) state.rev = [];
   const revEligibles = state.rev.filter(r => {
     if (!r.dateReelle || r.dateReelle < j30ago || r.dateReelle > today()) return false;
     if (r.demandeAlliance) return false;
-    const plan = (state.planningCT || {})[r.bus] || {};
-    if (plan.demandeAlliance) return false;
     const b = state.bus.find(x => x.nom === r.bus);
     if (isExcluEcolo(b)) return false;
     return true;
